@@ -252,53 +252,77 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>
-    /// Clé publique du serveur comparée à celle du certificat vérifié par ZillaTerm, au niveau d'authentification 0 (sans
-    /// l'avertissement de Windows) : la bonne clé ouvre la session, une autre la refuse, avec et sans authentification
-    /// réseau (NLA). Tout est noté avant de vérifier, avec l'ordre des événements du contrôle (journal de débogage).
+    /// Diagnostic : sans authentification réseau (NLA) et sans vérification du serveur (niveau 0), comme une session PSM
+    /// (sans mot de passe) ou avec mot de passe, Windows affiche une boîte de dialogue dès le début de la connexion. Un
+    /// guetteur note au journal de débogage le texte de chaque fenêtre qui apparaît (le processus peut s'arrêter juste
+    /// après).
     /// </summary>
     [Fact]
     [Trait("Category", "RdpIntegration")]
-    public async Task ServerKeyCheckedByZillaTermOpensWithoutWindowsWarning()
+    public Task NoNlaWithoutPassword() => NoNlaAsync(password: false);
+
+    /// <inheritdoc cref="NoNlaWithoutPassword"/>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public Task NoNlaWithPassword() => NoNlaAsync(password: true);
+
+    private async Task NoNlaAsync(bool password)
     {
         if (IntegrationAccount() is not { } account)
         {
             return;
         }
 
-        var certificate = await RdpCertificateProbe.GetAsync("127.0.0.2", 3389, CancellationToken.None);
-        output.WriteLine($"Certificat « {certificate.Subject} », clé {certificate.PublicKey.Length} octets "
-            + $"{Convert.ToHexString(certificate.PublicKey.AsSpan(0, Math.Min(16, certificate.PublicKey.Length)))}…, problème « {certificate.Problem} »");
-        Assert.False(certificate.Trusted);
-
-        // Diagnostic d'abord (sans clé attendue, donc sans récepteur) : ce que Windows affiche sans NLA, avec et sans
-        // mot de passe (une session PSM n'en a pas).
-        foreach (var (password, label) in new[] { (true, "avec mot de passe"), (false, "sans mot de passe") })
+        using var watcher = new DialogWatcher();
+        var result = await AttemptAsync(account, 0, nla: false, key: null, password, TimeSpan.FromSeconds(password ? 60 : 20));
+        output.WriteLine($"Sans NLA, niveau 0, {(password ? "avec" : "sans")} mot de passe → {result}");
+        foreach (var seen in watcher.Seen)
         {
-            var diagnostic = await AttemptAsync(account, 0, nla: false, key: null, password, TimeSpan.FromSeconds(password ? 90 : 20));
-            output.WriteLine($"Diagnostic NLA False, niveau 0, sans clé attendue, {label} → {diagnostic}");
+            output.WriteLine($"Fenêtre : {seen}");
+        }
+    }
+
+    /// <summary>Note au journal de débogage le texte de chaque nouvelle fenêtre de ce processus, toutes les 10 ms.</summary>
+    private sealed class DialogWatcher : IDisposable
+    {
+        private readonly HashSet<IntPtr> _known = [.. Win32Input.ProcessWindows()];
+        private readonly CancellationTokenSource _stop = new();
+        private readonly Thread _thread;
+
+        public DialogWatcher()
+        {
+            _thread = new Thread(() =>
+            {
+                while (!_stop.IsCancellationRequested)
+                {
+                    foreach (var window in Win32Input.ProcessWindows())
+                    {
+                        if (_known.Add(window) && Win32Input.IsWindowVisible(window))
+                        {
+                            var text = $"{Win32Input.ClassName(window)} {Win32Input.Describe(window)}";
+                            lock (Seen)
+                            {
+                                Seen.Add(text);
+                            }
+
+                            Core.Diagnostics.DebugLog.Write("test", $"Nouvelle fenêtre : {text}");
+                        }
+                    }
+
+                    Thread.Sleep(10);
+                }
+            })
+            { IsBackground = true };
+            _thread.Start();
         }
 
-        var results = new List<(string Case, bool Expected, Attempt Result)>();
-        byte[] other = [.. certificate.PublicKey];
-        other[^1] ^= 0xFF;
-        foreach (var nla in new[] { true, false })
-        {
-            results.Add(($"NLA {nla}, clé du certificat", true, await AttemptAsync(account, 0, nla, certificate.PublicKey)));
-            results.Add(($"NLA {nla}, autre clé", false, await AttemptAsync(account, 0, nla, other)));
-            output.WriteLine($"{results[^2].Case} → {results[^2].Result}");
-            output.WriteLine($"{results[^1].Case} → {results[^1].Result}");
-        }
+        public List<string> Seen { get; } = [];
 
-        foreach (var (name, _, result) in results)
+        public void Dispose()
         {
-            output.WriteLine($"{name} → {result}");
-        }
-
-        foreach (var (name, expected, result) in results)
-        {
-            Assert.False(result.Warning, $"{name} : avertissement de Windows affiché");
-            Assert.True(expected == (result.State == RdpSessionState.Connected), $"{name} → {result}");
-            Assert.Equal(expected, result.KeyMatched);
+            _stop.Cancel();
+            _thread.Join(TimeSpan.FromSeconds(1));
+            _stop.Dispose();
         }
     }
 

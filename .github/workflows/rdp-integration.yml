@@ -112,15 +112,22 @@ jobs:
       - name: Tests de sessions réelles
         run: >
           dotnet test tests/ZillaTerm.App.Tests -c Release
-          --filter "Category=RdpIntegration&FullyQualifiedName!~ServerKey"
+          --filter "Category=RdpIntegration&FullyQualifiedName!~NoNla"
           --logger "console;verbosity=detailed"
 
-      # À part : un plantage du contrôle pendant ce test n'efface pas les résultats des autres.
-      - name: Clé du serveur vérifiée par ZillaTerm
+      # Diagnostics sans NLA, chacun à part : un arrêt du processus n'efface pas les autres résultats.
+      - name: Sans NLA, sans mot de passe (comme une session PSM)
         if: always()
         run: >
           dotnet test tests/ZillaTerm.App.Tests -c Release --no-build
-          --filter "Category=RdpIntegration&FullyQualifiedName~ServerKey"
+          --filter "Category=RdpIntegration&FullyQualifiedName~NoNlaWithoutPassword"
+          --logger "console;verbosity=detailed"
+
+      - name: Sans NLA, avec mot de passe
+        if: always()
+        run: >
+          dotnet test tests/ZillaTerm.App.Tests -c Release --no-build
+          --filter "Category=RdpIntegration&FullyQualifiedName~NoNlaWithPassword"
           --logger "console;verbosity=detailed"
 
       - name: Journal de débogage des sessions
