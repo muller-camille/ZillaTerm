@@ -29,7 +29,6 @@ internal sealed class RdpConnection
     private const int DispIdFatalError = 10;
     private const int DispIdWarning = 11;
     private const int DispIdRemoteDesktopSizeChange = 12;
-    private const int DispIdReceivedTSPublicKey = 16;
     private const int DispIdAuthenticationWarningDisplayed = 18;
     private const int DispIdAuthenticationWarningDismissed = 19;
     private const int DispIdLogonError = 22;
@@ -51,6 +50,7 @@ internal sealed class RdpConnection
     private Container? _container;
     private RdpClientHost? _client;
     private object? _ocx;
+    private RdpPublicKeySink? _keySink;
     private System.Windows.Forms.Timer? _resizeTimer;
     private (int Width, int Height) _pixels;
     private (int Width, int Height) _sessionSize;
@@ -186,11 +186,11 @@ internal sealed class RdpConnection
             ToSession(s => s.OnFullScreenChanged(this, false));
             FocusControl();
         }));
-        // Clé publique du serveur, comparée à celle du certificat vérifié par ZillaTerm (sessions PSM). Événement d'une
-        // interface de distribution : « pfContinueLogon » ([out, retval]) est la valeur de retour.
+        // Clé publique du serveur, comparée à celle du certificat vérifié par ZillaTerm (sessions PSM) : récepteur à part,
+        // qui lit les paramètres tels que le contrôle les envoie.
         if (_request.ServerPublicKey is not null)
         {
-            Subscribe(ocx, DispIdReceivedTSPublicKey, new Func<string, bool>(OnReceivedPublicKey));
+            _keySink = RdpPublicKeySink.Advise(ocx, EventsIid, OnReceivedPublicKey, _label);
         }
         // Avertissement de Windows sur l'identité du serveur (certificat) : l'onglet le signale.
         Subscribe(ocx, DispIdAuthenticationWarningDisplayed, new Action(() =>
@@ -341,12 +341,11 @@ internal sealed class RdpConnection
     /// ZillaTerm), la connexion ne se poursuit que si c'est la même : un intermédiaire qui présenterait un autre
     /// certificat entre la vérification et la connexion est refusé.
     /// </summary>
-    private bool OnReceivedPublicKey(string publicKey)
+    private bool OnReceivedPublicKey(byte[] key)
     {
         var expected = _request.ServerPublicKey;
         try
         {
-            var key = MemoryMarshal.AsBytes((publicKey ?? "").AsSpan()).ToArray();
             bool? matched = expected is null ? null : key.AsSpan().SequenceEqual(expected);
             DebugLog.Write("rdp", $"{_label} : clé publique du serveur reçue ({key.Length} octets, SHA256 "
                 + $"{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(key))}) : "
@@ -445,6 +444,9 @@ internal sealed class RdpConnection
                 TryCall(() => ComEventsHelper.Remove(ocx, EventsIid, dispId, handler));
             }
         }
+
+        _keySink?.Unadvise();
+        _keySink = null;
 
         _handlers.Clear();
         _ocx = null;

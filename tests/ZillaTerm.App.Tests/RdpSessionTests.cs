@@ -270,30 +270,15 @@ public class RdpSessionTests(ITestOutputHelper output)
             + $"{Convert.ToHexString(certificate.PublicKey.AsSpan(0, Math.Min(16, certificate.PublicKey.Length)))}…, problème « {certificate.Problem} »");
         Assert.False(certificate.Trusted);
 
-        var log = Path.Combine(Path.GetTempPath(), $"zillaterm-rdp-{Guid.NewGuid():N}.log");
-        Core.Diagnostics.DebugLog.Start(log, "test");
         var results = new List<(string Case, bool Expected, Attempt Result)>();
-        try
+        byte[] other = [.. certificate.PublicKey];
+        other[^1] ^= 0xFF;
+        foreach (var nla in new[] { true, false })
         {
-            byte[] other = [.. certificate.PublicKey];
-            other[^1] ^= 0xFF;
-            foreach (var nla in new[] { true, false })
-            {
-                results.Add(($"NLA {nla}, clé du certificat", true, await AttemptAsync(account, 0, nla, certificate.PublicKey)));
-                results.Add(($"NLA {nla}, autre clé", false, await AttemptAsync(account, 0, nla, other)));
-            }
-        }
-        finally
-        {
-            Core.Diagnostics.DebugLog.Stop();
+            results.Add(($"NLA {nla}, clé du certificat", true, await AttemptAsync(account, 0, nla, certificate.PublicKey)));
+            results.Add(($"NLA {nla}, autre clé", false, await AttemptAsync(account, 0, nla, other)));
         }
 
-        foreach (var line in File.ReadLines(log).Where(l => l.Contains("rdp", StringComparison.Ordinal)))
-        {
-            output.WriteLine(line);
-        }
-
-        File.Delete(log);
         foreach (var (name, _, result) in results)
         {
             output.WriteLine($"{name} → {result}");
@@ -463,7 +448,10 @@ public class RdpSessionTests(ITestOutputHelper output)
         }
     }
 
-    /// <summary>Compte de test fourni par le workflow d'intégration, ou null (tests ignorés).</summary>
+    /// <summary>
+    /// Compte de test fourni par le workflow d'intégration, ou null (tests ignorés). Le journal de débogage est alors tenu
+    /// dans le fichier RDP_TEST_LOG (affiché par le workflow, même si le processus s'arrête).
+    /// </summary>
     private (string User, string Password)? IntegrationAccount()
     {
         var user = Environment.GetEnvironmentVariable("RDP_TEST_USER");
@@ -472,6 +460,11 @@ public class RdpSessionTests(ITestOutputHelper output)
         {
             output.WriteLine("Pas de compte RDP de test : test d'intégration ignoré.");
             return null;
+        }
+
+        if (Environment.GetEnvironmentVariable("RDP_TEST_LOG") is { Length: > 0 } log && !Core.Diagnostics.DebugLog.Enabled)
+        {
+            Core.Diagnostics.DebugLog.Start(log, "Tests de sessions réelles");
         }
 
         return ($"{Environment.MachineName}\\{user}", password);

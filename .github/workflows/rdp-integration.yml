@@ -107,9 +107,25 @@ jobs:
           $run = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
           Set-ItemProperty $run -Name ZillaTermClickTarget -Value 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Users\Public\zt-clicktarget.ps1'
           "RDP_TEST_CLICKS=C:\Users\Public\zt-clicks.txt" >> $env:GITHUB_ENV
+          "RDP_TEST_LOG=$env:RUNNER_TEMP\zillaterm-rdp.log" >> $env:GITHUB_ENV
 
       - name: Tests de sessions réelles
         run: >
           dotnet test tests/ZillaTerm.App.Tests -c Release
-          --filter Category=RdpIntegration
+          --filter "Category=RdpIntegration&FullyQualifiedName!~ServerKey"
           --logger "console;verbosity=detailed"
+
+      # À part : un plantage du contrôle pendant ce test n'efface pas les résultats des autres.
+      - name: Clé du serveur vérifiée par ZillaTerm
+        if: always()
+        run: >
+          dotnet test tests/ZillaTerm.App.Tests -c Release --no-build
+          --filter "Category=RdpIntegration&FullyQualifiedName~ServerKey"
+          --logger "console;verbosity=detailed"
+
+      - name: Journal de débogage des sessions
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path $env:RDP_TEST_LOG) { Get-Content $env:RDP_TEST_LOG } else { 'Pas de journal.' }
+          if (Test-Path $env:RDP_TEST_CLICKS) { 'Fenêtre de test :'; Get-Content $env:RDP_TEST_CLICKS }
