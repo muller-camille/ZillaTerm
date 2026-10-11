@@ -29,6 +29,15 @@ public partial class MainWindow
     private async Task<RdpSession> OpenRdpTabAsync(string label, Func<CancellationToken, Task<RdpConnectionRequest>> prepare,
         Func<Task>? duplicate = null, ServerTag? tag = null, string? psm = null)
     {
+        var session = AddRdpTab(label, prepare, duplicate, tag, psm);
+        await ConnectRdpTabAsync(session);
+        return session;
+    }
+
+    /// <summary>Onglet Bureau à distance ajouté et affiché, sans connexion (<see cref="ConnectRdpTabAsync"/>).</summary>
+    private RdpSession AddRdpTab(string label, Func<CancellationToken, Task<RdpConnectionRequest>> prepare,
+        Func<Task>? duplicate, ServerTag? tag, string? psm)
+    {
         var session = new RdpSession(label, prepare) { Psm = psm };
         var view = new RdpSessionView(session) { Visibility = Visibility.Hidden, InterventionRecording = Intervention.IsRecording };
         view.ShowTag(tag);
@@ -51,20 +60,36 @@ public partial class MainWindow
         _rdpViews.Add(view);
         MainTabs.Items.Add(tab);
         MainTabs.SelectedItem = tab;
-        // Laisse la mise en page se faire pour connaître la taille de l'onglet.
-        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
-        await session.ConnectAsync();
         return session;
     }
 
+    /// <summary>Première connexion d'un onglet ajouté : terminée une fois la connexion lancée (pas ouverte).</summary>
+    private async Task ConnectRdpTabAsync(RdpSession session)
+    {
+        // Laisse la mise en page se faire pour connaître la taille de l'onglet.
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+        await session.ConnectAsync();
+    }
+
+    private bool HasRdpTab(RdpSession session) => MainTabs.Items.OfType<TabItem>().Any(t => t.Tag == session);
+
+    /// <summary>Adresse du PSM donnée par le PVWA : dans l'infobulle de l'onglet.</summary>
+    private void ShowPsmAddress(RdpSession session, string psm)
+    {
+        session.Psm = psm;
+        if (MainTabs.Items.OfType<TabItem>().FirstOrDefault(t => t.Tag == session)?.Header is SessionTabHeader header)
+        {
+            header.SetMode(Text.Format(Strings.TabModePsm, psm));
+        }
+    }
+
     /// <summary>
-    /// Réglages pour ouvrir dans un onglet la session PSM de ce fichier du PVWA, ou null pour la confier à mstsc :
-    /// option désactivée, fichier illisible, passerelle Bureau à distance, ou ni client FreeRDP ni contrôle Bureau à
-    /// distance pour ce fichier (<paramref name="reason"/> le dit alors à l'utilisateur). Avec le client FreeRDP
-    /// embarqué (versions publiées), bureau comme application distante s'ouvrent dans l'onglet ; sans lui, seulement
-    /// un bureau, avec le contrôle de Windows.
+    /// Client pour ouvrir une session PSM dans un onglet, choisi avant la demande au PVWA : vrai pour le client FreeRDP
+    /// embarqué (versions publiées : bureau comme application distante), faux pour le contrôle Bureau à distance de
+    /// Windows (bureau seulement) ; null pour mstsc : option désactivée, ou ni l'un ni l'autre sur ce poste
+    /// (<paramref name="reason"/> le dit alors à l'utilisateur).
     /// </summary>
-    private (RdpConnectionSettings Settings, bool FreeRdp)? PsmTabSettings(byte[] rdp, string label, out string? reason)
+    private bool? PsmTabClient(string label, out string? reason)
     {
         reason = null;
         if (!_settings.PsmDesktopInTab)
@@ -72,6 +97,29 @@ public partial class MainWindow
             return null;
         }
 
+        if (FreeRdpClient.IsAvailable)
+        {
+            return true;
+        }
+
+        if (RdpClientHost.IsAvailable)
+        {
+            return false;
+        }
+
+        reason = Text.Format(Strings.PsmTabNoControl, label);
+        DebugLog.Write("psm", "Contrôle Bureau à distance absent : session PSM ouverte avec mstsc.");
+        return null;
+    }
+
+    /// <summary>
+    /// Réglages de l'onglet pour ce fichier du PVWA, ou null pour le confier à mstsc : fichier illisible, passerelle
+    /// Bureau à distance, application distante sans le client FreeRDP (<paramref name="reason"/> le dit à
+    /// l'utilisateur quand il le faut).
+    /// </summary>
+    private static RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, bool freeRdp, out string? reason)
+    {
+        reason = null;
         RdpConnectionSettings settings;
         try
         {
@@ -90,25 +138,13 @@ public partial class MainWindow
             return null;
         }
 
-        if (FreeRdpClient.IsAvailable)
-        {
-            return (settings.ForPsmTab(), true);
-        }
-
-        if (settings.IsRemoteApp)
+        if (settings.IsRemoteApp && !freeRdp)
         {
             DebugLog.Write("psm", "Composant en application distante (RemoteApp), client FreeRDP absent : ouvert avec mstsc.");
             return null;
         }
 
-        if (!RdpClientHost.IsAvailable)
-        {
-            reason = Text.Format(Strings.PsmTabNoControl, label);
-            DebugLog.Write("psm", "Contrôle Bureau à distance absent : session PSM ouverte avec mstsc.");
-            return null;
-        }
-
-        return (settings.ForPsmTab(), false);
+        return settings.ForPsmTab();
     }
 
     /// <summary>

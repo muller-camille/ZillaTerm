@@ -104,6 +104,7 @@ public partial class MainWindow
         var mode = tab.Tag switch
         {
             RemoteSession { Psmp: { } psmp } => Text.Format(Strings.TabModePsmp, psmp),
+            RdpSession { Psm: "" } => Strings.TabModePsmPending,
             RdpSession { Psm: { } psm } => Text.Format(Strings.TabModePsm, psm),
             _ => Strings.TabModeDirect,
         };

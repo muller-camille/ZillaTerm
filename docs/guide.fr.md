@@ -156,6 +156,9 @@ CyberArk, décochée par défaut) : ZillaTerm lit lui-même le fichier du PVWA e
 client Bureau à distance FreeRDP qu'il embarque : ni fichier `.rdp`, ni avertissement de Windows sur son éditeur, ni
 fenêtre à part.
 
+- **Ouverture** : l'onglet s'ouvre tout de suite, comme pour une session PSMP ; une barre de progression y reste
+  pendant que ZillaTerm demande la session au PVWA puis se connecte au PSM, jusqu'à l'affichage de la session. Si le
+  PVWA refuse la demande (motif exigé, composant inconnu…), l'onglet se ferme et la fenêtre de connexion le dit.
 - **Bureau ou application distante** : un bureau Windows comme une application distante (RemoteApp :
   `||PSMInitSession`, composants PSM-RDP, PSM-SSH, WinSCP…) s'affichent dans l'onglet. Les fenêtres de l'application
   y sont placées comme sur un bureau ; aucune ne s'ouvre sur celui du poste.

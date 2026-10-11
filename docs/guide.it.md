@@ -157,6 +157,9 @@ CyberArk, disattivata per impostazione predefinita): ZillaTerm legge da sé il f
 scheda con il client Desktop remoto FreeRDP che integra: nessun file `.rdp`, nessun avviso di Windows sul suo autore,
 nessuna finestra separata.
 
+- **Apertura**: la scheda si apre subito, come per una sessione PSMP; una barra di avanzamento vi resta mentre
+  ZillaTerm chiede la sessione al PVWA e poi si connette al PSM, fino alla comparsa della sessione. Se il PVWA rifiuta
+  la richiesta (motivo richiesto, componente sconosciuto…), la scheda si chiude e la finestra di connessione lo dice.
 - **Desktop o applicazione remota**: un desktop Windows come un'applicazione remota (RemoteApp:
   `||PSMInitSession`, componenti PSM-RDP, PSM-SSH, WinSCP…) si mostrano nella scheda. Le finestre dell'applicazione
   vi sono collocate come su un desktop; nessuna si apre su quello del computer.

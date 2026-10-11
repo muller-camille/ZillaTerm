@@ -56,6 +56,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
     public bool CanFullScreen => false;
 
+    public bool HasWindow => _window != IntPtr.Zero;
+
     public async Task StartAsync(IntPtr slot, (int Width, int Height) pixels)
     {
         var lines = FreeRdpArguments.Build(_request.Settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled,

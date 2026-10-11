@@ -64,17 +64,20 @@ public partial class RdpSessionView : UserControl
             case RdpSessionState.Connecting:
                 StatusLine.Text = Text.Format(Strings.RdpConnecting, server);
                 OverlayText.Text = Text.Format(Strings.RdpConnecting, session.Label);
-                OverlayDetail.Text = "";
+                OverlayDetail.Text = session.Step ?? "";
+                OverlayProgress.Visibility = Visibility.Visible;
                 ReconnectButton.Visibility = Visibility.Collapsed;
                 break;
             case RdpSessionState.Connected:
                 StatusLine.Text = Text.Format(Strings.RdpConnected, session.Label, server);
+                OverlayProgress.Visibility = Visibility.Collapsed;
                 break;
             default:
                 var failed = session.State == RdpSessionState.Failed;
                 StatusLine.Text = failed ? Strings.ConnectionImpossible : Strings.SessionEnded;
                 OverlayText.Text = StatusLine.Text;
                 OverlayDetail.Text = session.Error ?? "";
+                OverlayProgress.Visibility = Visibility.Collapsed;
                 ReconnectButton.Visibility = Visibility.Visible;
                 break;
         }

@@ -5466,4 +5466,13 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
     <value>J'ai vérifié avec l'administrateur CyberArk que cette adresse regroupe plusieurs serveurs PSM</value>
   </data>
+  <data name="PsmTabRequesting" xml:space="preserve">
+    <value>Demande de la session au PVWA…</value>
+  </data>
+  <data name="PsmTabConnecting" xml:space="preserve">
+    <value>Connexion au PSM {0}…</value>
+  </data>
+  <data name="TabModePsmPending" xml:space="preserve">
+    <value>Via le PSM : session gérée par CyberArk</value>
+  </data>
 </root>

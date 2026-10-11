@@ -16305,5 +16305,32 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("RdpKeyAckLoadBalanced", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Requesting the session from the PVWA….
+        /// </summary>
+        public static string PsmTabRequesting {
+            get {
+                return ResourceManager.GetString("PsmTabRequesting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connecting to the PSM {0}….
+        /// </summary>
+        public static string PsmTabConnecting {
+            get {
+                return ResourceManager.GetString("PsmTabConnecting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Via the PSM: session managed by CyberArk.
+        /// </summary>
+        public static string TabModePsmPending {
+            get {
+                return ResourceManager.GetString("TabModePsmPending", resourceCulture);
+            }
+        }
     }
 }

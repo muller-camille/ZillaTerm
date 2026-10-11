@@ -35,6 +35,11 @@ internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, stri
 }
 
 /// <summary>
+/// Levée par la préparation d'une connexion confiée à un autre client (mstsc) : l'onglet ne signale aucune erreur.
+/// </summary>
+internal sealed class RdpHandedOffException(string message) : Exception(message);
+
+/// <summary>
 /// Réponse à un certificat ou à une clé présentés au client FreeRDP, donnée sans attendre l'utilisateur : le serveur
 /// ferme une connexion qui attend (constaté avec un PSM). Une question se pose après la fin de la connexion
 /// (<see cref="AskThenRetry"/>) : si l'utilisateur fait confiance, une nouvelle connexion est lancée (nouveau jeton PSM :
@@ -112,8 +117,14 @@ internal sealed class RdpSession : IDisposable
 
     public bool IsFullScreen { get; private set; }
 
-    /// <summary>Session PSM : adresse du PSM (infobulle de l'onglet) ; null pour une connexion directe.</summary>
-    public string? Psm { get; init; }
+    /// <summary>
+    /// Session PSM : adresse du PSM (infobulle de l'onglet), vide tant que le PVWA ne l'a pas donnée ; null pour une
+    /// connexion directe.
+    /// </summary>
+    public string? Psm { get; set; }
+
+    /// <summary>Étape de la connexion en cours (demande au PVWA, connexion au PSM…), sous sa progression ; ou null.</summary>
+    public string? Step { get; private set; }
 
     /// <summary>Vrai tant que Windows affiche son avertissement sur l'identité du serveur (certificat).</summary>
     public bool IsAuthenticationWarningOpen { get; private set; }
@@ -138,8 +149,11 @@ internal sealed class RdpSession : IDisposable
     /// <summary>Vrai tant que le contrôle Bureau à distance existe (connexion en cours ou établie).</summary>
     public bool HasControl => _connection is not null;
 
-    /// <summary>Vrai si l'onglet affiche le bureau distant (le contrôle existe).</summary>
-    public bool ShowsDesktop => HasControl;
+    /// <summary>
+    /// Vrai si l'onglet affiche le bureau distant : le contrôle de Windows dès sa création, le client FreeRDP dès que sa
+    /// fenêtre existe (connexion ouverte). Avant, l'onglet montre la progression de la connexion.
+    /// </summary>
+    public bool ShowsDesktop => _connection is { HasWindow: true };
 
     /// <summary>Plein écran possible pour la connexion en cours (contrôle de Windows seulement).</summary>
     public bool CanFullScreen => _connection?.CanFullScreen == true;
@@ -179,6 +193,12 @@ internal sealed class RdpSession : IDisposable
         {
             request = await _prepare(_lifetime.Token);
         }
+        catch (RdpHandedOffException ex)
+        {
+            // Session confiée à un autre client (mstsc) : ni erreur ni message, l'onglet va être retiré.
+            DebugLog.Write("rdp", $"{Label} : {ex.Message}");
+            return;
+        }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             DebugLog.Write("rdp", $"{Label} : échec de la préparation de la connexion", ex);
@@ -212,10 +232,11 @@ internal sealed class RdpSession : IDisposable
         _connection = connection;
         _attached.Add(connection);
         _ = connection.Detached.ContinueWith(_ => _dispatcher.BeginInvoke(() => _attached.Remove(connection)), TaskScheduler.Default);
-        _starting = true;
+        // L'emplacement s'affiche avant la création du contrôle : celui-ci prend sa taille dans l'onglet. Le client
+        // FreeRDP reçoit sa taille : l'emplacement reste masqué jusqu'à sa fenêtre (la progression reste visible).
+        _starting = !request.FreeRdp || Host.SlotHandle == IntPtr.Zero;
         try
         {
-            // L'emplacement s'affiche avant la création du contrôle : celui-ci prend sa taille dans l'onglet.
             UpdateHost();
             Host.UpdateLayout();
             await connection.StartAsync(Host.SlotHandle, Host.PixelSize);
@@ -361,7 +382,16 @@ internal sealed class RdpSession : IDisposable
         }
 
         ConnectedAt = DateTime.UtcNow;
+        // Fenêtre du client FreeRDP créée à l'ouverture de la connexion : l'emplacement s'affiche maintenant.
+        UpdateHost();
         SetState(RdpSessionState.Connected);
+    }
+
+    /// <summary>Étape de la connexion affichée dans l'onglet (thread de l'interface).</summary>
+    internal void ShowStep(string? step)
+    {
+        Step = step;
+        StateChanged?.Invoke();
     }
 
     internal void OnDisconnected(IRdpConnection connection, int reason, uint extended, string? description)

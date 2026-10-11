@@ -380,8 +380,14 @@ public class RdpSessionTests(ITestOutputHelper output)
         await RunOnStaAsync(request, async (session, window) =>
         {
             await session.ConnectAsync();
+            // Connexion lancée, pas encore ouverte : l'onglet garde sa progression, l'emplacement vide reste masqué.
+            Assert.Equal(RdpSessionState.Connecting, session.State);
+            Assert.False(session.ShowsDesktop);
+            Assert.NotEqual(Visibility.Visible, session.Host.Visibility);
             var state = await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90));
             Assert.Equal(RdpSessionState.Connected, state);
+            Assert.True(session.ShowsDesktop);
+            Assert.Equal(Visibility.Visible, session.Host.Visibility);
             var certificate = Assert.Single(certificates);
             Assert.Equal("127.0.0.2", certificate.Host);
             Assert.Contains("BEGIN CERTIFICATE", certificate.Pem, StringComparison.Ordinal);

@@ -5466,4 +5466,13 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
     <value>I have checked with the CyberArk administrator that this address groups several PSM servers</value>
   </data>
+  <data name="PsmTabRequesting" xml:space="preserve">
+    <value>Requesting the session from the PVWA…</value>
+  </data>
+  <data name="PsmTabConnecting" xml:space="preserve">
+    <value>Connecting to the PSM {0}…</value>
+  </data>
+  <data name="TabModePsmPending" xml:space="preserve">
+    <value>Via the PSM: session managed by CyberArk</value>
+  </data>
 </root>

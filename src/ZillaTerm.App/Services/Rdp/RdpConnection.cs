@@ -72,6 +72,8 @@ internal sealed class RdpConnection : IRdpConnection
 
     public bool CanFullScreen => true;
 
+    public bool HasWindow => true;
+
     /// <summary>Terminée quand la fenêtre du contrôle a quitté l'onglet (ou n'y est plus : thread arrêté).</summary>
     public Task Detached => _detachedTask.Task;
 

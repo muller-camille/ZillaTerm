@@ -13,6 +13,12 @@ internal interface IRdpConnection
     /// <summary>Plein écran possible (contrôle de Windows seulement).</summary>
     bool CanFullScreen { get; }
 
+    /// <summary>
+    /// Vrai quand la fenêtre de la session est à afficher dans l'onglet : dès sa création pour le contrôle de Windows,
+    /// à l'ouverture de la connexion pour le client FreeRDP (rien à montrer avant : l'onglet garde sa progression).
+    /// </summary>
+    bool HasWindow { get; }
+
     /// <summary>Crée la fenêtre de la session dans l'emplacement de l'onglet et lance la connexion.</summary>
     Task StartAsync(IntPtr slot, (int Width, int Height) pixels);
 

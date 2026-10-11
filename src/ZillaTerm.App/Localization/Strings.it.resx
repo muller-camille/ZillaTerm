@@ -5466,4 +5466,13 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
     <value>Ho verificato con l'amministratore CyberArk che questo indirizzo raggruppa più server PSM</value>
   </data>
+  <data name="PsmTabRequesting" xml:space="preserve">
+    <value>Richiesta della sessione al PVWA…</value>
+  </data>
+  <data name="PsmTabConnecting" xml:space="preserve">
+    <value>Connessione al PSM {0}…</value>
+  </data>
+  <data name="TabModePsmPending" xml:space="preserve">
+    <value>Tramite il PSM: sessione gestita da CyberArk</value>
+  </data>
 </root>

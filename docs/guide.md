@@ -149,6 +149,9 @@ PVWA "Connect" button: the PVWA's RDP file is handed over as is. A component tha
 default): ZillaTerm reads the PVWA file itself and opens the session in a tab with the FreeRDP Remote Desktop client
 it includes: no `.rdp` file, no Windows warning about its publisher, no separate window.
 
+- **Opening**: the tab opens at once, as for a PSMP session; a progress bar stays in it while ZillaTerm requests the
+  session from the PVWA and then connects to the PSM, until the session shows. If the PVWA refuses the request (reason
+  required, unknown component…), the tab closes and the connection window says why.
 - **Desktop or remote application**: a Windows desktop and a remote application alike (RemoteApp:
   `||PSMInitSession`, PSM-RDP, PSM-SSH, WinSCP components…) show in the tab. The application's windows are placed
   there as on a desktop; none opens on this computer's desktop.
