@@ -33,8 +33,10 @@ public class FreeRdpTests
         Assert.Contains("/port:3389", lines);
         Assert.Contains("/size:1280x800", lines);
         Assert.Contains("/smart-sizing", lines);
-        Assert.Contains("/sec:rdp:off", lines);
-        Assert.Contains("/sec:nla:off", lines);
+        Assert.Contains("FreeRDP_RdpSecurity=FALSE", lines);
+        Assert.Contains("FreeRDP_UseRdpSecurityLayer=FALSE", lines);
+        Assert.Contains("FreeRDP_NlaSecurity=FALSE", lines);
+        Assert.Contains("FreeRDP_ExtSecurity=FALSE", lines);
         Assert.Contains("-clipboard", lines);
         Assert.Contains("/drives", lines);
         Assert.Contains("FreeRDP_RemoteApplicationMode=TRUE", lines);
@@ -48,6 +50,19 @@ public class FreeRdpTests
         Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_AlternateShell=", StringComparison.Ordinal));
         // Chaque ligne est une option ou un réglage, sauf la ligne vide finale.
         Assert.All(lines.SkipLast(1), l => Assert.True(l[0] is '/' or '+' or '-' || l.StartsWith("FreeRDP_", StringComparison.Ordinal), l));
+        AssertEachOptionOnce(lines);
+    }
+
+    /// <summary>
+    /// FreeRDP ne garde que la dernière valeur d'une option donnée deux fois (deux « /sec:… » : seul le second
+    /// comptait, et la sécurité RDP sans TLS restait permise) : chaque option et chaque réglage une seule fois.
+    /// </summary>
+    private static void AssertEachOptionOnce(IReadOnlyList<string> lines)
+    {
+        var names = lines.SkipLast(1).Select(l => l.StartsWith("FreeRDP_", StringComparison.Ordinal)
+            ? l[..l.IndexOf('=')]
+            : l.TrimStart('/', '+', '-').Split(':')[0]);
+        Assert.All(names.GroupBy(n => n, StringComparer.OrdinalIgnoreCase), g => Assert.True(g.Count() == 1, g.Key));
     }
 
     [Fact]
@@ -74,8 +89,12 @@ public class FreeRdpTests
         Assert.Contains("-aero", lines);
         Assert.Contains("/audio-mode:2", lines);
         Assert.Contains("+clipboard", lines);
-        Assert.DoesNotContain("/sec:nla:off", lines);
+        Assert.Contains("FreeRDP_RdpSecurity=FALSE", lines);
+        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_NlaSecurity=", StringComparison.Ordinal));
+        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_ExtSecurity=", StringComparison.Ordinal));
+        Assert.DoesNotContain(lines, l => l.StartsWith("/sec", StringComparison.Ordinal));
         Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_RemoteApplication", StringComparison.Ordinal));
+        AssertEachOptionOnce(lines);
     }
 
     [Theory]
@@ -133,6 +152,7 @@ public class FreeRdpTests
         Assert.Equal(new FreeRdpConnected(132456), FreeRdpMessage.Parse("zillaterm:connected 132456"));
         Assert.Equal(new FreeRdpEnded(0x0001000C, "ERRINFO_LOGOFF_BY_USER"), FreeRdpMessage.Parse("zillaterm:ended 65548 ERRINFO_LOGOFF_BY_USER"));
         Assert.Equal(new FreeRdpEnded(0, ""), FreeRdpMessage.Parse("zillaterm:ended 0"));
+        Assert.Equal(new FreeRdpReconnecting(3), FreeRdpMessage.Parse("zillaterm:reconnecting 3"));
 
         var pem = "-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----\n";
         var request = Assert.IsType<FreeRdpCertificateRequest>(
@@ -150,6 +170,7 @@ public class FreeRdpTests
         Assert.Null(FreeRdpMessage.Parse("zillaterm:certificate 0 99999 AAAA psm.corp.local"));
         Assert.Null(FreeRdpMessage.Parse("zillaterm:certificate 0 3389 !!! psm.corp.local"));
         Assert.Null(FreeRdpMessage.Parse("zillaterm:certificate 0 3389 AAAA psm corp"));
+        Assert.Null(FreeRdpMessage.Parse("zillaterm:reconnecting x"));
         Assert.Null(FreeRdpMessage.Parse("zillaterm:unknown 1"));
     }
 

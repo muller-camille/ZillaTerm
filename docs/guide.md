@@ -1140,8 +1140,8 @@ direct connections follow the tab size.
 
 **FreeRDP client.** PSM sessions in a tab go through the FreeRDP Windows client (`wfreerdp`), built by
 `tools/freerdp-build.sh`: FreeRDP 3.32.1 and OpenSSL 3.5.9 at pinned versions (verified commit, archive verified by
-its SHA-256 sum), statically linked (a single executable, which uses only Windows DLLs), with the patches of
-`tools/freerdp/zillaterm.patch`. ZillaTerm includes it, copies it on first use to
+its SHA-256 sum), statically linked (a single executable, which uses only Windows DLLs), with the ZillaTerm
+patches (branch `zillaterm-3.32.1` of the `muller-camille/FreeRDP` fork). ZillaTerm includes it, copies it on first use to
 `%LOCALAPPDATA%\ZillaTerm\FreeRDP\<fingerprint>` (folder reserved for the user), checks its SHA-256 fingerprint
 before each launch and keeps it open read-only while it runs. It launches it with the single argument `/zillaterm`
 and describes the connection to it on its standard input: PSM token and password are neither on the command line nor
@@ -1152,7 +1152,7 @@ be reached; otherwise fingerprint pinned (`rdp://server:port` among the accepted
 user. Hardening: no library loaded from outside System32 (the virtual channels are compiled into the executable),
 OpenSSL with no module, engine or configuration file loaded at run time, its compiled-in folders being Windows
 folders reserved for administrators; log, proxy and OpenSSL variables removed from its environment; never the old
-"RDP security" without TLS. The process is in a job object closed along with ZillaTerm: it does not outlive it. Its
+"RDP security" without TLS (a server that only accepts it is refused, with a message). The process is in a job object closed along with ZillaTerm: it does not outlive it. Its
 window is a child of the tab (`/parent-window` option); a click inside gives the keyboard to the tab, from which
 FreeRDP's keyboard hook sends the keys to the session. A remote application is shown in this window (session
 surface, like a desktop) instead of separate windows. Session end and errors: the FreeRDP code (`ERRINFO_…`,

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Client Bureau à distance de ZillaTerm : wfreerdp (client Windows de FreeRDP), compilé depuis une version figée de
-# FreeRDP avec les correctifs de tools/freerdp/zillaterm.patch, lié statiquement à OpenSSL (version figée, archive
-# vérifiée par sa somme SHA-256). Un seul exécutable, sans DLL à côté.
+# Client Bureau à distance de ZillaTerm : wfreerdp (client Windows de FreeRDP), compilé depuis le fork
+# muller-camille/FreeRDP au commit figé ci-dessous (vérifié après le téléchargement) : FreeRDP 3.32.1 et les correctifs
+# de ZillaTerm (branche zillaterm-3.32.1). Lié statiquement à OpenSSL (version figée, archive vérifiée par sa somme
+# SHA-256). Un seul exécutable, sans DLL à côté.
 #
-# Correctifs (voir le fichier) : réglages de la connexion lus sur l'entrée standard (jamais sur la ligne de commande
-# ni sur le disque), certificats vérifiés par ZillaTerm, aucune fenêtre de Windows (identifiants, certificats,
+# Correctifs (commits de la branche) : application distante (RemoteApp) qui répond à l'échange initial du serveur, et
+# mode ZillaTerm : réglages de la connexion lus sur l'entrée standard (jamais sur la ligne de commande
+# ni sur le disque), certificats vérifiés par ZillaTerm, jamais l'ancienne sécurité RDP sans TLS, reconnexion
+# automatique interrompue dès la fermeture de l'onglet, aucune fenêtre de Windows (identifiants, certificats,
 # messages de passerelle), identifiants enregistrés de Windows jamais lus, applications distantes (RemoteApp)
 # affichées dans la fenêtre de la session quand elle est dans ZillaTerm, aucune bibliothèque chargée hors de
 # System32, sensibilité aux DPI de la fenêtre parente.
@@ -13,9 +16,9 @@
 # résultat en cache ; ZillaTerm l'embarque s'il est présent dans local-packages/freerdp/ au moment de la compilation.
 set -euo pipefail
 
-freerdp_repository=https://github.com/FreeRDP/FreeRDP
+freerdp_repository=https://github.com/muller-camille/FreeRDP
 freerdp_version=3.32.1
-freerdp_commit=bf217a504e54cc719880c228e82353382cd7d4fa
+freerdp_commit=5564c20b9699808493d749782d35953bd9dea8d2
 openssl_version=3.5.9
 openssl_sha256=603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a
 openssl_url=https://github.com/openssl/openssl/releases/download/openssl-$openssl_version/openssl-$openssl_version.tar.gz
@@ -24,8 +27,8 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 tools="$root/tools/freerdp"
 out="$root/local-packages/freerdp"
 
-# Clé de la compilation : versions figées, script, correctif et chaîne de compilation. Même clé : rien à refaire.
-key=$(cat "$0" "$tools/zillaterm.patch" "$tools/mingw64.cmake" | sha256sum | cut -c1-16)
+# Clé de la compilation : versions et commit figés (dans ce script) et chaîne de compilation. Même clé : rien à refaire.
+key=$(cat "$0" "$tools/mingw64.cmake" | sha256sum | cut -c1-16)
 if [ -f "$out/wfreerdp.exe" ] && [ "$(cat "$out/BUILD-KEY" 2>/dev/null)" = "$key" ]; then
   echo "FreeRDP $freerdp_version (ZillaTerm $key) : déjà dans local-packages/freerdp."
   exit 0
@@ -72,14 +75,13 @@ if strings "$ssl_prefix/lib/libcrypto.a" | grep -q "$work"; then
   exit 1
 fi
 
-# ---- FreeRDP, au commit figé (vérifié), avec les correctifs de ZillaTerm.
+# ---- FreeRDP et les correctifs de ZillaTerm, au commit figé (vérifié).
 src="$work/freerdp"
 rm -rf "$src"
 git init --quiet "$src"
 git -C "$src" fetch --quiet --depth 1 "$freerdp_repository" "$freerdp_commit"
 git -C "$src" checkout --quiet --detach FETCH_HEAD
 test "$(git -C "$src" rev-parse HEAD)" = "$freerdp_commit"
-git -C "$src" apply --whitespace=nowarn "$tools/zillaterm.patch"
 
 build="$work/freerdp-build"
 rm -rf "$build"
@@ -120,9 +122,8 @@ cp "$work/openssl/LICENSE.txt" "$out/LICENSE.OpenSSL.txt" 2>/dev/null || tar xOf
 # Bibliothèques d'exécution de mingw-w64 liées statiquement (winpthreads…) : leurs licences.
 cp /usr/share/doc/mingw-w64-x86-64-dev/copyright "$out/LICENSE.mingw-w64.txt"
 {
-  echo "FreeRDP $freerdp_version ($freerdp_repository, commit $freerdp_commit) + tools/freerdp/zillaterm.patch"
+  echo "FreeRDP $freerdp_version + correctifs de ZillaTerm ($freerdp_repository, commit $freerdp_commit)"
   echo "OpenSSL $openssl_version ($openssl_url, SHA-256 $openssl_sha256)"
-  echo "Correctif SHA-256 $(sha256sum "$tools/zillaterm.patch" | cut -d' ' -f1)"
   echo "wfreerdp.exe SHA-256 $(sha256sum "$out/wfreerdp.exe" | cut -d' ' -f1)"
 } > "$out/BUILD.txt"
 echo "$key" > "$out/BUILD-KEY"

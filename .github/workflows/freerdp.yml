@@ -1,9 +1,9 @@
 name: freerdp
 
-# Client Bureau à distance FreeRDP de ZillaTerm (tools/freerdp-build.sh) : FreeRDP et OpenSSL à des versions figées,
-# avec les correctifs de tools/freerdp/zillaterm.patch, compilés depuis Linux pour Windows (mingw-w64). Appelé par les
+# Client Bureau à distance FreeRDP de ZillaTerm (tools/freerdp-build.sh) : FreeRDP et ses correctifs (fork
+# muller-camille/FreeRDP) et OpenSSL à des versions figées, compilés depuis Linux pour Windows (mingw-w64). Appelé par les
 # workflows qui compilent ZillaTerm : l'exécutable est déposé en artefact « freerdp », puis embarqué dans ZillaTerm.
-# En cache tant que le script, le correctif et la chaîne de compilation ne changent pas, sauf pour une publication
+# En cache tant que le script (versions et commit figés) et la chaîne de compilation ne changent pas, sauf pour une publication
 # (use-cache: false), toujours recompilée.
 on:
   workflow_call:

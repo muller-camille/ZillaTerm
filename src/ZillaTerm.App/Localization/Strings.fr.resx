@@ -5413,7 +5413,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Connexion sécurisée impossible, ou certificat du serveur refusé.</value>
   </data>
   <data name="FreeRdpNegotiation" xml:space="preserve">
-    <value>Le serveur et ZillaTerm n'ont aucune sécurité en commun (authentification réseau, TLS).</value>
+    <value>Le serveur n'accepte aucune des connexions sécurisées proposées par ZillaTerm (TLS, authentification réseau). S'il n'accepte que l'ancienne sécurité RDP, sans TLS, son identité ne peut pas être vérifiée : ZillaTerm ne s'y connecte pas.</value>
   </data>
   <data name="FreeRdpAuthentication" xml:space="preserve">
     <value>Identifiant ou mot de passe refusé par le serveur.</value>

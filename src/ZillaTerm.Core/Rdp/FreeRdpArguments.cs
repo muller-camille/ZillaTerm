@@ -59,13 +59,18 @@ public static class FreeRdpArguments
             "/bpp:" + settings.ColorDepth.ToString(CultureInfo.InvariantCulture),
             "-toggle-fullscreen",
             "/log-level:" + (verbose ? "INFO" : "WARN"),
-            // Jamais l'ancienne « sécurité RDP » sans TLS : le serveur ne serait pas authentifié.
-            "/sec:rdp:off",
+            // Jamais l'ancienne « sécurité RDP » sans TLS : le serveur ne serait pas authentifié (le client compilé
+            // pour ZillaTerm l'impose aussi). Réglages explicites plutôt que « /sec » : une option donnée deux fois
+            // ne garde que sa dernière valeur.
+            "FreeRDP_RdpSecurity=FALSE",
+            "FreeRDP_UseRdpSecurityLayer=FALSE",
         };
 
         if (!settings.EnableCredSsp)
         {
-            lines.Add("/sec:nla:off");
+            // Sans authentification réseau : ni NLA, ni NLA étendue (activée par défaut dans FreeRDP).
+            lines.Add("FreeRDP_NlaSecurity=FALSE");
+            lines.Add("FreeRDP_ExtSecurity=FALSE");
         }
 
         lines.Add(settings.RedirectClipboard ? "+clipboard" : "-clipboard");

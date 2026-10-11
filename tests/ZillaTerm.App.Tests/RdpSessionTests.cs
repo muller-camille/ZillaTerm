@@ -507,9 +507,12 @@ public class RdpSessionTests(ITestOutputHelper output)
 
         output.WriteLine($"Clavier : {Win32Input.ClassName(Win32Input.FocusOf(host))}");
         int before = Lines(log).Count;
-        Win32Input.Type("ZT");
-        await WaitForLineAsync(log, before, l => l == "key Z", TimeSpan.FromSeconds(20));
-        await WaitForLineAsync(log, before, l => l == "key T", TimeSpan.FromSeconds(20));
+        await RetryUntilLineAsync(log, before, l => l == "key T", () =>
+        {
+            Win32Input.Type("ZT");
+            return Task.CompletedTask;
+        });
+        await WaitForLineAsync(log, before, l => l == "key Z", TimeSpan.FromSeconds(5));
         Assert.Equal(RdpSessionState.Connected, session.State);
     }
 
@@ -518,10 +521,14 @@ public class RdpSessionTests(ITestOutputHelper output)
     {
         int before = Lines(log).Count;
         var point = (tab.Left + (int)(tab.Width * at.X), tab.Top + (int)(tab.Height * at.Y));
-        Win32Input.BringToFront(host);
-        await Task.Delay(300);
-        Win32Input.Click(point);
-        var line = await WaitForLineAsync(log, before, l => l.StartsWith("click ", StringComparison.Ordinal), TimeSpan.FromSeconds(20));
+        // Clic renouvelé tant qu'aucun n'est reçu : la fenêtre de test d'une session reprise ne reçoit rien tant que le
+        // bureau n'est pas rétabli (ouverture de session encore en cours quand l'onglet est déjà connecté).
+        var line = await RetryUntilLineAsync(log, before, l => l.StartsWith("click ", StringComparison.Ordinal), async () =>
+        {
+            Win32Input.BringToFront(host);
+            await Task.Delay(300);
+            Win32Input.Click(point);
+        });
         var xy = line["click ".Length..].Split(',').Select(v => int.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
         var expected = ((int)(desktop.Width * at.X), (int)(desktop.Height * at.Y));
         // Tolérance : arrondis de la mise à l'échelle (quelques pixels du bureau distant).
@@ -529,6 +536,27 @@ public class RdpSessionTests(ITestOutputHelper output)
         output.WriteLine($"Clic à {point} (onglet {at}) → reçu {xy[0]},{xy[1]}, attendu {expected}");
         Assert.InRange(xy[0], expected.Item1 - tolerance, expected.Item1 + tolerance);
         Assert.InRange(xy[1], expected.Item2 - tolerance, expected.Item2 + tolerance);
+    }
+
+    /// <summary>
+    /// Refait <paramref name="act"/> toutes les 4 secondes jusqu'à une ligne qui vérifie <paramref name="match"/> après
+    /// les <paramref name="skip"/> premières (45 secondes au plus).
+    /// </summary>
+    private async Task<string> RetryUntilLineAsync(string log, int skip, Func<string, bool> match, Func<Task> act)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        while (true)
+        {
+            await act();
+            try
+            {
+                return await WaitForLineAsync(log, skip, match, TimeSpan.FromSeconds(4));
+            }
+            catch (Xunit.Sdk.XunitException) when (watch.Elapsed < TimeSpan.FromSeconds(45))
+            {
+                output.WriteLine("Rien reçu : nouvel essai");
+            }
+        }
     }
 
     /// <summary>Lignes du journal de la fenêtre de test (écrit par une autre session : lu sans le bloquer).</summary>

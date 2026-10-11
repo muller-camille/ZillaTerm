@@ -5413,7 +5413,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>No secure connection possible, or the server certificate was refused.</value>
   </data>
   <data name="FreeRdpNegotiation" xml:space="preserve">
-    <value>The server and ZillaTerm have no security mode in common (network level authentication, TLS).</value>
+    <value>The server accepts none of the secure connections ZillaTerm offers (TLS, network level authentication). If it only accepts the legacy RDP security, without TLS, its identity cannot be checked: ZillaTerm does not connect to it.</value>
   </data>
   <data name="FreeRdpAuthentication" xml:space="preserve">
     <value>User name or password refused by the server.</value>

@@ -1213,7 +1213,7 @@ taille fixe et la mise à l'échelle de ces sessions ; les connexions directes, 
 **Client FreeRDP.** Les sessions PSM dans un onglet passent par le client Windows de FreeRDP (`wfreerdp`), compilé par
 `tools/freerdp-build.sh` : FreeRDP 3.32.1 et OpenSSL 3.5.9 à des versions figées (commit vérifié, archive vérifiée par
 sa somme SHA-256), liés statiquement (un seul exécutable, qui n'utilise que des DLL de Windows), avec les correctifs de
-`tools/freerdp/zillaterm.patch`. ZillaTerm l'embarque, le copie au premier usage dans
+ZillaTerm (branche `zillaterm-3.32.1` du fork `muller-camille/FreeRDP`). ZillaTerm l'embarque, le copie au premier usage dans
 `%LOCALAPPDATA%\ZillaTerm\FreeRDP\<empreinte>` (dossier réservé à l'utilisateur), en vérifie l'empreinte SHA-256
 avant chaque lancement et le garde ouvert en lecture seule pendant celui-ci. Il le lance avec le seul argument
 `/zillaterm` et lui décrit la connexion sur son entrée standard : jeton PSM et mot de passe ne sont ni sur la ligne de
@@ -1225,7 +1225,7 @@ jusqu'à une autorité approuvée par Windows, nom, usage, révocation quand ell
 bibliothèque chargée hors de System32 (les canaux virtuels sont compilés dans l'exécutable), OpenSSL sans module,
 moteur ni fichier de configuration chargés à l'exécution, ses dossiers compilés étant ceux de Windows réservés aux
 administrateurs ; variables de journal, de proxy et d'OpenSSL retirées de son environnement ; jamais l'ancienne
-« sécurité RDP » sans TLS. Le processus est dans un objet de travail fermé avec ZillaTerm : il ne lui survit pas.
+« sécurité RDP » sans TLS (un serveur qui n'accepte qu'elle est refusé, avec un message). Le processus est dans un objet de travail fermé avec ZillaTerm : il ne lui survit pas.
 Sa fenêtre est une enfant de l'onglet (option `/parent-window`) ; un clic dedans donne le clavier à l'onglet, d'où
 le crochet clavier de FreeRDP envoie les touches à la session. Une application distante est affichée dans cette
 fenêtre (surface de la session, comme un bureau) au lieu de fenêtres à part. Fin de session et erreurs : le code de

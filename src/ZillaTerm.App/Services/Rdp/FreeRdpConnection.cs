@@ -35,7 +35,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private RdpSlot? _slot;
     private IntPtr _window;
     private FreeRdpEnded? _ended;
-    private bool _released;
+    private volatile bool _released;
 
     public FreeRdpConnection(RdpSession session, RdpConnectionRequest request, string label)
     {
@@ -167,14 +167,17 @@ internal sealed class FreeRdpConnection : IRdpConnection
             return;
         }
 
-        // Fenêtre d'un autre processus : interrogée hors du thread de l'interface ; pas de réponse si elle est bloquée.
-        _ = Task.Run(() =>
+        // Fenêtre d'un autre processus : interrogée hors du thread de l'interface, de nouveau tant qu'elle ne répond pas
+        // (pause de FreeRDP, ouverture de session lente) : la réponse arrive dès qu'elle répond, fermée ou libérée.
+        _ = Task.Run(async () =>
         {
-            if (SendMessageTimeout(window, WmNull, IntPtr.Zero, IntPtr.Zero, SmtoAbortIfHung, 4000, out _) != IntPtr.Zero
-                || !IsWindow(window))
+            while (SendMessageTimeout(window, WmNull, IntPtr.Zero, IntPtr.Zero, SmtoAbortIfHung, 4000, out _) == IntPtr.Zero
+                   && IsWindow(window) && !_released)
             {
-                _ui.BeginInvoke(pong);
+                await Task.Delay(500);
             }
+
+            _ = _ui.BeginInvoke(pong);
         });
     }
 
@@ -212,6 +215,9 @@ internal sealed class FreeRdpConnection : IRdpConnection
                 break;
             case FreeRdpEnded ended:
                 _ended = ended;
+                break;
+            case FreeRdpReconnecting reconnecting:
+                DebugLog.Write("freerdp", $"{_label} : connexion coupée, reconnexion automatique (tentative {reconnecting.Attempt})");
                 break;
             default:
                 if (DebugLog.Enabled)

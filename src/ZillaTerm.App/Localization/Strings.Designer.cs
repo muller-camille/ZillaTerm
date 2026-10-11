@@ -16145,7 +16145,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The server and ZillaTerm have no security mode in common (network level authentication, TLS)..
+        ///   Looks up a localized string similar to The server accepts none of the secure connections ZillaTerm offers (TLS, network level authentication). If it only accepts the legacy RDP security, without TLS, its identity cannot be checked: ZillaTerm does not connect to it..
         /// </summary>
         public static string FreeRdpNegotiation {
             get {

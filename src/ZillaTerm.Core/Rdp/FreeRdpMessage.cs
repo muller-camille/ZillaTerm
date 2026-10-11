@@ -4,7 +4,7 @@ using System.Text;
 namespace ZillaTerm.Core.Rdp;
 
 /// <summary>
-/// Message du client FreeRDP de ZillaTerm sur sa sortie standard (« zillaterm:… », tools/freerdp/zillaterm.patch). Les
+/// Message du client FreeRDP de ZillaTerm sur sa sortie standard (« zillaterm:… », fork muller-camille/FreeRDP, client/Windows/wf_zillaterm.h). Les
 /// autres lignes ne sont pas des messages.
 /// </summary>
 public abstract record FreeRdpMessage
@@ -25,6 +25,8 @@ public abstract record FreeRdpMessage
             ["connected", var window] when long.TryParse(window, NumberStyles.None, CultureInfo.InvariantCulture, out var handle) =>
                 new FreeRdpConnected(handle),
             ["certificate", var flags, var port, var pem, var host] => Certificate(flags, port, pem, host),
+            ["reconnecting", var attempt] when int.TryParse(attempt, NumberStyles.None, CultureInfo.InvariantCulture, out var number) =>
+                new FreeRdpReconnecting(number),
             ["ended", var code, ..] when uint.TryParse(code, NumberStyles.None, CultureInfo.InvariantCulture, out var value) =>
                 new FreeRdpEnded(value, parts.Length > 2 ? Name(parts[2]) : ""),
             _ => null,
@@ -74,3 +76,6 @@ public sealed record FreeRdpCertificateRequest(uint Flags, int Port, string Pem,
 
 /// <summary>Fin du client : code de la dernière erreur (0 si aucune) et son nom FREERDP_ERROR_….</summary>
 public sealed record FreeRdpEnded(uint Code, string Name) : FreeRdpMessage;
+
+/// <summary>Connexion coupée : tentative de reconnexion automatique (la première est 1).</summary>
+public sealed record FreeRdpReconnecting(int Attempt) : FreeRdpMessage;

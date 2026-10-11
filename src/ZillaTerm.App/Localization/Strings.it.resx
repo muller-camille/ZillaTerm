@@ -5413,7 +5413,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Connessione sicura impossibile, o certificato del server rifiutato.</value>
   </data>
   <data name="FreeRdpNegotiation" xml:space="preserve">
-    <value>Il server e ZillaTerm non hanno alcuna sicurezza in comune (autenticazione a livello di rete, TLS).</value>
+    <value>Il server non accetta nessuna delle connessioni sicure proposte da ZillaTerm (TLS, autenticazione a livello di rete). Se accetta solo la vecchia sicurezza RDP, senza TLS, la sua identità non può essere verificata: ZillaTerm non vi si connette.</value>
   </data>
   <data name="FreeRdpAuthentication" xml:space="preserve">
     <value>Nome utente o password rifiutati dal server.</value>

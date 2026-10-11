@@ -1219,7 +1219,7 @@ dimensione della scheda.
 **Client FreeRDP.** Le sessioni PSM in una scheda passano dal client Windows di FreeRDP (`wfreerdp`), compilato da
 `tools/freerdp-build.sh`: FreeRDP 3.32.1 e OpenSSL 3.5.9 a versioni fisse (commit verificato, archivio verificato
 dalla sua somma SHA-256), collegati staticamente (un solo eseguibile, che usa solo DLL di Windows), con le correzioni
-di `tools/freerdp/zillaterm.patch`. ZillaTerm lo integra, lo copia al primo utilizzo in
+di ZillaTerm (ramo `zillaterm-3.32.1` del fork `muller-camille/FreeRDP`). ZillaTerm lo integra, lo copia al primo utilizzo in
 `%LOCALAPPDATA%\ZillaTerm\FreeRDP\<impronta>` (cartella riservata all'utente), ne verifica l'impronta SHA-256 prima
 di ogni avvio e lo tiene aperto in sola lettura durante l'esecuzione. Lo avvia con il solo argomento `/zillaterm` e
 gli descrive la connessione sul suo standard input: token PSM e password non sono né sulla riga di comando, né sul
@@ -1230,7 +1230,7 @@ da Windows, nome, utilizzo, revoca quando è raggiungibile; altrimenti impronta 
 chiavi dei server accettate) o confermata dall'utente. Rafforzamento: nessuna libreria caricata fuori da System32 (i
 canali virtuali sono compilati nell'eseguibile), OpenSSL senza moduli, motori né file di configurazione caricati
 all'esecuzione, essendo le sue cartelle compilate quelle di Windows riservate agli amministratori; variabili di log,
-di proxy e di OpenSSL rimosse dal suo ambiente; mai la vecchia «sicurezza RDP» senza TLS. Il processo è in un oggetto
+di proxy e di OpenSSL rimosse dal suo ambiente; mai la vecchia «sicurezza RDP» senza TLS (un server che accetta solo quella viene rifiutato, con un messaggio). Il processo è in un oggetto
 processo (job object) chiuso insieme a ZillaTerm: non gli sopravvive. La sua finestra è figlia della scheda (opzione
 `/parent-window`); un clic al suo interno dà la tastiera alla scheda, da cui l'hook di tastiera di FreeRDP invia i
 tasti alla sessione. Un'applicazione remota viene mostrata in questa finestra (superficie della sessione, come un
