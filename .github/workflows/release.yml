@@ -3,7 +3,7 @@ name: release
 # Publie une version depuis GitHub : Actions → release → Run workflow sur main, avec le numéro X.Y.Z (le tag vX.Y.Z est
 # créé sur le commit compilé). « Vérifier sans publier » fait toute la chaîne (tests, compilation, archive, passage d'un
 # job à l'autre) sans rien publier, depuis n'importe quelle branche.
-# Deux jobs : la compilation, qui exécute le code des paquets NuGet et du fork SSH.NET, n'a qu'un jeton en lecture ;
+# Deux jobs : la compilation, qui exécute le code des paquets NuGet et de SSH.NET patché, n'a qu'un jeton en lecture ;
 # seule la publication, qui ne compile rien, peut écrire dans le dépôt. Les actions sont épinglées par commit.
 # Relancé pour une version déjà publiée, il met à jour les notes sans remplacer les fichiers.
 on:
@@ -22,16 +22,7 @@ on:
 permissions: {}
 
 jobs:
-  # Client Bureau à distance FreeRDP, toujours recompilé pour une publication (pas de cache).
-  freerdp:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/freerdp.yml
-    with:
-      use-cache: false
-
   build:
-    needs: freerdp
     runs-on: windows-latest
     permissions:
       contents: read
@@ -59,16 +50,15 @@ jobs:
           "VERSION=$version" >> $env:GITHUB_ENV
           "version=$version" >> $env:GITHUB_OUTPUT
 
-      # SSH.NET 2026.0.0 patché (noms du propriétaire et du groupe en SFTP), compilé depuis le fork à un commit figé.
-      # Client Bureau à distance FreeRDP (freerdp.yml), embarqué dans ZillaTerm.
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: freerdp
-          path: local-packages/freerdp
-
-      - name: SSH.NET patché
+      # Client Bureau à distance FreeRDP (embarqué dans ZillaTerm) et SSH.NET patché : releases de leurs forks, vérifiées
+      # (somme SHA-256 figée, attestation de provenance).
+      - name: Binaires des forks
         shell: bash
-        run: bash tools/sshnet-patched.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash tools/freerdp-download.sh
+          bash tools/sshnet-patched.sh
 
       - name: Tests
         run: dotnet test ZillaTerm.sln -c Release

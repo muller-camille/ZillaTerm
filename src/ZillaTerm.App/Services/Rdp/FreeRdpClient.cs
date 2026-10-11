@@ -13,7 +13,7 @@ namespace ZillaTerm.App.Services.Rdp;
 internal sealed class FreeRdpStartException(string message, Exception? inner = null) : Exception(message, inner);
 
 /// <summary>
-/// Client Bureau à distance FreeRDP de ZillaTerm (wfreerdp compilé par tools/freerdp-build.sh) : embarqué dans
+/// Client Bureau à distance FreeRDP de ZillaTerm (wfreerdp, release du fork, tools/freerdp-download.sh) : embarqué dans
 /// l'application, copié au premier usage dans un dossier réservé à l'utilisateur
 /// (« %LOCALAPPDATA%\ZillaTerm\FreeRDP\&lt;empreinte&gt; »), vérifié (SHA-256) avant chaque lancement et gardé ouvert
 /// en lecture seule pendant celui-ci : il ne peut pas être remplacé entre la vérification et le lancement. Ses
