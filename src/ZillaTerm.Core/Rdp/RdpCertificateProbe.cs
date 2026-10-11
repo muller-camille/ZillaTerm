@@ -16,6 +16,12 @@ public sealed record RdpCertificate(string Subject, string Issuer, string Sha256
 {
     /// <summary>Certificat approuvé par le système (autorité reconnue, nom du serveur, dates).</summary>
     public bool Trusted => Problem.Length == 0;
+
+    /// <summary>
+    /// Empreinte SHA-1 (hexadécimal) : celle que Connexion Bureau à distance garde pour un serveur dont on a approuvé
+    /// le certificat (« Ne plus demander... »), qui sert à le reconnaître sans avertissement.
+    /// </summary>
+    public string Sha1 { get; init; } = "";
 }
 
 /// <summary>Le certificat du serveur Bureau à distance n'a pas pu être lu (pas de TLS, pas de réponse...).</summary>
@@ -126,7 +132,10 @@ public static class RdpCertificateProbe
                 {
                     using var copy = new X509Certificate2(certificate);
                     received = new RdpCertificate(copy.Subject, copy.Issuer, Convert.ToHexString(SHA256.HashData(copy.RawData)),
-                        copy.NotBefore, copy.NotAfter, Ftp.FtpFileBrowser.Describe(errors));
+                        copy.NotBefore, copy.NotAfter, Ftp.FtpFileBrowser.Describe(errors))
+                    {
+                        Sha1 = copy.Thumbprint,
+                    };
                 }
 
                 return false;

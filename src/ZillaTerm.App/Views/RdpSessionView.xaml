@@ -19,6 +19,8 @@
                 <TextBlock x:Name="StatusLine" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
             </DockPanel>
         </Border>
+        <!-- Cadre de la couleur de l'étiquette du serveur (PROD, QA…), autour du bureau distant. -->
+        <Border x:Name="TagFrame" BorderThickness="0">
         <Grid x:Name="Body" Background="#0C0C0C">
             <!-- Le contrôle Bureau à distance (fenêtre Windows) est inséré ici ; rien de WPF ne peut s'afficher par-dessus. -->
             <Border x:Name="Overlay" Background="#0C0C0C">
@@ -31,5 +33,6 @@
                 </StackPanel>
             </Border>
         </Grid>
+        </Border>
     </DockPanel>
 </UserControl>

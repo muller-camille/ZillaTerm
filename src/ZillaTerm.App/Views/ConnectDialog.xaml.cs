@@ -128,7 +128,7 @@ public partial class ConnectDialog : Window
     {
         if (PsmRadio.IsChecked == true)
         {
-            SshHint.Text = Strings.PsmHint;
+            SshHint.Text = _settings.PsmDesktopInTab ? Strings.PsmHintTab : Strings.PsmHint;
             return;
         }
 

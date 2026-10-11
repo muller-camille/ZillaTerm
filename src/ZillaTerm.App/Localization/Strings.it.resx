@@ -5358,4 +5358,34 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="ColorOther" xml:space="preserve">
     <value>Altro ({0})</value>
   </data>
+  <data name="TabModePsm" xml:space="preserve">
+    <value>Tramite il PSM {0}: sessione gestita da CyberArk</value>
+  </data>
+  <data name="PsmTabNoControl" xml:space="preserve">
+    <value>{0}: controllo Desktop remoto non disponibile, sessione PSM aperta in Connessione Desktop remoto.</value>
+  </data>
+  <data name="PsmTabFallback" xml:space="preserve">
+    <value>{0}: impossibile usare il controllo Desktop remoto ({1}), sessione PSM aperta in Connessione Desktop remoto.</value>
+  </data>
+  <data name="PsmTabRemoteAppNow" xml:space="preserve">
+    <value>Il PVWA ora restituisce un'applicazione remota invece di un desktop: riapri la connessione dall'elenco.</value>
+  </data>
+  <data name="InterventionPsmTab" xml:space="preserve">
+    <value>Sessione PSM aperta in una scheda di ZillaTerm, componente {0}</value>
+  </data>
+  <data name="RdpCertificateWarningOpen" xml:space="preserve">
+    <value>Windows chiede di confermare l'identità di {0}: verifica il certificato prima di accettare.</value>
+  </data>
+  <data name="PsmDesktopInTab" xml:space="preserve">
+    <value>Apri le sessioni PSM Windows (desktop) in una sc_heda di ZillaTerm, altrimenti in Connessione Desktop remoto</value>
+  </data>
+  <data name="PsmDesktopInTabHelp" xml:space="preserve">
+    <value>La sessione prende la dimensione della scheda. ZillaTerm verifica il certificato del PSM (domanda la prima volta se Windows non lo approva) e mantiene i reindirizzamenti richiesti dal PVWA, mai di più. Le applicazioni remote (PSM-SSH, WinSCP…) si aprono sempre in Connessione Desktop remoto.</value>
+  </data>
+  <data name="EnvPsmDesktopInTab" xml:space="preserve">
+    <value>Sessioni PSM Windows in una scheda</value>
+  </data>
+  <data name="PsmHintTab" xml:space="preserve">
+    <value>Il PVWA genera una connessione RDP: un desktop Windows si apre in una scheda di ZillaTerm, un'applicazione remota (PSM-SSH, WinSCP…) in Connessione Desktop remoto (mstsc).</value>
+  </data>
 </root>

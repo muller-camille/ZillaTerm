@@ -5358,4 +5358,34 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="ColorOther" xml:space="preserve">
     <value>Other ({0})</value>
   </data>
+  <data name="TabModePsm" xml:space="preserve">
+    <value>Via the PSM {0}: session managed by CyberArk</value>
+  </data>
+  <data name="PsmTabNoControl" xml:space="preserve">
+    <value>{0}: Remote Desktop control unavailable, PSM session opened in Remote Desktop Connection.</value>
+  </data>
+  <data name="PsmTabFallback" xml:space="preserve">
+    <value>{0}: the Remote Desktop control could not be used ({1}), PSM session opened in Remote Desktop Connection.</value>
+  </data>
+  <data name="PsmTabRemoteAppNow" xml:space="preserve">
+    <value>The PVWA now returns a remote application instead of a desktop: open the connection again from the list.</value>
+  </data>
+  <data name="InterventionPsmTab" xml:space="preserve">
+    <value>PSM session opened in a ZillaTerm tab, component {0}</value>
+  </data>
+  <data name="RdpCertificateWarningOpen" xml:space="preserve">
+    <value>Windows asks you to confirm the identity of {0}: check the certificate before accepting.</value>
+  </data>
+  <data name="PsmDesktopInTab" xml:space="preserve">
+    <value>Open PSM Windows sessions (desktop) in a ZillaTerm _tab, otherwise in Remote Desktop Connection</value>
+  </data>
+  <data name="PsmDesktopInTabHelp" xml:space="preserve">
+    <value>The session takes the size of the tab. ZillaTerm checks the PSM certificate (question the first time if Windows does not trust it) and keeps the redirections asked by the PVWA, never more. Remote applications (PSM-SSH, WinSCP…) still open in Remote Desktop Connection.</value>
+  </data>
+  <data name="EnvPsmDesktopInTab" xml:space="preserve">
+    <value>PSM Windows sessions in a tab</value>
+  </data>
+  <data name="PsmHintTab" xml:space="preserve">
+    <value>The PVWA generates an RDP connection: a Windows desktop opens in a ZillaTerm tab, a remote application (PSM-SSH, WinSCP…) in Remote Desktop Connection (mstsc).</value>
+  </data>
 </root>

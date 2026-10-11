@@ -192,6 +192,7 @@ internal static class EnvironmentImport
             EnvironmentSetting.CentralFile => Strings.EnvCentralFile,
             EnvironmentSetting.KeepPvwaSessionAlive => Strings.EnvKeepAlive,
             EnvironmentSetting.SshInApp => Strings.EnvSshInApp,
+            EnvironmentSetting.PsmDesktopInTab => Strings.EnvPsmDesktopInTab,
             EnvironmentSetting.CheckForUpdates => Strings.EnvCheckForUpdates,
             EnvironmentSetting.DutyText => Strings.EnvDutyText,
             EnvironmentSetting.DutyTextFile => change.Detail is { } dutyServer ? Text.Format(Strings.EnvDutyFileNetwork, dutyServer) : Strings.EnvDutyFile,

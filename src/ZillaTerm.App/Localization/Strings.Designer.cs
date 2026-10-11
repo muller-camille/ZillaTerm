@@ -15981,5 +15981,95 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("ColorOther", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Via the PSM {0}: session managed by CyberArk.
+        /// </summary>
+        public static string TabModePsm {
+            get {
+                return ResourceManager.GetString("TabModePsm", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: Remote Desktop control unavailable, PSM session opened in Remote Desktop Connection..
+        /// </summary>
+        public static string PsmTabNoControl {
+            get {
+                return ResourceManager.GetString("PsmTabNoControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: the Remote Desktop control could not be used ({1}), PSM session opened in Remote Desktop Connection..
+        /// </summary>
+        public static string PsmTabFallback {
+            get {
+                return ResourceManager.GetString("PsmTabFallback", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The PVWA now returns a remote application instead of a desktop: open the connection again from the list..
+        /// </summary>
+        public static string PsmTabRemoteAppNow {
+            get {
+                return ResourceManager.GetString("PsmTabRemoteAppNow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PSM session opened in a ZillaTerm tab, component {0}.
+        /// </summary>
+        public static string InterventionPsmTab {
+            get {
+                return ResourceManager.GetString("InterventionPsmTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Windows asks you to confirm the identity of {0}: check the certificate before accepting..
+        /// </summary>
+        public static string RdpCertificateWarningOpen {
+            get {
+                return ResourceManager.GetString("RdpCertificateWarningOpen", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open PSM Windows sessions (desktop) in a ZillaTerm _tab, otherwise in Remote Desktop Connection.
+        /// </summary>
+        public static string PsmDesktopInTab {
+            get {
+                return ResourceManager.GetString("PsmDesktopInTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The session takes the size of the tab. ZillaTerm checks the PSM certificate (question the first time if Windows does not trust it) and keeps the redirections asked by the PVWA, never more. Remote applications (PSM-SSH, WinSCP…) still open in Remote Desktop Connection..
+        /// </summary>
+        public static string PsmDesktopInTabHelp {
+            get {
+                return ResourceManager.GetString("PsmDesktopInTabHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PSM Windows sessions in a tab.
+        /// </summary>
+        public static string EnvPsmDesktopInTab {
+            get {
+                return ResourceManager.GetString("EnvPsmDesktopInTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The PVWA generates an RDP connection: a Windows desktop opens in a ZillaTerm tab, a remote application (PSM-SSH, WinSCP…) in Remote Desktop Connection (mstsc)..
+        /// </summary>
+        public static string PsmHintTab {
+            get {
+                return ResourceManager.GetString("PsmHintTab", resourceCulture);
+            }
+        }
     }
 }

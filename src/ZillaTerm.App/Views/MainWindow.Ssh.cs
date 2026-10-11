@@ -91,7 +91,8 @@ public partial class MainWindow
     /// En-tête d'un onglet de session : pastille d'état, icône, nom (numéroté si un autre onglet porte le même), bouton
     /// de fermeture, menu (clic droit) ; l'infobulle dit l'état et par où passe la session.
     /// </summary>
-    private SessionTabHeader TabHeader(TabItem tab, string label, string icon, Func<Task>? duplicate)
+    /// <param name="tag">Étiquette du serveur ; par défaut, celle d'une session SSH ou Fichiers.</param>
+    private SessionTabHeader TabHeader(TabItem tab, string label, string icon, Func<Task>? duplicate, ServerTag? tag = null)
     {
         var closeButton = new Button
         {
@@ -100,10 +101,15 @@ public partial class MainWindow
             ToolTip = Strings.CloseSessionTip,
         };
         closeButton.Click += (_, _) => CloseSessionTab(tab);
-        var mode = tab.Tag is RemoteSession { Psmp: { } psmp } ? Text.Format(Strings.TabModePsmp, psmp) : Strings.TabModeDirect;
+        var mode = tab.Tag switch
+        {
+            RemoteSession { Psmp: { } psmp } => Text.Format(Strings.TabModePsmp, psmp),
+            RdpSession { Psm: { } psm } => Text.Format(Strings.TabModePsm, psm),
+            _ => Strings.TabModeDirect,
+        };
         var shown = SessionTabHeader.UniqueLabel(label, SessionTabs().Select(t => t.Header).OfType<SessionTabHeader>().Select(h => h.Label));
         var header = new SessionTabHeader(shown, icon, closeButton, mode,
-            tab.Tag is SshSession ? Strings.TabDetachTip : null, tab.Tag is RemoteSession remote ? TagOf(remote) : null);
+            tab.Tag is SshSession ? Strings.TabDetachTip : null, tag ?? (tab.Tag is RemoteSession remote ? TagOf(remote) : null));
         // Clic molette sur l'onglet : fermeture.
         header.MouseDown += (_, e) =>
         {
@@ -127,12 +133,15 @@ public partial class MainWindow
     /// ouverte depuis « Disponibles » ou les connexions récentes, celle du serveur enregistré pour ce compte et cette
     /// machine cible.
     /// </summary>
-    private ServerTag? TagOf(RemoteSession session)
+    private ServerTag? TagOf(RemoteSession session) => TagOf(session.Account, session.Saved, session.Request?.RemoteMachine);
+
+    /// <summary>Étiquette du serveur ouvert sur ce compte (voir <see cref="TagOf(RemoteSession)"/>).</summary>
+    private ServerTag? TagOf(PvwaAccount? account, SavedSession? saved, string? remoteMachine)
     {
-        var name = session.Saved?.Tag;
-        if (name is null && session.Saved is null && session.Account is { } account)
+        var name = saved?.Tag;
+        if (name is null && saved is null && account is not null)
         {
-            name = SessionLibrary.FindSession(_settings, account, PvwaHost, session.Request?.RemoteMachine)?.Tag;
+            name = SessionLibrary.FindSession(_settings, account, PvwaHost, remoteMachine)?.Tag;
         }
 
         return ServerTagView.Resolve(_settings.ServerTags, name);

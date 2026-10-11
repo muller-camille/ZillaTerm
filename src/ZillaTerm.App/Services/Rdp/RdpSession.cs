@@ -80,6 +80,15 @@ internal sealed class RdpSession : IDisposable
 
     public bool IsFullScreen { get; private set; }
 
+    /// <summary>Session PSM : adresse du PSM (infobulle de l'onglet) ; null pour une connexion directe.</summary>
+    public string? Psm { get; init; }
+
+    /// <summary>Vrai tant que Windows affiche son avertissement sur l'identité du serveur (certificat).</summary>
+    public bool IsAuthenticationWarningOpen { get; private set; }
+
+    /// <summary>Vrai si Windows a affiché son avertissement sur l'identité du serveur pendant la dernière connexion.</summary>
+    public bool AuthenticationWarningShown { get; private set; }
+
     /// <summary>Code de la dernière déconnexion signalée par le contrôle (événement OnDisconnected).</summary>
     public int? DisconnectReason { get; private set; }
 
@@ -127,6 +136,8 @@ internal sealed class RdpSession : IDisposable
         DisconnectReason = null;
         ExtendedDisconnectReason = null;
         IsFullScreen = false;
+        IsAuthenticationWarningOpen = false;
+        AuthenticationWarningShown = false;
         SetState(RdpSessionState.Connecting);
         RdpConnectionRequest request;
         try
@@ -358,6 +369,18 @@ internal sealed class RdpSession : IDisposable
         }
     }
 
+    internal void OnAuthenticationWarning(RdpConnection connection, bool displayed)
+    {
+        if (connection != _connection || _disposed)
+        {
+            return;
+        }
+
+        IsAuthenticationWarningOpen = displayed;
+        AuthenticationWarningShown |= displayed;
+        StateChanged?.Invoke();
+    }
+
     /// <summary>Contrôle libéré par la connexion (fin de session, erreur) : l'onglet n'a plus de contrôle.</summary>
     internal void OnReleased(RdpConnection connection)
     {
@@ -370,6 +393,7 @@ internal sealed class RdpSession : IDisposable
         _watchdog.Stop();
         _pingPending = false;
         IsNotResponding = false;
+        IsAuthenticationWarningOpen = false;
         UpdateHost();
         StateChanged?.Invoke();
     }

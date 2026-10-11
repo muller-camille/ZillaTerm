@@ -1,15 +1,18 @@
 name: rdp-integration
 
-# Sessions Bureau à distance réelles sur le poste de CI (connexion à 127.0.0.2) : bureau dans un onglet. Le poste
-# est éphémère : on y active le Bureau à distance et un compte local de test au mot de passe aléatoire, masqué dans
-# les journaux.
+# Sessions Bureau à distance réelles sur le poste de CI (connexion à 127.0.0.2) : bureau dans un onglet, certificat
+# confié au contrôle, taille et clics d'une session PSM dans l'onglet. Le poste est éphémère : on y active le Bureau à
+# distance, un compte local de test au mot de passe aléatoire, masqué dans les journaux, et une fenêtre lancée à
+# l'ouverture de session de ce compte qui note la taille de son écran et les clics reçus.
 on:
   workflow_dispatch:
   pull_request:
     paths:
       - 'src/ZillaTerm.App/Services/Rdp/**'
       - 'src/ZillaTerm.Core/Rdp/**'
+      - 'src/ZillaTerm.App/Views/MainWindow.Rdp.cs'
       - 'tests/ZillaTerm.App.Tests/RdpSessionTests.cs'
+      - 'tests/ZillaTerm.App.Tests/Win32Input.cs'
       - '.github/workflows/rdp-integration.yml'
 
 permissions:
@@ -45,6 +48,11 @@ jobs:
 
           $ts = 'HKLM:\System\CurrentControlSet\Control\Terminal Server'
           Set-ItemProperty $ts -Name fDenyTSConnections -Value 0 -Type DWord
+          # Connexions avec et sans authentification réseau (NLA) : un PSM se connecte en général sans.
+          Set-ItemProperty "$ts\WinStations\RDP-Tcp" -Name UserAuthentication -Value 0 -Type DWord
+          # Pas de Gestionnaire de serveur à l'ouverture de session (il couvrirait la fenêtre de test).
+          New-Item 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Server\ServerManager' -Force | Out-Null
+          Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Server\ServerManager' -Name DoNotOpenAtLogon -Value 1 -Type DWord
           # Délégation des identifiants (CredSSP) vers ce poste, authentifié par NTLM seulement.
           $deleg = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation'
           New-Item "$deleg\AllowFreshCredentialsWhenNTLMOnly" -Force | Out-Null
@@ -61,6 +69,44 @@ jobs:
 
           "RDP_TEST_USER=$user" >> $env:GITHUB_ENV
           "RDP_TEST_PASSWORD=$password" >> $env:GITHUB_ENV
+
+      # Fenêtre plein écran lancée à l'ouverture de session du compte de test : elle note la taille de l'écran de la
+      # session (« size LxH ») et chaque clic reçu (« click x,y »), lus par le test des clics.
+      - name: Fenêtre de test des clics
+        shell: pwsh
+        run: |
+          $script = @'
+          if ($env:USERNAME -ne 'cattest') { exit }
+          Add-Type -AssemblyName System.Windows.Forms
+          Add-Type -AssemblyName System.Drawing
+          $log = 'C:\Users\Public\zt-clicks.txt'
+          $form = New-Object System.Windows.Forms.Form
+          $form.FormBorderStyle = 'None'
+          $form.StartPosition = 'Manual'
+          $form.TopMost = $true
+          $form.ShowInTaskbar = $false
+          $form.BackColor = [System.Drawing.Color]::DarkSlateBlue
+          $script:last = ''
+          $fit = {
+            # Taille lue à chaque fois (GetSystemMetrics) : une session reprise change de taille.
+            $size = [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize
+            $b = New-Object System.Drawing.Rectangle(0, 0, $size.Width, $size.Height)
+            if ($form.Bounds -ne $b) { $form.Bounds = $b }
+            $text = 'size {0}x{1}' -f $b.Width, $b.Height
+            if ($text -ne $script:last) { $script:last = $text; Add-Content -Path $log -Value $text }
+          }
+          $form.Add_Shown($fit)
+          $timer = New-Object System.Windows.Forms.Timer
+          $timer.Interval = 300
+          $timer.Add_Tick($fit)
+          $timer.Start()
+          $form.Add_MouseDown({ param($s, $e) Add-Content -Path $log -Value ('click {0},{1}' -f $e.X, $e.Y) })
+          [System.Windows.Forms.Application]::Run($form)
+          '@
+          Set-Content -Path 'C:\Users\Public\zt-clicktarget.ps1' -Value $script
+          $run = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+          Set-ItemProperty $run -Name ZillaTermClickTarget -Value 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Users\Public\zt-clicktarget.ps1'
+          "RDP_TEST_CLICKS=C:\Users\Public\zt-clicks.txt" >> $env:GITHUB_ENV
 
       - name: Tests de sessions réelles
         run: >

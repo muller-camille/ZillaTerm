@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Threading;
@@ -204,6 +205,308 @@ public class RdpSessionTests(ITestOutputHelper output)
         Assert.True(closeMs < 2000, $"{closeMs} ms : la fermeture a attendu le thread du contrôle");
     }
 
+    /// <summary>
+    /// Session PSM dans l'onglet (fichier du PVWA qui demande le plein écran) : le contrôle reste dans l'onglet, l'image
+    /// est mise à l'échelle au lieu de changer la résolution, rien de l'écran n'est gardé sur le disque, et le programme
+    /// de démarrage du PSM est bien transmis.
+    /// </summary>
+    [Fact]
+    public async Task PsmTabStartsInTheTabWithAFixedResolution()
+    {
+        if (!OperatingSystem.IsWindows() || !RdpClientHost.IsAvailable)
+        {
+            Assert.True(Environment.GetEnvironmentVariable("GITHUB_ACTIONS") is null, "Contrôle Bureau à distance absent du poste de CI");
+            return;
+        }
+
+        var settings = RdpConnectionSettings.FromRdpFile(Encoding.Unicode.GetBytes(
+            "screen mode id:i:2\r\nuse multimon:i:1\r\nfull address:s:10.255.255.1\r\nusername:s:jdoe\r\n" +
+            "alternate shell:s:psm /u admin-srv01 /a srv01.corp.local /c PSM-RDP\r\nauthentication level:i:0\r\n" +
+            "enablecredsspsupport:i:0\r\nbitmapcachepersistenable:i:1\r\n")).ForPsmTab();
+        await RunOnStaAsync(new RdpConnectionRequest(settings, null), async session =>
+        {
+            await session.ConnectAsync();
+            Assert.True(session.HasControl, session.Error);
+            var (fullScreen, smartSizing, persistence, startProgram) = await session.InvokeOnControlAsync(ocx =>
+            {
+                var advanced = Dispatch.First(ocx, "AdvancedSettings9", "AdvancedSettings8", "AdvancedSettings7", "AdvancedSettings6")!;
+                var secured = Dispatch.First(ocx, "SecuredSettings3", "SecuredSettings2")!;
+                return (Convert.ToBoolean(Dispatch.Get(ocx, "FullScreen"), System.Globalization.CultureInfo.InvariantCulture),
+                    Convert.ToBoolean(Dispatch.Get(advanced, "SmartSizing"), System.Globalization.CultureInfo.InvariantCulture),
+                    Convert.ToInt32(Dispatch.Get(advanced, "BitmapPersistence"), System.Globalization.CultureInfo.InvariantCulture),
+                    Dispatch.Get(secured, "StartProgram") as string);
+            });
+            Assert.False(fullScreen);
+            Assert.False(session.IsFullScreen);
+            Assert.True(smartSizing);
+            Assert.Equal(0, persistence);
+            Assert.Equal("psm /u admin-srv01 /a srv01.corp.local /c PSM-RDP", startProgram);
+        });
+    }
+
+    [Theory]
+    [InlineData("psm.corp.local", 3389, new[] { "psm.corp.local" })]
+    [InlineData("psm.corp.local", 3390, new[] { "psm.corp.local", "psm.corp.local:3390" })]
+    public void CertificateHashKeysFollowRemoteDesktopConnection(string server, int port, string[] expected)
+    {
+        Assert.Equal(expected, RdpClientTrust.KeyNames(server, port));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(@"..\..\Software")]
+    public void CertificateHashRefusesOddServerNames(string server)
+    {
+        Assert.Throws<ArgumentException>(() => RdpClientTrust.KeyNames(server, 3389));
+    }
+
+    /// <summary>
+    /// Certificat approuvé par ZillaTerm : son empreinte SHA-1 est gardée là où Connexion Bureau à distance garde celle
+    /// d'un certificat accepté (« Ne plus demander… »), pour ce serveur seulement.
+    /// </summary>
+    [Fact]
+    public void CertificateHashIsKeptWhereRemoteDesktopConnectionKeepsIt()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        const string server = "zillaterm-test.invalid";
+        var sha1 = Convert.ToHexString(System.Security.Cryptography.SHA1.HashData("certificat"u8));
+        var other = Convert.ToHexString(System.Security.Cryptography.SHA1.HashData("autre"u8));
+        try
+        {
+            RdpClientTrust.Remember(server, 3390, sha1);
+            Assert.True(RdpClientTrust.IsRemembered(server, 3390, sha1));
+            Assert.False(RdpClientTrust.IsRemembered(server, 3390, other));
+            Assert.False(RdpClientTrust.IsRemembered("autre." + server, 3390, sha1));
+            using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey($@"Software\Microsoft\Terminal Server Client\Servers\{server}"))
+            {
+                Assert.Equal(Convert.FromHexString(sha1), key?.GetValue("CertHash") as byte[]);
+            }
+
+            RdpClientTrust.Forget(server, 3390);
+            Assert.False(RdpClientTrust.IsRemembered(server, 3390, sha1));
+        }
+        finally
+        {
+            foreach (var name in RdpClientTrust.KeyNames(server, 3390))
+            {
+                Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree($@"Software\Microsoft\Terminal Server Client\Servers\{name}", throwOnMissingSubKey: false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Certificat auto-signé de ce poste (son nom n'est pas 127.0.0.2) : sans empreinte confiée, le niveau
+    /// d'authentification 1 refuse la connexion (le contrôle vérifie bien le certificat). L'empreinte confiée comme le fait
+    /// ZillaTerm après sa propre vérification, la session s'ouvre sans avertissement de Windows, aux niveaux 1 et 2, avec et
+    /// sans authentification réseau (NLA). Tout est noté avant de vérifier : le journal du test dit ce que fait Windows.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task CertificateConfirmedByZillaTermOpensWithoutWindowsWarning()
+    {
+        if (IntegrationAccount() is not { } account)
+        {
+            return;
+        }
+
+        var certificate = await RdpCertificateProbe.GetAsync("127.0.0.2", 3389, CancellationToken.None);
+        output.WriteLine($"Certificat « {certificate.Subject} », SHA1 {certificate.Sha1}, problème « {certificate.Problem} »");
+        Assert.False(certificate.Trusted);
+
+        var results = new List<(string Case, bool Expected, Attempt Result)>();
+        RdpClientTrust.Forget("127.0.0.2", 3389);
+        try
+        {
+            foreach (var nla in new[] { true, false })
+            {
+                results.Add(($"NLA {nla}, niveau 1, sans empreinte", false, await AttemptAsync(account, 1, nla)));
+            }
+
+            RdpClientTrust.Remember("127.0.0.2", 3389, certificate.Sha1);
+            foreach (var nla in new[] { true, false })
+            {
+                foreach (var level in new[] { 1, 2 })
+                {
+                    results.Add(($"NLA {nla}, niveau {level}, empreinte confiée", true, await AttemptAsync(account, level, nla)));
+                }
+            }
+        }
+        finally
+        {
+            RdpClientTrust.Forget("127.0.0.2", 3389);
+        }
+
+        foreach (var (name, _, result) in results)
+        {
+            output.WriteLine($"{name} → {result}");
+        }
+
+        foreach (var (name, expected, result) in results)
+        {
+            Assert.False(result.Warning, $"{name} : avertissement de Windows affiché");
+            Assert.True(expected == (result.State == RdpSessionState.Connected), $"{name} → {result}");
+        }
+    }
+
+    private sealed record Attempt(RdpSessionState State, bool Warning, int? Reason, uint? Extended, string? Error);
+
+    /// <summary>
+    /// Une connexion à ce poste au niveau d'authentification donné ; un avertissement de Windows est fermé (« Non ») et
+    /// noté. Session ouverte : déconnectée aussitôt.
+    /// </summary>
+    private async Task<Attempt> AttemptAsync((string User, string Password) account, int level, bool nla)
+    {
+        var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User) with { AuthenticationLevel = level, EnableCredSsp = nla };
+        Attempt? attempt = null;
+        await RunOnStaAsync(new RdpConnectionRequest(settings, account.Password), async session =>
+        {
+            await session.ConnectAsync();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            while (session.State == RdpSessionState.Connecting && watch.Elapsed < TimeSpan.FromSeconds(90))
+            {
+                if (session.IsAuthenticationWarningOpen)
+                {
+                    CloseDialogs();
+                }
+
+                await Task.Delay(200);
+            }
+
+            attempt = new Attempt(session.State, session.AuthenticationWarningShown, session.DisconnectReason, session.ExtendedDisconnectReason, session.Error);
+            if (session.State == RdpSessionState.Connected)
+            {
+                session.Disconnect();
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30));
+            }
+        });
+        return attempt!;
+    }
+
+    /// <summary>Ferme les boîtes de dialogue de ce processus (avertissement du contrôle Bureau à distance).</summary>
+    private void CloseDialogs()
+    {
+        foreach (var window in Win32Input.ProcessWindows().Where(w => Win32Input.IsWindowVisible(w) && Win32Input.ClassName(w) == "#32770"))
+        {
+            output.WriteLine($"Boîte de dialogue fermée : « {Win32Input.Title(window)} »");
+            Win32Input.Close(window);
+        }
+    }
+
+    /// <summary>
+    /// Session PSM dans l'onglet, sur ce poste : le bureau distant prend la taille de l'onglet et la garde quand la fenêtre
+    /// change de taille (image mise à l'échelle) ; un clic arrive à l'endroit visé, avant comme après. Une fenêtre lancée à
+    /// l'ouverture de session du compte de test (clé Run du workflow) note la taille de son écran et les clics reçus.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task PsmTabKeepsItsSizeAndClicksLandWhereAimed()
+    {
+        if (IntegrationAccount() is not { } account)
+        {
+            return;
+        }
+
+        var log = Environment.GetEnvironmentVariable("RDP_TEST_CLICKS");
+        if (string.IsNullOrEmpty(log))
+        {
+            output.WriteLine("Pas de fenêtre de test des clics : test ignoré.");
+            return;
+        }
+
+        var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab() with { AuthenticationLevel = 0 };
+        await RunOnStaAsync(new RdpConnectionRequest(settings, account.Password), async (session, window) =>
+        {
+            await session.ConnectAsync();
+            var state = await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90));
+            Assert.Equal(RdpSessionState.Connected, state);
+
+            var slot = session.Host.SlotHandle;
+            var bounds = Win32Input.ScreenBounds(slot);
+            var (width, height) = RdpConnection.DesktopSize((bounds.Width, bounds.Height));
+            output.WriteLine($"Onglet {bounds}, bureau distant attendu {width}x{height}");
+            // Le bureau distant a la taille de l'onglet (session reprise : Windows l'adapte à la nouvelle connexion).
+            await WaitForLineAsync(log, 0, line => line == $"size {width}x{height}", TimeSpan.FromSeconds(150));
+
+            var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+            await ClickAndCheckAsync(log, host, bounds, (0.5, 0.5), (width, height));
+
+            // Fenêtre réduite : l'image suit, la résolution du bureau distant ne change pas.
+            window.Width = 720;
+            window.Height = 540;
+            await Task.Delay(TimeSpan.FromSeconds(3));
+            bounds = Win32Input.ScreenBounds(slot);
+            output.WriteLine($"Onglet réduit {bounds}");
+            Assert.True(bounds.Width < width - 100, $"{bounds}");
+            Assert.Equal($"size {width}x{height}", Lines(log).Last(l => l.StartsWith("size ", StringComparison.Ordinal)));
+            await ClickAndCheckAsync(log, host, bounds, (0.25, 0.25), (width, height));
+            await ClickAndCheckAsync(log, host, bounds, (0.75, 0.6), (width, height));
+            output.WriteLine($"Clavier : {Win32Input.ClassName(Win32Input.FocusOf(slot))}");
+            Assert.Equal(RdpSessionState.Connected, session.State);
+
+            session.Disconnect();
+            await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30));
+        });
+    }
+
+    /// <summary>Clique à la position relative <paramref name="at"/> de l'onglet et vérifie l'endroit reçu sur le bureau distant.</summary>
+    private async Task ClickAndCheckAsync(string log, IntPtr host, Win32Input.Bounds tab, (double X, double Y) at, (int Width, int Height) desktop)
+    {
+        int before = Lines(log).Count;
+        var point = (tab.Left + (int)(tab.Width * at.X), tab.Top + (int)(tab.Height * at.Y));
+        Win32Input.BringToFront(host);
+        await Task.Delay(300);
+        Win32Input.Click(point);
+        var line = await WaitForLineAsync(log, before, l => l.StartsWith("click ", StringComparison.Ordinal), TimeSpan.FromSeconds(20));
+        var xy = line["click ".Length..].Split(',').Select(v => int.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        var expected = ((int)(desktop.Width * at.X), (int)(desktop.Height * at.Y));
+        // Tolérance : arrondis de la mise à l'échelle (quelques pixels du bureau distant).
+        int tolerance = Math.Max(4, (int)Math.Ceiling((double)desktop.Width / tab.Width) + 2);
+        output.WriteLine($"Clic à {point} (onglet {at}) → reçu {xy[0]},{xy[1]}, attendu {expected}");
+        Assert.InRange(xy[0], expected.Item1 - tolerance, expected.Item1 + tolerance);
+        Assert.InRange(xy[1], expected.Item2 - tolerance, expected.Item2 + tolerance);
+    }
+
+    /// <summary>Lignes du journal de la fenêtre de test (écrit par une autre session : lu sans le bloquer).</summary>
+    private static List<string> Lines(string path)
+    {
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            return [.. reader.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimEnd('\r'))];
+        }
+        catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException or IOException)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>Attend une ligne qui vérifie <paramref name="match"/> après les <paramref name="skip"/> premières.</summary>
+    private async Task<string> WaitForLineAsync(string path, int skip, Func<string, bool> match, TimeSpan timeout)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        while (true)
+        {
+            var lines = Lines(path);
+            if (lines.Skip(skip).FirstOrDefault(match) is { } line)
+            {
+                return line;
+            }
+
+            if (watch.Elapsed > timeout)
+            {
+                output.WriteLine($"Journal de la fenêtre de test :\n{string.Join("\n", lines.TakeLast(20))}");
+                throw new Xunit.Sdk.XunitException("Ligne attendue absente du journal de la fenêtre de test");
+            }
+
+            await Task.Delay(250);
+        }
+    }
+
     /// <summary>Compte de test fourni par le workflow d'intégration, ou null (tests ignorés).</summary>
     private (string User, string Password)? IntegrationAccount()
     {
@@ -219,19 +522,33 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>Exécute <paramref name="scenario"/> sur un thread STA, la session étant affichée dans une fenêtre.</summary>
-    private static async Task RunOnStaAsync(RdpConnectionRequest request, Func<RdpSession, Task> scenario)
+    private static Task RunOnStaAsync(RdpConnectionRequest request, Func<RdpSession, Task> scenario) =>
+        RunOnStaAsync(request, (session, _) => scenario(session));
+
+    /// <summary>Comme ci-dessus, avec la fenêtre (placée en haut à gauche de l'écran principal).</summary>
+    private static async Task RunOnStaAsync(RdpConnectionRequest request, Func<RdpSession, Window, Task> scenario)
     {
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
             var session = new RdpSession("test", _ => Task.FromResult(request));
-            var window = new Window { Width = 900, Height = 650, ShowInTaskbar = false, ShowActivated = false, Content = session.Host };
+            var window = new Window
+            {
+                Width = 900,
+                Height = 650,
+                ShowInTaskbar = false,
+                ShowActivated = false,
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Left = 0,
+                Top = 0,
+                Content = session.Host,
+            };
             window.Show();
             window.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, async () =>
             {
                 try
                 {
-                    await scenario(session);
+                    await scenario(session, window);
                     done.TrySetResult();
                 }
                 catch (Exception e)

@@ -1,8 +1,10 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services.Rdp;
+using ZillaTerm.Core;
 using ZillaTerm.Core.Diagnostics;
 using ZillaTerm.Core.Rdp;
 using ZillaTerm.Core.Ssh;
@@ -19,16 +21,20 @@ public partial class MainWindow
     private Grid RdpLayer => _rdpLayer ??= (Grid)MainTabs.Template.FindName("RdpLayer", MainTabs);
 
     /// <summary>
-    /// Ouvre un onglet Bureau à distance. <paramref name="prepare"/> fournit les réglages de chaque connexion
-    /// (y compris les reconnexions).
+    /// Ouvre un onglet Bureau à distance et lance la première connexion. <paramref name="prepare"/> fournit les réglages
+    /// de chaque connexion (y compris les reconnexions).
     /// </summary>
     /// <param name="duplicate">Ouvre une autre session sur le même compte ou la même entrée (menu de l'onglet).</param>
-    private async Task OpenRdpTabAsync(string label, Func<CancellationToken, Task<RdpConnectionRequest>> prepare, Func<Task>? duplicate = null)
+    /// <param name="tag">Étiquette du serveur (PROD, QA…) : pastille de l'onglet et cadre du bureau.</param>
+    /// <param name="psm">Adresse du PSM pour une session PSM ; null pour une connexion directe.</param>
+    private async Task<RdpSession> OpenRdpTabAsync(string label, Func<CancellationToken, Task<RdpConnectionRequest>> prepare,
+        Func<Task>? duplicate = null, ServerTag? tag = null, string? psm = null)
     {
-        var session = new RdpSession(label, prepare);
+        var session = new RdpSession(label, prepare) { Psm = psm };
         var view = new RdpSessionView(session) { Visibility = Visibility.Hidden, InterventionRecording = Intervention.IsRecording };
+        view.ShowTag(tag);
         var tab = new TabItem { Tag = session };
-        tab.Header = TabHeader(tab, label, "IconWindows", duplicate);
+        tab.Header = TabHeader(tab, label, "IconWindows", duplicate, tag);
         session.StateChanged += () =>
         {
             switch (session.State)
@@ -49,6 +55,86 @@ public partial class MainWindow
         // Laisse la mise en page se faire pour connaître la taille de l'onglet.
         await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         await session.ConnectAsync();
+        return session;
+    }
+
+    /// <summary>
+    /// Réglages pour ouvrir dans un onglet la session PSM de ce fichier du PVWA, ou null pour la confier à mstsc :
+    /// option désactivée, application distante (composants PSM pour SSH, WinSCP…), fichier illisible ou contrôle
+    /// Bureau à distance absent (<paramref name="reason"/> le dit alors à l'utilisateur).
+    /// </summary>
+    private RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, out string? reason)
+    {
+        reason = null;
+        if (!_settings.PsmDesktopInTab)
+        {
+            return null;
+        }
+
+        RdpConnectionSettings settings;
+        try
+        {
+            settings = RdpConnectionSettings.FromRdpFile(rdp);
+        }
+        catch (FormatException)
+        {
+            DebugLog.Write("psm", "Fichier .rdp sans adresse de serveur : ouvert avec mstsc.");
+            return null;
+        }
+
+        if (settings.IsRemoteApp)
+        {
+            DebugLog.Write("psm", "Composant en application distante (RemoteApp) : ouvert avec mstsc.");
+            return null;
+        }
+
+        if (!RdpClientHost.IsAvailable)
+        {
+            reason = Text.Format(Strings.PsmTabNoControl, label);
+            DebugLog.Write("psm", "Contrôle Bureau à distance absent : session PSM ouverte avec mstsc.");
+            return null;
+        }
+
+        return settings.ForPsmTab();
+    }
+
+    /// <summary>
+    /// Session PSM dans l'onglet : le certificat du PSM est lu et vérifié par ZillaTerm avant la connexion (épinglé,
+    /// question au premier usage s'il n'est pas approuvé par Windows, alerte s'il change). Refusé : rien n'est envoyé
+    /// au PSM. Accepté : il est confié au contrôle (<see cref="RdpClientTrust"/>), qui vérifie la vraie connexion avec
+    /// lui sans afficher son propre avertissement (voir <see cref="RdpConnectionSettings.ForPsmTab"/>). Certificat
+    /// illisible (pas de TLS, répartiteur de charge…) : Windows vérifie seul, et avertit s'il ne peut pas.
+    /// </summary>
+    private async Task TrustPsmCertificateAsync(string label, RdpConnectionSettings settings, CancellationToken ct)
+    {
+        RdpCertificate certificate;
+        try
+        {
+            certificate = await RdpCertificateProbe.GetAsync(settings.Server, settings.Port, ct);
+        }
+        catch (Exception ex) when (ex is RdpCertificateException or System.Net.Sockets.SocketException or IOException)
+        {
+            DebugLog.Write("psm", $"{label} : certificat du PSM {settings.Server}:{settings.Port} illisible ({ex.Message}) : "
+                + $"vérifié par Windows seul, niveau d'authentification {settings.AuthenticationLevel}");
+            return;
+        }
+
+        DebugLog.Write("psm", $"{label} : PSM {settings.Server}:{settings.Port}, certificat SHA256 {certificate.Sha256}, « {certificate.Subject} », "
+            + $"{(certificate.Trusted ? "approuvé par Windows" : certificate.Problem)}");
+        if (!TrustRdpCertificate(settings.Server, settings, certificate))
+        {
+            throw new OperationCanceledException(Strings.RdpCertificateDeclined);
+        }
+
+        try
+        {
+            RdpClientTrust.Remember(settings.Server, settings.Port, certificate.Sha1);
+            DebugLog.Write("psm", $"{label} : certificat confié au contrôle, niveau d'authentification {settings.AuthenticationLevel}");
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException or ArgumentException)
+        {
+            DebugLog.Write("psm", $"{label} : certificat non confié au contrôle ({ex.Message}) : Windows pourra demander de le confirmer.");
+        }
     }
 
     private async Task CloseRdpTabAsync(TabItem tab)

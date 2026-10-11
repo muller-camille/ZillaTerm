@@ -22,6 +22,9 @@ public partial class RdpSessionView : UserControl
 
     internal RdpSession Session { get; }
 
+    /// <summary>Cadre de la couleur de l'étiquette du serveur (aucun sans étiquette).</summary>
+    internal void ShowTag(Core.ServerTag? tag) => ServerTagView.Frame(TagFrame, tag);
+
     /// <summary>Intervention en cours d'enregistrement : le bouton « Capture » est proposé.</summary>
     internal bool InterventionRecording
     {
@@ -76,13 +79,18 @@ public partial class RdpSessionView : UserControl
                 break;
         }
 
+        if (session.IsAuthenticationWarningOpen)
+        {
+            StatusLine.Text = Text.Format(Strings.RdpCertificateWarningOpen, server);
+        }
+
         if (session.IsNotResponding)
         {
             // Barre de l'onglet (WPF) : la fenêtre du contrôle reste à sa place, rien ne s'affiche par-dessus.
             StatusLine.Text = Text.Format(Strings.RdpNotResponding, session.Label);
         }
 
-        if (session.IsNotResponding)
+        if (session.IsNotResponding || session.IsAuthenticationWarningOpen)
         {
             StatusLine.SetResourceReference(TextBlock.ForegroundProperty, "ErrorBrush");
             StatusLine.FontWeight = FontWeights.SemiBold;

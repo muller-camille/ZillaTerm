@@ -1052,11 +1052,18 @@ public partial class MainWindow : Window
             }
 
             LogRdpFile(rdp);
-            // Session PSM dans Connexion Bureau à distance (mstsc), en fenêtre(s) à part : le fichier du PVWA tel quel.
-            _launcher.LaunchRdp(rdp, label);
-            SetStatus(Text.Format(Strings.PsmStarted, label, request.Component));
-            InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request));
             AddRecent(account, label, request.Component, request.RemoteMachine);
+            if (PsmTabSettings(rdp, label, out var mstscReason) is { } settings)
+            {
+                await OpenPsmTabAsync(account, request, options, saved, label, rdp, settings);
+            }
+            else
+            {
+                // Session PSM dans Connexion Bureau à distance (mstsc), en fenêtre(s) à part : le fichier du PVWA tel quel.
+                _launcher.LaunchRdp(rdp, label);
+                SetStatus(mstscReason ?? Text.Format(Strings.PsmStarted, label, request.Component));
+                InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: false));
+            }
         }
         else
         {
@@ -1092,6 +1099,53 @@ public partial class MainWindow : Window
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Session PSM (bureau Windows) dans un onglet : ZillaTerm vérifie le certificat du PSM puis ouvre la session avec le
+    /// contrôle Bureau à distance, à la taille de l'onglet. Chaque reconnexion demande un nouveau fichier au PVWA (le jeton
+    /// d'une session PSM ne sert qu'une fois). Contrôle inutilisable à la première connexion : le jeton n'a pas servi,
+    /// le fichier est confié à mstsc.
+    /// </summary>
+    private async Task OpenPsmTabAsync(PvwaAccount account, ConnectRequest request, PsmConnectOptions options, SavedSession? saved,
+        string label, byte[] rdp, RdpConnectionSettings settings)
+    {
+        SetStatus(Text.Format(Strings.PsmStarted, label, request.Component));
+        InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: true));
+        byte[]? first = rdp;
+        var session = await OpenRdpTabAsync(label, async ct =>
+        {
+            var file = first;
+            first = null;
+            var next = settings;
+            if (file is null)
+            {
+                DebugLog.Write("psm", $"Nouvelle demande de connexion PSM pour {label} (reconnexion)");
+                file = await Client.PsmConnectAsync(account.Id, options, ct);
+                LogRdpFile(file);
+                next = RdpConnectionSettings.FromRdpFile(file);
+                if (next.IsRemoteApp)
+                {
+                    throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
+                }
+
+                next = next.ForPsmTab();
+            }
+
+            await TrustPsmCertificateAsync(label, next, ct);
+            return new RdpConnectionRequest(next, null);
+        }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), settings.Server);
+
+        if (session.ControlFailed && session.ConnectedAt is null && MainTabs.Items.OfType<TabItem>().Any(t => t.Tag == session))
+        {
+            // Contrôle Bureau à distance inutilisable sur ce poste : rien n'a été envoyé au PSM, mstsc prend le relais.
+            DebugLog.Write("psm", $"Contrôle Bureau à distance inutilisable ({session.Error}) : session PSM ouverte avec mstsc.");
+            var error = session.Error;
+            await RemoveRdpTabAsync(session);
+            _launcher.LaunchRdp(rdp, label);
+            SetStatus(Text.Format(Strings.PsmTabFallback, label, error));
+            InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: false));
+        }
     }
 
     /// <summary>Fichier .rdp renvoyé par le PVWA, dans le journal de débogage (jetons et signature masqués).</summary>
