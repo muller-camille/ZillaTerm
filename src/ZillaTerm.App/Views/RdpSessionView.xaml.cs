@@ -22,6 +22,9 @@ public partial class RdpSessionView : UserControl
 
     internal RdpSession Session { get; }
 
+    /// <summary>Cadre de la couleur de l'étiquette du serveur (aucun sans étiquette).</summary>
+    internal void ShowTag(Core.ServerTag? tag) => ServerTagView.Frame(TagFrame, tag);
+
     /// <summary>Intervention en cours d'enregistrement : le bouton « Capture » est proposé.</summary>
     internal bool InterventionRecording
     {
@@ -53,7 +56,7 @@ public partial class RdpSessionView : UserControl
         var session = Session;
         CaptureButton.Visibility = _interventionRecording && session.ShowsDesktop ? Visibility.Visible : Visibility.Collapsed;
         Overlay.Visibility = session.ShowsDesktop ? Visibility.Collapsed : Visibility.Visible;
-        FullScreenButton.IsEnabled = session.IsConnected;
+        FullScreenButton.IsEnabled = session.IsConnected && session.CanFullScreen;
         DisconnectButton.IsEnabled = session.HasControl;
         var server = session.Server.Length > 0 ? session.Server : session.Label;
         switch (session.State)
@@ -61,19 +64,27 @@ public partial class RdpSessionView : UserControl
             case RdpSessionState.Connecting:
                 StatusLine.Text = Text.Format(Strings.RdpConnecting, server);
                 OverlayText.Text = Text.Format(Strings.RdpConnecting, session.Label);
-                OverlayDetail.Text = "";
+                OverlayDetail.Text = session.Step ?? "";
+                OverlayProgress.Visibility = Visibility.Visible;
                 ReconnectButton.Visibility = Visibility.Collapsed;
                 break;
             case RdpSessionState.Connected:
                 StatusLine.Text = Text.Format(Strings.RdpConnected, session.Label, server);
+                OverlayProgress.Visibility = Visibility.Collapsed;
                 break;
             default:
                 var failed = session.State == RdpSessionState.Failed;
                 StatusLine.Text = failed ? Strings.ConnectionImpossible : Strings.SessionEnded;
                 OverlayText.Text = StatusLine.Text;
                 OverlayDetail.Text = session.Error ?? "";
+                OverlayProgress.Visibility = Visibility.Collapsed;
                 ReconnectButton.Visibility = Visibility.Visible;
                 break;
+        }
+
+        if (session.IsAuthenticationWarningOpen)
+        {
+            StatusLine.Text = Text.Format(Strings.RdpCertificateWarningOpen, server);
         }
 
         if (session.IsNotResponding)
@@ -82,7 +93,7 @@ public partial class RdpSessionView : UserControl
             StatusLine.Text = Text.Format(Strings.RdpNotResponding, session.Label);
         }
 
-        if (session.IsNotResponding)
+        if (session.IsNotResponding || session.IsAuthenticationWarningOpen)
         {
             StatusLine.SetResourceReference(TextBlock.ForegroundProperty, "ErrorBrush");
             StatusLine.FontWeight = FontWeights.SemiBold;

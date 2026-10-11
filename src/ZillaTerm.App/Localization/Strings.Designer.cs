@@ -15981,5 +15981,410 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("ColorOther", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Via the PSM {0}: session managed by CyberArk.
+        /// </summary>
+        public static string TabModePsm {
+            get {
+                return ResourceManager.GetString("TabModePsm", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: Remote Desktop control unavailable, PSM session opened in Remote Desktop Connection..
+        /// </summary>
+        public static string PsmTabNoControl {
+            get {
+                return ResourceManager.GetString("PsmTabNoControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: the Remote Desktop client could not be used ({1}), PSM session opened in Remote Desktop Connection..
+        /// </summary>
+        public static string PsmTabFallback {
+            get {
+                return ResourceManager.GetString("PsmTabFallback", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The PVWA now returns a remote application instead of a desktop: open the connection again from the list..
+        /// </summary>
+        public static string PsmTabRemoteAppNow {
+            get {
+                return ResourceManager.GetString("PsmTabRemoteAppNow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PSM session opened in a ZillaTerm tab, component {0}.
+        /// </summary>
+        public static string InterventionPsmTab {
+            get {
+                return ResourceManager.GetString("InterventionPsmTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Windows asks you to confirm the identity of {0}: check the certificate before accepting..
+        /// </summary>
+        public static string RdpCertificateWarningOpen {
+            get {
+                return ResourceManager.GetString("RdpCertificateWarningOpen", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open PSM Windows sessions in a ZillaTerm _tab, otherwise in Remote Desktop Connection.
+        /// </summary>
+        public static string PsmDesktopInTab {
+            get {
+                return ResourceManager.GetString("PsmDesktopInTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection..
+        /// </summary>
+        public static string PsmDesktopInTabHelp {
+            get {
+                return ResourceManager.GetString("PsmDesktopInTabHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PSM Windows sessions in a tab.
+        /// </summary>
+        public static string EnvPsmDesktopInTab {
+            get {
+                return ResourceManager.GetString("EnvPsmDesktopInTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The PVWA generates an RDP connection: it opens in a ZillaTerm tab (built-in FreeRDP client), Windows desktop or remote application alike..
+        /// </summary>
+        public static string PsmHintTab {
+            get {
+                return ResourceManager.GetString("PsmHintTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The FreeRDP Remote Desktop client could not start: {0}.
+        /// </summary>
+        public static string FreeRdpStartFailed {
+            get {
+                return ResourceManager.GetString("FreeRdpStartFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The FreeRDP Remote Desktop client stopped unexpectedly (code {0})..
+        /// </summary>
+        public static string FreeRdpCrashed {
+            get {
+                return ResourceManager.GetString("FreeRdpCrashed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The session was taken over from another connection..
+        /// </summary>
+        public static string FreeRdpTakenOver {
+            get {
+                return ResourceManager.GetString("FreeRdpTakenOver", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session closed by the server (idle, or logon took too long)..
+        /// </summary>
+        public static string FreeRdpTimeout {
+            get {
+                return ResourceManager.GetString("FreeRdpTimeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server refused the connection..
+        /// </summary>
+        public static string FreeRdpDenied {
+            get {
+                return ResourceManager.GetString("FreeRdpDenied", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server not found: {0}..
+        /// </summary>
+        public static string FreeRdpNameNotFound {
+            get {
+                return ResourceManager.GetString("FreeRdpNameNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server unreachable, or connection lost: {0}..
+        /// </summary>
+        public static string FreeRdpUnreachable {
+            get {
+                return ResourceManager.GetString("FreeRdpUnreachable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No secure connection possible, or the server certificate was refused..
+        /// </summary>
+        public static string FreeRdpTls {
+            get {
+                return ResourceManager.GetString("FreeRdpTls", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server accepts none of the secure connections ZillaTerm offers (TLS, network level authentication; legacy RDP security for a PSM only)..
+        /// </summary>
+        public static string FreeRdpNegotiation {
+            get {
+                return ResourceManager.GetString("FreeRdpNegotiation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to User name or password refused by the server..
+        /// </summary>
+        public static string FreeRdpAuthentication {
+            get {
+                return ResourceManager.GetString("FreeRdpAuthentication", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Account locked, expired or disabled, or password to change..
+        /// </summary>
+        public static string FreeRdpAccount {
+            get {
+                return ResourceManager.GetString("FreeRdpAccount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Logon refused on this server..
+        /// </summary>
+        public static string FreeRdpAccessDenied {
+            get {
+                return ResourceManager.GetString("FreeRdpAccessDenied", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to FreeRDP Remote Desktop client error..
+        /// </summary>
+        public static string FreeRdpOther {
+            get {
+                return ResourceManager.GetString("FreeRdpOther", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: connection through a Remote Desktop gateway, PSM session opened in Remote Desktop Connection..
+        /// </summary>
+        public static string PsmTabGateway {
+            get {
+                return ResourceManager.GetString("PsmTabGateway", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PSM server key.
+        /// </summary>
+        public static string RdpKeyTitle {
+            get {
+                return ResourceManager.GetString("RdpKeyTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Check the key of this PSM.
+        /// </summary>
+        public static string RdpKeyVerifyHeading {
+            get {
+                return ResourceManager.GetString("RdpKeyVerifyHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PSM only accepts the legacy RDP security, without TLS: no certificate proves its identity, only the fingerprint of its key, remembered on this computer once trusted. Its encryption (RC4) is also weaker than TLS: ask the CyberArk administrator to enable TLS on the PSM..
+        /// </summary>
+        public static string RdpKeyMessage {
+            get {
+                return ResourceManager.GetString("RdpKeyMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Key fingerprint (SHA-256).
+        /// </summary>
+        public static string RdpKeyFingerprint {
+            get {
+                return ResourceManager.GetString("RdpKeyFingerprint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This server no longer offers TLS.
+        /// </summary>
+        public static string RdpKeyDowngradeHeading {
+            get {
+                return ResourceManager.GetString("RdpKeyDowngradeHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This server presented a TLS certificate before, and now only offers the legacy RDP security, whose identity cannot be checked: the connection may be intercepted, ZillaTerm refuses it. If the CyberArk administrator confirms that TLS was disabled on the PSM, remove its certificate from the accepted server keys in the Settings, then connect again..
+        /// </summary>
+        public static string RdpKeyDowngradeMessage {
+            get {
+                return ResourceManager.GetString("RdpKeyDowngradeMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server key refused: the session was not opened..
+        /// </summary>
+        public static string FreeRdpKeyRefused {
+            get {
+                return ResourceManager.GetString("FreeRdpKeyRefused", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New key for this PSM.
+        /// </summary>
+        public static string RdpKeyAnotherHeading {
+            get {
+                return ResourceManager.GetString("RdpKeyAnotherHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keys already known for this address: {0}. A new key usually comes from another PSM server behind the load balancer, but it may also reveal an interception. Only trust it if the CyberArk administrator confirms that this address groups several PSM servers. The known keys stay accepted..
+        /// </summary>
+        public static string RdpKeyAnotherMessage {
+            get {
+                return ResourceManager.GetString("RdpKeyAnotherMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Also trust this key and connect.
+        /// </summary>
+        public static string RdpKeyTrustAnother {
+            get {
+                return ResourceManager.GetString("RdpKeyTrustAnother", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to I have checked with the CyberArk administrator that this address groups several PSM servers.
+        /// </summary>
+        public static string RdpKeyAckLoadBalanced {
+            get {
+                return ResourceManager.GetString("RdpKeyAckLoadBalanced", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New certificate for this PSM.
+        /// </summary>
+        public static string RdpCertAnotherHeading {
+            get {
+                return ResourceManager.GetString("RdpCertAnotherHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Certificates already known for this address: {0}. Windows does not trust this one: {1}. Another certificate usually comes from another PSM server behind the load balancing, or from a renewed certificate; it can also point to an interception. Compare its fingerprint with the CyberArk administrator before trusting it..
+        /// </summary>
+        public static string RdpCertAnotherMessage {
+            get {
+                return ResourceManager.GetString("RdpCertAnotherMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Also trust it (another PSM server) and connect.
+        /// </summary>
+        public static string RdpCertTrustAnother {
+            get {
+                return ResourceManager.GetString("RdpCertTrustAnother", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Replace the known certificates (renewal) and connect.
+        /// </summary>
+        public static string RdpCertReplaceKnown {
+            get {
+                return ResourceManager.GetString("RdpCertReplaceKnown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to I have compared this fingerprint with the CyberArk administrator.
+        /// </summary>
+        public static string RdpCertAckPsm {
+            get {
+                return ResourceManager.GetString("RdpCertAckPsm", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Requesting the session from the PVWA….
+        /// </summary>
+        public static string PsmTabRequesting {
+            get {
+                return ResourceManager.GetString("PsmTabRequesting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connecting to the PSM {0}….
+        /// </summary>
+        public static string PsmTabConnecting {
+            get {
+                return ResourceManager.GetString("PsmTabConnecting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Via the PSM: session managed by CyberArk.
+        /// </summary>
+        public static string TabModePsmPending {
+            get {
+                return ResourceManager.GetString("TabModePsmPending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Checking the identity of {0}….
+        /// </summary>
+        public static string FreeRdpChecking {
+            get {
+                return ResourceManager.GetString("FreeRdpChecking", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The identity of {0} could not be checked: {1}.
+        /// </summary>
+        public static string FreeRdpCheckFailed {
+            get {
+                return ResourceManager.GetString("FreeRdpCheckFailed", resourceCulture);
+            }
+        }
     }
 }

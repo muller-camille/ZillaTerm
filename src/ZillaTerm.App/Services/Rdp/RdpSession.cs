@@ -16,7 +16,46 @@ internal enum RdpSessionState
 }
 
 /// <summary>Ce qu'il faut pour (re)lancer une connexion : réglages et, pour une connexion directe, le mot de passe.</summary>
-internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, string? Password);
+internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, string? Password)
+{
+    /// <summary>Client FreeRDP de ZillaTerm (session PSM, application distante comprise) au lieu du contrôle de Windows.</summary>
+    public bool FreeRdp { get; init; }
+
+    /// <summary>
+    /// Certificat TLS du serveur, lu par ZillaTerm avant le lancement du client FreeRDP (aucune question pendant sa
+    /// connexion). Sans vérification, tout certificat est refusé.
+    /// </summary>
+    public Func<RdpCertificate, string, int, Task<RdpTrust>>? VerifyCertificate { get; init; }
+
+    /// <summary>
+    /// Clé d'un serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS, lue par ZillaTerm avant le lancement.
+    /// Fournie, elle permet cette sécurité au client FreeRDP (PSM seulement) ; sinon, un serveur sans TLS est refusé.
+    /// </summary>
+    public Func<RdpServerKey, string, int, Task<RdpTrust>>? VerifyServerKey { get; init; }
+
+    /// <summary>
+    /// Empreintes SHA-256 des certificats et clés déjà acceptés pour ce serveur (plusieurs derrière une adresse en
+    /// répartition de charge) : le client FreeRDP accepte celles-ci et celle qui vient d'être vérifiée, aucune autre.
+    /// </summary>
+    public Func<string, int, IReadOnlyCollection<string>>? KnownFingerprints { get; init; }
+}
+
+/// <summary>Réponse de ZillaTerm à un certificat ou une clé lus avant la connexion.</summary>
+internal enum RdpTrust
+{
+    Refused,
+
+    /// <summary>Connu ou approuvé, sans question.</summary>
+    Trusted,
+
+    /// <summary>Accepté par l'utilisateur après une question : la connexion repart avec une nouvelle demande.</summary>
+    AcceptedAfterQuestion,
+}
+
+/// <summary>
+/// Levée par la préparation d'une connexion confiée à un autre client (mstsc) : l'onglet ne signale aucune erreur.
+/// </summary>
+internal sealed class RdpHandedOffException(string message) : Exception(message);
 
 /// <summary>
 /// Session Bureau à distance dans un onglet, vue du thread de l'interface. Chaque connexion (<see cref="RdpConnection"/>)
@@ -42,8 +81,8 @@ internal sealed class RdpSession : IDisposable
     private readonly Dispatcher _dispatcher;
 
     // Connexions dont la fenêtre est peut-être encore dans l'onglet (en cours, ou en cours de libération).
-    private readonly List<RdpConnection> _attached = [];
-    private RdpConnection? _connection;
+    private readonly List<IRdpConnection> _attached = [];
+    private IRdpConnection? _connection;
     private bool _starting;
     private bool _pingPending;
     private long _pingSentAt;
@@ -80,6 +119,21 @@ internal sealed class RdpSession : IDisposable
 
     public bool IsFullScreen { get; private set; }
 
+    /// <summary>
+    /// Session PSM : adresse du PSM (infobulle de l'onglet), vide tant que le PVWA ne l'a pas donnée ; null pour une
+    /// connexion directe.
+    /// </summary>
+    public string? Psm { get; set; }
+
+    /// <summary>Étape de la connexion en cours (demande au PVWA, connexion au PSM…), sous sa progression ; ou null.</summary>
+    public string? Step { get; private set; }
+
+    /// <summary>Vrai tant que Windows affiche son avertissement sur l'identité du serveur (certificat).</summary>
+    public bool IsAuthenticationWarningOpen { get; private set; }
+
+    /// <summary>Vrai si Windows a affiché son avertissement sur l'identité du serveur pendant la dernière connexion.</summary>
+    public bool AuthenticationWarningShown { get; private set; }
+
     /// <summary>Code de la dernière déconnexion signalée par le contrôle (événement OnDisconnected).</summary>
     public int? DisconnectReason { get; private set; }
 
@@ -97,8 +151,14 @@ internal sealed class RdpSession : IDisposable
     /// <summary>Vrai tant que le contrôle Bureau à distance existe (connexion en cours ou établie).</summary>
     public bool HasControl => _connection is not null;
 
-    /// <summary>Vrai si l'onglet affiche le bureau distant (le contrôle existe).</summary>
-    public bool ShowsDesktop => HasControl;
+    /// <summary>
+    /// Vrai si l'onglet affiche le bureau distant : le contrôle de Windows dès sa création, le client FreeRDP dès que sa
+    /// fenêtre existe (connexion ouverte). Avant, l'onglet montre la progression de la connexion.
+    /// </summary>
+    public bool ShowsDesktop => _connection is { HasWindow: true };
+
+    /// <summary>Plein écran possible pour la connexion en cours (contrôle de Windows seulement).</summary>
+    public bool CanFullScreen => _connection?.CanFullScreen == true;
 
     /// <summary>Ouverture de la session (fin de l'ouverture de session Windows), ou null.</summary>
     public DateTime? ConnectedAt { get; private set; }
@@ -127,11 +187,19 @@ internal sealed class RdpSession : IDisposable
         DisconnectReason = null;
         ExtendedDisconnectReason = null;
         IsFullScreen = false;
+        IsAuthenticationWarningOpen = false;
+        AuthenticationWarningShown = false;
         SetState(RdpSessionState.Connecting);
         RdpConnectionRequest request;
         try
         {
             request = await _prepare(_lifetime.Token);
+        }
+        catch (RdpHandedOffException ex)
+        {
+            // Session confiée à un autre client (mstsc) : ni erreur ni message, l'onglet va être retiré.
+            DebugLog.Write("rdp", $"{Label} : {ex.Message}");
+            return;
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -152,10 +220,10 @@ internal sealed class RdpSession : IDisposable
         }
 
         Server = request.Settings.Server;
-        RdpConnection connection;
+        IRdpConnection connection;
         try
         {
-            connection = new RdpConnection(this, request, Label);
+            connection = request.FreeRdp ? new FreeRdpConnection(this, request, Label) : new RdpConnection(this, request, Label);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -166,10 +234,11 @@ internal sealed class RdpSession : IDisposable
         _connection = connection;
         _attached.Add(connection);
         _ = connection.Detached.ContinueWith(_ => _dispatcher.BeginInvoke(() => _attached.Remove(connection)), TaskScheduler.Default);
-        _starting = true;
+        // L'emplacement s'affiche avant la création du contrôle : celui-ci prend sa taille dans l'onglet. Le client
+        // FreeRDP reçoit sa taille : l'emplacement reste masqué jusqu'à sa fenêtre (la progression reste visible).
+        _starting = !request.FreeRdp || Host.SlotHandle == IntPtr.Zero;
         try
         {
-            // L'emplacement s'affiche avant la création du contrôle : celui-ci prend sa taille dans l'onglet.
             UpdateHost();
             Host.UpdateLayout();
             await connection.StartAsync(Host.SlotHandle, Host.PixelSize);
@@ -307,7 +376,7 @@ internal sealed class RdpSession : IDisposable
 
     // ---- Événements de la connexion, sur le thread de l'interface ; ceux d'une connexion remplacée sont ignorés.
 
-    internal void OnLoggedIn(RdpConnection connection)
+    internal void OnLoggedIn(IRdpConnection connection)
     {
         if (connection != _connection || _disposed)
         {
@@ -315,10 +384,47 @@ internal sealed class RdpSession : IDisposable
         }
 
         ConnectedAt = DateTime.UtcNow;
+        AutomaticRetries = 0;
+        // Fenêtre du client FreeRDP créée à l'ouverture de la connexion : l'emplacement s'affiche maintenant.
+        UpdateHost();
         SetState(RdpSessionState.Connected);
     }
 
-    internal void OnDisconnected(RdpConnection connection, int reason, uint extended, string? description)
+    /// <summary>
+    /// Nouvelles connexions lancées d'elles-mêmes depuis la dernière ouverture de session (autre serveur derrière la
+    /// même adresse) : bornées, chacune consomme une demande au PVWA.
+    /// </summary>
+    internal int AutomaticRetries { get; set; }
+
+    /// <summary>
+    /// Connexion abandonnée avant d'avoir commencé, puis relancée tout de suite avec une nouvelle demande (un jeton PSM ne
+    /// sert qu'une fois) : l'onglet reste « en cours de connexion ».
+    /// </summary>
+    internal void Restart(IRdpConnection connection)
+    {
+        if (connection != _connection || _disposed)
+        {
+            return;
+        }
+
+        OnReleased(connection);
+        _dispatcher.BeginInvoke(async () =>
+        {
+            if (!_disposed && _connection is null)
+            {
+                await ConnectAsync();
+            }
+        });
+    }
+
+    /// <summary>Étape de la connexion affichée dans l'onglet (thread de l'interface).</summary>
+    internal void ShowStep(string? step)
+    {
+        Step = step;
+        StateChanged?.Invoke();
+    }
+
+    internal void OnDisconnected(IRdpConnection connection, int reason, uint extended, string? description)
     {
         if (connection != _connection || _disposed)
         {
@@ -339,7 +445,33 @@ internal sealed class RdpSession : IDisposable
         SetState(normal ? RdpSessionState.Ended : RdpSessionState.Failed);
     }
 
-    internal void OnFatalError(RdpConnection connection, int code)
+    /// <summary>Fin d'une session FreeRDP : <paramref name="error"/> est null pour une fin normale.</summary>
+    internal void OnEnded(IRdpConnection connection, bool normal, string? error)
+    {
+        if (connection != _connection || _disposed)
+        {
+            return;
+        }
+
+        DebugLog.Write("rdp", ConnectedAt is { } at
+            ? $"{Label} : fin de session {(DateTime.UtcNow - at).TotalSeconds:0.0} s après l'ouverture de session"
+            : $"{Label} : fin de session avant l'ouverture de session");
+        Error = error;
+        IsFullScreen = false;
+        SetState(normal ? RdpSessionState.Ended : RdpSessionState.Failed);
+    }
+
+    /// <summary>Message de la session terminée, remplacé (réponse à une question posée après sa fin).</summary>
+    internal void ShowError(string error)
+    {
+        if (_connection is null && !_disposed && State is RdpSessionState.Ended or RdpSessionState.Failed)
+        {
+            Error = error;
+            SetState(RdpSessionState.Failed);
+        }
+    }
+
+    internal void OnFatalError(IRdpConnection connection, int code)
     {
         if (connection != _connection || _disposed)
         {
@@ -350,7 +482,7 @@ internal sealed class RdpSession : IDisposable
         SetState(RdpSessionState.Failed);
     }
 
-    internal void OnFullScreenChanged(RdpConnection connection, bool fullScreen)
+    internal void OnFullScreenChanged(IRdpConnection connection, bool fullScreen)
     {
         if (connection == _connection)
         {
@@ -358,8 +490,20 @@ internal sealed class RdpSession : IDisposable
         }
     }
 
+    internal void OnAuthenticationWarning(IRdpConnection connection, bool displayed)
+    {
+        if (connection != _connection || _disposed)
+        {
+            return;
+        }
+
+        IsAuthenticationWarningOpen = displayed;
+        AuthenticationWarningShown |= displayed;
+        StateChanged?.Invoke();
+    }
+
     /// <summary>Contrôle libéré par la connexion (fin de session, erreur) : l'onglet n'a plus de contrôle.</summary>
-    internal void OnReleased(RdpConnection connection)
+    internal void OnReleased(IRdpConnection connection)
     {
         if (connection != _connection || _disposed)
         {
@@ -370,6 +514,7 @@ internal sealed class RdpSession : IDisposable
         _watchdog.Stop();
         _pingPending = false;
         IsNotResponding = false;
+        IsAuthenticationWarningOpen = false;
         UpdateHost();
         StateChanged?.Invoke();
     }
@@ -378,7 +523,12 @@ internal sealed class RdpSession : IDisposable
     {
         DebugLog.Write("rdp", $"{Label} : échec du contrôle Bureau à distance", ex);
         ControlFailed = true;
-        Error = ex is COMException com ? Text.Format(Strings.RdpControlError, $"0x{com.HResult:X8}") : ErrorText.Describe(ex);
+        Error = ex switch
+        {
+            COMException com => Text.Format(Strings.RdpControlError, $"0x{com.HResult:X8}"),
+            FreeRdpStartException start => Text.Format(Strings.FreeRdpStartFailed, start.Message),
+            _ => ErrorText.Describe(ex),
+        };
         SetState(RdpSessionState.Failed);
     }
 
@@ -425,7 +575,7 @@ internal sealed class RdpSession : IDisposable
         }
     }
 
-    private void OnPong(RdpConnection connection)
+    private void OnPong(IRdpConnection connection)
     {
         if (connection != _connection)
         {
@@ -450,7 +600,14 @@ internal sealed class RdpSession : IDisposable
     {
         if (!IsNotResponding)
         {
-            Host.Visibility = _starting || ShowsDesktop ? Visibility.Visible : Visibility.Hidden;
+            bool visible = _starting || ShowsDesktop;
+            Host.Visibility = visible ? Visibility.Visible : Visibility.Hidden;
+            if (visible)
+            {
+                // WPF ne place la fenêtre de l'emplacement qu'à la mise en page suivante : jamais placée tant qu'elle
+                // était masquée (client FreeRDP en cours de connexion), elle resterait sans taille jusque-là.
+                Host.UpdateWindowPos();
+            }
         }
     }
 

@@ -1030,8 +1030,6 @@ public partial class MainWindow : Window
         if (request.Mode == ConnectMode.Psm)
         {
             SetStatus(Text.Format(Strings.PsmOpening, label, request.Component));
-            LoadProgress.IsIndeterminate = true;
-            LoadProgress.Visibility = Visibility.Visible;
             var options = new PsmConnectOptions
             {
                 ConnectionComponent = request.Component,
@@ -1040,8 +1038,17 @@ public partial class MainWindow : Window
                 TicketId = request.TicketId,
                 RemoteMachine = request.RemoteMachine,
             };
+            if (PsmTabClient(label, out var mstscReason) is { } freeRdp)
+            {
+                // Onglet ouvert tout de suite : la demande au PVWA puis la connexion s'y suivent, avec leur progression.
+                await OpenPsmTabAsync(account, request, options, saved, label, freeRdp);
+                return true;
+            }
+
+            LoadProgress.IsIndeterminate = true;
+            LoadProgress.Visibility = Visibility.Visible;
             byte[] rdp;
-            DebugLog.Write("psm", $"Demande de connexion PSM pour {label} (compte {account.Id}, composant {request.Component}, machine cible « {request.RemoteMachine} »)");
+            DebugLog.Write("psm", PsmRequestLog(account, request, label));
             try
             {
                 rdp = await Client.PsmConnectAsync(account.Id, options, _lifetime.Token);
@@ -1052,11 +1059,8 @@ public partial class MainWindow : Window
             }
 
             LogRdpFile(rdp);
-            // Session PSM dans Connexion Bureau à distance (mstsc), en fenêtre(s) à part : le fichier du PVWA tel quel.
-            _launcher.LaunchRdp(rdp, label);
-            SetStatus(Text.Format(Strings.PsmStarted, label, request.Component));
-            InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request));
             AddRecent(account, label, request.Component, request.RemoteMachine);
+            LaunchPsmInMstsc(request, label, rdp, mstscReason);
         }
         else
         {
@@ -1093,6 +1097,128 @@ public partial class MainWindow : Window
 
         return true;
     }
+
+    /// <summary>
+    /// Session PSM dans un onglet, à la taille de l'onglet, ouvert avant la demande au PVWA (progression dans l'onglet,
+    /// comme une session PSMP) : avec le client FreeRDP de ZillaTerm (bureau ou application distante ; ZillaTerm
+    /// vérifie le certificat du PSM), sinon avec le contrôle Bureau à distance (bureau seulement ; Windows vérifie le
+    /// certificat, voir <see cref="RdpConnectionSettings.ForPsmTab"/>). Chaque connexion demande un nouveau fichier au
+    /// PVWA (le jeton d'une session PSM ne sert qu'une fois). À la première : refus du PVWA, onglet fermé et erreur
+    /// traitée par <see cref="ConnectAsync"/> (fenêtre de connexion, reconnexion au PVWA) ; fichier que l'onglet ne
+    /// peut pas ouvrir, ou client inutilisable (lancement refusé…), onglet fermé et fichier confié à mstsc (le jeton
+    /// n'a pas servi).
+    /// </summary>
+    private async Task OpenPsmTabAsync(PvwaAccount account, ConnectRequest request, PsmConnectOptions options, SavedSession? saved,
+        string label, bool freeRdp)
+    {
+        RdpSession? session = null;
+        byte[]? first = null;
+        Exception? firstError = null;
+        string? mstscReason = null;
+        bool toMstsc = false;
+        int attempts = 0;
+        session = AddRdpTab(label, async ct =>
+        {
+            bool initial = attempts++ == 0;
+            session!.ShowStep(Strings.PsmTabRequesting);
+            DebugLog.Write("psm", initial ? PsmRequestLog(account, request, label) : $"Nouvelle demande de connexion PSM pour {label} (reconnexion)");
+            byte[] file;
+            try
+            {
+                file = await Client.PsmConnectAsync(account.Id, options, ct);
+            }
+            catch (Exception e) when (initial)
+            {
+                firstError = e;
+                throw;
+            }
+
+            LogRdpFile(file);
+            RdpConnectionSettings settings;
+            if (initial)
+            {
+                first = file;
+                if (PsmTabSettings(file, label, freeRdp, out mstscReason) is not { } tab)
+                {
+                    toMstsc = true;
+                    throw new RdpHandedOffException("session PSM confiée à mstsc");
+                }
+
+                settings = tab;
+            }
+            else
+            {
+                settings = RdpConnectionSettings.FromRdpFile(file);
+                if (settings.UsesGateway)
+                {
+                    throw new InvalidOperationException(Text.Format(Strings.PsmTabGateway, label));
+                }
+
+                if (settings.IsRemoteApp && !freeRdp)
+                {
+                    throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
+                }
+
+                settings = settings.ForPsmTab();
+            }
+
+            ShowPsmAddress(session, settings.Server);
+            session.ShowStep(Text.Format(Strings.PsmTabConnecting, settings.Server));
+            return new RdpConnectionRequest(settings, null)
+            {
+                FreeRdp = freeRdp,
+                VerifyCertificate = freeRdp ? VerifyFreeRdpCertificateAsync : null,
+                // Session PSM : un PSM qui n'accepte que l'ancienne sécurité RDP est permis, sa clé épinglée.
+                VerifyServerKey = freeRdp ? VerifyFreeRdpServerKeyAsync : null,
+                KnownFingerprints = freeRdp ? KnownFreeRdpFingerprints : null,
+            };
+        }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), psm: "");
+        await ConnectRdpTabAsync(session);
+
+        if (!HasRdpTab(session))
+        {
+            // Onglet fermé pendant la demande ou la connexion : rien d'autre à faire.
+            return;
+        }
+
+        if (firstError is not null)
+        {
+            await RemoveRdpTabAsync(session);
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(firstError).Throw();
+        }
+
+        AddRecent(account, label, request.Component, request.RemoteMachine);
+        if (toMstsc && first is not null)
+        {
+            await RemoveRdpTabAsync(session);
+            LaunchPsmInMstsc(request, label, first, mstscReason);
+            return;
+        }
+
+        if (session.ControlFailed && session.ConnectedAt is null && first is not null)
+        {
+            // Client Bureau à distance inutilisable sur ce poste : rien n'a été envoyé au PSM, mstsc prend le relais.
+            DebugLog.Write("psm", $"Client Bureau à distance inutilisable ({session.Error}) : session PSM ouverte avec mstsc.");
+            var error = session.Error;
+            await RemoveRdpTabAsync(session);
+            LaunchPsmInMstsc(request, label, first, Text.Format(Strings.PsmTabFallback, label, error));
+            return;
+        }
+
+        SetStatus(Text.Format(Strings.PsmStarted, label, request.Component));
+        InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: true));
+    }
+
+    /// <summary>Session PSM dans Connexion Bureau à distance (mstsc), en fenêtre(s) à part : le fichier du PVWA tel quel.</summary>
+    private void LaunchPsmInMstsc(ConnectRequest request, string label, byte[] rdp, string? reason)
+    {
+        _launcher.LaunchRdp(rdp, label);
+        SetStatus(reason ?? Text.Format(Strings.PsmStarted, label, request.Component));
+        InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: false));
+    }
+
+    private static string PsmRequestLog(PvwaAccount account, ConnectRequest request, string label) =>
+        $"Demande de connexion PSM pour {label} (compte {account.Id}, composant {request.Component}, machine cible « {request.RemoteMachine} »)";
 
     /// <summary>Fichier .rdp renvoyé par le PVWA, dans le journal de débogage (jetons et signature masqués).</summary>
     private static void LogRdpFile(byte[] rdp)

@@ -60,9 +60,9 @@ public partial class MainWindow
     private static void InterventionRecord(InterventionKind kind, string source, string text) => Intervention.Record(kind, source, text);
 
     /// <summary>Session PSM ouverte : composant, machine cible, motif et ticket, pour le journal.</summary>
-    private static string InterventionPsmText(ConnectRequest request)
+    private static string InterventionPsmText(ConnectRequest request, bool inTab)
     {
-        var lines = new List<string> { Text.Format(Strings.InterventionPsmLaunched, request.Component) };
+        var lines = new List<string> { Text.Format(inTab ? Strings.InterventionPsmTab : Strings.InterventionPsmLaunched, request.Component) };
         if (!string.IsNullOrWhiteSpace(request.RemoteMachine))
         {
             lines.Add(Text.Format(Strings.InterventionMachine, request.RemoteMachine));

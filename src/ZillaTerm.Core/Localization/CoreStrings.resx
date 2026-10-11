@@ -558,4 +558,7 @@
   <data name="MigrationColTag" xml:space="preserve">
     <value>Tag</value>
   </data>
+  <data name="RdpNoEncryption" xml:space="preserve">
+    <value>The Remote Desktop server uses no encryption: nothing proves its identity nor protects the connection, it is refused.</value>
+  </data>
 </root>

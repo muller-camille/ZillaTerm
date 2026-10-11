@@ -21,6 +21,7 @@ public sealed class EnvironmentProfileTests : IDisposable
             PsmpPort = 2222,
             WindowsComponent = "WIN-PSM",
             EnvironmentFile = @"\\srv\partage\zillaterm\prod.env.json",
+            PsmDesktopInTab = true,
         };
         settings.PsmpServers.Add(new PsmpServer { Address = "psmp.paris.corp.com", Port = 22 });
         settings.ComponentByPlatform["UnixSSH"] = "PSM-SSH";
@@ -74,8 +75,11 @@ public sealed class EnvironmentProfileTests : IDisposable
         Assert.Contains(changes, c => c is { Setting: EnvironmentSetting.PlatformComponent, Detail: "UnixSSH", New: "PSM-SSH" });
         Assert.Contains(changes, c => c is { Setting: EnvironmentSetting.CentralFile, Sensitive: true });
         Assert.DoesNotContain(changes, c => c.Setting == EnvironmentSetting.KeepPvwaSessionAlive);
+        // Sessions PSM Windows dans un onglet : choix d'équipe, repris par le nouveau poste.
+        Assert.Contains(changes, c => c is { Setting: EnvironmentSetting.PsmDesktopInTab, Sensitive: false });
 
         profile.ApplyTo(fresh);
+        Assert.True(fresh.PsmDesktopInTab);
         Assert.Equal(("pvwa.corp.com", AuthMethod.LDAP, "psmp.corp.com", 2222, "WIN-PSM"),
             (fresh.PvwaUrl, fresh.AuthMethod, fresh.PsmpAddress, fresh.PsmpPort, fresh.WindowsComponent));
         Assert.Equal("", fresh.UserName);

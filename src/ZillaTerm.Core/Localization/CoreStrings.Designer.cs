@@ -1693,5 +1693,14 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("MigrationColTag", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The Remote Desktop server uses no encryption: nothing proves its identity nor protects the connection, it is refused..
+        /// </summary>
+        public static string RdpNoEncryption {
+            get {
+                return ResourceManager.GetString("RdpNoEncryption", resourceCulture);
+            }
+        }
     }
 }

@@ -75,6 +75,12 @@ public sealed class AppSettings
     /// <summary>Sessions SSH dans un onglet ZillaTerm (terminal + navigateur de fichiers) plutôt que Windows Terminal.</summary>
     public bool SshInApp { get; set; } = true;
 
+    /// <summary>
+    /// Sessions PSM Windows (bureau) dans un onglet de ZillaTerm, avec le contrôle Bureau à distance, plutôt que dans
+    /// Connexion Bureau à distance (mstsc). Les composants en application distante (PSM-SSH, WinSCP…) restent dans mstsc.
+    /// </summary>
+    public bool PsmDesktopInTab { get; set; }
+
     /// <summary>Journal de débogage (déroulement des connexions, sans secret), désactivé par défaut.</summary>
     public bool DebugLogEnabled { get; set; }
 

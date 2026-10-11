@@ -139,6 +139,30 @@ public class SshSupportTests
         Assert.Equal("", RemoteFileBrowser.IdText(-1));
     }
 
+    /// <summary>
+    /// PSM en répartition de charge : plusieurs clés derrière une même adresse, chacune acceptée une fois, sans retirer les
+    /// autres ; le certificat TLS du même serveur reste à part.
+    /// </summary>
+    [Fact]
+    public void SeveralKeysOfOneTypeCanBeAcceptedForOneAddress()
+    {
+        var store = new Dictionary<string, string>();
+        KnownHosts.RememberAnother(store, "rdp://PSM.corp.local", 3389, "RDP-RSA", "AAAAAAAAAAAAAAAAAAAA");
+        KnownHosts.RememberAnother(store, "rdp://psm.corp.local", 3389, "RDP-RSA", "BBBBBBBBBBBBBBBBBBBB");
+        KnownHosts.RememberAnother(store, "rdp://psm.corp.local", 3389, "RDP-RSA", "BBBBBBBBBBBBBBBBBBBB");
+
+        Assert.Equal(HostKeyStatus.Trusted, KnownHosts.Check(store, "rdp://psm.corp.local", 3389, "RDP-RSA", "AAAAAAAAAAAAAAAAAAAA"));
+        Assert.Equal(HostKeyStatus.Trusted, KnownHosts.Check(store, "rdp://psm.corp.local", 3389, "RDP-RSA", "BBBBBBBBBBBBBBBBBBBB"));
+        Assert.Equal(HostKeyStatus.Changed, KnownHosts.Check(store, "rdp://psm.corp.local", 3389, "RDP-RSA", "CCCCCCCCCCCCCCCCCCCC"));
+        Assert.Equal(2, KnownHosts.CountKeys(store, "rdp://psm.corp.local", 3389, "RDP-RSA"));
+        Assert.Null(KnownHosts.Known(store, "rdp://psm.corp.local", 3389, "X.509"));
+
+        KnownHosts.Remember(store, "rdp://psm.corp.local", 3389, "X.509", "CERT");
+        Assert.Equal(2, KnownHosts.CountKeys(store, "rdp://psm.corp.local", 3389, "RDP-RSA"));
+        Assert.Equal(HostKeyStatus.Trusted, KnownHosts.Check(store, "rdp://psm.corp.local", 3389, "X.509", "CERT"));
+        Assert.All(store.Keys, k => Assert.Equal("rdp://psm.corp.local:3389", KnownHosts.Server(k)));
+    }
+
     [Fact]
     public void KnownHostsTrustOnFirstUseAndDetectChanges()
     {

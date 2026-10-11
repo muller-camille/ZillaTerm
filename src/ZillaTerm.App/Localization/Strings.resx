@@ -5358,4 +5358,139 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="ColorOther" xml:space="preserve">
     <value>Other ({0})</value>
   </data>
+  <data name="TabModePsm" xml:space="preserve">
+    <value>Via the PSM {0}: session managed by CyberArk</value>
+  </data>
+  <data name="PsmTabNoControl" xml:space="preserve">
+    <value>{0}: Remote Desktop control unavailable, PSM session opened in Remote Desktop Connection.</value>
+  </data>
+  <data name="PsmTabFallback" xml:space="preserve">
+    <value>{0}: the Remote Desktop client could not be used ({1}), PSM session opened in Remote Desktop Connection.</value>
+  </data>
+  <data name="PsmTabRemoteAppNow" xml:space="preserve">
+    <value>The PVWA now returns a remote application instead of a desktop: open the connection again from the list.</value>
+  </data>
+  <data name="InterventionPsmTab" xml:space="preserve">
+    <value>PSM session opened in a ZillaTerm tab, component {0}</value>
+  </data>
+  <data name="RdpCertificateWarningOpen" xml:space="preserve">
+    <value>Windows asks you to confirm the identity of {0}: check the certificate before accepting.</value>
+  </data>
+  <data name="PsmDesktopInTab" xml:space="preserve">
+    <value>Open PSM Windows sessions in a ZillaTerm _tab, otherwise in Remote Desktop Connection</value>
+  </data>
+  <data name="PsmDesktopInTabHelp" xml:space="preserve">
+    <value>The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection.</value>
+  </data>
+  <data name="EnvPsmDesktopInTab" xml:space="preserve">
+    <value>PSM Windows sessions in a tab</value>
+  </data>
+  <data name="PsmHintTab" xml:space="preserve">
+    <value>The PVWA generates an RDP connection: it opens in a ZillaTerm tab (built-in FreeRDP client), Windows desktop or remote application alike.</value>
+  </data>
+  <data name="FreeRdpStartFailed" xml:space="preserve">
+    <value>The FreeRDP Remote Desktop client could not start: {0}</value>
+  </data>
+  <data name="FreeRdpCrashed" xml:space="preserve">
+    <value>The FreeRDP Remote Desktop client stopped unexpectedly (code {0}).</value>
+  </data>
+  <data name="FreeRdpTakenOver" xml:space="preserve">
+    <value>The session was taken over from another connection.</value>
+  </data>
+  <data name="FreeRdpTimeout" xml:space="preserve">
+    <value>Session closed by the server (idle, or logon took too long).</value>
+  </data>
+  <data name="FreeRdpDenied" xml:space="preserve">
+    <value>The server refused the connection.</value>
+  </data>
+  <data name="FreeRdpNameNotFound" xml:space="preserve">
+    <value>Server not found: {0}.</value>
+  </data>
+  <data name="FreeRdpUnreachable" xml:space="preserve">
+    <value>Server unreachable, or connection lost: {0}.</value>
+  </data>
+  <data name="FreeRdpTls" xml:space="preserve">
+    <value>No secure connection possible, or the server certificate was refused.</value>
+  </data>
+  <data name="FreeRdpNegotiation" xml:space="preserve">
+    <value>The server accepts none of the secure connections ZillaTerm offers (TLS, network level authentication; legacy RDP security for a PSM only).</value>
+  </data>
+  <data name="FreeRdpAuthentication" xml:space="preserve">
+    <value>User name or password refused by the server.</value>
+  </data>
+  <data name="FreeRdpAccount" xml:space="preserve">
+    <value>Account locked, expired or disabled, or password to change.</value>
+  </data>
+  <data name="FreeRdpAccessDenied" xml:space="preserve">
+    <value>Logon refused on this server.</value>
+  </data>
+  <data name="FreeRdpOther" xml:space="preserve">
+    <value>FreeRDP Remote Desktop client error.</value>
+  </data>
+  <data name="PsmTabGateway" xml:space="preserve">
+    <value>{0}: connection through a Remote Desktop gateway, PSM session opened in Remote Desktop Connection.</value>
+  </data>
+  <data name="RdpKeyTitle" xml:space="preserve">
+    <value>PSM server key</value>
+  </data>
+  <data name="RdpKeyVerifyHeading" xml:space="preserve">
+    <value>Check the key of this PSM</value>
+  </data>
+  <data name="RdpKeyMessage" xml:space="preserve">
+    <value>This PSM only accepts the legacy RDP security, without TLS: no certificate proves its identity, only the fingerprint of its key, remembered on this computer once trusted. Its encryption (RC4) is also weaker than TLS: ask the CyberArk administrator to enable TLS on the PSM.</value>
+  </data>
+  <data name="RdpKeyFingerprint" xml:space="preserve">
+    <value>Key fingerprint (SHA-256)</value>
+  </data>
+  <data name="RdpKeyDowngradeHeading" xml:space="preserve">
+    <value>This server no longer offers TLS</value>
+  </data>
+  <data name="RdpKeyDowngradeMessage" xml:space="preserve">
+    <value>This server presented a TLS certificate before, and now only offers the legacy RDP security, whose identity cannot be checked: the connection may be intercepted, ZillaTerm refuses it. If the CyberArk administrator confirms that TLS was disabled on the PSM, remove its certificate from the accepted server keys in the Settings, then connect again.</value>
+  </data>
+  <data name="FreeRdpKeyRefused" xml:space="preserve">
+    <value>Server key refused: the session was not opened.</value>
+  </data>
+  <data name="RdpKeyAnotherHeading" xml:space="preserve">
+    <value>New key for this PSM</value>
+  </data>
+  <data name="RdpKeyAnotherMessage" xml:space="preserve">
+    <value>Keys already known for this address: {0}. A new key usually comes from another PSM server behind the load balancer, but it may also reveal an interception. Only trust it if the CyberArk administrator confirms that this address groups several PSM servers. The known keys stay accepted.</value>
+  </data>
+  <data name="RdpKeyTrustAnother" xml:space="preserve">
+    <value>Also trust this key and connect</value>
+  </data>
+  <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
+    <value>I have checked with the CyberArk administrator that this address groups several PSM servers</value>
+  </data>
+  <data name="RdpCertAnotherHeading" xml:space="preserve">
+    <value>New certificate for this PSM</value>
+  </data>
+  <data name="RdpCertAnotherMessage" xml:space="preserve">
+    <value>Certificates already known for this address: {0}. Windows does not trust this one: {1}. Another certificate usually comes from another PSM server behind the load balancing, or from a renewed certificate; it can also point to an interception. Compare its fingerprint with the CyberArk administrator before trusting it.</value>
+  </data>
+  <data name="RdpCertTrustAnother" xml:space="preserve">
+    <value>Also trust it (another PSM server) and connect</value>
+  </data>
+  <data name="RdpCertReplaceKnown" xml:space="preserve">
+    <value>Replace the known certificates (renewal) and connect</value>
+  </data>
+  <data name="RdpCertAckPsm" xml:space="preserve">
+    <value>I have compared this fingerprint with the CyberArk administrator</value>
+  </data>
+  <data name="PsmTabRequesting" xml:space="preserve">
+    <value>Requesting the session from the PVWA…</value>
+  </data>
+  <data name="PsmTabConnecting" xml:space="preserve">
+    <value>Connecting to the PSM {0}…</value>
+  </data>
+  <data name="TabModePsmPending" xml:space="preserve">
+    <value>Via the PSM: session managed by CyberArk</value>
+  </data>
+  <data name="FreeRdpChecking" xml:space="preserve">
+    <value>Checking the identity of {0}…</value>
+  </data>
+  <data name="FreeRdpCheckFailed" xml:space="preserve">
+    <value>The identity of {0} could not be checked: {1}</value>
+  </data>
 </root>

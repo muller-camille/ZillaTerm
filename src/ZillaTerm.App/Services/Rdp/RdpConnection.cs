@@ -17,7 +17,7 @@ namespace ZillaTerm.App.Services.Rdp;
 /// Avant de libérer le contrôle, la connexion retire sa fenêtre de l'onglet : une libération qui tarde ne touche plus
 /// l'interface, puis le thread s'arrête.
 /// </summary>
-internal sealed class RdpConnection
+internal sealed class RdpConnection : IRdpConnection
 {
     private static readonly Guid EventsIid = new("336D5562-EFA8-482E-8CB3-C5C0FC7A7DB6");
     private const int DispIdConnecting = 1;
@@ -69,6 +69,10 @@ internal sealed class RdpConnection
     }
 
     public RdpConnectionSettings Settings => _request.Settings;
+
+    public bool CanFullScreen => true;
+
+    public bool HasWindow => true;
 
     /// <summary>Terminée quand la fenêtre du contrôle a quitté l'onglet (ou n'y est plus : thread arrêté).</summary>
     public Task Detached => _detachedTask.Task;
@@ -174,11 +178,27 @@ internal sealed class RdpConnection
         Subscribe(ocx, DispIdDisconnected, new Action<int>(OnDisconnected));
         Subscribe(ocx, DispIdFatalError, new Action<int>(OnFatalError));
 
-        Subscribe(ocx, DispIdEnterFullScreen, new Action(() => ToSession(s => s.OnFullScreenChanged(this, true))));
+        Subscribe(ocx, DispIdEnterFullScreen, new Action(() =>
+        {
+            DebugLog.Write("rdp", $"{_label} : plein écran (OnEnterFullScreenMode)");
+            ToSession(s => s.OnFullScreenChanged(this, true));
+        }));
         Subscribe(ocx, DispIdLeaveFullScreen, new Action(() =>
         {
+            DebugLog.Write("rdp", $"{_label} : retour dans l'onglet (OnLeaveFullScreenMode)");
             ToSession(s => s.OnFullScreenChanged(this, false));
             FocusControl();
+        }));
+        // Avertissement de Windows sur l'identité du serveur (certificat) : l'onglet le signale.
+        Subscribe(ocx, DispIdAuthenticationWarningDisplayed, new Action(() =>
+        {
+            DebugLog.Write("rdp", $"{_label} : avertissement d'authentification du serveur affiché par Windows");
+            ToSession(s => s.OnAuthenticationWarning(this, true));
+        }));
+        Subscribe(ocx, DispIdAuthenticationWarningDismissed, new Action(() =>
+        {
+            DebugLog.Write("rdp", $"{_label} : avertissement d'authentification du serveur fermé");
+            ToSession(s => s.OnAuthenticationWarning(this, false));
         }));
         if (DebugLog.Enabled)
         {
@@ -220,6 +240,8 @@ internal sealed class RdpConnection
 
         Dispatch.Set(ocx, "DesktopWidth", _sessionSize.Width);
         Dispatch.Set(ocx, "DesktopHeight", _sessionSize.Height);
+        // Toujours dans l'onglet au départ, quel que soit le mode d'affichage demandé ailleurs (fichier du PVWA).
+        Optional(() => Dispatch.Set(ocx, "FullScreen", false));
         Optional(() => Dispatch.Set(ocx, "ColorDepth", s.ColorDepth));
         Optional(() => Dispatch.Set(ocx, "FullScreenTitle", _label));
 
@@ -463,8 +485,6 @@ internal sealed class RdpConnection
         Subscribe(ocx, DispIdConnected, new Action(() => Log("connecté au serveur (OnConnected)")));
         Subscribe(ocx, DispIdWarning, new Action<int>(code => Log($"avertissement du contrôle (OnWarning) {code}")));
         Subscribe(ocx, DispIdRemoteDesktopSizeChange, new Action<int, int>((width, height) => Log($"taille du bureau distant {width}x{height}")));
-        Subscribe(ocx, DispIdAuthenticationWarningDisplayed, new Action(() => Log("avertissement d'authentification du serveur affiché")));
-        Subscribe(ocx, DispIdAuthenticationWarningDismissed, new Action(() => Log("avertissement d'authentification du serveur fermé")));
         Subscribe(ocx, DispIdLogonError, new Action<int>(code => Log($"erreur d'ouverture de session (OnLogonError) {code}")));
         Subscribe(ocx, DispIdServiceMessageReceived, new Action<string>(message => Log($"message du serveur (OnServiceMessageReceived) « {message} »")));
         Subscribe(ocx, DispIdAutoReconnecting2, new Action<int, bool, int, int>((reason, network, attempt, max) =>

@@ -59,6 +59,7 @@ public partial class SettingsDialog : Window
         PsmpGrid.ItemsSource = _psmpRows;
         UpdatePsmpTest();
         SshInAppBox.IsChecked = settings.SshInApp;
+        PsmDesktopInTabBox.IsChecked = settings.PsmDesktopInTab;
         FollowBox.IsChecked = settings.FollowTerminalFolder;
         X11DisplayBox.Text = settings.X11Display;
         DutyTextBox.Text = settings.DutyText;
@@ -269,6 +270,7 @@ public partial class SettingsDialog : Window
         _settings.WindowsComponent = windowsComponent;
         _settings.EnvironmentFile = centralFile;
         _settings.SshInApp = SshInAppBox.IsChecked == true;
+        _settings.PsmDesktopInTab = PsmDesktopInTabBox.IsChecked == true;
         _settings.FollowTerminalFolder = FollowBox.IsChecked == true;
         _settings.X11Display = x11Display;
         _settings.DutyText = EnvironmentProfile.NormalizeDutyText(DutyTextBox.Text);

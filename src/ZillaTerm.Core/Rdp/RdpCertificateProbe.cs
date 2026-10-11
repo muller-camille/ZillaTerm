@@ -19,7 +19,12 @@ public sealed record RdpCertificate(string Subject, string Issuer, string Sha256
 }
 
 /// <summary>Le certificat du serveur Bureau à distance n'a pas pu être lu (pas de TLS, pas de réponse...).</summary>
-public sealed class RdpCertificateException(string message) : Exception(message);
+/// <param name="noTls">Le serveur refuse TLS : il n'accepte que l'ancienne sécurité RDP.</param>
+public sealed class RdpCertificateException(string message, bool noTls = false) : Exception(message)
+{
+    /// <summary>Le serveur refuse TLS : il n'accepte que l'ancienne sécurité RDP (voir <see cref="RdpSecurityProbe"/>).</summary>
+    public bool NoTls { get; } = noTls;
+}
 
 /// <summary>
 /// Lit le certificat d'un serveur Bureau à distance avant de lui confier un mot de passe : demande de connexion X.224
@@ -64,7 +69,7 @@ public static class RdpCertificateProbe
             if ((selected & (ProtocolSsl | ProtocolHybrid | ProtocolHybridEx)) == 0)
             {
                 // Ancienne « sécurité RDP » : pas de certificat vérifiable, le mot de passe serait exposé à un intermédiaire.
-                throw new RdpCertificateException(CoreStrings.RdpNoTls);
+                throw new RdpCertificateException(CoreStrings.RdpNoTls, noTls: true);
             }
 
             return await ReadCertificateAsync(network, host, timeout.Token).ConfigureAwait(false);
@@ -104,7 +109,7 @@ public static class RdpCertificateProbe
             case 0x02:
                 return value;
             case 0x03 when value is SslNotAllowedByServer or SslCertNotOnServer:
-                throw new RdpCertificateException(CoreStrings.RdpNoTls);
+                throw new RdpCertificateException(CoreStrings.RdpNoTls, noTls: true);
             case 0x03:
                 throw new RdpCertificateException(string.Format(CultureInfo.CurrentCulture, CoreStrings.RdpNegotiationRefused, value));
             default:

@@ -33,7 +33,7 @@ internal static class AppDebugLog
             Système : {RuntimeInformation.OSDescription} ({RuntimeInformation.OSArchitecture}), {RuntimeInformation.FrameworkDescription}, processus {RuntimeInformation.ProcessArchitecture}
             Contrôle Bureau à distance (mstscax.dll) : {RdpControlVersion()}
             Langue : {CultureInfo.CurrentUICulture.Name} (réglage « {s.Language} »)
-            Options : authentification {s.AuthMethod}, PSMP « {s.PsmpAddress} » + {s.PsmpServers.Count} par domaine, SSH dans l'onglet {s.SshInApp}, maintien de la session PVWA {s.KeepPvwaSessionAlive}
+            Options : authentification {s.AuthMethod}, PSMP « {s.PsmpAddress} » + {s.PsmpServers.Count} par domaine, SSH dans l'onglet {s.SshInApp}, PSM Windows dans l'onglet {s.PsmDesktopInTab}, maintien de la session PVWA {s.KeepPvwaSessionAlive}
             """);
     }
 

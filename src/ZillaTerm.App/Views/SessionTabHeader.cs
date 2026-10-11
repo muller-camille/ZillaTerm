@@ -28,7 +28,7 @@ public sealed class SessionTabHeader : StackPanel
     public const double TitleMaxWidth = 200;
 
     private readonly Ellipse _dot = new() { Width = 8, Height = 8, StrokeThickness = 1.5, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
-    private readonly string _mode;
+    private string _mode;
     private readonly string? _hint;
 
     /// <param name="label">Nom affiché, déjà numéroté s'il existe un autre onglet du même nom.</param>
@@ -76,6 +76,13 @@ public sealed class SessionTabHeader : StackPanel
     public TextBlock Title { get; }
 
     public SessionTabState State { get; private set; }
+
+    /// <summary>Ligne du mode de l'infobulle, précisée après l'ouverture de l'onglet (adresse du PSM donnée par le PVWA).</summary>
+    public void SetMode(string mode)
+    {
+        _mode = mode;
+        SetState(State);
+    }
 
     public void SetState(SessionTabState state)
     {

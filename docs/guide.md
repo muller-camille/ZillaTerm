@@ -145,6 +145,39 @@ connection from the PVWA and opens the session in Windows **Remote Desktop Conne
 PVWA "Connect" button: the PVWA's RDP file is handed over as is. A component that opens a remote application
 (RemoteApp) opens its windows on this computer's desktop.
 
+**PSM sessions in a tab** ("Open PSM Windows sessions in a ZillaTerm tab" option, Settings › CyberArk, off by
+default): ZillaTerm reads the PVWA file itself and opens the session in a tab with the FreeRDP Remote Desktop client
+it includes: no `.rdp` file, no Windows warning about its publisher, no separate window.
+
+- **Opening**: the tab opens at once, as for a PSMP session; a progress bar stays in it while ZillaTerm requests the
+  session from the PVWA and then connects to the PSM, until the session shows. If the PVWA refuses the request (reason
+  required, unknown component…), the tab closes and the connection window says why.
+- **Desktop or remote application**: a Windows desktop and a remote application alike (RemoteApp:
+  `||PSMInitSession`, PSM-RDP, PSM-SSH, WinSCP components…) show in the tab. The application's windows are placed
+  there as on a desktop; none opens on this computer's desktop.
+- **Size**: the session takes the size of the tab when it connects and keeps it. If the window changes size, the
+  picture is scaled: the PSM opened its connection to the server at that size. The session never goes full screen,
+  even if the PVWA file asks for it.
+- **Keyboard**: when the tab has the keyboard (click in the session), all keys go to the session, Windows shortcuts
+  included (Alt+Tab, Windows key). Click elsewhere in ZillaTerm to get them back.
+- **PSM certificate**: read by ZillaTerm while the progress bar shows, before anything is sent to the PSM (neither
+  token nor user), and checked with the authorities Windows trusts (PSM name, dates, revocation when it can be
+  reached). Trusted: nothing to confirm. Otherwise (self-signed certificate, issued for another name), ZillaTerm shows
+  its fingerprint and asks you to confirm once, then remembers it, like an SSH key. A load-balanced PSM address can
+  hide several servers, each with its own certificate: another certificate is flagged, then accepted as another PSM
+  server (the known ones stay accepted) or in place of the known ones (renewal), after confirmation. After a question,
+  the connection starts with a new token requested from the PVWA. Never a connection without a check, never a
+  question during the connection, never a question from Windows. A PSM certificate issued by the company authority,
+  to ask the CyberArk team for, avoids the confirmations.
+- **Redirections** (clipboard, drives…): those the PVWA asks for, never more. No picture of the session is kept on
+  disk.
+- **Reconnect**, "Duplicate tab": new request to the PVWA (a PSM session token is used only once); reason and ticket
+  stay those of the first connection.
+- The tab shows the server's tag (PROD, QA…) and its coloured frame; "Capture" adds a picture to the log of an
+  intervention being recorded.
+- A connection through a Remote Desktop gateway still opens in Remote Desktop Connection; so does the session if the
+  FreeRDP client cannot be launched on the computer (computer policy, for example): the status bar says so.
+
 - **PSM component**: deduced from the platform (`PSM-RDP` for Windows, `PSM-SSH` for Unix and network,
   `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Tick "Remember this component" to keep it for the whole platform. Your
   PVWA may name its components differently (for example `WIN-PSM`): enter the name its "Connect" button offers; the
@@ -278,7 +311,7 @@ each PSMP is checked on its first connection. The tab tooltip names the PSMP use
   The terminal moves to a separate window and the session goes on. The tab keeps its place ("Show the window",
   "Bring it back here") and the Files tab works on this session when it is selected. Closing the separate window
   brings the terminal back to its tab without closing the session. Remote desktop tabs do not detach (use "Full
-  screen"); PSM sessions already open in Windows Remote Desktop Connection, a window of its own.
+  screen"); a PSM session opened in Windows Remote Desktop Connection is already a window of its own.
 - **Parallel view** (up to 8 sessions on screen): "Parallel" toolbar button (greyed out while no SSH session is
   open), or right-click an SSH tab → "Add to the
   parallel view". Tick the open SSH sessions to show together (8 at most): they are laid out as a grid in the
@@ -858,6 +891,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | CyberArk | Default PSMP, port | PSM for SSH server; when set (or a PSMP by domain), Unix accounts open over SSH by default (as files only for an "SFTP" platform); without any PSMP, SSH and SFTP are disabled | empty, 22 |
 | CyberArk | PSMP by domain | Other PSMPs (address, port, domain served); each server goes through the one of the domain closest to its own (see [PSMP by domain](#psmp-by-domain)); "Which PSMP for the server" to check | none |
 | CyberArk | Windows accounts component | PSM component of Windows accounts (domain or local) without a component remembered for their platform, for example `WIN-PSM` | empty = `PSM-RDP` |
+| CyberArk | PSM Windows sessions in a tab | PSM session (desktop or remote application) in a ZillaTerm tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); spread by the environment file | no |
 | CyberArk | Component per platform | Platform (PVWA ID, for example `WinDomain`) / PSM component table: "Add a component", "Remove the line", editable cells; takes precedence over the Windows accounts component. "Remember this component for platform" (connection window) adds a line to it | empty |
 | Terminal | SSH in ZillaTerm | Built-in terminal and Files tab; otherwise Windows Terminal | yes |
 | Terminal | Terminal colours, font size | Palette (Campbell, One Half, Solarized…) and font size of the SSH terminals | Campbell, 14 |
@@ -951,7 +985,11 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
   if it belongs to another account (TEMP pointing to a shared folder), `%LOCALAPPDATA%\ZillaTerm\Temp` is used
   instead. The paths below are relative to this folder.
 - **PSM sessions**: the PVWA's RDP file (one-time PSM token) is written to the temporary folder for `mstsc`, which
-  checks its signature, then deleted after 60 s or on exit.
+  checks its signature, then deleted after 60 s or on exit. In a tab (option), it is never written to disk: ZillaTerm
+  reads it in memory and passes it to the FreeRDP client on its standard input (token absent from the command line
+  and from the logs). The PSM certificate (or its key) is read and checked by ZillaTerm before the client is launched
+  (trusted by Windows, pinned or confirmed); the client then accepts no other, shows no Windows window and reads no
+  saved Windows credentials.
 - **Simultaneous typing** (parallel view): off every time the view opens, shown by the amber "ON (n)" button, an
   amber banner and frame that name the sessions concerned; excluded sessions are marked "excluded", an added session
   is not included by default, and pasting several lines into several
@@ -1094,21 +1132,72 @@ resolved (one round trip each); beyond that, a link shows as a file and opening 
 
 ### Remote desktop sessions
 
-PSM sessions open with the RDP file returned by `PSMConnect`, handed as is to Remote Desktop Connection (`mstsc`):
-it checks its signature and handles a desktop as well as a remote application (RemoteApp). The debug log records its
-structure (token, signature and arguments masked). Versions 0.4 to 0.6 opened these sessions in a tab: a PSM that
-only accepts remote applications did not work well there (place and size of the windows on the server, mouse), hence
-the return to `mstsc`.
+PSM sessions open with the RDP file returned by `PSMConnect`. By default it is handed as is to Remote Desktop
+Connection (`mstsc`): it checks its signature and handles a desktop as well as a remote application (RemoteApp). The
+debug log records its structure (token, signature and arguments masked).
 
-Remote desktop tabs (direct remote desktop from KeePass databases) host the Windows ActiveX control (`mstscax.dll`, the
-most recent `MsRdpClient` class available), set up as a direct connection: network level authentication (NLA),
-warning if the server is not recognized, redirections off except the clipboard, persistent bitmap cache off. Before
-each connection, ZillaTerm reads the server's TLS certificate itself (X.224 connection request, then a TLS negotiation
-stopped as soon as the certificate is received: neither user name nor password is sent) to pin it
-(`rdp://server:port` among the accepted server keys); the ActiveX control does not allow imposing this fingerprint
-on it. The remote desktop resolution
-follows the tab size. Session ends and connection errors are explained in the tab with the Windows message and codes
-(reason, extended reason). An integration test (`rdp-integration` workflow) opens a real session on the CI machine.
+With the "PSM Windows sessions in a tab" option, the file is read by ZillaTerm: PSM address and port, user, start
+program (`alternate shell`) or remote application (`remoteapplicationprogram`, name and arguments), security,
+gateway, load balancing, redirections (`drivestoredirect:s:*` only for drives), effects. The file's display mode
+(`screen mode id`, size, monitors) is ignored. A PSM session is nested: inside its own session, the PSM opens the
+connection to the target server at the same size, and changing the PSM session's resolution afterwards does not
+change it for the target (cut-off desktop, shifted clicks). Hence the fixed size and scaling of these sessions;
+direct connections follow the tab size.
+
+**FreeRDP client.** PSM sessions in a tab go through the FreeRDP Windows client (`wfreerdp`), built by
+`tools/freerdp-build.sh`: FreeRDP 3.32.1 and OpenSSL 3.5.9 at pinned versions (verified commit, archive verified by
+its SHA-256 sum), statically linked (a single executable, which uses only Windows DLLs), with generic patches, nothing
+specific to ZillaTerm, each one meant to be offered to the FreeRDP project (branch `patches-3.32.1` of the
+`muller-camille/FreeRDP` fork): connection file read from standard input, legacy "RDP security" subject to
+`/cert:deny` and to the fingerprints, remote applications answering the server and shown in the parent window,
+keyboard and mouse wheel, window responsive between reconnection attempts, DPI of the parent window, library search
+path. ZillaTerm includes it, copies it on first use to `%LOCALAPPDATA%\ZillaTerm\FreeRDP\<fingerprint>` (folder
+reserved for the user), checks its SHA-256 fingerprint before each launch and keeps it open read-only while it runs.
+
+It drives it with standard FreeRDP options only. The PVWA file, rewritten by ZillaTerm (PSM, user, start program or
+remote application and its arguments, which carry the token), is passed on its standard input (`-` as the connection
+file): PSM token and password are neither on the command line nor on disk. It holds an empty password: the client
+asks for nothing and never reads saved Windows credentials (`TERMSRV/…`); `/from-stdin` keeps it from opening a
+Windows credentials window. `/cert:deny` followed by the fingerprints accepted by ZillaTerm
+(`fingerprint:sha256:…`): it refuses any other certificate or key without asking. Its configuration folder is a
+ZillaTerm folder, kept empty.
+
+**Server identity, before the connection.** ZillaTerm reads the PSM certificate itself before launching the client
+(X.224 connection request, then a TLS negotiation stopped as soon as the certificate is received: neither token nor
+user is sent) and checks it: chain up to an authority Windows trusts, name, usage, revocation when it can be reached;
+otherwise fingerprint pinned (`rdp://server:port` among the accepted server keys) or confirmed by the user. A PSM that
+only accepts the old "RDP security" without TLS: ZillaTerm reads its key the same way (connection request whose answer
+holds the key; nothing else is sent) and pins it (`rdp://server:port`, type `RDP-RSA`; fingerprint: SHA-256 of the
+key in DER PKCS#1, the one FreeRDP compares), with 128-bit encryption at least; a PSM without encryption is refused, and
+so is a key from a server that has already presented a TLS certificate (TLS removed: possible interception). Several
+certificates and keys per address (load-balanced PSM: one per server, each confirmed once): the client receives them
+all. Questions come before the client is launched, never during the connection; once one is answered, the connection
+starts with a new token requested from the PVWA (the PSM token only works once and expires quickly). If the client
+still refuses the server (another server behind the same address), ZillaTerm reads its identity again and asks about
+it if it is new (twice at most per connection).
+
+Hardening: no library loaded from outside its folder and System32 (the virtual channels are compiled into the
+executable), OpenSSL with no module, engine or configuration file loaded at run time, its compiled-in folders being
+Windows folders reserved for administrators; log, proxy and OpenSSL variables removed from its environment. The process
+is in a job object closed along with ZillaTerm: it does not outlive it. Its window is a child of the tab
+(`/parent-window` option); a click inside gives the keyboard to the tab, from which FreeRDP's keyboard hook sends the
+keys to the session. A remote application is shown in this window (session surface, like a desktop) instead of
+separate windows. Closing the tab closes this window (end of session as with the client's close button). Session end
+and errors: the FreeRDP code (`ERRINFO_…`, `ERRCONNECT_…`, exit code of the client) is explained in the tab. Limit: the
+FreeRDP Windows client is marked "unmaintained" by the FreeRDP project (the protocol core itself is maintained);
+ZillaTerm pins its version and updates it with its patches. The integration tests (`rdp-integration` workflow) open a
+desktop and a remote application with it on the CI machine: size, clicks, keys, refused certificate, legacy RDP
+security key.
+
+**Windows Remote Desktop control.** Direct remote desktop from KeePass databases, and desktop PSM sessions when the
+FreeRDP client is not included (build without it), host the Windows ActiveX control (`mstscax.dll`, the most recent
+`MsRdpClient` class available). A direct connection is set up this way: network level authentication (NLA), warning
+if the server is not recognized, redirections off except the clipboard, persistent bitmap cache off. Before each
+connection, ZillaTerm reads the server's TLS certificate itself (X.224 connection request, then a TLS negotiation
+stopped as soon as the certificate is received: neither user name nor password is sent) to pin it. The ActiveX
+control does not allow imposing this fingerprint on it: for a PSM session without FreeRDP, Windows checks the
+certificate, as with `mstsc` (authentication level 2 at least). Session ends and connection errors are explained in
+the tab with the Windows message and codes (reason, extended reason).
 
 **One thread per remote desktop connection.** The control, its window and its events live on a separate thread (STA,
 with its own message loop); the interface never waits for it. The tab holds a window of the interface thread, in
@@ -1190,6 +1279,15 @@ sh or fish, following is not set up and nothing stays on screen.
 | "you do not have the right to modify this file (rights of the network share)" | The share is read-only for you: ask its owner for write access. The list can still be used. |
 | A shared list shows "(unreadable)" | Share unreachable or damaged file: the tooltip gives the error. If the file is damaged, copy the most recent version of the `name.versions` folder in its place. |
 | Understanding a connection failure | Settings → Debug log, reproduce the problem, then Settings → "Show the debug log file". |
+| A PSM session in a tab asks you to confirm the PSM certificate | Windows does not trust this certificate (self-signed, or issued for another name): compare the fingerprint with the CyberArk team before accepting; it is then remembered. A certificate issued by the company authority for the PSM name removes this question. |
+| PSM session: "New certificate for this PSM" | The PSM address probably groups several servers (load balancing), each with its own self-signed certificate, or the certificate was renewed: compare the fingerprint with the CyberArk administrator, then "Also trust it" (another PSM server) or "Replace the known certificates" (renewal). |
+| PSM session: "The identity of … could not be checked" | ZillaTerm could not read the PSM certificate before the connection (PSM unreachable, port filtered, answer that is not Remote Desktop): the reason follows the message. Nothing was sent to the PSM. |
+| A PSM session opens in Remote Desktop Connection despite the "in a tab" option | Connection through a Remote Desktop gateway, or FreeRDP client cannot be launched on the computer (computer policy): the status bar says so. |
+| Alt+Tab or the Windows key no longer respond | The tab of a PSM session has the keyboard: all keys go to the session. Click elsewhere in ZillaTerm (another tab, the list). |
+| PSM session: "Check the key of this PSM" | The PSM only accepts the legacy "RDP security", without TLS: only the fingerprint of its key identifies it. Accept it on first use (it is remembered) and ask the CyberArk administrator to enable TLS on the PSM. |
+| PSM session: "New key for this PSM" | The PSM address probably groups several servers (load balancing), each with its own key: trust it if the CyberArk administrator confirms. The keys already accepted stay accepted. |
+| PSM session: "This server no longer offers TLS" | The connection may be intercepted: only continue with the CyberArk administrator's agreement (see the message). |
+| PSM session: "The Remote Desktop server uses no encryption…" | The PSM (or a device in between) offers the old RDP security without encryption: nothing would protect the token. Alert the CyberArk administrator. |
 | A direct remote desktop tab (KeePass) shows "Remote Desktop control error" | Report the code shown (if the Remote Desktop control is missing from the computer, the connection goes through `mstsc`). |
 | VNC: "The VNC server offers no authentication supported by ZillaTerm…" | The server requires its vendor's own authentication (Windows account, VeNCrypt encryption…): enable "VNC password" authentication on the server. |
 | VNC: "No VNC answer from the server within 30 seconds" | Wrong port (5900 + display number) or a service other than VNC at this address. |

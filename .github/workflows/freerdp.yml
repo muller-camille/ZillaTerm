@@ -1,0 +1,53 @@
+name: freerdp
+
+# Client Bureau à distance FreeRDP de ZillaTerm (tools/freerdp-build.sh) : FreeRDP et ses correctifs (fork
+# muller-camille/FreeRDP) et OpenSSL à des versions figées, compilés depuis Linux pour Windows (mingw-w64). Appelé par les
+# workflows qui compilent ZillaTerm : l'exécutable est déposé en artefact « freerdp », puis embarqué dans ZillaTerm.
+# En cache tant que le script (versions et commit figés) et la chaîne de compilation ne changent pas, sauf pour une publication
+# (use-cache: false), toujours recompilée.
+on:
+  workflow_call:
+    inputs:
+      use-cache:
+        type: boolean
+        default: true
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freerdp:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Cache
+        id: cache
+        if: ${{ inputs.use-cache != false }}
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: local-packages/freerdp
+          key: freerdp-${{ hashFiles('tools/freerdp-build.sh', 'tools/freerdp/**') }}
+
+      - name: Outils de compilation
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends mingw-w64 ninja-build
+
+      - name: Compilation
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: bash tools/freerdp-build.sh
+
+      - name: Versions et empreinte
+        run: cat local-packages/freerdp/BUILD.txt
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: freerdp
+          path: local-packages/freerdp
+          if-no-files-found: error
+          retention-days: 7

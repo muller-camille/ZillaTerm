@@ -5358,4 +5358,139 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="ColorOther" xml:space="preserve">
     <value>Autre ({0})</value>
   </data>
+  <data name="TabModePsm" xml:space="preserve">
+    <value>Via le PSM {0} : session gérée par CyberArk</value>
+  </data>
+  <data name="PsmTabNoControl" xml:space="preserve">
+    <value>{0} : contrôle Bureau à distance indisponible, session PSM ouverte dans Connexion Bureau à distance.</value>
+  </data>
+  <data name="PsmTabFallback" xml:space="preserve">
+    <value>{0} : client Bureau à distance inutilisable ({1}), session PSM ouverte dans Connexion Bureau à distance.</value>
+  </data>
+  <data name="PsmTabRemoteAppNow" xml:space="preserve">
+    <value>Le PVWA renvoie maintenant une application distante au lieu d'un bureau : rouvrez la connexion depuis la liste.</value>
+  </data>
+  <data name="InterventionPsmTab" xml:space="preserve">
+    <value>Session PSM ouverte dans un onglet de ZillaTerm, composant {0}</value>
+  </data>
+  <data name="RdpCertificateWarningOpen" xml:space="preserve">
+    <value>Windows demande de confirmer l'identité de {0} : vérifiez le certificat avant d'accepter.</value>
+  </data>
+  <data name="PsmDesktopInTab" xml:space="preserve">
+    <value>Ouvrir les sessions PSM Windows dans un _onglet de ZillaTerm, sinon dans Connexion Bureau à distance</value>
+  </data>
+  <data name="PsmDesktopInTabHelp" xml:space="preserve">
+    <value>La session prend la taille de l'onglet et s'ouvre avec le client FreeRDP intégré à ZillaTerm, bureau comme application distante (PSM-RDP, PSM-SSH, WinSCP…), sans fenêtre à part. ZillaTerm vérifie le certificat du PSM (approuvé par Windows, sinon empreinte confirmée une fois puis retenue), et les redirections restent celles demandées par le PVWA, jamais plus. Une connexion par une passerelle Bureau à distance s'ouvre toujours dans la Connexion Bureau à distance.</value>
+  </data>
+  <data name="EnvPsmDesktopInTab" xml:space="preserve">
+    <value>Sessions PSM Windows dans un onglet</value>
+  </data>
+  <data name="PsmHintTab" xml:space="preserve">
+    <value>Le PVWA génère une connexion RDP : elle s'ouvre dans un onglet de ZillaTerm (client FreeRDP intégré), bureau Windows comme application distante.</value>
+  </data>
+  <data name="FreeRdpStartFailed" xml:space="preserve">
+    <value>Le client Bureau à distance FreeRDP n'a pas pu démarrer : {0}</value>
+  </data>
+  <data name="FreeRdpCrashed" xml:space="preserve">
+    <value>Le client Bureau à distance FreeRDP s'est arrêté de façon inattendue (code {0}).</value>
+  </data>
+  <data name="FreeRdpTakenOver" xml:space="preserve">
+    <value>La session a été reprise depuis une autre connexion.</value>
+  </data>
+  <data name="FreeRdpTimeout" xml:space="preserve">
+    <value>Session fermée par le serveur (inactivité, ou ouverture de session trop longue).</value>
+  </data>
+  <data name="FreeRdpDenied" xml:space="preserve">
+    <value>Le serveur a refusé la connexion.</value>
+  </data>
+  <data name="FreeRdpNameNotFound" xml:space="preserve">
+    <value>Serveur introuvable : {0}.</value>
+  </data>
+  <data name="FreeRdpUnreachable" xml:space="preserve">
+    <value>Serveur injoignable, ou connexion coupée : {0}.</value>
+  </data>
+  <data name="FreeRdpTls" xml:space="preserve">
+    <value>Connexion sécurisée impossible, ou certificat du serveur refusé.</value>
+  </data>
+  <data name="FreeRdpNegotiation" xml:space="preserve">
+    <value>Le serveur n'accepte aucune des connexions sécurisées proposées par ZillaTerm (TLS, authentification réseau ; ancienne sécurité RDP pour un PSM seulement).</value>
+  </data>
+  <data name="FreeRdpAuthentication" xml:space="preserve">
+    <value>Identifiant ou mot de passe refusé par le serveur.</value>
+  </data>
+  <data name="FreeRdpAccount" xml:space="preserve">
+    <value>Compte bloqué, expiré ou désactivé, ou mot de passe à changer.</value>
+  </data>
+  <data name="FreeRdpAccessDenied" xml:space="preserve">
+    <value>Ouverture de session refusée sur ce serveur.</value>
+  </data>
+  <data name="FreeRdpOther" xml:space="preserve">
+    <value>Erreur du client Bureau à distance FreeRDP.</value>
+  </data>
+  <data name="PsmTabGateway" xml:space="preserve">
+    <value>{0} : connexion par une passerelle Bureau à distance, session PSM ouverte dans Connexion Bureau à distance.</value>
+  </data>
+  <data name="RdpKeyTitle" xml:space="preserve">
+    <value>Clé du serveur PSM</value>
+  </data>
+  <data name="RdpKeyVerifyHeading" xml:space="preserve">
+    <value>Vérifier la clé de ce PSM</value>
+  </data>
+  <data name="RdpKeyMessage" xml:space="preserve">
+    <value>Ce PSM n'accepte que l'ancienne sécurité RDP, sans TLS : aucun certificat ne prouve son identité, seule l'empreinte de sa clé, retenue sur ce poste une fois approuvée. Son chiffrement (RC4) est aussi plus faible que TLS : demandez à l'administrateur CyberArk d'activer TLS sur le PSM.</value>
+  </data>
+  <data name="RdpKeyFingerprint" xml:space="preserve">
+    <value>Empreinte de la clé (SHA-256)</value>
+  </data>
+  <data name="RdpKeyDowngradeHeading" xml:space="preserve">
+    <value>Ce serveur ne propose plus TLS</value>
+  </data>
+  <data name="RdpKeyDowngradeMessage" xml:space="preserve">
+    <value>Ce serveur présentait un certificat TLS et ne propose plus que l'ancienne sécurité RDP, dont l'identité ne peut pas être vérifiée : la connexion est peut-être interceptée, ZillaTerm la refuse. Si l'administrateur CyberArk confirme que TLS a été désactivé sur le PSM, retirez son certificat des clés de serveurs acceptées dans les Paramètres, puis reconnectez-vous.</value>
+  </data>
+  <data name="FreeRdpKeyRefused" xml:space="preserve">
+    <value>Clé du serveur refusée : la session n'a pas été ouverte.</value>
+  </data>
+  <data name="RdpKeyAnotherHeading" xml:space="preserve">
+    <value>Nouvelle clé pour ce PSM</value>
+  </data>
+  <data name="RdpKeyAnotherMessage" xml:space="preserve">
+    <value>Clés déjà connues pour cette adresse : {0}. Une nouvelle clé vient en général d'un autre serveur PSM derrière la répartition de charge, mais elle peut aussi signaler une interception. Ne lui faites confiance que si l'administrateur CyberArk confirme que cette adresse regroupe plusieurs serveurs PSM. Les clés déjà connues restent acceptées.</value>
+  </data>
+  <data name="RdpKeyTrustAnother" xml:space="preserve">
+    <value>Faire aussi confiance à cette clé et se connecter</value>
+  </data>
+  <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
+    <value>J'ai vérifié avec l'administrateur CyberArk que cette adresse regroupe plusieurs serveurs PSM</value>
+  </data>
+  <data name="RdpCertAnotherHeading" xml:space="preserve">
+    <value>Nouveau certificat pour ce PSM</value>
+  </data>
+  <data name="RdpCertAnotherMessage" xml:space="preserve">
+    <value>Certificats déjà connus pour cette adresse : {0}. Windows n'approuve pas celui-ci : {1}. Un autre certificat vient en général d'un autre serveur PSM derrière la répartition de charge, ou d'un certificat renouvelé ; il peut aussi signaler une interception. Comparez son empreinte avec l'administrateur CyberArk avant de lui faire confiance.</value>
+  </data>
+  <data name="RdpCertTrustAnother" xml:space="preserve">
+    <value>Lui faire aussi confiance (autre serveur PSM) et se connecter</value>
+  </data>
+  <data name="RdpCertReplaceKnown" xml:space="preserve">
+    <value>Remplacer les certificats connus (renouvellement) et se connecter</value>
+  </data>
+  <data name="RdpCertAckPsm" xml:space="preserve">
+    <value>J'ai comparé cette empreinte avec l'administrateur CyberArk</value>
+  </data>
+  <data name="PsmTabRequesting" xml:space="preserve">
+    <value>Demande de la session au PVWA…</value>
+  </data>
+  <data name="PsmTabConnecting" xml:space="preserve">
+    <value>Connexion au PSM {0}…</value>
+  </data>
+  <data name="TabModePsmPending" xml:space="preserve">
+    <value>Via le PSM : session gérée par CyberArk</value>
+  </data>
+  <data name="FreeRdpChecking" xml:space="preserve">
+    <value>Vérification de l'identité de {0}…</value>
+  </data>
+  <data name="FreeRdpCheckFailed" xml:space="preserve">
+    <value>Identité de {0} impossible à vérifier : {1}</value>
+  </data>
 </root>

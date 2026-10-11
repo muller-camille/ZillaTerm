@@ -19,6 +19,8 @@
                 <TextBlock x:Name="StatusLine" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
             </DockPanel>
         </Border>
+        <!-- Cadre de la couleur de l'étiquette du serveur (PROD, QA…), autour du bureau distant. -->
+        <Border x:Name="TagFrame" BorderThickness="0">
         <Grid x:Name="Body" Background="#0C0C0C">
             <!-- Le contrôle Bureau à distance (fenêtre Windows) est inséré ici ; rien de WPF ne peut s'afficher par-dessus. -->
             <Border x:Name="Overlay" Background="#0C0C0C">
@@ -26,10 +28,14 @@
                     <Image Source="{DynamicResource IconWindows}" Width="44" Height="44" Margin="0,0,0,12" />
                     <TextBlock x:Name="OverlayText" Foreground="White" FontSize="15" TextAlignment="Center" TextWrapping="Wrap" />
                     <TextBlock x:Name="OverlayDetail" Foreground="#9AA5B1" TextAlignment="Center" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <!-- Connexion en cours (demande au PVWA, connexion au PSM) : jusqu'à l'affichage du bureau. -->
+                    <ProgressBar x:Name="OverlayProgress" IsIndeterminate="True" Height="4" Width="260" Margin="0,16,0,0" Visibility="Collapsed"
+                                 AutomationProperties.LabeledBy="{Binding ElementName=OverlayText}" />
                     <Button x:Name="ReconnectButton" Content="{x:Static loc:Strings.Reconnect}" HorizontalAlignment="Center"
                             Padding="12,2" Margin="0,16,0,0" Click="OnReconnect" Visibility="Collapsed" />
                 </StackPanel>
             </Border>
         </Grid>
+        </Border>
     </DockPanel>
 </UserControl>

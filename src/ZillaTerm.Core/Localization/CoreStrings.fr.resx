@@ -558,4 +558,7 @@
   <data name="MigrationColTag" xml:space="preserve">
     <value>Étiquette</value>
   </data>
+  <data name="RdpNoEncryption" xml:space="preserve">
+    <value>Le serveur Bureau à distance n'utilise aucun chiffrement : rien ne prouve son identité ni ne protège la connexion, elle est refusée.</value>
+  </data>
 </root>
