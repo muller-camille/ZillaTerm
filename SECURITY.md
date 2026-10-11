@@ -39,8 +39,8 @@ Out of scope, to be reported to their maintainers:
 - vulnerabilities in CyberArk products (PVWA, PSM, PSMP) → CyberArk;
 - vulnerabilities in [SSH.NET](https://github.com/sshnet/SSH.NET), [FluentFTP](https://github.com/robinrodricks/FluentFTP),
   [Konscious.Security.Cryptography](https://github.com/kmaragon/Konscious.Security.Cryptography) (Argon2) or .NET → their projects
-  (except in the two patches that ZillaTerm carries on SSH.NET, SFTP longname and X11 forwarding, built by
-  `tools/sshnet-patched.sh`: report them here);
+  (except in the two patches that ZillaTerm carries on SSH.NET, SFTP longname and X11 forwarding, built by the release
+  workflow of the fork and fetched by `tools/sshnet-patched.sh`: report them here);
 - vulnerabilities in the Windows Remote Desktop client or in KeePass / KeePassXC → Microsoft or their projects.
 
 The security measures built into the application are summed up in the [README](README.md#security) and described in

@@ -178,8 +178,9 @@ Dipendenze esterne: [SSH.NET](https://github.com/sshnet/SSH.NET), [FluentFTP](ht
 e [Konscious.Security.Cryptography](https://github.com/kmaragon/Konscious.Security.Cryptography) (Argon2), tutte
 con licenza MIT. SSH.NET è la versione 2026.0.0 più due correzioni, una che conserva i nomi del proprietario e del
 gruppo negli elenchi SFTP e una che aggiunge l'inoltro X11 delle shell, compilata da
-[un fork](https://github.com/muller-camille/SSH.NET) a un commit fisso da `tools/sshnet-patched.sh`, in attesa di una
-versione di SSH.NET che le includa.
+[un fork](https://github.com/muller-camille/SSH.NET) a un commit fisso dal suo workflow di release, poi scaricata e
+verificata da `tools/sshnet-patched.sh` (somma SHA-256 fissa, attestazione di provenienza), in attesa di una versione
+di SSH.NET che le includa.
 
 ### Traduzioni
 
@@ -193,10 +194,12 @@ codice a `UiLanguage.Supported`.
 ### Compilare e testare
 
 Con l'[SDK .NET 10](https://dotnet.microsoft.com/download/dotnet/10.0) e Git (Git Bash su Windows); il primo comando
-compila il pacchetto SSH.NET con la correzione in `local-packages` (basta una volta):
+scarica il pacchetto SSH.NET con la correzione in `local-packages` (basta una volta), il secondo il client FreeRDP
+integrato per le sessioni PSM in una scheda (facoltativo: senza di esso, l'applicazione usa il controllo di Windows):
 
 ```powershell
 bash tools/sshnet-patched.sh
+bash tools/freerdp-download.sh
 dotnet test ZillaTerm.sln
 dotnet run --project src/ZillaTerm.App
 ```

@@ -3,30 +3,31 @@
 # qui les intègre : la ligne « longname » des listes SFTP version 3 (noms du propriétaire et du groupe) et le transfert
 # X11 des shells (comme ssh -X, cookie factice vérifié puis remplacé avant d'atteindre le serveur X local).
 #
-# Compile le paquet depuis le fork muller-camille/SSH.NET, au commit figé ci-dessous (vérifié après le clone), et le
-# dépose dans local-packages/, où nuget.config prend SSH.NET et lui seul. À lancer une fois avant de compiler
-# ZillaTerm (Git Bash sous Windows) ; la CI, la publication et l'image de l'OSS Scanner le lancent aussi.
+# Paquet compilé par le workflow « release » du fork muller-camille/SSH.NET (branche ci) depuis un commit figé, et
+# publié dans une release ; téléchargé ici, vérifié par sa somme SHA-256 figée ci-dessous et par l'attestation de
+# provenance de GitHub (voir tools/fork-release.sh), puis déposé dans local-packages/, où nuget.config prend SSH.NET et
+# lui seul. À lancer une fois avant de compiler ZillaTerm (Git Bash sous Windows) ; la CI, la publication et l'image de
+# l'OSS Scanner le lancent aussi.
 set -euo pipefail
 
-repository=https://github.com/muller-camille/SSH.NET
-commit=c3245ef61d4bf06c986d7e486d1b7de4686320d7
+repository=muller-camille/SSH.NET
 version=2026.0.1-zillaterm.2.gc3245ef61d
+sha256=a336b523da95a2bbe6aba2a1adbc1fcc51c04f0fb9172f7d7d7d287ceb88f80c
 
 root=$(cd "$(dirname "$0")/.." && pwd)
+. "$root/tools/fork-release.sh"
 package="$root/local-packages/SSH.NET.$version.nupkg"
-if [ -f "$package" ]; then
+if [ -f "$package" ] && echo "$sha256  $package" | sha256sum -c --status; then
   echo "SSH.NET $version : déjà dans local-packages."
   exit 0
 fi
 
-# Hors du dossier de ZillaTerm : SSH.NET a ses propres nuget.config, global.json et Directory.Build.props.
+mkdir -p "$root/local-packages"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-# Historique complet : Nerdbank.GitVersioning en tire le numéro de version du paquet.
-git clone --quiet "$repository" "$work/sshnet"
-git -C "$work/sshnet" checkout --quiet --detach "$commit"
-test "$(git -C "$work/sshnet" rev-parse HEAD)" = "$commit"
-# Sans les variables de GitHub Actions, le numéro de version ne dépend pas de la branche de ZillaTerm compilée.
-env -u GITHUB_ACTIONS -u GITHUB_REF dotnet pack "$work/sshnet/src/Renci.SshNet" -c Release -o "$root/local-packages"
-test -f "$package"
-echo "SSH.NET $version : compilé depuis $repository au commit $commit."
+download="$work/$(basename "$package")"
+fork_download "$repository" "v$version" "SSH.NET.$version.nupkg" "$download"
+fork_check_sha256 "$download" "$sha256"
+fork_check_provenance "$download" "$repository"
+mv "$download" "$package"
+echo "SSH.NET $version : release v$version de $repository."

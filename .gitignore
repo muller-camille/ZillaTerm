@@ -6,5 +6,5 @@ obj/
 TestResults/
 publish/
 
-# Paquet SSH.NET patché, construit par tools/sshnet-patched.sh
+# Paquet SSH.NET patché et client FreeRDP, téléchargés par tools/sshnet-patched.sh et tools/freerdp-download.sh
 local-packages/

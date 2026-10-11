@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <!--
-    Client Bureau à distance FreeRDP de ZillaTerm (tools/freerdp-build.sh), embarqué s'il a été compilé : sessions PSM
+    Client Bureau à distance FreeRDP de ZillaTerm (tools/freerdp-download.sh), embarqué s'il est là : sessions PSM
     dans un onglet, bureau ou application distante. Sans lui, l'application se compile et utilise le contrôle de Windows.
   -->
   <ItemGroup Condition="Exists('..\..\local-packages\freerdp\wfreerdp.exe')">

@@ -1,10 +1,9 @@
 name: build
 
 # Compilation, tests et exécutable à chaque PR et sur main ; sessions Bureau à distance réelles (job rdp) quand une PR
-# touche au Bureau à distance, ou à la demande. Les dépendances compilées depuis leurs forks le sont une seule fois par
-# passage, en cache tant que leur script (versions et commits figés) ne change pas, et partagées par les jobs Windows :
-# client FreeRDP (freerdp.yml) et SSH.NET patché. Un nouveau commit sur une PR annule le passage en cours.
-# La publication (release.yml) recompile tout, sans cache.
+# touche au Bureau à distance, ou à la demande. Rien n'est compilé depuis les forks : le client FreeRDP et SSH.NET
+# patché sont les binaires publiés par leurs releases, vérifiés (somme SHA-256 figée, attestation de provenance).
+# Un nouveau commit sur une PR annule le passage en cours.
 on:
   push:
     branches: [main]
@@ -19,41 +18,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  freerdp:
-    uses: ./.github/workflows/freerdp.yml
-
-  # SSH.NET 2026.0.0 patché (noms du propriétaire et du groupe en SFTP, transfert X11), compilé depuis le fork à un
-  # commit figé (tools/sshnet-patched.sh) : un paquet NuGet, le même quel que soit le système qui le compile.
-  sshnet:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-
-      - name: Cache
-        id: cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: local-packages/SSH.NET.*
-          key: sshnet-${{ hashFiles('tools/sshnet-patched.sh') }}
-
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
-        if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Compilation
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: bash tools/sshnet-patched.sh
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: sshnet
-          path: local-packages/SSH.NET.*
-          if-no-files-found: error
-          retention-days: 7
-
   # Sessions réelles (job rdp) : à la demande, ou pour une PR qui touche au Bureau à distance.
   changes:
     runs-on: ubuntu-24.04
@@ -76,7 +40,7 @@ jobs:
           elif [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             # Commit de fusion de la PR : son premier parent est la branche de base.
             git diff --name-only HEAD^1 HEAD | tee changed.txt
-            if grep -qE '^(src/ZillaTerm\.App/Services/Rdp/|src/ZillaTerm\.Core/Rdp/|src/ZillaTerm\.App/Views/MainWindow\.Rdp\.cs$|tests/ZillaTerm\.App\.Tests/(RdpSessionTests|Win32Input)\.cs$|\.github/workflows/(build|freerdp)\.yml$|tools/freerdp)' changed.txt; then
+            if grep -qE '^(src/ZillaTerm\.App/Services/Rdp/|src/ZillaTerm\.Core/Rdp/|src/ZillaTerm\.App/Views/MainWindow\.Rdp\.cs$|tests/ZillaTerm\.App\.Tests/(RdpSessionTests|Win32Input)\.cs$|\.github/workflows/build\.yml$|tools/(freerdp-download|fork-release)\.sh$)' changed.txt; then
               rdp=true
             fi
           fi
@@ -84,7 +48,6 @@ jobs:
           echo "Sessions réelles : $rdp"
 
   build:
-    needs: [freerdp, sshnet]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -95,16 +58,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # Client Bureau à distance FreeRDP (freerdp.yml), embarqué dans ZillaTerm.
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: freerdp
-          path: local-packages/freerdp
-
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: sshnet
-          path: local-packages
+      # Client Bureau à distance FreeRDP (embarqué dans ZillaTerm) et SSH.NET patché : releases de leurs forks.
+      - name: Binaires des forks
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash tools/freerdp-download.sh
+          bash tools/sshnet-patched.sh
 
       - name: Tests
         run: dotnet test ZillaTerm.sln -c Release
@@ -129,7 +90,7 @@ jobs:
   # journaux, et une fenêtre de test qui note la taille de son écran, les clics et les touches reçus : lancée à
   # l'ouverture de session du premier compte, et comme application distante pour le second.
   rdp:
-    needs: [freerdp, sshnet, changes]
+    needs: changes
     if: needs.changes.outputs.rdp == 'true'
     runs-on: windows-latest
     steps:
@@ -141,16 +102,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # Client Bureau à distance FreeRDP (freerdp.yml), embarqué dans ZillaTerm.
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: freerdp
-          path: local-packages/freerdp
-
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: sshnet
-          path: local-packages
+      # Client Bureau à distance FreeRDP (embarqué dans ZillaTerm) et SSH.NET patché : releases de leurs forks.
+      - name: Binaires des forks
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash tools/freerdp-download.sh
+          bash tools/sshnet-patched.sh
 
       - name: Bureau à distance et compte de test
         shell: pwsh
