@@ -16,14 +16,7 @@ internal enum RdpSessionState
 }
 
 /// <summary>Ce qu'il faut pour (re)lancer une connexion : réglages et, pour une connexion directe, le mot de passe.</summary>
-internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, string? Password)
-{
-    /// <summary>
-    /// Clé publique du certificat vérifié par ZillaTerm juste avant : la connexion n'est poursuivie que si le serveur
-    /// présente celle-ci (voir <see cref="RdpConnection"/>). Null : pas de vérification par ZillaTerm.
-    /// </summary>
-    public byte[]? ServerPublicKey { get; init; }
-}
+internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, string? Password);
 
 /// <summary>
 /// Session Bureau à distance dans un onglet, vue du thread de l'interface. Chaque connexion (<see cref="RdpConnection"/>)
@@ -96,15 +89,6 @@ internal sealed class RdpSession : IDisposable
     /// <summary>Vrai si Windows a affiché son avertissement sur l'identité du serveur pendant la dernière connexion.</summary>
     public bool AuthenticationWarningShown { get; private set; }
 
-    /// <summary>Clé publique présentée par le serveur pendant la dernière connexion (journal, tests), ou null.</summary>
-    public byte[]? ServerPublicKey { get; private set; }
-
-    /// <summary>
-    /// Clé du serveur comparée à celle du certificat vérifié par ZillaTerm : vrai si c'est la même, faux si elle diffère
-    /// (connexion refusée), null si elle n'a pas été comparée.
-    /// </summary>
-    public bool? ServerKeyMatched { get; private set; }
-
     /// <summary>Code de la dernière déconnexion signalée par le contrôle (événement OnDisconnected).</summary>
     public int? DisconnectReason { get; private set; }
 
@@ -154,8 +138,6 @@ internal sealed class RdpSession : IDisposable
         IsFullScreen = false;
         IsAuthenticationWarningOpen = false;
         AuthenticationWarningShown = false;
-        ServerPublicKey = null;
-        ServerKeyMatched = null;
         SetState(RdpSessionState.Connecting);
         RdpConnectionRequest request;
         try
@@ -362,10 +344,8 @@ internal sealed class RdpSession : IDisposable
         bool normal = NormalDisconnects.Contains(reason);
         // Codes de Windows joints au message : ils disent ce que le texte, souvent générique, ne dit pas.
         var codes = Text.Format(Strings.RdpDisconnectCodes, reason, extended);
-        Error = ServerKeyMatched == false ? Text.Format(Strings.RdpServerKeyMismatch, Server)
-                : normal && reason == 1 ? null
+        Error = normal && reason == 1 ? null
                 : string.IsNullOrWhiteSpace(description) ? Text.Format(Strings.RdpDisconnectCode, codes) : $"{description.Trim()} ({codes})";
-        normal &= ServerKeyMatched != false;
         IsFullScreen = false;
         SetState(normal ? RdpSessionState.Ended : RdpSessionState.Failed);
     }
@@ -399,17 +379,6 @@ internal sealed class RdpSession : IDisposable
         IsAuthenticationWarningOpen = displayed;
         AuthenticationWarningShown |= displayed;
         StateChanged?.Invoke();
-    }
-
-    internal void OnServerKey(RdpConnection connection, byte[] key, bool? matched)
-    {
-        if (connection != _connection || _disposed)
-        {
-            return;
-        }
-
-        ServerPublicKey = key;
-        ServerKeyMatched = matched;
     }
 
     /// <summary>Contrôle libéré par la connexion (fin de session, erreur) : l'onglet n'a plus de contrôle.</summary>

@@ -88,8 +88,6 @@ public sealed class RdpCertificateProbeTests
 
         Assert.Equal(RdpCertificateProbe.ConnectionRequest.ToArray(), server.Request);
         Assert.Equal(Convert.ToHexString(SHA256.HashData(certificate.RawData)), received.Sha256);
-        // Clé publique, comparée à celle que le contrôle reçoit pendant la connexion.
-        Assert.Equal(certificate.GetPublicKey(), received.PublicKey);
         Assert.Contains("srv01.corp.local", received.Subject);
         // Auto-signé : Windows ne l'approuve pas, il faudra l'épingler.
         Assert.False(received.Trusted);

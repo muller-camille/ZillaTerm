@@ -5380,15 +5380,12 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Apri le sessioni PSM Windows (desktop) in una sc_heda di ZillaTerm, altrimenti in Connessione Desktop remoto</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>La sessione prende la dimensione della scheda. ZillaTerm verifica il certificato del PSM (domanda la prima volta se Windows non lo approva) e mantiene i reindirizzamenti richiesti dal PVWA, mai di più. Le applicazioni remote (PSM-SSH, WinSCP…) si aprono sempre in Connessione Desktop remoto.</value>
+    <value>La sessione prende la dimensione della scheda. Windows verifica il certificato del PSM come in Connessione Desktop remoto, e i reindirizzamenti restano quelli richiesti dal PVWA, mai di più. Le applicazioni remote (PSM-SSH, WinSCP…) si aprono sempre in Connessione Desktop remoto.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessioni PSM Windows in una scheda</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
     <value>Il PVWA genera una connessione RDP: un desktop Windows si apre in una scheda di ZillaTerm, un'applicazione remota (PSM-SSH, WinSCP…) in Connessione Desktop remoto (mstsc).</value>
-  </data>
-  <data name="RdpServerKeyMismatch" xml:space="preserve">
-    <value>{0} ha presentato un certificato diverso da quello che ZillaTerm aveva appena verificato: connessione rifiutata (possibile intercettazione). Riprova; se si ripete, avvisa il team CyberArk.</value>
   </data>
 </root>

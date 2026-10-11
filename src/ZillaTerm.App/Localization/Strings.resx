@@ -5380,15 +5380,12 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Open PSM Windows sessions (desktop) in a ZillaTerm _tab, otherwise in Remote Desktop Connection</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>The session takes the size of the tab. ZillaTerm checks the PSM certificate (question the first time if Windows does not trust it) and keeps the redirections asked by the PVWA, never more. Remote applications (PSM-SSH, WinSCP…) still open in Remote Desktop Connection.</value>
+    <value>The session takes the size of the tab. Windows checks the PSM certificate as in Remote Desktop Connection, and the redirections stay those asked by the PVWA, never more. Remote applications (PSM-SSH, WinSCP…) still open in Remote Desktop Connection.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>PSM Windows sessions in a tab</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
     <value>The PVWA generates an RDP connection: a Windows desktop opens in a ZillaTerm tab, a remote application (PSM-SSH, WinSCP…) in Remote Desktop Connection (mstsc).</value>
-  </data>
-  <data name="RdpServerKeyMismatch" xml:space="preserve">
-    <value>{0} presented another certificate than the one ZillaTerm had just checked: connection refused (possible interception). Try again; if it happens again, tell the CyberArk team.</value>
   </data>
 </root>

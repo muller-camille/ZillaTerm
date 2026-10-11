@@ -160,9 +160,10 @@ un file `.rdp`.
 - **Dimensione**: la sessione prende la dimensione della scheda alla connessione e la mantiene. Se la finestra cambia
   dimensione, l'immagine viene ridimensionata: il PSM ha aperto la sua connessione al server a quella dimensione.
   «Schermo intero» la ingrandisce; la sessione non parte mai a schermo intero, anche se il file del PVWA lo chiede.
-- **Certificato del PSM**: verificato da ZillaTerm prima della connessione. Approvato da Windows, non viene chiesto
-  nulla; altrimenti, la prima volta, ZillaTerm mostra la sua impronta e la memorizza, e un avviso compare se cambia.
-  Windows non chiede più di confermarlo.
+- **Certificato del PSM**: verificato da Windows, come in Connessione Desktop remoto; la sessione non si apre mai
+  senza questa verifica. Se Windows non lo approva (certificato autofirmato, nome diverso), chiede di confermare, e
+  la barra della scheda lo segnala: un certificato del PSM emesso dall'autorità dell'azienda, da chiedere al team
+  CyberArk, elimina questa domanda.
 - **Reindirizzamenti** (appunti, unità…): quelli richiesti dal PVWA, mai di più. Nessuna immagine della sessione
   viene conservata sul disco.
 - **Riconnetti**, «Duplica la scheda»: nuova richiesta al PVWA (il token di una sessione PSM vale una sola volta);
@@ -949,7 +950,7 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | File | Editor di testo | Programma aperto da «Modifica» nella scheda File | Blocco note |
 | File | Strumento di confronto | Programma proposto nella finestra di confronto, con i suoi argomenti (`{0}` = file di sinistra, `{1}` = di destra) | nessuno |
 | Sicurezza | Vault locale | Password principali KeePass memorizzate: «Crea…», «Sblocca…», «Cambia password…», «Elimina ora…»; queste azioni si applicano subito, senza «Salva» | — |
-| Sicurezza | Chiavi dei server accettate | Tabella delle impronte verificate e accettate (server, tipo, impronta): PSMP, SSH diretto, certificati FTPS e Desktop remoto delle voci KeePass, certificati dei PSM per le sessioni in una scheda (una riga per tipo di chiave). «Dimentica le chiavi scelte» rimuove le righe selezionate al salvataggio; la chiave verrà richiesta di nuovo alla prossima connessione | — |
+| Sicurezza | Chiavi dei server accettate | Tabella delle impronte verificate e accettate (server, tipo, impronta): PSMP, SSH diretto, certificati FTPS e Desktop remoto delle voci KeePass (una riga per tipo di chiave). «Dimentica le chiavi scelte» rimuove le righe selezionate al salvataggio; la chiave verrà richiesta di nuovo alla prossima connessione | — |
 | Menu del pulsante Impostazioni | Registro di debug | Svolgimento delle connessioni in un file, senza segreti (vedi [Sicurezza](#sicurezza)); «Mostra il file del registro» lo apre in Esplora risorse | no |
 
 ### Ambiente condiviso
@@ -1039,14 +1040,9 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   `%LOCALAPPDATA%\ZillaTerm\Temp`. I percorsi qui sotto sono relativi a questa cartella.
 - **Sessioni PSM**: il file RDP del PVWA (token PSM monouso) viene scritto nella cartella temporanea per `mstsc`, che
   ne verifica la firma, poi eliminato dopo 60 s o alla chiusura. In una scheda (opzione), non viene mai scritto sul
-  disco: ZillaTerm lo legge in memoria.
-- **Certificato del PSM** (sessioni in una scheda): letto prima della connessione, senza inviare nient'altro (né
-  nome utente né token), poi fissato come quelli delle connessioni dirette. Una volta accettato, la sua impronta SHA-1
-  viene salvata dove Connessione Desktop remoto conserva un certificato accettato con «Non chiedere più conferma per
-  le connessioni a questo computer» (`HKCU\Software\Microsoft\Terminal Server Client\Servers\<PSM>`, valore
-  `CertHash`): il controllo verifica la vera connessione con essa. Il controllo non si connette mai senza verificare il
-  server (livello di autenticazione 2, o 1 se il file lo chiede): un altro certificato presentato tra la verifica e la
-  connessione fa comparire l'avviso di Windows, segnalato nella scheda.
+  disco: ZillaTerm lo legge in memoria. Il controllo Desktop remoto non si connette allora mai senza verificare il
+  server (livello di autenticazione 2, o 1 se il file lo chiede), anche se il file lo consente: un certificato che
+  Windows non approva fa comparire il suo avviso, segnalato nella scheda.
 - **Digitazione simultanea** (vista parallela): disattivata a ogni apertura della vista, segnalata dal pulsante
   ambra «ATTIVA (n)», da una fascia e da una cornice ambra che nominano le sessioni interessate; le sessioni escluse
   sono segnate «esclusa», una sessione aggiunta non vi è inclusa d'ufficio, e
@@ -1219,11 +1215,14 @@ reindirizzamenti disattivati tranne gli appunti, cache persistente delle immagin
 connessione, ZillaTerm legge da sé il certificato TLS del server (richiesta di connessione X.224, poi negoziazione
 TLS interrotta appena ricevuto il certificato: né nome utente né password inviati) per fissarlo
 (`rdp://server:porta` tra le chiavi dei server accettate). Il controllo ActiveX non permette di imporgli questa
-impronta; per un PSM, ZillaTerm gliela affida come fa Connessione Desktop remoto (vedi [Sicurezza](#sicurezza)). Le
-chiusure di sessione e gli errori di connessione sono spiegati nella scheda con il messaggio e i codici di Windows
-(motivo, motivo esteso). Un test di integrazione (workflow `rdp-integration`) apre vere sessioni sul computer di CI:
-desktop, certificato affidato al controllo (con e senza NLA), e una sessione impostata come una sessione PSM, di cui
-dimensione e clic vengono verificati dall'interno della sessione.
+impronta, né di affidargli un certificato accettato: né l'impronta che conserva Connessione Desktop remoto
+(«CertHash»), né la sua chiave pubblica, che non segnala con NLA, evitano il suo avviso (constatato sul computer di
+CI). Per una sessione PSM è quindi Windows a verificare il certificato, come con `mstsc`; senza NLA (il caso di un
+PSM), il livello di autenticazione 0 arresta perfino il controllo su Windows Server 2025, da qui almeno il livello 2.
+Le chiusure di sessione e gli errori di connessione sono spiegati nella scheda con il messaggio e i codici di Windows
+(motivo, motivo esteso). Un test di integrazione (workflow `rdp-integration`) apre vere sessioni sul computer di CI,
+tra cui una impostata come una sessione PSM: la sua dimensione e i clic ricevuti, prima e dopo un cambio di
+dimensione della finestra, vengono verificati dall'interno della sessione.
 
 **Un thread per connessione desktop remoto.** Il controllo, la sua finestra e i suoi eventi vivono su un thread a
 parte (STA, con il proprio ciclo di messaggi); l'interfaccia non lo attende mai. La scheda contiene una finestra del
@@ -1306,7 +1305,7 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 | «non hai il diritto di modificare questo file (diritti della condivisione di rete)» | La condivisione è in sola lettura per te: chiedi il diritto di scrittura al suo responsabile. L'elenco resta utilizzabile. |
 | Un elenco condiviso mostra «(illeggibile)» | Condivisione irraggiungibile o file danneggiato: la descrizione comandi riporta l'errore. Se il file è danneggiato, copia al suo posto la versione più recente della cartella `nome.versions`. |
 | Capire un errore di connessione | Impostazioni → Registro di debug, riproduci il problema, poi Impostazioni → «Mostra il file del registro». |
-| Una sessione PSM in una scheda mostra «Windows chiede di confermare l'identità di …» | Il certificato presentato alla connessione non è né approvato da Windows né quello che ZillaTerm aveva appena verificato: PSM dietro un bilanciatore di carico i cui server hanno certificati diversi, oppure intercettazione. Nel dubbio, rifiuta e avvisa il team CyberArk. |
+| Una sessione PSM in una scheda mostra «Windows chiede di confermare l'identità di …» | Windows non approva il certificato del PSM (autofirmato, o emesso per un altro nome): verificalo prima di accettare. Un certificato emesso dall'autorità dell'azienda per il nome del PSM, da chiedere al team CyberArk, elimina questa domanda. |
 | Una sessione PSM si apre in Connessione Desktop remoto nonostante l'opzione «in una scheda» | Componente in applicazione remota (PSM-SSH, WinSCP…), oppure controllo Desktop remoto assente o non utilizzabile sul computer: la barra di stato lo dice. |
 | Una scheda di desktop remoto diretto (KeePass) mostra «Errore del controllo Desktop remoto» | Segnala il codice mostrato (se il controllo Desktop remoto manca dal computer, la connessione passa da `mstsc`). |
 | VNC: «Il server VNC non propone alcuna autenticazione supportata da ZillaTerm…» | Il server richiede un'autenticazione propria del suo produttore (account Windows, cifratura VeNCrypt…): attiva l'autenticazione «password VNC» sul server. |

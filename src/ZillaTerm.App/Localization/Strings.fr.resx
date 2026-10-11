@@ -5380,15 +5380,12 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Ouvrir les sessions PSM Windows (bureau) dans un _onglet de ZillaTerm, sinon dans Connexion Bureau à distance</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>La session prend la taille de l'onglet. ZillaTerm vérifie le certificat du PSM (question la première fois si Windows ne l'approuve pas) et garde les redirections demandées par le PVWA, jamais plus. Les applications distantes (PSM-SSH, WinSCP…) s'ouvrent toujours dans Connexion Bureau à distance.</value>
+    <value>La session prend la taille de l'onglet. Windows vérifie le certificat du PSM comme dans la Connexion Bureau à distance, et les redirections restent celles demandées par le PVWA, jamais plus. Les applications distantes (PSM-SSH, WinSCP…) s'ouvrent toujours dans la Connexion Bureau à distance.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
     <value>Le PVWA génère une connexion RDP : un bureau Windows s'ouvre dans un onglet de ZillaTerm, une application distante (PSM-SSH, WinSCP…) dans la Connexion Bureau à distance (mstsc).</value>
-  </data>
-  <data name="RdpServerKeyMismatch" xml:space="preserve">
-    <value>{0} a présenté un autre certificat que celui que ZillaTerm venait de vérifier : connexion refusée (interception possible). Réessayez ; si cela se reproduit, prévenez l'équipe CyberArk.</value>
   </data>
 </root>

@@ -152,9 +152,9 @@ control, without the warning Windows shows when an `.rdp` file is opened.
 - **Size**: the session takes the size of the tab when it connects and keeps it. If the window changes size, the
   picture is scaled: the PSM opened its connection to the server at that size. "Full screen" enlarges it; the session
   never starts full screen, even if the PVWA file asks for it.
-- **PSM certificate**: checked by ZillaTerm before connecting. Trusted by Windows, nothing is asked; otherwise, the
-  first time, ZillaTerm shows its fingerprint and remembers it, and a warning appears if it changes. Windows no
-  longer asks you to confirm it.
+- **PSM certificate**: checked by Windows, as in Remote Desktop Connection; the session never opens without this
+  check. If Windows does not trust it (self-signed certificate, other name), it asks you to confirm, and the tab bar
+  says so: a PSM certificate issued by the company authority, to ask the CyberArk team for, removes this question.
 - **Redirections** (clipboard, drives…): those the PVWA asks for, never more. No picture of the session is kept on
   disk.
 - **Reconnect**, "Duplicate tab": new request to the PVWA (a PSM session token is used only once); reason and ticket
@@ -892,7 +892,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | Files | Text editor | Program opened by "Edit" in the Files tab | Notepad |
 | Files | Comparison tool | Program offered in the comparison window, with its arguments (`{0}` = left file, `{1}` = right file) | none |
 | Security | Local vault | Remembered KeePass master passwords: "Create…", "Unlock…", "Change password…", "Delete now…"; these actions apply at once, without "Save" | — |
-| Security | Accepted server keys | Table of the fingerprints checked and accepted (server, type, fingerprint): PSMP, direct SSH, FTPS and Remote Desktop certificates of KeePass entries, PSM certificates for sessions in a tab (one row per key type). "Forget the selected keys" removes the selected rows on save; the key will be asked again at the next connection | — |
+| Security | Accepted server keys | Table of the fingerprints checked and accepted (server, type, fingerprint): PSMP, direct SSH, FTPS and Remote Desktop certificates of KeePass entries (one row per key type). "Forget the selected keys" removes the selected rows on save; the key will be asked again at the next connection | — |
 | Settings button menu | Debug log | How connections unfold, in a file, without secrets (see [Security](#security)); "Show the debug log file" opens it in Explorer | no |
 
 ### Shared environment
@@ -972,14 +972,9 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
   instead. The paths below are relative to this folder.
 - **PSM sessions**: the PVWA's RDP file (one-time PSM token) is written to the temporary folder for `mstsc`, which
   checks its signature, then deleted after 60 s or on exit. In a tab (option), it is never written to disk: ZillaTerm
-  reads it in memory.
-- **PSM certificate** (sessions in a tab): read before connecting, sending nothing else (neither user name nor
-  token), then pinned like those of direct connections. Once accepted, its SHA-1 fingerprint is saved where Remote
-  Desktop Connection keeps a certificate accepted with "Don't ask me again for connections to this computer"
-  (`HKCU\Software\Microsoft\Terminal Server Client\Servers\<PSM>`, `CertHash` value): the control checks the real
-  connection with it. The control never connects without checking the server (authentication level 2, or 1 if the
-  file asks for it): another certificate presented between the check and the connection brings up the Windows
-  warning, flagged in the tab.
+  reads it in memory. The Remote Desktop control then never connects without checking the server (authentication
+  level 2, or 1 if the file asks for it), even if the file allows it: a certificate Windows does not trust brings up
+  its warning, flagged in the tab.
 - **Simultaneous typing** (parallel view): off every time the view opens, shown by the amber "ON (n)" button, an
   amber banner and frame that name the sessions concerned; excluded sessions are marked "excluded", an added session
   is not included by default, and pasting several lines into several
@@ -1141,11 +1136,14 @@ way: network level authentication (NLA), warning if the server is not recognized
 clipboard, persistent bitmap cache off. Before each connection, ZillaTerm reads the server's TLS certificate itself
 (X.224 connection request, then a TLS negotiation stopped as soon as the certificate is received: neither user name
 nor password is sent) to pin it (`rdp://server:port` among the accepted server keys). The ActiveX control does not
-allow imposing this fingerprint on it; for a PSM, ZillaTerm hands it over the way Remote Desktop Connection does (see
-[Security](#security)). Session ends and connection errors are explained in the tab with the Windows message and
-codes (reason, extended reason). An integration test (`rdp-integration` workflow) opens real sessions on the CI
-machine: desktop, certificate handed to the control (with and without NLA), and a session set up like a PSM session
-whose size and clicks are checked from inside the session.
+allow imposing this fingerprint on it, nor handing it an accepted certificate: neither the fingerprint Remote Desktop
+Connection keeps ("CertHash") nor its public key, which it does not report with NLA, avoids its warning (seen on the
+CI machine). For a PSM session, Windows therefore checks the certificate, as with `mstsc`; without NLA (the PSM case),
+authentication level 0 even stops the control on Windows Server 2025, hence level 2 at least. Session ends and
+connection errors are explained in the tab with the Windows message and codes (reason, extended reason). An
+integration test (`rdp-integration` workflow) opens real sessions on the CI machine, one of them set up like a PSM
+session: its size and the clicks received, before and after the window changes size, are checked from inside the
+session.
 
 **One thread per remote desktop connection.** The control, its window and its events live on a separate thread (STA,
 with its own message loop); the interface never waits for it. The tab holds a window of the interface thread, in
@@ -1227,7 +1225,7 @@ sh or fish, following is not set up and nothing stays on screen.
 | "you do not have the right to modify this file (rights of the network share)" | The share is read-only for you: ask its owner for write access. The list can still be used. |
 | A shared list shows "(unreadable)" | Share unreachable or damaged file: the tooltip gives the error. If the file is damaged, copy the most recent version of the `name.versions` folder in its place. |
 | Understanding a connection failure | Settings → Debug log, reproduce the problem, then Settings → "Show the debug log file". |
-| A PSM session in a tab shows "Windows asks you to confirm the identity of …" | The certificate presented when connecting is neither trusted by Windows nor the one ZillaTerm had just checked: PSM behind a load balancer whose servers have different certificates, or interception. If in doubt, refuse and tell the CyberArk team. |
+| A PSM session in a tab shows "Windows asks you to confirm the identity of …" | Windows does not trust the PSM certificate (self-signed, or issued for another name): check it before accepting. A certificate issued by the company authority for the PSM name, to ask the CyberArk team for, removes this question. |
 | A PSM session opens in Remote Desktop Connection despite the "in a tab" option | Remote application component (PSM-SSH, WinSCP…), or Remote Desktop control missing or unusable on the computer: the status bar says so. |
 | A direct remote desktop tab (KeePass) shows "Remote Desktop control error" | Report the code shown (if the Remote Desktop control is missing from the computer, the connection goes through `mstsc`). |
 | VNC: "The VNC server offers no authentication supported by ZillaTerm…" | The server requires its vendor's own authentication (Windows account, VeNCrypt encryption…): enable "VNC password" authentication on the server. |

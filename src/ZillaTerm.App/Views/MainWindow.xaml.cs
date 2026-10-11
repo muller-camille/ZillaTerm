@@ -1102,10 +1102,10 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Session PSM (bureau Windows) dans un onglet : ZillaTerm vérifie le certificat du PSM puis ouvre la session avec le
-    /// contrôle Bureau à distance, à la taille de l'onglet. Chaque reconnexion demande un nouveau fichier au PVWA (le jeton
-    /// d'une session PSM ne sert qu'une fois). Contrôle inutilisable à la première connexion : le jeton n'a pas servi,
-    /// le fichier est confié à mstsc.
+    /// Session PSM (bureau Windows) dans un onglet, avec le contrôle Bureau à distance, à la taille de l'onglet ; Windows
+    /// vérifie le certificat du PSM comme avec mstsc (voir <see cref="RdpConnectionSettings.ForPsmTab"/>). Chaque
+    /// reconnexion demande un nouveau fichier au PVWA (le jeton d'une session PSM ne sert qu'une fois). Contrôle
+    /// inutilisable à la première connexion : le jeton n'a pas servi, le fichier est confié à mstsc.
     /// </summary>
     private async Task OpenPsmTabAsync(PvwaAccount account, ConnectRequest request, PsmConnectOptions options, SavedSession? saved,
         string label, byte[] rdp, RdpConnectionSettings settings)
@@ -1132,7 +1132,7 @@ public partial class MainWindow : Window
                 next = next.ForPsmTab();
             }
 
-            return await TrustPsmCertificateAsync(label, next, ct);
+            return new RdpConnectionRequest(next, null);
         }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), settings.Server);
 
         if (session.ControlFailed && session.ConnectedAt is null && MainTabs.Items.OfType<TabItem>().Any(t => t.Tag == session))

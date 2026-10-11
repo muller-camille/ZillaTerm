@@ -16046,7 +16046,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The session takes the size of the tab. ZillaTerm checks the PSM certificate (question the first time if Windows does not trust it) and keeps the redirections asked by the PVWA, never more. Remote applications (PSM-SSH, WinSCP…) still open in Remote Desktop Connection..
+        ///   Looks up a localized string similar to The session takes the size of the tab. Windows checks the PSM certificate as in Remote Desktop Connection, and the redirections stay those asked by the PVWA, never more. Remote applications (PSM-SSH, WinSCP…) still open in Remote Desktop Connection..
         /// </summary>
         public static string PsmDesktopInTabHelp {
             get {
@@ -16069,15 +16069,6 @@ namespace ZillaTerm.App.Localization {
         public static string PsmHintTab {
             get {
                 return ResourceManager.GetString("PsmHintTab", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to {0} presented another certificate than the one ZillaTerm had just checked: connection refused (possible interception). Try again; if it happens again, tell the CyberArk team..
-        /// </summary>
-        public static string RdpServerKeyMismatch {
-            get {
-                return ResourceManager.GetString("RdpServerKeyMismatch", resourceCulture);
             }
         }
     }

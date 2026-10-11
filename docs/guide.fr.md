@@ -159,9 +159,10 @@ fichier `.rdp`.
 - **Taille** : la session prend la taille de l'onglet à la connexion et la garde. Si la fenêtre change de taille,
   l'image est mise à l'échelle : le PSM a ouvert sa connexion vers le serveur à cette taille. « Plein écran »
   l'agrandit ; la session ne démarre jamais en plein écran, même si le fichier du PVWA le demande.
-- **Certificat du PSM** : vérifié par ZillaTerm avant la connexion. Approuvé par Windows, rien n'est demandé ;
-  sinon, la première fois, ZillaTerm montre son empreinte et le mémorise, et une alerte apparaît s'il change.
-  Windows ne demande plus de le confirmer.
+- **Certificat du PSM** : vérifié par Windows, comme dans la Connexion Bureau à distance ; la session ne s'ouvre
+  jamais sans cette vérification. Si Windows ne l'approuve pas (certificat auto-signé, nom différent), il demande
+  de confirmer, et la barre de l'onglet le signale : un certificat du PSM émis par l'autorité de l'entreprise, à
+  demander à l'équipe CyberArk, supprime cette question.
 - **Redirections** (presse-papiers, disques…) : celles demandées par le PVWA, jamais plus. Aucune image de la session
   n'est gardée sur le disque.
 - **Reconnecter**, « Dupliquer l'onglet » : nouvelle demande au PVWA (le jeton d'une session PSM ne sert qu'une
@@ -946,7 +947,7 @@ disent sous leur case (« ⚠ Effet : … »).
 | Fichiers | Éditeur de texte | Programme ouvert par « Modifier » dans l'onglet Fichiers | Bloc-notes |
 | Fichiers | Outil de comparaison | Programme proposé dans la fenêtre de comparaison, avec ses arguments (`{0}` = fichier de gauche, `{1}` = de droite) | aucun |
 | Sécurité | Coffre local | Mots de passe maîtres KeePass mémorisés : « Créer le coffre… », « Déverrouiller… », « Changer le mot de passe… », « Supprimer maintenant… » ; ces actions s'appliquent tout de suite, sans « Enregistrer » | — |
-| Sécurité | Clés de serveurs acceptées | Tableau des empreintes vérifiées et acceptées (serveur, type, empreinte) : PSMP, SSH direct, certificats FTPS et Bureau à distance des entrées KeePass, certificats des PSM pour les sessions dans un onglet (une ligne par type de clé). « Oublier les clés choisies » retire les lignes sélectionnées à l'enregistrement ; la clé sera redemandée à la prochaine connexion | — |
+| Sécurité | Clés de serveurs acceptées | Tableau des empreintes vérifiées et acceptées (serveur, type, empreinte) : PSMP, SSH direct, certificats FTPS et Bureau à distance des entrées KeePass (une ligne par type de clé). « Oublier les clés choisies » retire les lignes sélectionnées à l'enregistrement ; la clé sera redemandée à la prochaine connexion | — |
 | Menu du bouton Paramètres | Journal de débogage | Déroulement des connexions dans un fichier, sans secret (voir [Sécurité](#sécurité)) ; « Afficher le fichier du journal » l'ouvre dans l'Explorateur | non |
 
 ### Environnement partagé
@@ -1035,14 +1036,9 @@ renommé) : téléchargez-la une fois depuis la page des versions.
   le remplace. Les chemins ci-dessous sont relatifs à ce dossier.
 - **Sessions PSM** : le fichier RDP du PVWA (jeton PSM à usage unique) est écrit dans le dossier temporaire pour
   `mstsc`, qui en vérifie la signature, puis supprimé après 60 s ou à la fermeture. Dans un onglet (option), il
-  n'est jamais écrit sur le disque : ZillaTerm le lit en mémoire.
-- **Certificat du PSM** (sessions dans un onglet) : lu avant la connexion, sans rien envoyer d'autre (ni identifiant
-  ni jeton), puis épinglé comme ceux des connexions directes. Accepté, son empreinte SHA-1 est enregistrée là où la
-  Connexion Bureau à distance garde un certificat accepté avec « Ne plus demander de confirmation pour les connexions
-  à cet ordinateur » (`HKCU\Software\Microsoft\Terminal Server Client\Servers\<PSM>`, valeur `CertHash`) : le
-  contrôle vérifie la vraie connexion avec lui. Le contrôle ne se connecte jamais sans vérifier le serveur (niveau
-  d'authentification 2, ou 1 si le fichier le demande) : un autre certificat présenté entre la vérification et la
-  connexion fait apparaître l'avertissement de Windows, signalé dans l'onglet.
+  n'est jamais écrit sur le disque : ZillaTerm le lit en mémoire. Le contrôle Bureau à distance ne se connecte alors
+  jamais sans vérifier le serveur (niveau d'authentification 2, ou 1 si le fichier le demande), même si le fichier
+  le permet : un certificat que Windows n'approuve pas fait apparaître son avertissement, signalé dans l'onglet.
 - **Saisie simultanée** (vue parallèle) : désactivée à chaque ouverture de la vue, signalée par le bouton ambre
   « ACTIVE (n) », un bandeau et un cadre ambre qui nomment les sessions concernées ; les sessions exclues sont
   marquées « exclue », une session ajoutée n'y est pas incluse d'office, et un collage
@@ -1213,12 +1209,14 @@ est réglée ainsi : authentification réseau (NLA), alerte si le serveur n'est 
 sauf le presse-papiers, cache d'images persistant désactivé. Avant chaque connexion, ZillaTerm lit lui-même le
 certificat TLS du serveur (demande de connexion X.224, puis négociation TLS interrompue dès le certificat reçu : ni
 identifiant ni mot de passe envoyés) pour l'épingler (`rdp://serveur:port` parmi les clés de serveurs acceptées). Le
-contrôle ActiveX ne permet pas de lui imposer cette empreinte ; pour un PSM, ZillaTerm la lui confie comme le fait la
-Connexion Bureau à distance (voir [Sécurité](#sécurité)). Les fermetures de session et les erreurs de connexion sont
-expliquées dans l'onglet avec le message et les codes de Windows (raison, raison étendue). Un test d'intégration
-(workflow `rdp-integration`) ouvre de vraies sessions sur le poste de CI : bureau, certificat confié au contrôle (avec
-et sans NLA), et session réglée comme une session PSM dont la taille et les clics sont vérifiés depuis la session
-ouverte.
+contrôle ActiveX ne permet pas de lui imposer cette empreinte, ni de lui confier un certificat accepté : ni
+l'empreinte que garde la Connexion Bureau à distance (« CertHash »), ni sa clé publique, qu'il ne signale pas avec
+NLA, n'évitent son avertissement (constaté sur le poste de CI). Pour une session PSM, c'est donc Windows qui vérifie
+le certificat, comme avec `mstsc` ; sans NLA (cas d'un PSM), le niveau d'authentification 0 arrête même le contrôle sur
+Windows Server 2025, d'où le niveau 2 au moins. Les fermetures de session et les erreurs de connexion sont expliquées
+dans l'onglet avec le message et les codes de Windows (raison, raison étendue). Un test d'intégration (workflow
+`rdp-integration`) ouvre de vraies sessions sur le poste de CI, dont une réglée comme une session PSM : sa taille et
+les clics reçus, avant et après un changement de taille de la fenêtre, sont vérifiés depuis la session ouverte.
 
 **Un thread par connexion Bureau à distance.** Le contrôle, sa fenêtre et ses événements vivent sur un thread à part
 (STA, avec sa boucle de messages) ; l'interface ne l'attend jamais. L'onglet contient une fenêtre du thread de
@@ -1302,7 +1300,7 @@ l'écran.
 | « vous n'avez pas le droit de modifier ce fichier (droits du partage réseau) » | Le partage est en lecture seule pour vous : demandez le droit d'écriture à son responsable. La liste reste utilisable. |
 | Une liste partagée affiche « (illisible) » | Partage injoignable ou fichier endommagé : l'info-bulle donne l'erreur. Si le fichier est endommagé, copiez la version la plus récente du dossier `nom.versions` à sa place. |
 | Comprendre un échec de connexion | Paramètres → Journal de débogage, reproduisez le problème, puis Paramètres → « Afficher le fichier du journal ». |
-| Une session PSM dans un onglet affiche « Windows demande de confirmer l'identité de … » | Le certificat présenté à la connexion n'est ni approuvé par Windows, ni celui que ZillaTerm venait de vérifier : PSM derrière un répartiteur de charge dont les serveurs ont des certificats différents, ou interception. Dans le doute, refusez et prévenez l'équipe CyberArk. |
+| Une session PSM dans un onglet affiche « Windows demande de confirmer l'identité de … » | Windows n'approuve pas le certificat du PSM (auto-signé, ou émis pour un autre nom) : vérifiez-le avant d'accepter. Un certificat émis par l'autorité de l'entreprise pour le nom du PSM, à demander à l'équipe CyberArk, supprime cette question. |
 | Une session PSM s'ouvre dans la Connexion Bureau à distance malgré l'option « dans un onglet » | Composant en application distante (PSM-SSH, WinSCP…), ou contrôle Bureau à distance absent ou inutilisable sur le poste : la barre d'état le dit. |
 | Un onglet de bureau à distance direct (KeePass) affiche « Erreur du contrôle Bureau à distance » | Signalez le code affiché (si le contrôle Bureau à distance est absent du poste, la connexion passe par `mstsc`). |
 | VNC : « Le serveur VNC ne propose aucune authentification prise en charge… » | Le serveur exige une authentification propre à son éditeur (compte Windows, chiffrement VeNCrypt…) : activez l'authentification « mot de passe VNC » sur le serveur. |

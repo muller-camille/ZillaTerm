@@ -1,7 +1,7 @@
 name: rdp-integration
 
-# Sessions Bureau à distance réelles sur le poste de CI (connexion à 127.0.0.2) : bureau dans un onglet, certificat
-# confié au contrôle, taille et clics d'une session PSM dans l'onglet. Le poste est éphémère : on y active le Bureau à
+# Sessions Bureau à distance réelles sur le poste de CI (connexion à 127.0.0.2) : bureau dans un onglet, taille et
+# clics d'une session réglée comme une session PSM dans l'onglet. Le poste est éphémère : on y active le Bureau à
 # distance, un compte local de test au mot de passe aléatoire, masqué dans les journaux, et une fenêtre lancée à
 # l'ouverture de session de ce compte qui note la taille de son écran et les clics reçus.
 on:
@@ -112,22 +112,7 @@ jobs:
       - name: Tests de sessions réelles
         run: >
           dotnet test tests/ZillaTerm.App.Tests -c Release
-          --filter "Category=RdpIntegration&FullyQualifiedName!~NoNla"
-          --logger "console;verbosity=detailed"
-
-      # Diagnostics sans NLA, chacun à part : un arrêt du processus n'efface pas les autres résultats.
-      - name: Sans NLA, sans mot de passe (comme une session PSM)
-        if: always()
-        run: >
-          dotnet test tests/ZillaTerm.App.Tests -c Release --no-build
-          --filter "Category=RdpIntegration&FullyQualifiedName~NoNlaWithoutPassword"
-          --logger "console;verbosity=detailed"
-
-      - name: Sans NLA, avec mot de passe
-        if: always()
-        run: >
-          dotnet test tests/ZillaTerm.App.Tests -c Release --no-build
-          --filter "Category=RdpIntegration&FullyQualifiedName~NoNlaWithPassword"
+          --filter Category=RdpIntegration
           --logger "console;verbosity=detailed"
 
       - name: Journal de débogage des sessions

@@ -50,7 +50,6 @@ internal sealed class RdpConnection
     private Container? _container;
     private RdpClientHost? _client;
     private object? _ocx;
-    private RdpPublicKeySink? _keySink;
     private System.Windows.Forms.Timer? _resizeTimer;
     private (int Width, int Height) _pixels;
     private (int Width, int Height) _sessionSize;
@@ -186,12 +185,6 @@ internal sealed class RdpConnection
             ToSession(s => s.OnFullScreenChanged(this, false));
             FocusControl();
         }));
-        // Clé publique du serveur, comparée à celle du certificat vérifié par ZillaTerm (sessions PSM) : récepteur à part,
-        // qui lit les paramètres tels que le contrôle les envoie.
-        if (_request.ServerPublicKey is not null)
-        {
-            _keySink = RdpPublicKeySink.Advise(ocx, EventsIid, OnReceivedPublicKey, _label);
-        }
         // Avertissement de Windows sur l'identité du serveur (certificat) : l'onglet le signale.
         Subscribe(ocx, DispIdAuthenticationWarningDisplayed, new Action(() =>
         {
@@ -336,36 +329,6 @@ internal sealed class RdpConnection
         }
     }
 
-    /// <summary>
-    /// Clé publique présentée par le serveur pendant la connexion. Avec une clé attendue (certificat vérifié par
-    /// ZillaTerm), la connexion ne se poursuit que si c'est la même : un intermédiaire qui présenterait un autre
-    /// certificat entre la vérification et la connexion est refusé.
-    /// </summary>
-    private bool OnReceivedPublicKey(byte[] key)
-    {
-        var expected = _request.ServerPublicKey;
-        try
-        {
-            bool? matched = expected is null ? null : key.AsSpan().SequenceEqual(expected);
-            DebugLog.Write("rdp", $"{_label} : clé publique du serveur reçue ({key.Length} octets, SHA256 "
-                + $"{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(key))}) : "
-                + matched switch
-                {
-                    null => "pas de clé attendue",
-                    true => "celle du certificat vérifié",
-                    false => $"DIFFÉRENTE de celle du certificat vérifié ({expected!.Length} octets) : connexion refusée",
-                });
-            ToSession(s => s.OnServerKey(this, key, matched));
-            return matched != false;
-        }
-        catch (Exception e) when (e is not OutOfMemoryException)
-        {
-            // Jamais d'exception vers le contrôle ; clé attendue mais non comparée : connexion refusée.
-            DebugLog.Write("rdp", $"{_label} : clé publique du serveur illisible", e);
-            return expected is null;
-        }
-    }
-
     private void OnLoginComplete()
     {
         DebugLog.Write("rdp", $"{_label} : ouverture de session Windows terminée (OnLoginComplete)");
@@ -444,9 +407,6 @@ internal sealed class RdpConnection
                 TryCall(() => ComEventsHelper.Remove(ocx, EventsIid, dispId, handler));
             }
         }
-
-        _keySink?.Unadvise();
-        _keySink = null;
 
         _handlers.Clear();
         _ocx = null;

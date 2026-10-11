@@ -16,12 +16,6 @@ public sealed record RdpCertificate(string Subject, string Issuer, string Sha256
 {
     /// <summary>Certificat approuvé par le système (autorité reconnue, nom du serveur, dates).</summary>
     public bool Trusted => Problem.Length == 0;
-
-    /// <summary>
-    /// Clé publique du certificat (contenu de « subjectPublicKey ») : celle que le contrôle Bureau à distance reçoit du
-    /// serveur pendant la connexion, comparée à celle-ci pour s'assurer qu'il s'agit bien du serveur vérifié.
-    /// </summary>
-    public byte[] PublicKey { get; init; } = [];
 }
 
 /// <summary>Le certificat du serveur Bureau à distance n'a pas pu être lu (pas de TLS, pas de réponse...).</summary>
@@ -132,10 +126,7 @@ public static class RdpCertificateProbe
                 {
                     using var copy = new X509Certificate2(certificate);
                     received = new RdpCertificate(copy.Subject, copy.Issuer, Convert.ToHexString(SHA256.HashData(copy.RawData)),
-                        copy.NotBefore, copy.NotAfter, Ftp.FtpFileBrowser.Describe(errors))
-                    {
-                        PublicKey = copy.GetPublicKey(),
-                    };
+                        copy.NotBefore, copy.NotAfter, Ftp.FtpFileBrowser.Describe(errors));
                 }
 
                 return false;
