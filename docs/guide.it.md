@@ -949,7 +949,7 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | File | Editor di testo | Programma aperto da «Modifica» nella scheda File | Blocco note |
 | File | Strumento di confronto | Programma proposto nella finestra di confronto, con i suoi argomenti (`{0}` = file di sinistra, `{1}` = di destra) | nessuno |
 | Sicurezza | Vault locale | Password principali KeePass memorizzate: «Crea…», «Sblocca…», «Cambia password…», «Elimina ora…»; queste azioni si applicano subito, senza «Salva» | — |
-| Sicurezza | Chiavi dei server accettate | Tabella delle impronte verificate e accettate (server, tipo, impronta): PSMP, SSH diretto, certificati FTPS e Desktop remoto delle voci KeePass (una riga per tipo di chiave). «Dimentica le chiavi scelte» rimuove le righe selezionate al salvataggio; la chiave verrà richiesta di nuovo alla prossima connessione | — |
+| Sicurezza | Chiavi dei server accettate | Tabella delle impronte verificate e accettate (server, tipo, impronta): PSMP, SSH diretto, certificati FTPS e Desktop remoto delle voci KeePass, certificati dei PSM per le sessioni in una scheda (una riga per tipo di chiave). «Dimentica le chiavi scelte» rimuove le righe selezionate al salvataggio; la chiave verrà richiesta di nuovo alla prossima connessione | — |
 | Menu del pulsante Impostazioni | Registro di debug | Svolgimento delle connessioni in un file, senza segreti (vedi [Sicurezza](#sicurezza)); «Mostra il file del registro» lo apre in Esplora risorse | no |
 
 ### Ambiente condiviso

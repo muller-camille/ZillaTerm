@@ -892,7 +892,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | Files | Text editor | Program opened by "Edit" in the Files tab | Notepad |
 | Files | Comparison tool | Program offered in the comparison window, with its arguments (`{0}` = left file, `{1}` = right file) | none |
 | Security | Local vault | Remembered KeePass master passwords: "Create…", "Unlock…", "Change password…", "Delete now…"; these actions apply at once, without "Save" | — |
-| Security | Accepted server keys | Table of the fingerprints checked and accepted (server, type, fingerprint): PSMP, direct SSH, FTPS and Remote Desktop certificates of KeePass entries (one row per key type). "Forget the selected keys" removes the selected rows on save; the key will be asked again at the next connection | — |
+| Security | Accepted server keys | Table of the fingerprints checked and accepted (server, type, fingerprint): PSMP, direct SSH, FTPS and Remote Desktop certificates of KeePass entries, PSM certificates for sessions in a tab (one row per key type). "Forget the selected keys" removes the selected rows on save; the key will be asked again at the next connection | — |
 | Settings button menu | Debug log | How connections unfold, in a file, without secrets (see [Security](#security)); "Show the debug log file" opens it in Explorer | no |
 
 ### Shared environment
