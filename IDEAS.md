@@ -159,6 +159,42 @@ Piste : une sélection multiple dans « Disponibles » (Ctrl+clic, comme dans «
 - **SAML** : authentification par le fournisseur d'identité de l'entreprise.
 - **PSM Gateway (HTML5)** : PVWA qui ouvre les sessions dans le navigateur au lieu de fournir un fichier `.rdp`.
 
+## Étiquettes de serveurs
+
+### Garde-fous pour les étiquettes sensibles
+
+Une case « sensible » par étiquette dans les Paramètres (cochée pour PROD par défaut, diffusée par le fichier
+d'environnement), qui ajoute des confirmations là où une erreur coûte cher :
+
+- vue parallèle : la « saisie simultanée » avertit quand elle mélange des environnements (« 2 serveurs PROD et 3 DEV
+  recevront cette commande ») ;
+- envoi vers plusieurs serveurs : même avertissement si la liste mélange PROD et autre chose ;
+- collage de plusieurs lignes dans une session sensible : toujours confirmé, même si l'option est décochée.
+
+C'est l'avertissement au moment de taper qui évite l'erreur ; la couleur seule ne suffit pas.
+
+### Règles d'étiquetage de l'équipe
+
+Règles explicites dans le fichier d'environnement (« safe `*-PRD` → PROD », « plateforme `WinDomain-Prod` → PROD »,
+« nom `*rec*` → QA »), appliquées avant la proposition d'après le nom, à l'ajout comme à l'import : tout le monde a
+les mêmes étiquettes sans dépendre d'une devinette.
+
+### Étiquettes et Intervention
+
+Ouvrir une session sur un serveur à étiquette sensible propose de démarrer l'enregistrement (voir « Proposer
+d'enregistrer ») ; le rapport donne l'étiquette de chaque serveur touché et un résumé (« 3 serveurs PROD »).
+
+### Retrouver ses serveurs par étiquette
+
+Filtre par étiquette dans « Mes serveurs » (`tag:PROD` dans la recherche, ou pastilles cliquables) ; pastille dans
+les sessions récentes de l'accueil et dans « Disponibles » pour les comptes déjà rangés dans « Mes serveurs ».
+
+### Étiquette des sessions PSM
+
+Les sessions PSM s'ouvrent dans la Connexion Bureau à distance de Windows, que ZillaTerm ne peut ni colorer ni cadrer.
+Piste : l'étiquette en tête du nom de la session dans la fenêtre (selon ce que le composant PSM permet) et dans la
+barre d'état de ZillaTerm.
+
 ## Intervention et consignes d'astreinte
 
 ### Titre ou ticket de l'intervention
@@ -183,8 +219,9 @@ pastille « Nouvelles consignes » sur le bouton Intervention, pour qu'un numér
 
 ### Proposer d'enregistrer
 
-Proposer l'enregistrement à l'ouverture d'une session sur une cible de production (règle définie par l'équipe dans le
-fichier d'environnement, par ex. les safes `*-PRD`), et demander s'il faut l'arrêter à la déconnexion de CyberArk.
+Proposer l'enregistrement à l'ouverture d'une session sur une cible de production (étiquette sensible, ou règle
+définie par l'équipe dans le fichier d'environnement, par ex. les safes `*-PRD`), et demander s'il faut l'arrêter à
+la déconnexion de CyberArk.
 
 ### Durée de conservation des journaux
 
