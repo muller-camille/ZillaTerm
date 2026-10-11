@@ -87,16 +87,23 @@ internal static class Win32Input
             new Input { Type = 0, Mouse = new MouseInput { Flags = right ? 0x0010u : 0x0004u } });
     }
 
-    /// <summary>Appuie puis relâche chaque touche (codes virtuels : lettres majuscules, chiffres).</summary>
-    public static void Type(string keys)
+    /// <summary>
+    /// Appuie puis relâche chaque touche (codes virtuels : lettres majuscules, chiffres), avec son code de balayage
+    /// comme un clavier, ou sans (<paramref name="withScanCode"/> faux) comme une saisie automatique.
+    /// </summary>
+    public static void Type(string keys, bool withScanCode = true)
     {
         foreach (var key in keys)
         {
+            ushort scan = withScanCode ? (ushort)MapVirtualKey(key, 0) : (ushort)0;
             Send(
-                new Input { Type = 1, Keyboard = new KeyboardInput { Vk = key } },
-                new Input { Type = 1, Keyboard = new KeyboardInput { Vk = key, Flags = 0x0002 } });
+                new Input { Type = 1, Keyboard = new KeyboardInput { Vk = key, Scan = scan } },
+                new Input { Type = 1, Keyboard = new KeyboardInput { Vk = key, Scan = scan, Flags = 0x0002 } });
         }
     }
+
+    [DllImport("user32.dll")]
+    private static extern uint MapVirtualKey(uint code, uint mapType);
 
     private static void Send(params Input[] inputs) => SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>());
 

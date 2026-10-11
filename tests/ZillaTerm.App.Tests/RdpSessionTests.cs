@@ -578,13 +578,19 @@ public class RdpSessionTests(ITestOutputHelper output)
         await ClickAndCheckAsync(log, host, bounds, (0.75, 0.6), (width, height));
 
         output.WriteLine($"Clavier : {Win32Input.ClassName(Win32Input.FocusOf(host))}");
+        // Touches d'un clavier (code de balayage), puis d'une saisie automatique (code virtuel seul).
         int before = Lines(log).Count;
-        await RetryUntilLineAsync(log, before, l => l == "key T", () =>
+        await RetryUntilLineAsync(log, before, l => l == "key Z", () =>
         {
-            Win32Input.Type("ZT");
+            Win32Input.Type("Z");
             return Task.CompletedTask;
         });
-        await WaitForLineAsync(log, before, l => l == "key Z", TimeSpan.FromSeconds(5));
+        before = Lines(log).Count;
+        await RetryUntilLineAsync(log, before, l => l == "key T", () =>
+        {
+            Win32Input.Type("T", withScanCode: false);
+            return Task.CompletedTask;
+        });
         Assert.Equal(RdpSessionState.Connected, session.State);
     }
 

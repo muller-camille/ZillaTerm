@@ -26,6 +26,9 @@ internal sealed class FreeRdpConnection : IRdpConnection
     /// <summary>Délai laissé au client pour se déconnecter proprement avant d'être arrêté.</summary>
     private static readonly TimeSpan StopDelay = TimeSpan.FromSeconds(3);
 
+    // Déconnexion demandée pendant la fin de la connexion (canaux) : FreeRDP peut tarder à s'arrêter (constaté).
+    private static readonly TimeSpan DisconnectDelay = TimeSpan.FromSeconds(10);
+
     private readonly RdpSession _session;
     private readonly RdpConnectionRequest _request;
     private readonly string _label;
@@ -37,6 +40,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private FreeRdpEnded? _ended;
     private volatile bool _released;
     private bool _keyRefused;
+    private bool _disconnecting;
 
     public FreeRdpConnection(RdpSession session, RdpConnectionRequest request, string label)
     {
@@ -107,7 +111,16 @@ internal sealed class FreeRdpConnection : IRdpConnection
         }
     }
 
-    public void Disconnect() => Send("disconnect");
+    /// <summary>Déconnexion demandée à FreeRDP ; arrêté s'il n'a pas fini dans le délai : la session se termine toujours.</summary>
+    public void Disconnect()
+    {
+        _disconnecting = true;
+        Send("disconnect");
+        if (_process is { } process)
+        {
+            _ = StopLaterAsync(process, DisconnectDelay);
+        }
+    }
 
     public void EnterFullScreen()
     {
@@ -157,7 +170,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
         {
         }
 
-        _ = StopLaterAsync(process);
+        _ = StopLaterAsync(process, StopDelay);
     }
 
     public void Ping(Action pong)
@@ -326,7 +339,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
         {
             if (ended is null)
             {
-                _session.OnEnded(this, false, Text.Format(Strings.FreeRdpCrashed, exitCode));
+                // Arrêté après une déconnexion demandée : fin normale, pas un plantage.
+                _session.OnEnded(this, _disconnecting, _disconnecting ? null : Text.Format(Strings.FreeRdpCrashed, exitCode));
             }
             else
             {
@@ -362,15 +376,15 @@ internal sealed class FreeRdpConnection : IRdpConnection
         return $"{text} ({(ended.Name.Length > 0 ? ended.Name + ", " : "")}0x{ended.Code:X8})";
     }
 
-    private async Task StopLaterAsync(Process process)
+    private async Task StopLaterAsync(Process process, TimeSpan delay)
     {
         try
         {
-            await process.WaitForExitAsync().WaitAsync(StopDelay);
+            await process.WaitForExitAsync().WaitAsync(delay);
         }
         catch (TimeoutException)
         {
-            DebugLog.Write("freerdp", $"{_label} : le client ne s'est pas arrêté en {StopDelay.TotalSeconds:0} s ; arrêt forcé");
+            DebugLog.Write("freerdp", $"{_label} : le client ne s'est pas arrêté en {delay.TotalSeconds:0} s ; arrêt forcé");
             try
             {
                 process.Kill(entireProcessTree: true);
