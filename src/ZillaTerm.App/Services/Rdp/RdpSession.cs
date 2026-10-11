@@ -570,7 +570,14 @@ internal sealed class RdpSession : IDisposable
     {
         if (!IsNotResponding)
         {
-            Host.Visibility = _starting || ShowsDesktop ? Visibility.Visible : Visibility.Hidden;
+            bool visible = _starting || ShowsDesktop;
+            Host.Visibility = visible ? Visibility.Visible : Visibility.Hidden;
+            if (visible)
+            {
+                // WPF ne place la fenêtre de l'emplacement qu'à la mise en page suivante : jamais placée tant qu'elle
+                // était masquée (client FreeRDP en cours de connexion), elle resterait sans taille jusque-là.
+                Host.UpdateWindowPos();
+            }
         }
     }
 
