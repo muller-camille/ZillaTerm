@@ -25,6 +25,7 @@ public abstract record FreeRdpMessage
             ["connected", var window] when long.TryParse(window, NumberStyles.None, CultureInfo.InvariantCulture, out var handle) =>
                 new FreeRdpConnected(handle),
             ["certificate", var flags, var port, var pem, var host] => Certificate(flags, port, pem, host),
+            ["rdpkey", var port, var key, var host] => ServerKey(port, key, host),
             ["reconnecting", var attempt] when int.TryParse(attempt, NumberStyles.None, CultureInfo.InvariantCulture, out var number) =>
                 new FreeRdpReconnecting(number),
             ["ended", var code, ..] when uint.TryParse(code, NumberStyles.None, CultureInfo.InvariantCulture, out var value) =>
@@ -45,6 +46,27 @@ public abstract record FreeRdpMessage
         try
         {
             return new FreeRdpCertificateRequest(flagValue, portValue, Encoding.ASCII.GetString(Convert.FromBase64String(pem)), host);
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+    }
+
+    private static FreeRdpServerKey? ServerKey(string port, string key, string host)
+    {
+        if (!int.TryParse(port, NumberStyles.None, CultureInfo.InvariantCulture, out var portValue) || portValue is < 1 or > 65535)
+        {
+            return null;
+        }
+
+        try
+        {
+            // Exposant (4 octets) puis module RSA : 512 à 16384 bits.
+            var bytes = Convert.FromBase64String(key);
+            return bytes.Length is >= 4 + 64 and <= 4 + 2048
+                ? new FreeRdpServerKey(portValue, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)), host)
+                : null;
         }
         catch (FormatException)
         {
@@ -79,3 +101,10 @@ public sealed record FreeRdpEnded(uint Code, string Name) : FreeRdpMessage;
 
 /// <summary>Connexion coupée : tentative de reconnexion automatique (la première est 1).</summary>
 public sealed record FreeRdpReconnecting(int Attempt) : FreeRdpMessage;
+
+/// <summary>
+/// Clé du serveur pour l'ancienne sécurité RDP, sans TLS (aucun certificat ne l'authentifie) : FreeRDP attend « accept »
+/// ou « deny » avant de s'en servir.
+/// </summary>
+/// <param name="Sha256">Empreinte SHA-256 de la clé (exposant puis module), en hexadécimal.</param>
+public sealed record FreeRdpServerKey(int Port, string Sha256, string Host) : FreeRdpMessage;

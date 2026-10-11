@@ -446,6 +446,78 @@ public class RdpSessionTests(ITestOutputHelper output)
         });
     }
 
+    /// <summary>
+    /// Serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS (cas d'un PSM) : sa clé est soumise à ZillaTerm avant
+    /// tout envoi d'identifiants, la session s'ouvre si elle est acceptée et pas si elle est refusée ; aucun certificat
+    /// TLS n'est présenté. Le poste de CI est passé en sécurité RDP le temps du test.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpLegacySecurityAsksForTheServerKey()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        const string RdpTcp = @"SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp";
+        using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(RdpTcp, writable: true)
+            ?? throw new InvalidOperationException(RdpTcp);
+        var previous = key.GetValue("SecurityLayer");
+        key.SetValue("SecurityLayer", 0, Microsoft.Win32.RegistryValueKind.DWord);
+        try
+        {
+            var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab() with { EnableCredSsp = false };
+            string? first = null;
+            await RunOnStaAsync(Request(accept: true), async session =>
+            {
+                await session.ConnectAsync();
+                var state = await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90));
+                output.WriteLine($"Clé acceptée : {state} {session.Error}");
+                Assert.Equal(RdpSessionState.Connected, state);
+                session.Disconnect();
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30));
+            });
+            Assert.NotNull(first);
+
+            await RunOnStaAsync(Request(accept: false), async session =>
+            {
+                var states = new List<RdpSessionState>();
+                session.StateChanged += () => states.Add(session.State);
+                await session.ConnectAsync();
+                var state = await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
+                output.WriteLine($"Clé refusée : {state} {session.Error}");
+                Assert.Equal(RdpSessionState.Failed, state);
+                Assert.DoesNotContain(RdpSessionState.Connected, states);
+            });
+
+            RdpConnectionRequest Request(bool accept) => new(settings, account.Password)
+            {
+                FreeRdp = true,
+                VerifyCertificate = c => throw new Xunit.Sdk.XunitException($"Certificat TLS présenté : {c.Host}"),
+                VerifyServerKey = k =>
+                {
+                    output.WriteLine($"Clé du serveur {k.Host}:{k.Port} SHA256 {k.Sha256}");
+                    Assert.Equal("127.0.0.2", k.Host);
+                    // La même clé à chaque connexion : c'est elle qu'on épingle.
+                    Assert.Equal(first ??= k.Sha256, k.Sha256);
+                    return Task.FromResult(accept);
+                },
+            };
+        }
+        finally
+        {
+            if (previous is null)
+            {
+                key.DeleteValue("SecurityLayer", throwOnMissingValue: false);
+            }
+            else
+            {
+                key.SetValue("SecurityLayer", previous, Microsoft.Win32.RegistryValueKind.DWord);
+            }
+        }
+    }
+
     /// <summary>Certificat refusé par ZillaTerm : FreeRDP n'ouvre pas la session (rien n'est envoyé au serveur).</summary>
     [Fact]
     [Trait("Category", "RdpIntegration")]

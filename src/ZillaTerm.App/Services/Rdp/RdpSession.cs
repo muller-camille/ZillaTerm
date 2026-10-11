@@ -26,6 +26,12 @@ internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, stri
     /// tout certificat est refusé.
     /// </summary>
     public Func<FreeRdpCertificateRequest, Task<bool>>? VerifyCertificate { get; init; }
+
+    /// <summary>
+    /// Clé d'un serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS : vrai pour l'accepter. Fournie, elle permet
+    /// cette sécurité au client FreeRDP (PSM seulement) ; sinon, un serveur sans TLS est refusé.
+    /// </summary>
+    public Func<FreeRdpServerKey, Task<bool>>? VerifyServerKey { get; init; }
 }
 
 /// <summary>

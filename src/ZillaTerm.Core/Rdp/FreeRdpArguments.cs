@@ -39,9 +39,13 @@ public static class FreeRdpArguments
     /// <param name="pixels">Taille de l'onglet en pixels : résolution du bureau distant, mise à l'échelle ensuite.</param>
     /// <param name="password">Mot de passe d'une connexion directe ; null pour une session PSM (aucun n'est demandé).</param>
     /// <param name="verbose">Journal détaillé de FreeRDP (journal de débogage de ZillaTerm activé).</param>
+    /// <param name="legacySecurity">
+    /// Ancienne sécurité RDP permise si le serveur refuse TLS (PSM seulement) : sa clé est alors toujours soumise à
+    /// ZillaTerm, qui l'épingle ; chiffrement 128 bits ou FIPS seulement.
+    /// </param>
     /// <exception cref="ArgumentException">Valeur avec un retour à la ligne ou un caractère nul.</exception>
     public static IReadOnlyList<string> Build(RdpConnectionSettings settings, long parentWindow, (int Width, int Height) pixels,
-        string? password, bool verbose)
+        string? password, bool verbose, bool legacySecurity = false)
     {
         if (!Supports(settings))
         {
@@ -59,12 +63,22 @@ public static class FreeRdpArguments
             "/bpp:" + settings.ColorDepth.ToString(CultureInfo.InvariantCulture),
             "-toggle-fullscreen",
             "/log-level:" + (verbose ? "INFO" : "WARN"),
-            // Jamais l'ancienne « sécurité RDP » sans TLS : le serveur ne serait pas authentifié (le client compilé
-            // pour ZillaTerm l'impose aussi). Réglages explicites plutôt que « /sec » : une option donnée deux fois
-            // ne garde que sa dernière valeur.
-            "FreeRDP_RdpSecurity=FALSE",
+            // L'ancienne « sécurité RDP » sans TLS n'authentifie pas le serveur : seulement si elle est permise, et le
+            // client compilé pour ZillaTerm soumet alors la clé du serveur à ZillaTerm. Réglages explicites plutôt
+            // que « /sec » : une option donnée deux fois ne garde que sa dernière valeur.
             "FreeRDP_UseRdpSecurityLayer=FALSE",
         };
+
+        if (legacySecurity)
+        {
+            // ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS : ni 40, ni 56 bits.
+            lines.Add("FreeRDP_RdpSecurity=TRUE");
+            lines.Add("FreeRDP_EncryptionMethods=18");
+        }
+        else
+        {
+            lines.Add("FreeRDP_RdpSecurity=FALSE");
+        }
 
         if (!settings.EnableCredSsp)
         {

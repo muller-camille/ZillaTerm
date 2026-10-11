@@ -16145,7 +16145,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The server accepts none of the secure connections ZillaTerm offers (TLS, network level authentication). If it only accepts the legacy RDP security, without TLS, its identity cannot be checked: ZillaTerm does not connect to it..
+        ///   Looks up a localized string similar to The server accepts none of the secure connections ZillaTerm offers (TLS, network level authentication; legacy RDP security for a PSM only)..
         /// </summary>
         public static string FreeRdpNegotiation {
             get {
@@ -16195,6 +16195,96 @@ namespace ZillaTerm.App.Localization {
         public static string PsmTabGateway {
             get {
                 return ResourceManager.GetString("PsmTabGateway", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PSM server key.
+        /// </summary>
+        public static string RdpKeyTitle {
+            get {
+                return ResourceManager.GetString("RdpKeyTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Check the key of this PSM.
+        /// </summary>
+        public static string RdpKeyVerifyHeading {
+            get {
+                return ResourceManager.GetString("RdpKeyVerifyHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The key of this PSM has changed.
+        /// </summary>
+        public static string RdpKeyChangedHeading {
+            get {
+                return ResourceManager.GetString("RdpKeyChangedHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PSM only accepts the legacy RDP security, without TLS: no certificate proves its identity, only the fingerprint of its key, remembered on this computer once trusted. Its encryption (RC4) is also weaker than TLS: ask the CyberArk administrator to enable TLS on the PSM..
+        /// </summary>
+        public static string RdpKeyMessage {
+            get {
+                return ResourceManager.GetString("RdpKeyMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The key presented by this PSM is not the one remembered on this computer. Only continue if the CyberArk administrator confirms the PSM key was changed; otherwise cancel and warn them..
+        /// </summary>
+        public static string RdpKeyChangedMessage {
+            get {
+                return ResourceManager.GetString("RdpKeyChangedMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Key fingerprint (SHA-256).
+        /// </summary>
+        public static string RdpKeyFingerprint {
+            get {
+                return ResourceManager.GetString("RdpKeyFingerprint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Trust the new key and connect.
+        /// </summary>
+        public static string RdpKeyReplace {
+            get {
+                return ResourceManager.GetString("RdpKeyReplace", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This server no longer offers TLS.
+        /// </summary>
+        public static string RdpKeyDowngradeHeading {
+            get {
+                return ResourceManager.GetString("RdpKeyDowngradeHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This server presented a TLS certificate before, and now only offers the legacy RDP security, whose identity cannot be checked: the connection may be intercepted, ZillaTerm refuses it. If the CyberArk administrator confirms that TLS was disabled on the PSM, remove its certificate from the accepted server keys in the Settings, then connect again..
+        /// </summary>
+        public static string RdpKeyDowngradeMessage {
+            get {
+                return ResourceManager.GetString("RdpKeyDowngradeMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server key refused: the session was not opened..
+        /// </summary>
+        public static string FreeRdpKeyRefused {
+            get {
+                return ResourceManager.GetString("FreeRdpKeyRefused", resourceCulture);
             }
         }
     }

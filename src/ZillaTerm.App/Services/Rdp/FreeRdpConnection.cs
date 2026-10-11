@@ -36,6 +36,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private IntPtr _window;
     private FreeRdpEnded? _ended;
     private volatile bool _released;
+    private bool _keyRefused;
 
     public FreeRdpConnection(RdpSession session, RdpConnectionRequest request, string label)
     {
@@ -52,7 +53,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
     public async Task StartAsync(IntPtr slot, (int Width, int Height) pixels)
     {
-        var lines = FreeRdpArguments.Build(_request.Settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled);
+        var lines = FreeRdpArguments.Build(_request.Settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled,
+            legacySecurity: _request.VerifyServerKey is not null);
         var process = FreeRdpClient.Start();
         _process = process;
         DebugLog.Write("freerdp", $"{_label} : client FreeRDP lancé (processus {process.Id}), session {pixels.Width} × {pixels.Height}"
@@ -213,6 +215,25 @@ internal sealed class FreeRdpConnection : IRdpConnection
                 DebugLog.Write("freerdp", $"{_label} : certificat de {certificate.Host}:{certificate.Port} {(accept ? "accepté" : "refusé")}");
                 Send(accept ? "accept" : "deny");
                 break;
+            case FreeRdpServerKey key:
+                bool trusted = false;
+                if (!_released && _request.VerifyServerKey is { } verifyKey)
+                {
+                    try
+                    {
+                        trusted = await verifyKey(key);
+                    }
+                    catch (Exception e) when (e is not OutOfMemoryException)
+                    {
+                        DebugLog.Write("freerdp", $"{_label} : clé de {key.Host} non vérifiée", e);
+                    }
+                }
+
+                DebugLog.Write("freerdp", $"{_label} : sécurité RDP sans TLS, clé de {key.Host}:{key.Port} SHA256 {key.Sha256} "
+                    + (trusted ? "acceptée" : "refusée"));
+                _keyRefused |= !trusted;
+                Send(trusted ? "accept" : "deny");
+                break;
             case FreeRdpEnded ended:
                 _ended = ended;
                 break;
@@ -323,7 +344,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private string Describe(FreeRdpEnd end, FreeRdpEnded ended)
     {
         var server = _request.Settings.Server;
-        var text = end switch
+        var text = _keyRefused ? Strings.FreeRdpKeyRefused : end switch
         {
             FreeRdpEnd.TakenOver => Strings.FreeRdpTakenOver,
             FreeRdpEnd.Timeout => Strings.FreeRdpTimeout,

@@ -35,6 +35,7 @@ public class FreeRdpTests
         Assert.Contains("/smart-sizing", lines);
         Assert.Contains("FreeRDP_RdpSecurity=FALSE", lines);
         Assert.Contains("FreeRDP_UseRdpSecurityLayer=FALSE", lines);
+        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_EncryptionMethods=", StringComparison.Ordinal));
         Assert.Contains("FreeRDP_NlaSecurity=FALSE", lines);
         Assert.Contains("FreeRDP_ExtSecurity=FALSE", lines);
         Assert.Contains("-clipboard", lines);
@@ -50,6 +51,23 @@ public class FreeRdpTests
         Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_AlternateShell=", StringComparison.Ordinal));
         // Chaque ligne est une option ou un réglage, sauf la ligne vide finale.
         Assert.All(lines.SkipLast(1), l => Assert.True(l[0] is '/' or '+' or '-' || l.StartsWith("FreeRDP_", StringComparison.Ordinal), l));
+        AssertEachOptionOnce(lines);
+    }
+
+    /// <summary>
+    /// PSM qui n'accepte que l'ancienne sécurité RDP : permise sur demande seulement, avec un chiffrement de 128 bits ou
+    /// FIPS (ni 40, ni 56 bits).
+    /// </summary>
+    [Fact]
+    public void LegacyRdpSecurityOnlyWhenAllowedAndNeverBelow128Bits()
+    {
+        var settings = Read(RemoteAppFile).ForPsmTab();
+
+        var lines = FreeRdpArguments.Build(settings, 1, (1280, 800), password: null, verbose: false, legacySecurity: true);
+
+        Assert.Contains("FreeRDP_RdpSecurity=TRUE", lines);
+        Assert.Contains("FreeRDP_EncryptionMethods=18", lines);
+        Assert.DoesNotContain("FreeRDP_RdpSecurity=FALSE", lines);
         AssertEachOptionOnce(lines);
     }
 
@@ -171,6 +189,17 @@ public class FreeRdpTests
         Assert.Null(FreeRdpMessage.Parse("zillaterm:certificate 0 3389 !!! psm.corp.local"));
         Assert.Null(FreeRdpMessage.Parse("zillaterm:certificate 0 3389 AAAA psm corp"));
         Assert.Null(FreeRdpMessage.Parse("zillaterm:reconnecting x"));
+
+        // Clé de l'ancienne sécurité RDP : empreinte SHA-256 de l'exposant et du module.
+        var raw = new byte[4 + 256];
+        raw[0] = 1;
+        raw[2] = 1;
+        raw[^1] = 0xC3;
+        var key = Assert.IsType<FreeRdpServerKey>(FreeRdpMessage.Parse($"zillaterm:rdpkey 3389 {Convert.ToBase64String(raw)} psm.corp.local"));
+        Assert.Equal(new FreeRdpServerKey(3389, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(raw)), "psm.corp.local"), key);
+        Assert.Null(FreeRdpMessage.Parse($"zillaterm:rdpkey 0 {Convert.ToBase64String(raw)} psm.corp.local"));
+        Assert.Null(FreeRdpMessage.Parse($"zillaterm:rdpkey 3389 {Convert.ToBase64String(new byte[20])} psm.corp.local"));
+        Assert.Null(FreeRdpMessage.Parse("zillaterm:rdpkey 3389 !!! psm.corp.local"));
         Assert.Null(FreeRdpMessage.Parse("zillaterm:unknown 1"));
     }
 

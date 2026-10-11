@@ -1138,7 +1138,13 @@ public partial class MainWindow : Window
                 next = next.ForPsmTab();
             }
 
-            return new RdpConnectionRequest(next, null) { FreeRdp = freeRdp, VerifyCertificate = freeRdp ? VerifyFreeRdpCertificateAsync : null };
+            return new RdpConnectionRequest(next, null)
+            {
+                FreeRdp = freeRdp,
+                VerifyCertificate = freeRdp ? VerifyFreeRdpCertificateAsync : null,
+                // Session PSM : un PSM qui n'accepte que l'ancienne sécurité RDP est permis, sa clé épinglée.
+                VerifyServerKey = freeRdp ? VerifyFreeRdpServerKeyAsync : null,
+            };
         }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), settings.Server);
 
         if (session.ControlFailed && session.ConnectedAt is null && MainTabs.Items.OfType<TabItem>().Any(t => t.Tag == session))

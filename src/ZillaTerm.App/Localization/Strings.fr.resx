@@ -5413,7 +5413,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Connexion sécurisée impossible, ou certificat du serveur refusé.</value>
   </data>
   <data name="FreeRdpNegotiation" xml:space="preserve">
-    <value>Le serveur n'accepte aucune des connexions sécurisées proposées par ZillaTerm (TLS, authentification réseau). S'il n'accepte que l'ancienne sécurité RDP, sans TLS, son identité ne peut pas être vérifiée : ZillaTerm ne s'y connecte pas.</value>
+    <value>Le serveur n'accepte aucune des connexions sécurisées proposées par ZillaTerm (TLS, authentification réseau ; ancienne sécurité RDP pour un PSM seulement).</value>
   </data>
   <data name="FreeRdpAuthentication" xml:space="preserve">
     <value>Identifiant ou mot de passe refusé par le serveur.</value>
@@ -5429,5 +5429,35 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="PsmTabGateway" xml:space="preserve">
     <value>{0} : connexion par une passerelle Bureau à distance, session PSM ouverte dans Connexion Bureau à distance.</value>
+  </data>
+  <data name="RdpKeyTitle" xml:space="preserve">
+    <value>Clé du serveur PSM</value>
+  </data>
+  <data name="RdpKeyVerifyHeading" xml:space="preserve">
+    <value>Vérifier la clé de ce PSM</value>
+  </data>
+  <data name="RdpKeyChangedHeading" xml:space="preserve">
+    <value>La clé de ce PSM a changé</value>
+  </data>
+  <data name="RdpKeyMessage" xml:space="preserve">
+    <value>Ce PSM n'accepte que l'ancienne sécurité RDP, sans TLS : aucun certificat ne prouve son identité, seule l'empreinte de sa clé, retenue sur ce poste une fois approuvée. Son chiffrement (RC4) est aussi plus faible que TLS : demandez à l'administrateur CyberArk d'activer TLS sur le PSM.</value>
+  </data>
+  <data name="RdpKeyChangedMessage" xml:space="preserve">
+    <value>La clé présentée par ce PSM n'est pas celle retenue sur ce poste. Ne continuez que si l'administrateur CyberArk confirme le changement de clé du PSM ; sinon, annulez et prévenez-le.</value>
+  </data>
+  <data name="RdpKeyFingerprint" xml:space="preserve">
+    <value>Empreinte de la clé (SHA-256)</value>
+  </data>
+  <data name="RdpKeyReplace" xml:space="preserve">
+    <value>Faire confiance à la nouvelle clé et se connecter</value>
+  </data>
+  <data name="RdpKeyDowngradeHeading" xml:space="preserve">
+    <value>Ce serveur ne propose plus TLS</value>
+  </data>
+  <data name="RdpKeyDowngradeMessage" xml:space="preserve">
+    <value>Ce serveur présentait un certificat TLS et ne propose plus que l'ancienne sécurité RDP, dont l'identité ne peut pas être vérifiée : la connexion est peut-être interceptée, ZillaTerm la refuse. Si l'administrateur CyberArk confirme que TLS a été désactivé sur le PSM, retirez son certificat des clés de serveurs acceptées dans les Paramètres, puis reconnectez-vous.</value>
+  </data>
+  <data name="FreeRdpKeyRefused" xml:space="preserve">
+    <value>Clé du serveur refusée : la session n'a pas été ouverte.</value>
   </data>
 </root>

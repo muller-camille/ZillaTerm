@@ -1152,7 +1152,10 @@ be reached; otherwise fingerprint pinned (`rdp://server:port` among the accepted
 user. Hardening: no library loaded from outside System32 (the virtual channels are compiled into the executable),
 OpenSSL with no module, engine or configuration file loaded at run time, its compiled-in folders being Windows
 folders reserved for administrators; log, proxy and OpenSSL variables removed from its environment; never the old
-"RDP security" without TLS (a server that only accepts it is refused, with a message). The process is in a job object closed along with ZillaTerm: it does not outlive it. Its
+"RDP security" without TLS, except for a PSM that only accepts it: the PSM key, which no certificate authenticates, is
+then sent to ZillaTerm before any credential and pinned (`rdp://server:port`, type `RDP-RSA`: question on first use,
+alert if it changes), with 128-bit encryption at least; it is refused if this server has already presented a TLS
+certificate (TLS removed: possible interception). The process is in a job object closed along with ZillaTerm: it does not outlive it. Its
 window is a child of the tab (`/parent-window` option); a click inside gives the keyboard to the tab, from which
 FreeRDP's keyboard hook sends the keys to the session. A remote application is shown in this window (session
 surface, like a desktop) instead of separate windows. Session end and errors: the FreeRDP code (`ERRINFO_…`,
@@ -1254,6 +1257,8 @@ sh or fish, following is not set up and nothing stays on screen.
 | A PSM session in a tab asks you to confirm the PSM certificate | Windows does not trust this certificate (self-signed, or issued for another name): compare the fingerprint with the CyberArk team before accepting; it is then remembered. A certificate issued by the company authority for the PSM name removes this question. |
 | A PSM session opens in Remote Desktop Connection despite the "in a tab" option | Connection through a Remote Desktop gateway, or FreeRDP client cannot be launched on the computer (computer policy): the status bar says so. |
 | Alt+Tab or the Windows key no longer respond | The tab of a PSM session has the keyboard: all keys go to the session. Click elsewhere in ZillaTerm (another tab, the list). |
+| PSM session: "Check the key of this PSM" | The PSM only accepts the legacy "RDP security", without TLS: only the fingerprint of its key identifies it. Accept it on first use (it is remembered) and ask the CyberArk administrator to enable TLS on the PSM. |
+| PSM session: "The key of this PSM has changed" or "This server no longer offers TLS" | The connection may be intercepted: only continue with the CyberArk administrator's agreement (see the message). |
 | A direct remote desktop tab (KeePass) shows "Remote Desktop control error" | Report the code shown (if the Remote Desktop control is missing from the computer, the connection goes through `mstsc`). |
 | VNC: "The VNC server offers no authentication supported by ZillaTerm…" | The server requires its vendor's own authentication (Windows account, VeNCrypt encryption…): enable "VNC password" authentication on the server. |
 | VNC: "No VNC answer from the server within 30 seconds" | Wrong port (5900 + display number) or a service other than VNC at this address. |

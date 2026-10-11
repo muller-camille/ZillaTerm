@@ -1230,7 +1230,10 @@ da Windows, nome, utilizzo, revoca quando è raggiungibile; altrimenti impronta 
 chiavi dei server accettate) o confermata dall'utente. Rafforzamento: nessuna libreria caricata fuori da System32 (i
 canali virtuali sono compilati nell'eseguibile), OpenSSL senza moduli, motori né file di configurazione caricati
 all'esecuzione, essendo le sue cartelle compilate quelle di Windows riservate agli amministratori; variabili di log,
-di proxy e di OpenSSL rimosse dal suo ambiente; mai la vecchia «sicurezza RDP» senza TLS (un server che accetta solo quella viene rifiutato, con un messaggio). Il processo è in un oggetto
+di proxy e di OpenSSL rimosse dal suo ambiente; mai la vecchia «sicurezza RDP» senza TLS, salvo per un PSM che accetta solo quella: la chiave del PSM, che nessun
+certificato autentica, viene allora sottoposta a ZillaTerm prima di qualsiasi invio di credenziali e fissata
+(`rdp://server:porta`, tipo `RDP-RSA`: domanda al primo utilizzo, avviso se cambia), cifratura di almeno 128 bit; viene
+rifiutata se questo server ha già presentato un certificato TLS (TLS rimosso: possibile intercettazione). Il processo è in un oggetto
 processo (job object) chiuso insieme a ZillaTerm: non gli sopravvive. La sua finestra è figlia della scheda (opzione
 `/parent-window`); un clic al suo interno dà la tastiera alla scheda, da cui l'hook di tastiera di FreeRDP invia i
 tasti alla sessione. Un'applicazione remota viene mostrata in questa finestra (superficie della sessione, come un
@@ -1335,6 +1338,8 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 | Una sessione PSM in una scheda chiede di confermare il certificato del PSM | Windows non approva questo certificato (autofirmato, o emesso per un altro nome): confronta l'impronta con il team CyberArk prima di accettare; viene poi memorizzata. Un certificato emesso dall'autorità dell'azienda per il nome del PSM elimina questa domanda. |
 | Una sessione PSM si apre in Connessione Desktop remoto nonostante l'opzione «in una scheda» | Connessione tramite un gateway Desktop remoto, oppure client FreeRDP impossibile da avviare sul computer (criteri del computer): la barra di stato lo dice. |
 | Alt+Tab o il tasto Windows non rispondono più | La scheda di una sessione PSM ha la tastiera: tutti i tasti vanno alla sessione. Fai clic altrove in ZillaTerm (un'altra scheda, l'elenco). |
+| Sessione PSM: «Verifica la chiave di questo PSM» | Il PSM accetta solo la vecchia «sicurezza RDP», senza TLS: solo l'impronta della sua chiave lo identifica. Accettala al primo utilizzo (viene memorizzata) e chiedi all'amministratore CyberArk di attivare TLS sul PSM. |
+| Sessione PSM: «La chiave di questo PSM è cambiata» o «Questo server non offre più TLS» | La connessione potrebbe essere intercettata: continua solo con l'accordo dell'amministratore CyberArk (vedi il messaggio). |
 | Una scheda di desktop remoto diretto (KeePass) mostra «Errore del controllo Desktop remoto» | Segnala il codice mostrato (se il controllo Desktop remoto manca dal computer, la connessione passa da `mstsc`). |
 | VNC: «Il server VNC non propone alcuna autenticazione supportata da ZillaTerm…» | Il server richiede un'autenticazione propria del suo produttore (account Windows, cifratura VeNCrypt…): attiva l'autenticazione «password VNC» sul server. |
 | VNC: «Nessuna risposta VNC dal server entro 30 secondi» | Porta sbagliata (5900 + numero dello schermo) o servizio diverso da VNC a questo indirizzo. |
