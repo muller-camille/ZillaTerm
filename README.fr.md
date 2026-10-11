@@ -41,7 +41,7 @@ avez accès et ouvre vos sessions en un double-clic : bureau à distance via **P
 | **Mes serveurs** | Vos serveurs de travail, rangés en dossiers et sous-dossiers, chacun avec sa propre configuration et une **étiquette** d'environnement (PROD, QA, DEV…) dont la couleur marque l'onglet et la session ; export, import et **listes partagées** sur un partage réseau (chacun ajoute ou retire, historique des modifications et des versions). |
 | **Reprise d'un autre logiciel** | Les sessions de PuTTY, KiTTY, WinSCP, mRemoteNG, RDCMan, SecureCRT, OpenSSH, de fichiers `.rdp` ou `.mxtsessions` reprises dans « Mes serveurs » avec les mêmes dossiers, chacune associée à son compte du PVWA (sessions déjà via PSM ou le PSMP décodées) et ouverte via PSM ou le PSMP, jamais en direct ; résultat par serveur exportable en CSV, aucun mot de passe lu. |
 | **Environnement partagé** | La configuration de l'équipe (PVWA, PSMP par domaine, composants PSM, listes partagées, clés des PSMP) dans un fichier `ZillaTerm.env.json` : à côté de l'exécutable, importé, ou central sur un partage ; chaque changement est montré et confirmé, rien de personnel ni aucun mot de passe. |
-| **Sessions PSM** | Bureau à distance via le PSM (comme le bouton « Connect » du PVWA), dans la Connexion Bureau à distance de Windows : composant, machine cible (demandée pour un compte de domaine, et gardée dans « Mes serveurs » si vous le souhaitez), motif, ticket. |
+| **Sessions PSM** | Bureau à distance via le PSM (comme le bouton « Connect » du PVWA), dans la Connexion Bureau à distance de Windows ou, en option, dans un onglet de ZillaTerm (bureau Windows à la taille de l'onglet, certificat du PSM vérifié par ZillaTerm) : composant, machine cible (demandée pour un compte de domaine, et gardée dans « Mes serveurs » si vous le souhaitez), motif, ticket. |
 | **Sessions SSH (PSMP)** | Terminal intégré en onglet (compatible xterm : couleurs, vim, less, top…), MFA, menu du clic droit, recherche, fenêtres séparées, « Reconnecter » en fin de session, un PSMP par domaine de serveurs. Fichiers seuls (SFTP, sans terminal) pour les plateformes « SFTP » ou à la demande. |
 | **Onglet Fichiers** | Navigateur SFTP du serveur : dépôt (SFTP, ou SCP, l'autre prenant le relais si le serveur refuse) et téléchargement par glisser-déposer, vérification SHA-256 de chaque fichier, file d'attente (résultats gardés) et historique des transferts, tri par colonne, renommage, modification dans votre éditeur de texte, droits, suivi en direct (`tail -f`), comparaison, envoi vers plusieurs serveurs. |
 | **Vue parallèle** | Jusqu'à 8 sessions SSH côte à côte (un dossier de « Mes serveurs » s'ouvre d'un clic), saisie simultanée en option. |
@@ -95,7 +95,8 @@ peut pas le télécharger lui-même) ; vos réglages sont repris au premier dém
 
 - Windows 10 ou 11 (x64).
 - Le client Bureau à distance de Windows (présent par défaut) : la Connexion Bureau à distance (`mstsc`) pour les
-  sessions PSM, son contrôle intégré pour le bureau à distance direct des bases KeePass.
+  sessions PSM, son contrôle intégré pour les sessions PSM dans un onglet (option) et le bureau à distance direct des
+  bases KeePass.
 - Facultatif : Windows Terminal et le « Client OpenSSH » de Windows, uniquement si vous choisissez d'ouvrir
   le SSH hors de ZillaTerm.
 

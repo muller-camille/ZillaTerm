@@ -41,7 +41,7 @@ and opens your sessions with a double-click: remote desktop through **PSM**, or 
 | **My servers** | Your working servers, organized in folders and subfolders, each with its own settings and an environment **tag** (PROD, QA, DEV…) whose color marks the tab and the session; export, import and **shared lists** on a network share (everyone adds or removes, history of changes and versions). |
 | **Moving from another tool** | The sessions of PuTTY, KiTTY, WinSCP, mRemoteNG, RDCMan, SecureCRT, OpenSSH, `.rdp` or `.mxtsessions` files brought into "My servers" with the same folders, each matched with its PVWA account (sessions already through PSM or the PSMP are decoded) and opened through PSM or the PSMP, never directly; per-server result exportable as CSV, no password read. |
 | **Shared environment** | The team configuration (PVWA, PSMPs by domain, PSM components, shared lists, PSMP keys) in a `ZillaTerm.env.json` file: next to the executable, imported, or central on a share; every change is shown and confirmed, nothing personal and no password. |
-| **PSM sessions** | Remote desktop through the PSM (like the PVWA "Connect" button), in Windows Remote Desktop Connection: component, target machine (asked for a domain account, and kept in "My servers" if you wish), reason, ticket. |
+| **PSM sessions** | Remote desktop through the PSM (like the PVWA "Connect" button), in Windows Remote Desktop Connection or, as an option, in a ZillaTerm tab (Windows desktop at the size of the tab, PSM certificate checked by ZillaTerm): component, target machine (asked for a domain account, and kept in "My servers" if you wish), reason, ticket. |
 | **SSH sessions (PSMP)** | Built-in terminal in a tab (xterm compatible: colours, vim, less, top…), MFA, right-click menu, search, separate windows, "Reconnect" at the end of a session, one PSMP per server domain. Files only (SFTP, without a terminal) for "SFTP" platforms or on request. |
 | **Files tab** | SFTP browser of the server: drag-and-drop upload (SFTP, or SCP, the other one taking over if the server refuses) and download, SHA-256 check of every file, transfer queue (results kept) and history, sortable columns, renaming, editing in your text editor, permissions, live following (`tail -f`), comparison, sending to several servers. |
 | **Parallel view** | Up to 8 SSH sessions side by side (a "My servers" folder opens in one click), optional simultaneous typing. |
@@ -93,7 +93,7 @@ itself); your settings are carried over on first start, then you can delete `Cyb
 
 - Windows 10 or 11 (x64).
 - The Windows Remote Desktop client (installed by default): Remote Desktop Connection (`mstsc`) for PSM sessions,
-  its built-in control for direct remote desktop from KeePass databases.
+  its built-in control for PSM sessions in a tab (option) and direct remote desktop from KeePass databases.
 - Optional: Windows Terminal and the Windows "OpenSSH Client", only if you choose to open SSH outside
   ZillaTerm.
 

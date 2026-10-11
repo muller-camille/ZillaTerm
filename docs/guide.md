@@ -145,6 +145,25 @@ connection from the PVWA and opens the session in Windows **Remote Desktop Conne
 PVWA "Connect" button: the PVWA's RDP file is handed over as is. A component that opens a remote application
 (RemoteApp) opens its windows on this computer's desktop.
 
+**Windows desktop in a tab** ("Open PSM Windows sessions (desktop) in a ZillaTerm tab" option, Settings › CyberArk,
+off by default): ZillaTerm reads the PVWA file itself and opens the session in a tab with the Windows Remote Desktop
+control, without the warning Windows shows when an `.rdp` file is opened.
+
+- **Size**: the session takes the size of the tab when it connects and keeps it. If the window changes size, the
+  picture is scaled: the PSM opened its connection to the server at that size. "Full screen" enlarges it; the session
+  never starts full screen, even if the PVWA file asks for it.
+- **PSM certificate**: checked by ZillaTerm before connecting. Trusted by Windows, nothing is asked; otherwise, the
+  first time, ZillaTerm shows its fingerprint and remembers it, and a warning appears if it changes. Windows no
+  longer asks you to confirm it.
+- **Redirections** (clipboard, drives…): those the PVWA asks for, never more. No picture of the session is kept on
+  disk.
+- **Reconnect**, "Duplicate tab": new request to the PVWA (a PSM session token is used only once); reason and ticket
+  stay those of the first connection.
+- The tab shows the server's tag (PROD, QA…) and its coloured frame; "Capture" adds a picture to the log of an
+  intervention being recorded.
+- Remote application components (PSM-SSH, WinSCP…) still open in Remote Desktop Connection; so does the session if
+  the Remote Desktop control is missing or unusable (the status bar says so).
+
 - **PSM component**: deduced from the platform (`PSM-RDP` for Windows, `PSM-SSH` for Unix and network,
   `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Tick "Remember this component" to keep it for the whole platform. Your
   PVWA may name its components differently (for example `WIN-PSM`): enter the name its "Connect" button offers; the
@@ -278,7 +297,7 @@ each PSMP is checked on its first connection. The tab tooltip names the PSMP use
   The terminal moves to a separate window and the session goes on. The tab keeps its place ("Show the window",
   "Bring it back here") and the Files tab works on this session when it is selected. Closing the separate window
   brings the terminal back to its tab without closing the session. Remote desktop tabs do not detach (use "Full
-  screen"); PSM sessions already open in Windows Remote Desktop Connection, a window of its own.
+  screen"); a PSM session opened in Windows Remote Desktop Connection is already a window of its own.
 - **Parallel view** (up to 8 sessions on screen): "Parallel" toolbar button (greyed out while no SSH session is
   open), or right-click an SSH tab → "Add to the
   parallel view". Tick the open SSH sessions to show together (8 at most): they are laid out as a grid in the
@@ -858,6 +877,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | CyberArk | Default PSMP, port | PSM for SSH server; when set (or a PSMP by domain), Unix accounts open over SSH by default (as files only for an "SFTP" platform); without any PSMP, SSH and SFTP are disabled | empty, 22 |
 | CyberArk | PSMP by domain | Other PSMPs (address, port, domain served); each server goes through the one of the domain closest to its own (see [PSMP by domain](#psmp-by-domain)); "Which PSMP for the server" to check | none |
 | CyberArk | Windows accounts component | PSM component of Windows accounts (domain or local) without a component remembered for their platform, for example `WIN-PSM` | empty = `PSM-RDP` |
+| CyberArk | PSM Windows sessions in a tab | Windows desktop of a PSM session in a ZillaTerm tab, at the size of the tab; remote applications stay in Remote Desktop Connection (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); spread by the environment file | no |
 | CyberArk | Component per platform | Platform (PVWA ID, for example `WinDomain`) / PSM component table: "Add a component", "Remove the line", editable cells; takes precedence over the Windows accounts component. "Remember this component for platform" (connection window) adds a line to it | empty |
 | Terminal | SSH in ZillaTerm | Built-in terminal and Files tab; otherwise Windows Terminal | yes |
 | Terminal | Terminal colours, font size | Palette (Campbell, One Half, Solarized…) and font size of the SSH terminals | Campbell, 14 |
@@ -951,7 +971,15 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
   if it belongs to another account (TEMP pointing to a shared folder), `%LOCALAPPDATA%\ZillaTerm\Temp` is used
   instead. The paths below are relative to this folder.
 - **PSM sessions**: the PVWA's RDP file (one-time PSM token) is written to the temporary folder for `mstsc`, which
-  checks its signature, then deleted after 60 s or on exit.
+  checks its signature, then deleted after 60 s or on exit. In a tab (option), it is never written to disk: ZillaTerm
+  reads it in memory.
+- **PSM certificate** (sessions in a tab): read before connecting, sending nothing else (neither user name nor
+  token), then pinned like those of direct connections. Once accepted, its SHA-1 fingerprint is saved where Remote
+  Desktop Connection keeps a certificate accepted with "Don't ask me again for connections to this computer"
+  (`HKCU\Software\Microsoft\Terminal Server Client\Servers\<PSM>`, `CertHash` value): the control checks the real
+  connection with it. The control never connects without checking the server (authentication level 2, or 1 if the
+  file asks for it): another certificate presented between the check and the connection brings up the Windows
+  warning, flagged in the tab.
 - **Simultaneous typing** (parallel view): off every time the view opens, shown by the amber "ON (n)" button, an
   amber banner and frame that name the sessions concerned; excluded sessions are marked "excluded", an added session
   is not included by default, and pasting several lines into several
@@ -1094,21 +1122,30 @@ resolved (one round trip each); beyond that, a link shows as a file and opening 
 
 ### Remote desktop sessions
 
-PSM sessions open with the RDP file returned by `PSMConnect`, handed as is to Remote Desktop Connection (`mstsc`):
-it checks its signature and handles a desktop as well as a remote application (RemoteApp). The debug log records its
-structure (token, signature and arguments masked). Versions 0.4 to 0.6 opened these sessions in a tab: a PSM that
-only accepts remote applications did not work well there (place and size of the windows on the server, mouse), hence
-the return to `mstsc`.
+PSM sessions open with the RDP file returned by `PSMConnect`. By default it is handed as is to Remote Desktop
+Connection (`mstsc`): it checks its signature and handles a desktop as well as a remote application (RemoteApp). The
+debug log records its structure (token, signature and arguments masked).
 
-Remote desktop tabs (direct remote desktop from KeePass databases) host the Windows ActiveX control (`mstscax.dll`, the
-most recent `MsRdpClient` class available), set up as a direct connection: network level authentication (NLA),
-warning if the server is not recognized, redirections off except the clipboard, persistent bitmap cache off. Before
-each connection, ZillaTerm reads the server's TLS certificate itself (X.224 connection request, then a TLS negotiation
-stopped as soon as the certificate is received: neither user name nor password is sent) to pin it
-(`rdp://server:port` among the accepted server keys); the ActiveX control does not allow imposing this fingerprint
-on it. The remote desktop resolution
-follows the tab size. Session ends and connection errors are explained in the tab with the Windows message and codes
-(reason, extended reason). An integration test (`rdp-integration` workflow) opens a real session on the CI machine.
+With the "PSM Windows sessions in a tab" option, a desktop file (without `remoteapplicationmode:i:1`) is read by
+ZillaTerm: PSM address and port, user, start program (`alternate shell`), security, gateway, load balancing,
+redirections (`drivestoredirect:s:*` only for drives), effects. The file's display mode (`screen mode id`, size,
+monitors) is ignored. A PSM session is nested: inside its own session, the PSM opens the connection to the target
+server at the same size, and changing the PSM session's resolution afterwards does not change it for the target
+(cut-off desktop, shifted clicks). Hence the fixed size and scaling (`SmartSizing`) of these sessions; direct
+connections follow the tab size. Versions 0.4 to 0.6 also opened remote applications in a tab, without working well
+there (place and size of the windows on the server, mouse): they stay in `mstsc`.
+
+Remote desktop tabs (PSM sessions with the option, direct remote desktop from KeePass databases) host the Windows
+ActiveX control (`mstscax.dll`, the most recent `MsRdpClient` class available). A direct connection is set up this
+way: network level authentication (NLA), warning if the server is not recognized, redirections off except the
+clipboard, persistent bitmap cache off. Before each connection, ZillaTerm reads the server's TLS certificate itself
+(X.224 connection request, then a TLS negotiation stopped as soon as the certificate is received: neither user name
+nor password is sent) to pin it (`rdp://server:port` among the accepted server keys). The ActiveX control does not
+allow imposing this fingerprint on it; for a PSM, ZillaTerm hands it over the way Remote Desktop Connection does (see
+[Security](#security)). Session ends and connection errors are explained in the tab with the Windows message and
+codes (reason, extended reason). An integration test (`rdp-integration` workflow) opens real sessions on the CI
+machine: desktop, certificate handed to the control (with and without NLA), and a session set up like a PSM session
+whose size and clicks are checked from inside the session.
 
 **One thread per remote desktop connection.** The control, its window and its events live on a separate thread (STA,
 with its own message loop); the interface never waits for it. The tab holds a window of the interface thread, in
@@ -1190,6 +1227,8 @@ sh or fish, following is not set up and nothing stays on screen.
 | "you do not have the right to modify this file (rights of the network share)" | The share is read-only for you: ask its owner for write access. The list can still be used. |
 | A shared list shows "(unreadable)" | Share unreachable or damaged file: the tooltip gives the error. If the file is damaged, copy the most recent version of the `name.versions` folder in its place. |
 | Understanding a connection failure | Settings → Debug log, reproduce the problem, then Settings → "Show the debug log file". |
+| A PSM session in a tab shows "Windows asks you to confirm the identity of …" | The certificate presented when connecting is neither trusted by Windows nor the one ZillaTerm had just checked: PSM behind a load balancer whose servers have different certificates, or interception. If in doubt, refuse and tell the CyberArk team. |
+| A PSM session opens in Remote Desktop Connection despite the "in a tab" option | Remote application component (PSM-SSH, WinSCP…), or Remote Desktop control missing or unusable on the computer: the status bar says so. |
 | A direct remote desktop tab (KeePass) shows "Remote Desktop control error" | Report the code shown (if the Remote Desktop control is missing from the computer, the connection goes through `mstsc`). |
 | VNC: "The VNC server offers no authentication supported by ZillaTerm…" | The server requires its vendor's own authentication (Windows account, VeNCrypt encryption…): enable "VNC password" authentication on the server. |
 | VNC: "No VNC answer from the server within 30 seconds" | Wrong port (5900 + display number) or a service other than VNC at this address. |

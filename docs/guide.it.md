@@ -152,6 +152,26 @@ avanzate…» permette allora di scegliere il PSM. ZillaTerm richiede la conness
 (`mstsc`), esattamente come il pulsante «Connect» del PVWA: il file RDP del PVWA le viene passato così com'è. Un
 componente che apre un'applicazione remota (RemoteApp) apre le sue finestre sul desktop del computer.
 
+**Desktop Windows in una scheda** (opzione «Apri le sessioni PSM Windows (desktop) in una scheda di ZillaTerm»,
+Impostazioni › CyberArk, disattivata per impostazione predefinita): ZillaTerm legge da sé il file del PVWA e apre la
+sessione in una scheda con il controllo Desktop remoto di Windows, senza l'avviso che Windows mostra all'apertura di
+un file `.rdp`.
+
+- **Dimensione**: la sessione prende la dimensione della scheda alla connessione e la mantiene. Se la finestra cambia
+  dimensione, l'immagine viene ridimensionata: il PSM ha aperto la sua connessione al server a quella dimensione.
+  «Schermo intero» la ingrandisce; la sessione non parte mai a schermo intero, anche se il file del PVWA lo chiede.
+- **Certificato del PSM**: verificato da ZillaTerm prima della connessione. Approvato da Windows, non viene chiesto
+  nulla; altrimenti, la prima volta, ZillaTerm mostra la sua impronta e la memorizza, e un avviso compare se cambia.
+  Windows non chiede più di confermarlo.
+- **Reindirizzamenti** (appunti, unità…): quelli richiesti dal PVWA, mai di più. Nessuna immagine della sessione
+  viene conservata sul disco.
+- **Riconnetti**, «Duplica la scheda»: nuova richiesta al PVWA (il token di una sessione PSM vale una sola volta);
+  motivo e ticket restano quelli della prima connessione.
+- La scheda mostra l'etichetta del server (PROD, QA…) e la sua cornice colorata; «Cattura» aggiunge un'immagine al
+  registro di un intervento in corso.
+- I componenti in applicazione remota (PSM-SSH, WinSCP…) si aprono sempre in Connessione Desktop remoto; anche la
+  sessione, se il controllo Desktop remoto manca o non è utilizzabile (la barra di stato lo dice).
+
 - **Componente PSM**: dedotto dalla piattaforma (`PSM-RDP` per Windows, `PSM-SSH` per Unix e rete,
   `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Seleziona «Memorizza questo componente» per conservarlo per tutta la
   piattaforma. Il tuo PVWA può chiamare i suoi componenti in un altro modo (ad esempio `WIN-PSM`): inserisci il nome
@@ -293,8 +313,8 @@ usato.
   una nuova finestra». Il terminale passa in una finestra separata e la sessione continua. La scheda mantiene il suo
   posto («Mostra la finestra», «Riporta nella scheda») e la scheda File lavora su questa sessione quando è
   selezionata. Chiudere la finestra separata riporta il terminale nella sua scheda senza chiudere la sessione. Le
-  schede Desktop remoto non si staccano (usa «Schermo intero»); le sessioni PSM si aprono già in Connessione Desktop
-  remoto di Windows, una finestra a parte.
+  schede Desktop remoto non si staccano (usa «Schermo intero»); una sessione PSM aperta in Connessione Desktop
+  remoto di Windows è già una finestra a parte.
 - **Vista parallela** (fino a 8 sessioni sullo schermo): pulsante «Parallelo» della barra degli strumenti
   (disattivato finché non è aperta alcuna sessione SSH), o clic
   destro su una scheda SSH → «Aggiungi alla vista parallela». Seleziona le sessioni SSH aperte da mostrare insieme
@@ -914,6 +934,7 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | CyberArk | PSMP predefinito, porta | Server PSM for SSH; se impostato (o un PSMP per dominio), gli account Unix si aprono in SSH per impostazione predefinita (in soli file per una piattaforma «SFTP»); senza alcun PSMP, SSH e SFTP sono disattivati | vuoto, 22 |
 | CyberArk | PSMP per dominio | Altri PSMP (indirizzo, porta, dominio servito); ogni server passa da quello del dominio più vicino al suo (vedi [PSMP per dominio](#psmp-per-dominio)); «Quale PSMP per il server» per verificare | nessuno |
 | CyberArk | Componente degli account Windows | Componente PSM degli account Windows (di dominio o locali) senza componente memorizzato per la loro piattaforma, ad esempio `WIN-PSM` | vuoto = `PSM-RDP` |
+| CyberArk | Sessioni PSM Windows in una scheda | Desktop Windows di una sessione PSM in una scheda di ZillaTerm, alla dimensione della scheda; le applicazioni remote restano in Connessione Desktop remoto (vedi [Aprire una sessione PSM](#3-aprire-una-sessione-psm-desktop-remoto)); diffusa dal file d'ambiente | no |
 | CyberArk | Componente per piattaforma | Tabella Piattaforma (ID del PVWA, ad esempio `WinDomain`) / Componente PSM: «Aggiungi un componente», «Rimuovi la riga», celle modificabili; ha la precedenza sul componente degli account Windows. «Memorizza questo componente per la piattaforma» (finestra di connessione) vi aggiunge una riga | vuoto |
 | Terminale | SSH in ZillaTerm | Terminale e scheda File integrati; altrimenti Windows Terminal | sì |
 | Terminale | Colori del terminale, dimensione carattere | Tavolozza (Campbell, One Half, Solarized…) e dimensione del carattere dei terminali SSH | Campbell, 14 |
@@ -1017,7 +1038,15 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   soli); se appartiene a un altro account (variabile TEMP che punta a una cartella condivisa), viene usata
   `%LOCALAPPDATA%\ZillaTerm\Temp`. I percorsi qui sotto sono relativi a questa cartella.
 - **Sessioni PSM**: il file RDP del PVWA (token PSM monouso) viene scritto nella cartella temporanea per `mstsc`, che
-  ne verifica la firma, poi eliminato dopo 60 s o alla chiusura.
+  ne verifica la firma, poi eliminato dopo 60 s o alla chiusura. In una scheda (opzione), non viene mai scritto sul
+  disco: ZillaTerm lo legge in memoria.
+- **Certificato del PSM** (sessioni in una scheda): letto prima della connessione, senza inviare nient'altro (né
+  nome utente né token), poi fissato come quelli delle connessioni dirette. Una volta accettato, la sua impronta SHA-1
+  viene salvata dove Connessione Desktop remoto conserva un certificato accettato con «Non chiedere più conferma per
+  le connessioni a questo computer» (`HKCU\Software\Microsoft\Terminal Server Client\Servers\<PSM>`, valore
+  `CertHash`): il controllo verifica la vera connessione con essa. Il controllo non si connette mai senza verificare il
+  server (livello di autenticazione 2, o 1 se il file lo chiede): un altro certificato presentato tra la verifica e la
+  connessione fa comparire l'avviso di Windows, segnalato nella scheda.
 - **Digitazione simultanea** (vista parallela): disattivata a ogni apertura della vista, segnalata dal pulsante
   ambra «ATTIVA (n)», da una fascia e da una cornice ambra che nominano le sessioni interessate; le sessioni escluse
   sono segnate «esclusa», una sessione aggiunta non vi è inclusa d'ufficio, e
@@ -1169,22 +1198,32 @@ ciascuno); oltre, un collegamento appare come un file, e aprirlo entra nella car
 
 ### Sessioni Desktop remoto
 
-Le sessioni PSM si aprono con il file RDP restituito da `PSMConnect`, passato così com'è a Connessione Desktop
-remoto (`mstsc`): ne verifica la firma e gestisce sia il desktop sia l'applicazione remota (RemoteApp). Il registro
-di debug ne annota la struttura (token, firma e argomenti mascherati). Le versioni dalla 0.4 alla 0.6 aprivano
-queste sessioni in una scheda: un PSM che accetta solo l'applicazione remota non vi funzionava bene (posizione e
-dimensione delle finestre sul server, mouse), da qui il ritorno a `mstsc`.
+Le sessioni PSM si aprono con il file RDP restituito da `PSMConnect`. Per impostazione predefinita viene passato così
+com'è a Connessione Desktop remoto (`mstsc`): ne verifica la firma e gestisce sia il desktop sia l'applicazione
+remota (RemoteApp). Il registro di debug ne annota la struttura (token, firma e argomenti mascherati).
 
-Le schede Desktop remoto (desktop remoto diretto dei database KeePass) ospitano il controllo ActiveX di Windows
-(`mstscax.dll`, la classe `MsRdpClient` più recente disponibile), impostato come una connessione diretta:
-autenticazione a livello di rete (NLA), avviso se il server non è riconosciuto, reindirizzamenti disattivati tranne
-gli appunti, cache persistente delle immagini disattivata. Prima di ogni connessione, ZillaTerm legge da sé il
-certificato TLS del server (richiesta di connessione X.224, poi negoziazione TLS interrotta appena ricevuto il
-certificato: né nome utente né password inviati) per fissarlo (`rdp://server:porta` tra le chiavi dei server
-accettate); il controllo ActiveX non permette di imporgli questa impronta. La risoluzione del desktop remoto segue
-la dimensione della scheda. Le chiusure di sessione e gli
-errori di connessione sono spiegati nella scheda con il messaggio e i codici di Windows (motivo, motivo esteso). Un
-test di integrazione (workflow `rdp-integration`) apre una vera sessione sul computer di CI.
+Con l'opzione «Sessioni PSM Windows in una scheda», un file di desktop (senza `remoteapplicationmode:i:1`) viene letto
+da ZillaTerm: indirizzo e porta del PSM, utente, programma di avvio (`alternate shell`), sicurezza, gateway,
+bilanciamento del carico, reindirizzamenti (`drivestoredirect:s:*` solo per le unità), effetti. La modalità di
+visualizzazione del file (`screen mode id`, dimensione, schermi) viene ignorata. Una sessione PSM è annidata: nella
+propria sessione, il PSM apre la connessione al server di destinazione alla stessa dimensione, e cambiare poi la
+risoluzione della sessione PSM non la cambia per la destinazione (desktop tagliato, clic spostati). Da qui la
+dimensione fissa e il ridimensionamento dell'immagine (`SmartSizing`) di queste sessioni; le connessioni dirette
+seguono la dimensione della scheda. Le versioni dalla 0.4 alla 0.6 aprivano in una scheda anche le applicazioni
+remote, senza funzionarvi bene (posizione e dimensione delle finestre sul server, mouse): restano in `mstsc`.
+
+Le schede Desktop remoto (sessioni PSM con l'opzione, desktop remoto diretto dei database KeePass) ospitano il
+controllo ActiveX di Windows (`mstscax.dll`, la classe `MsRdpClient` più recente disponibile). Una connessione
+diretta è impostata così: autenticazione a livello di rete (NLA), avviso se il server non è riconosciuto,
+reindirizzamenti disattivati tranne gli appunti, cache persistente delle immagini disattivata. Prima di ogni
+connessione, ZillaTerm legge da sé il certificato TLS del server (richiesta di connessione X.224, poi negoziazione
+TLS interrotta appena ricevuto il certificato: né nome utente né password inviati) per fissarlo
+(`rdp://server:porta` tra le chiavi dei server accettate). Il controllo ActiveX non permette di imporgli questa
+impronta; per un PSM, ZillaTerm gliela affida come fa Connessione Desktop remoto (vedi [Sicurezza](#sicurezza)). Le
+chiusure di sessione e gli errori di connessione sono spiegati nella scheda con il messaggio e i codici di Windows
+(motivo, motivo esteso). Un test di integrazione (workflow `rdp-integration`) apre vere sessioni sul computer di CI:
+desktop, certificato affidato al controllo (con e senza NLA), e una sessione impostata come una sessione PSM, di cui
+dimensione e clic vengono verificati dall'interno della sessione.
 
 **Un thread per connessione desktop remoto.** Il controllo, la sua finestra e i suoi eventi vivono su un thread a
 parte (STA, con il proprio ciclo di messaggi); l'interfaccia non lo attende mai. La scheda contiene una finestra del
@@ -1267,6 +1306,8 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 | «non hai il diritto di modificare questo file (diritti della condivisione di rete)» | La condivisione è in sola lettura per te: chiedi il diritto di scrittura al suo responsabile. L'elenco resta utilizzabile. |
 | Un elenco condiviso mostra «(illeggibile)» | Condivisione irraggiungibile o file danneggiato: la descrizione comandi riporta l'errore. Se il file è danneggiato, copia al suo posto la versione più recente della cartella `nome.versions`. |
 | Capire un errore di connessione | Impostazioni → Registro di debug, riproduci il problema, poi Impostazioni → «Mostra il file del registro». |
+| Una sessione PSM in una scheda mostra «Windows chiede di confermare l'identità di …» | Il certificato presentato alla connessione non è né approvato da Windows né quello che ZillaTerm aveva appena verificato: PSM dietro un bilanciatore di carico i cui server hanno certificati diversi, oppure intercettazione. Nel dubbio, rifiuta e avvisa il team CyberArk. |
+| Una sessione PSM si apre in Connessione Desktop remoto nonostante l'opzione «in una scheda» | Componente in applicazione remota (PSM-SSH, WinSCP…), oppure controllo Desktop remoto assente o non utilizzabile sul computer: la barra di stato lo dice. |
 | Una scheda di desktop remoto diretto (KeePass) mostra «Errore del controllo Desktop remoto» | Segnala il codice mostrato (se il controllo Desktop remoto manca dal computer, la connessione passa da `mstsc`). |
 | VNC: «Il server VNC non propone alcuna autenticazione supportata da ZillaTerm…» | Il server richiede un'autenticazione propria del suo produttore (account Windows, cifratura VeNCrypt…): attiva l'autenticazione «password VNC» sul server. |
 | VNC: «Nessuna risposta VNC dal server entro 30 secondi» | Porta sbagliata (5900 + numero dello schermo) o servizio diverso da VNC a questo indirizzo. |
