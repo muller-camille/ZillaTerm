@@ -270,6 +270,14 @@ public class RdpSessionTests(ITestOutputHelper output)
             + $"{Convert.ToHexString(certificate.PublicKey.AsSpan(0, Math.Min(16, certificate.PublicKey.Length)))}…, problème « {certificate.Problem} »");
         Assert.False(certificate.Trusted);
 
+        // Diagnostic d'abord (sans clé attendue, donc sans récepteur) : ce que Windows affiche sans NLA, avec et sans
+        // mot de passe (une session PSM n'en a pas).
+        foreach (var (password, label) in new[] { (true, "avec mot de passe"), (false, "sans mot de passe") })
+        {
+            var diagnostic = await AttemptAsync(account, 0, nla: false, key: null, password, TimeSpan.FromSeconds(password ? 90 : 20));
+            output.WriteLine($"Diagnostic NLA False, niveau 0, sans clé attendue, {label} → {diagnostic}");
+        }
+
         var results = new List<(string Case, bool Expected, Attempt Result)>();
         byte[] other = [.. certificate.PublicKey];
         other[^1] ^= 0xFF;
@@ -277,6 +285,8 @@ public class RdpSessionTests(ITestOutputHelper output)
         {
             results.Add(($"NLA {nla}, clé du certificat", true, await AttemptAsync(account, 0, nla, certificate.PublicKey)));
             results.Add(($"NLA {nla}, autre clé", false, await AttemptAsync(account, 0, nla, other)));
+            output.WriteLine($"{results[^2].Case} → {results[^2].Result}");
+            output.WriteLine($"{results[^1].Case} → {results[^1].Result}");
         }
 
         foreach (var (name, _, result) in results)
@@ -298,15 +308,16 @@ public class RdpSessionTests(ITestOutputHelper output)
     /// Une connexion à ce poste au niveau d'authentification donné, avec la clé attendue du serveur ; un avertissement
     /// de Windows est fermé (« Non ») et noté. Session ouverte : déconnectée aussitôt.
     /// </summary>
-    private async Task<Attempt> AttemptAsync((string User, string Password) account, int level, bool nla, byte[]? key)
+    private async Task<Attempt> AttemptAsync((string User, string Password) account, int level, bool nla, byte[]? key,
+        bool password = true, TimeSpan? wait = null)
     {
         var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User) with { AuthenticationLevel = level, EnableCredSsp = nla };
         Attempt? attempt = null;
-        await RunOnStaAsync(new RdpConnectionRequest(settings, account.Password) { ServerPublicKey = key }, async session =>
+        await RunOnStaAsync(new RdpConnectionRequest(settings, password ? account.Password : null) { ServerPublicKey = key }, async session =>
         {
             await session.ConnectAsync();
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            while (session.State == RdpSessionState.Connecting && watch.Elapsed < TimeSpan.FromSeconds(90))
+            while (session.State == RdpSessionState.Connecting && watch.Elapsed < (wait ?? TimeSpan.FromSeconds(90)))
             {
                 if (session.IsAuthenticationWarningOpen)
                 {
@@ -318,7 +329,7 @@ public class RdpSessionTests(ITestOutputHelper output)
 
             attempt = new Attempt(session.State, session.AuthenticationWarningShown, session.ServerKeyMatched, session.ServerPublicKey?.Length,
                 session.DisconnectReason, session.ExtendedDisconnectReason, session.Error);
-            if (session.State == RdpSessionState.Connected)
+            if (session.State is RdpSessionState.Connected or RdpSessionState.Connecting)
             {
                 session.Disconnect();
                 await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30));
@@ -332,7 +343,7 @@ public class RdpSessionTests(ITestOutputHelper output)
     {
         foreach (var window in Win32Input.ProcessWindows().Where(w => Win32Input.IsWindowVisible(w) && Win32Input.ClassName(w) == "#32770"))
         {
-            output.WriteLine($"Boîte de dialogue fermée : « {Win32Input.Title(window)} »");
+            output.WriteLine($"Boîte de dialogue fermée : {Win32Input.Describe(window)}");
             Win32Input.Close(window);
         }
     }

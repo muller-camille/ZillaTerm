@@ -91,6 +91,11 @@ internal sealed class RdpPublicKeySink : RdpPublicKeySink.IEventsDispatch, ICust
     {
         if (dispId != DispIdReceivedTSPublicKey || dispParams == IntPtr.Zero)
         {
+            if (DebugLog.Enabled)
+            {
+                DebugLog.Write("rdp", $"{_label} : récepteur de la clé, événement {dispId} ignoré");
+            }
+
             return 0;
         }
 

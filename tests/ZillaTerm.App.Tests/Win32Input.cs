@@ -85,6 +85,13 @@ internal static class Win32Input
             new Input { Type = 0, Mouse = new MouseInput { Flags = right ? 0x0010u : 0x0004u } });
     }
 
+    /// <summary>Titre et textes d'une boîte de dialogue (message, boutons), pour le journal du test.</summary>
+    public static string Describe(IntPtr dialog) =>
+        $"« {Title(dialog)} » : " + string.Join(" | ", Descendants(dialog)
+            .Select(child => (Class: ClassName(child), Text: Title(child).Replace("\r", " ").Replace("\n", " ").Trim()))
+            .Where(c => c.Text.Length > 0)
+            .Select(c => $"{c.Class}: {c.Text}"));
+
     /// <summary>Demande la fermeture de <paramref name="window"/> (comme Échap ou la croix : « Non » pour un avertissement).</summary>
     public static void Close(IntPtr window) => PostMessage(window, 0x0010, IntPtr.Zero, IntPtr.Zero);
 
