@@ -1,5 +1,10 @@
 name: build
 
+# Compilation, tests et exécutable à chaque PR et sur main ; sessions Bureau à distance réelles (job rdp) quand une PR
+# touche au Bureau à distance, ou à la demande. Les dépendances compilées depuis leurs forks le sont une seule fois par
+# passage, en cache tant que leur script (versions et commits figés) ne change pas, et partagées par les jobs Windows :
+# client FreeRDP (freerdp.yml) et SSH.NET patché. Un nouveau commit sur une PR annule le passage en cours.
+# La publication (release.yml) recompile tout, sans cache.
 on:
   push:
     branches: [main]
@@ -9,12 +14,77 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   freerdp:
     uses: ./.github/workflows/freerdp.yml
 
+  # SSH.NET 2026.0.0 patché (noms du propriétaire et du groupe en SFTP, transfert X11), compilé depuis le fork à un
+  # commit figé (tools/sshnet-patched.sh) : un paquet NuGet, le même quel que soit le système qui le compile.
+  sshnet:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Cache
+        id: cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: local-packages/SSH.NET.*
+          key: sshnet-${{ hashFiles('tools/sshnet-patched.sh') }}
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Compilation
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: bash tools/sshnet-patched.sh
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sshnet
+          path: local-packages/SSH.NET.*
+          if-no-files-found: error
+          retention-days: 7
+
+  # Sessions réelles (job rdp) : à la demande, ou pour une PR qui touche au Bureau à distance.
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      rdp: ${{ steps.diff.outputs.rdp }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: github.event_name == 'pull_request'
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Fichiers du Bureau à distance modifiés
+        id: diff
+        shell: bash
+        run: |
+          rdp=false
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            rdp=true
+          elif [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            # Commit de fusion de la PR : son premier parent est la branche de base.
+            git diff --name-only HEAD^1 HEAD | tee changed.txt
+            if grep -qE '^(src/ZillaTerm\.App/Services/Rdp/|src/ZillaTerm\.Core/Rdp/|src/ZillaTerm\.App/Views/MainWindow\.Rdp\.cs$|tests/ZillaTerm\.App\.Tests/(RdpSessionTests|Win32Input)\.cs$|\.github/workflows/(build|freerdp)\.yml$|tools/freerdp)' changed.txt; then
+              rdp=true
+            fi
+          fi
+          echo "rdp=$rdp" >> "$GITHUB_OUTPUT"
+          echo "Sessions réelles : $rdp"
+
   build:
-    needs: freerdp
+    needs: [freerdp, sshnet]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -31,10 +101,10 @@ jobs:
           name: freerdp
           path: local-packages/freerdp
 
-      # SSH.NET 2026.0.0 patché (noms du propriétaire et du groupe en SFTP), compilé depuis le fork à un commit figé.
-      - name: SSH.NET patché
-        shell: bash
-        run: bash tools/sshnet-patched.sh
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: sshnet
+          path: local-packages
 
       - name: Tests
         run: dotnet test ZillaTerm.sln -c Release
@@ -51,3 +121,169 @@ jobs:
         with:
           name: ZillaTerm-win-x64
           path: publish/ZillaTerm.exe
+
+  # Sessions Bureau à distance réelles sur le poste de CI (connexion à 127.0.0.2) : bureau dans un onglet, taille et
+  # clics d'une session réglée comme une session PSM dans l'onglet, avec le contrôle de Windows et avec le client
+  # FreeRDP (bureau, et application distante affichée dans l'onglet). Le poste est éphémère : on y active le Bureau à
+  # distance et les applications distantes, deux comptes locaux de test au mot de passe aléatoire, masqué dans les
+  # journaux, et une fenêtre de test qui note la taille de son écran, les clics et les touches reçus : lancée à
+  # l'ouverture de session du premier compte, et comme application distante pour le second.
+  rdp:
+    needs: [freerdp, sshnet, changes]
+    if: needs.changes.outputs.rdp == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+
+      # Client Bureau à distance FreeRDP (freerdp.yml), embarqué dans ZillaTerm.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: freerdp
+          path: local-packages/freerdp
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: sshnet
+          path: local-packages
+
+      - name: Bureau à distance et compte de test
+        shell: pwsh
+        run: |
+          $bytes = [System.Security.Cryptography.RandomNumberGenerator]::GetBytes(18)
+          $password = [Convert]::ToBase64String($bytes).Replace('/', 'x').Replace('+', 'y') + 'aA1!'
+          Write-Output "::add-mask::$password"
+          $user = 'cattest'
+          # Second compte pour les applications distantes : sa session ne se mélange pas au bureau du premier.
+          $appUser = 'catapp'
+          foreach ($name in @($user, $appUser)) {
+            New-LocalUser -Name $name -Password (ConvertTo-SecureString $password -AsPlainText -Force) -PasswordNeverExpires | Out-Null
+            Add-LocalGroupMember -SID 'S-1-5-32-555' -Member $name   # Utilisateurs du Bureau à distance
+            Add-LocalGroupMember -SID 'S-1-5-32-544' -Member $name   # Administrateurs (sessions sans licence RDS)
+          }
+
+          $ts = 'HKLM:\System\CurrentControlSet\Control\Terminal Server'
+          Set-ItemProperty $ts -Name fDenyTSConnections -Value 0 -Type DWord
+          # Connexions avec et sans authentification réseau (NLA) : un PSM se connecte en général sans.
+          Set-ItemProperty "$ts\WinStations\RDP-Tcp" -Name UserAuthentication -Value 0 -Type DWord
+          # Applications distantes sans publication (liste d'autorisation désactivée), comme sur un hôte RemoteApp.
+          $allow = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\TSAppAllowList'
+          New-Item $allow -Force | Out-Null
+          Set-ItemProperty $allow -Name fDisabledAllowList -Value 1 -Type DWord
+          $policy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+          New-Item $policy -Force | Out-Null
+          Set-ItemProperty $policy -Name fAllowUnlistedRemotePrograms -Value 1 -Type DWord
+          # Pas de Gestionnaire de serveur à l'ouverture de session (il couvrirait la fenêtre de test).
+          New-Item 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Server\ServerManager' -Force | Out-Null
+          Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Server\ServerManager' -Name DoNotOpenAtLogon -Value 1 -Type DWord
+          # Délégation des identifiants (CredSSP) vers ce poste, authentifié par NTLM seulement.
+          $deleg = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation'
+          New-Item "$deleg\AllowFreshCredentialsWhenNTLMOnly" -Force | Out-Null
+          Set-ItemProperty $deleg -Name AllowFreshCredentialsWhenNTLMOnly -Value 1 -Type DWord
+          Set-ItemProperty $deleg -Name ConcatenateDefaults_AllowFreshNTLMOnly -Value 1 -Type DWord
+          Set-ItemProperty "$deleg\AllowFreshCredentialsWhenNTLMOnly" -Name 1 -Value 'TERMSRV/*'
+
+          # Le service lit ces réglages à chaque connexion : il suffit qu'il tourne (pas de redémarrage).
+          Set-Service TermService -StartupType Automatic
+          if ((Get-Service TermService).Status -ne 'Running') { Start-Service TermService }
+          Start-Sleep -Seconds 3
+          Get-Service TermService | Format-Table -AutoSize | Out-String | Write-Output
+          Test-NetConnection 127.0.0.2 -Port 3389 | Select-Object TcpTestSucceeded | Out-String | Write-Output
+
+          "RDP_TEST_USER=$user" >> $env:GITHUB_ENV
+          "RDP_TEST_REMOTEAPP_USER=$appUser" >> $env:GITHUB_ENV
+          "RDP_TEST_PASSWORD=$password" >> $env:GITHUB_ENV
+
+      # Fenêtre plein écran lancée à l'ouverture de session du premier compte (argument « run »), ou comme application
+      # distante pour le second : elle note la taille de l'écran de la session (« size LxH »), chaque clic reçu
+      # (« click x,y ») et chaque touche (« key Z »), dans un journal par compte lu par les tests.
+      - name: Fenêtre de test des clics
+        shell: pwsh
+        run: |
+          $script = @'
+          param([string]$mode = '')
+          if ($mode -eq 'run' -and $env:USERNAME -ne 'cattest') { exit }
+          Add-Type -AssemblyName System.Windows.Forms
+          Add-Type -AssemblyName System.Drawing
+          $log = "C:\Users\Public\zt-clicks-$($env:USERNAME).txt"
+          $form = New-Object System.Windows.Forms.Form
+          $form.FormBorderStyle = 'None'
+          $form.StartPosition = 'Manual'
+          $form.TopMost = $true
+          $form.ShowInTaskbar = $false
+          $form.BackColor = [System.Drawing.Color]::DarkSlateBlue
+          $script:last = ''
+          $fit = {
+            # Taille lue à chaque fois (GetSystemMetrics) : une session reprise change de taille.
+            $size = [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize
+            $b = New-Object System.Drawing.Rectangle(0, 0, $size.Width, $size.Height)
+            if ($form.Bounds -ne $b) { $form.Bounds = $b }
+            $text = 'size {0}x{1}' -f $b.Width, $b.Height
+            if ($text -ne $script:last) { $script:last = $text; Add-Content -Path $log -Value $text }
+          }
+          $form.Add_Shown($fit)
+          $timer = New-Object System.Windows.Forms.Timer
+          $timer.Interval = 300
+          $timer.Add_Tick($fit)
+          $timer.Start()
+          $form.Add_MouseDown({ param($s, $e) Add-Content -Path $log -Value ('click {0},{1}' -f $e.X, $e.Y) })
+          $form.KeyPreview = $true
+          $form.Add_KeyDown({ param($s, $e) Add-Content -Path $log -Value ('key {0}' -f $e.KeyCode) })
+          [System.Windows.Forms.Application]::Run($form)
+          '@
+          Set-Content -Path 'C:\Users\Public\zt-clicktarget.ps1' -Value $script
+          $run = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+          Set-ItemProperty $run -Name ZillaTermClickTarget -Value 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Users\Public\zt-clicktarget.ps1 run'
+          "RDP_TEST_CLICKS=C:\Users\Public\zt-clicks-cattest.txt" >> $env:GITHUB_ENV
+          "RDP_TEST_REMOTEAPP_CLICKS=C:\Users\Public\zt-clicks-catapp.txt" >> $env:GITHUB_ENV
+          "RDP_TEST_REMOTEAPP_SCRIPT=C:\Users\Public\zt-clicktarget.ps1" >> $env:GITHUB_ENV
+          "RDP_TEST_LOG=$env:RUNNER_TEMP\zillaterm-rdp.log" >> $env:GITHUB_ENV
+
+      - name: Tests de sessions réelles
+        run: >
+          dotnet test tests/ZillaTerm.App.Tests -c Release
+          --filter "Category=RdpIntegration&FullyQualifiedName!~RemoteApp"
+          --logger "console;verbosity=detailed"
+
+      # Application distante à part, en dernier : sa session (second compte) ne doit pas gêner les autres tests.
+      - name: Application distante
+        if: always()
+        run: >
+          dotnet test tests/ZillaTerm.App.Tests -c Release --no-build
+          --filter "Category=RdpIntegration&FullyQualifiedName~RemoteApp"
+          --logger "console;verbosity=detailed"
+
+      - name: Journal de débogage des sessions
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path $env:RDP_TEST_LOG) { Get-Content $env:RDP_TEST_LOG } else { 'Pas de journal.' }
+          if (Test-Path $env:RDP_TEST_CLICKS) { 'Fenêtre de test (bureau) :'; Get-Content $env:RDP_TEST_CLICKS }
+          if (Test-Path $env:RDP_TEST_REMOTEAPP_CLICKS) { 'Fenêtre de test (application distante) :'; Get-Content $env:RDP_TEST_REMOTEAPP_CLICKS }
+
+      # Côté serveur : ouvertures et fins de session, erreurs du protocole (raison d'une connexion fermée).
+      - name: Journaux du serveur Bureau à distance
+        if: always()
+        shell: pwsh
+        run: |
+          $logs = @(
+            'Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Operational',
+            'Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Admin',
+            'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational',
+            'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational',
+            'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Admin'
+          )
+          foreach ($log in $logs) {
+            "==== $log"
+            Get-WinEvent -LogName $log -MaxEvents 120 -ErrorAction SilentlyContinue | Sort-Object TimeCreated |
+              ForEach-Object { '{0:HH:mm:ss.fff} {1,5} {2,-11} {3}' -f $_.TimeCreated, $_.Id, $_.LevelDisplayName, ($_.Message -replace '\s+', ' ') }
+          }
+          "==== Application (rdpinit, rdpshell)"
+          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-30) } -ErrorAction SilentlyContinue |
+            Where-Object { $_.Message -match 'rdpinit|rdpshell|RemoteApp' } | Sort-Object TimeCreated |
+            ForEach-Object { '{0:HH:mm:ss.fff} {1,5} {2} {3}' -f $_.TimeCreated, $_.Id, $_.ProviderName, ($_.Message -replace '\s+', ' ') }

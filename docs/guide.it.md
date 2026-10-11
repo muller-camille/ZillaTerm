@@ -1266,9 +1266,9 @@ l'hook di tastiera di FreeRDP invia i tasti alla sessione. Un'applicazione remot
 (fine della sessione come con il pulsante di chiusura del client). Fine della sessione ed errori: il codice di FreeRDP
 (`ERRINFO_…`, `ERRCONNECT_…`, codice di uscita del client) è spiegato nella scheda. Limite: il client Windows di
 FreeRDP è contrassegnato come «non mantenuto» dal progetto FreeRDP (il nucleo del protocollo, invece, lo è); ZillaTerm
-ne fissa la versione e lo aggiorna con le sue correzioni. I test di integrazione (workflow `rdp-integration`) aprono
-con esso un desktop e un'applicazione remota sul computer di CI: dimensione, clic, tasti, certificato rifiutato,
-chiave della vecchia sicurezza RDP.
+ne fissa la versione e lo aggiorna con le sue correzioni. I test di integrazione (job `rdp` del workflow `build`)
+aprono con esso un desktop e un'applicazione remota sul computer di CI: dimensione, clic, tasti, certificato
+rifiutato, chiave della vecchia sicurezza RDP.
 
 **Controllo Desktop remoto di Windows.** Il desktop remoto diretto dei database KeePass, e le sessioni PSM di desktop
 quando il client FreeRDP non è integrato (compilazione senza di esso), ospitano il controllo ActiveX di Windows
