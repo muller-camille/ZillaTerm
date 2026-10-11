@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Interop;
 
 namespace ZillaTerm.App.Services.Rdp;
@@ -22,11 +23,36 @@ internal sealed class RdpSlot : HwndHost
     /// <summary>Fenêtre de l'emplacement (parent des fenêtres du contrôle), ou zéro tant qu'elle n'existe pas.</summary>
     public IntPtr SlotHandle => _window?.Handle ?? IntPtr.Zero;
 
-    /// <summary>Taille de l'emplacement, en pixels de l'écran.</summary>
-    public (int Width, int Height) PixelSize =>
-        _window is { Handle: var handle } && handle != IntPtr.Zero && GetClientRect(handle, out var rect)
-            ? (rect.Right - rect.Left, rect.Bottom - rect.Top)
-            : (0, 0);
+    /// <summary>
+    /// Taille de l'emplacement, en pixels de l'écran : celle de sa fenêtre, ou celle que la mise en page lui donne tant
+    /// que WPF n'a pas encore placé la fenêtre (emplacement tout juste affiché, juste avant la création du contrôle).
+    /// Sans cela, le bureau distant démarrerait à la taille minimale (200 × 200).
+    /// </summary>
+    public (int Width, int Height) PixelSize
+    {
+        get
+        {
+            if (IsVisible && _window is { Handle: var handle } && handle != IntPtr.Zero && GetClientRect(handle, out var rect)
+                && rect.Right - rect.Left > 0 && rect.Bottom - rect.Top > 0)
+            {
+                return (rect.Right - rect.Left, rect.Bottom - rect.Top);
+            }
+
+            return LayoutPixelSize();
+        }
+    }
+
+    /// <summary>Taille donnée par la mise en page de WPF, convertie en pixels de l'écran ; (0, 0) hors de la fenêtre.</summary>
+    private (int Width, int Height) LayoutPixelSize()
+    {
+        if (ActualWidth <= 0 || ActualHeight <= 0 || PresentationSource.FromVisual(this)?.CompositionTarget is not { } target)
+        {
+            return (0, 0);
+        }
+
+        var toDevice = target.TransformToDevice;
+        return ((int)Math.Round(ActualWidth * toDevice.M11), (int)Math.Round(ActualHeight * toDevice.M22));
+    }
 
     protected override HandleRef BuildWindowCore(HandleRef hwndParent)
     {

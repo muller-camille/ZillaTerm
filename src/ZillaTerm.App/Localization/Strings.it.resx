@@ -5388,4 +5388,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="PsmHintTab" xml:space="preserve">
     <value>Il PVWA genera una connessione RDP: un desktop Windows si apre in una scheda di ZillaTerm, un'applicazione remota (PSM-SSH, WinSCP…) in Connessione Desktop remoto (mstsc).</value>
   </data>
+  <data name="RdpServerKeyMismatch" xml:space="preserve">
+    <value>{0} ha presentato un certificato diverso da quello che ZillaTerm aveva appena verificato: connessione rifiutata (possibile intercettazione). Riprova; se si ripete, avvisa il team CyberArk.</value>
+  </data>
 </root>

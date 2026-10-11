@@ -227,15 +227,22 @@ public class RdpSessionTests(ITestOutputHelper output)
         {
             await session.ConnectAsync();
             Assert.True(session.HasControl, session.Error);
-            var (fullScreen, smartSizing, persistence, startProgram) = await session.InvokeOnControlAsync(ocx =>
+            var (fullScreen, smartSizing, persistence, startProgram, width, height) = await session.InvokeOnControlAsync(ocx =>
             {
                 var advanced = Dispatch.First(ocx, "AdvancedSettings9", "AdvancedSettings8", "AdvancedSettings7", "AdvancedSettings6")!;
                 var secured = Dispatch.First(ocx, "SecuredSettings3", "SecuredSettings2")!;
-                return (Convert.ToBoolean(Dispatch.Get(ocx, "FullScreen"), System.Globalization.CultureInfo.InvariantCulture),
-                    Convert.ToBoolean(Dispatch.Get(advanced, "SmartSizing"), System.Globalization.CultureInfo.InvariantCulture),
-                    Convert.ToInt32(Dispatch.Get(advanced, "BitmapPersistence"), System.Globalization.CultureInfo.InvariantCulture),
-                    Dispatch.Get(secured, "StartProgram") as string);
+                var culture = System.Globalization.CultureInfo.InvariantCulture;
+                return (Convert.ToBoolean(Dispatch.Get(ocx, "FullScreen"), culture),
+                    Convert.ToBoolean(Dispatch.Get(advanced, "SmartSizing"), culture),
+                    Convert.ToInt32(Dispatch.Get(advanced, "BitmapPersistence"), culture),
+                    Dispatch.Get(secured, "StartProgram") as string,
+                    Convert.ToInt32(Dispatch.Get(ocx, "DesktopWidth"), culture),
+                    Convert.ToInt32(Dispatch.Get(ocx, "DesktopHeight"), culture));
             });
+            // Bureau distant à la taille de l'onglet dès la connexion (pas la taille minimale, 200 × 200).
+            var bounds = Win32Input.ScreenBounds(session.Host.SlotHandle);
+            output.WriteLine($"Onglet {bounds}, bureau distant {width}x{height}");
+            Assert.Equal(RdpConnection.DesktopSize((bounds.Width, bounds.Height)), (width, height));
             Assert.False(fullScreen);
             Assert.False(session.IsFullScreen);
             Assert.True(smartSizing);
@@ -244,69 +251,14 @@ public class RdpSessionTests(ITestOutputHelper output)
         });
     }
 
-    [Theory]
-    [InlineData("psm.corp.local", 3389, new[] { "psm.corp.local" })]
-    [InlineData("psm.corp.local", 3390, new[] { "psm.corp.local", "psm.corp.local:3390" })]
-    public void CertificateHashKeysFollowRemoteDesktopConnection(string server, int port, string[] expected)
-    {
-        Assert.Equal(expected, RdpClientTrust.KeyNames(server, port));
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(@"..\..\Software")]
-    public void CertificateHashRefusesOddServerNames(string server)
-    {
-        Assert.Throws<ArgumentException>(() => RdpClientTrust.KeyNames(server, 3389));
-    }
-
     /// <summary>
-    /// Certificat approuvé par ZillaTerm : son empreinte SHA-1 est gardée là où Connexion Bureau à distance garde celle
-    /// d'un certificat accepté (« Ne plus demander… »), pour ce serveur seulement.
-    /// </summary>
-    [Fact]
-    public void CertificateHashIsKeptWhereRemoteDesktopConnectionKeepsIt()
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        const string server = "zillaterm-test.invalid";
-        var sha1 = Convert.ToHexString(System.Security.Cryptography.SHA1.HashData("certificat"u8));
-        var other = Convert.ToHexString(System.Security.Cryptography.SHA1.HashData("autre"u8));
-        try
-        {
-            RdpClientTrust.Remember(server, 3390, sha1);
-            Assert.True(RdpClientTrust.IsRemembered(server, 3390, sha1));
-            Assert.False(RdpClientTrust.IsRemembered(server, 3390, other));
-            Assert.False(RdpClientTrust.IsRemembered("autre." + server, 3390, sha1));
-            using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey($@"Software\Microsoft\Terminal Server Client\Servers\{server}"))
-            {
-                Assert.Equal(Convert.FromHexString(sha1), key?.GetValue("CertHash") as byte[]);
-            }
-
-            RdpClientTrust.Forget(server, 3390);
-            Assert.False(RdpClientTrust.IsRemembered(server, 3390, sha1));
-        }
-        finally
-        {
-            foreach (var name in RdpClientTrust.KeyNames(server, 3390))
-            {
-                Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree($@"Software\Microsoft\Terminal Server Client\Servers\{name}", throwOnMissingSubKey: false);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Certificat auto-signé de ce poste (son nom n'est pas 127.0.0.2) : sans empreinte confiée, le niveau
-    /// d'authentification 1 refuse la connexion (le contrôle vérifie bien le certificat). L'empreinte confiée comme le fait
-    /// ZillaTerm après sa propre vérification, la session s'ouvre sans avertissement de Windows, aux niveaux 1 et 2, avec et
-    /// sans authentification réseau (NLA). Tout est noté avant de vérifier : le journal du test dit ce que fait Windows.
+    /// Clé publique du serveur comparée à celle du certificat vérifié par ZillaTerm, au niveau d'authentification 0 (sans
+    /// l'avertissement de Windows) : la bonne clé ouvre la session, une autre la refuse, avec et sans authentification
+    /// réseau (NLA). Tout est noté avant de vérifier, avec l'ordre des événements du contrôle (journal de débogage).
     /// </summary>
     [Fact]
     [Trait("Category", "RdpIntegration")]
-    public async Task CertificateConfirmedByZillaTermOpensWithoutWindowsWarning()
+    public async Task ServerKeyCheckedByZillaTermOpensWithoutWindowsWarning()
     {
         if (IntegrationAccount() is not { } account)
         {
@@ -314,32 +266,34 @@ public class RdpSessionTests(ITestOutputHelper output)
         }
 
         var certificate = await RdpCertificateProbe.GetAsync("127.0.0.2", 3389, CancellationToken.None);
-        output.WriteLine($"Certificat « {certificate.Subject} », SHA1 {certificate.Sha1}, problème « {certificate.Problem} »");
+        output.WriteLine($"Certificat « {certificate.Subject} », clé {certificate.PublicKey.Length} octets "
+            + $"{Convert.ToHexString(certificate.PublicKey.AsSpan(0, Math.Min(16, certificate.PublicKey.Length)))}…, problème « {certificate.Problem} »");
         Assert.False(certificate.Trusted);
 
+        var log = Path.Combine(Path.GetTempPath(), $"zillaterm-rdp-{Guid.NewGuid():N}.log");
+        Core.Diagnostics.DebugLog.Start(log, "test");
         var results = new List<(string Case, bool Expected, Attempt Result)>();
-        RdpClientTrust.Forget("127.0.0.2", 3389);
         try
         {
+            byte[] other = [.. certificate.PublicKey];
+            other[^1] ^= 0xFF;
             foreach (var nla in new[] { true, false })
             {
-                results.Add(($"NLA {nla}, niveau 1, sans empreinte", false, await AttemptAsync(account, 1, nla)));
-            }
-
-            RdpClientTrust.Remember("127.0.0.2", 3389, certificate.Sha1);
-            foreach (var nla in new[] { true, false })
-            {
-                foreach (var level in new[] { 1, 2 })
-                {
-                    results.Add(($"NLA {nla}, niveau {level}, empreinte confiée", true, await AttemptAsync(account, level, nla)));
-                }
+                results.Add(($"NLA {nla}, clé du certificat", true, await AttemptAsync(account, 0, nla, certificate.PublicKey)));
+                results.Add(($"NLA {nla}, autre clé", false, await AttemptAsync(account, 0, nla, other)));
             }
         }
         finally
         {
-            RdpClientTrust.Forget("127.0.0.2", 3389);
+            Core.Diagnostics.DebugLog.Stop();
         }
 
+        foreach (var line in File.ReadLines(log).Where(l => l.Contains("rdp", StringComparison.Ordinal)))
+        {
+            output.WriteLine(line);
+        }
+
+        File.Delete(log);
         foreach (var (name, _, result) in results)
         {
             output.WriteLine($"{name} → {result}");
@@ -349,20 +303,21 @@ public class RdpSessionTests(ITestOutputHelper output)
         {
             Assert.False(result.Warning, $"{name} : avertissement de Windows affiché");
             Assert.True(expected == (result.State == RdpSessionState.Connected), $"{name} → {result}");
+            Assert.Equal(expected, result.KeyMatched);
         }
     }
 
-    private sealed record Attempt(RdpSessionState State, bool Warning, int? Reason, uint? Extended, string? Error);
+    private sealed record Attempt(RdpSessionState State, bool Warning, bool? KeyMatched, int? KeyLength, int? Reason, uint? Extended, string? Error);
 
     /// <summary>
-    /// Une connexion à ce poste au niveau d'authentification donné ; un avertissement de Windows est fermé (« Non ») et
-    /// noté. Session ouverte : déconnectée aussitôt.
+    /// Une connexion à ce poste au niveau d'authentification donné, avec la clé attendue du serveur ; un avertissement
+    /// de Windows est fermé (« Non ») et noté. Session ouverte : déconnectée aussitôt.
     /// </summary>
-    private async Task<Attempt> AttemptAsync((string User, string Password) account, int level, bool nla)
+    private async Task<Attempt> AttemptAsync((string User, string Password) account, int level, bool nla, byte[]? key)
     {
         var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User) with { AuthenticationLevel = level, EnableCredSsp = nla };
         Attempt? attempt = null;
-        await RunOnStaAsync(new RdpConnectionRequest(settings, account.Password), async session =>
+        await RunOnStaAsync(new RdpConnectionRequest(settings, account.Password) { ServerPublicKey = key }, async session =>
         {
             await session.ConnectAsync();
             var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -376,7 +331,8 @@ public class RdpSessionTests(ITestOutputHelper output)
                 await Task.Delay(200);
             }
 
-            attempt = new Attempt(session.State, session.AuthenticationWarningShown, session.DisconnectReason, session.ExtendedDisconnectReason, session.Error);
+            attempt = new Attempt(session.State, session.AuthenticationWarningShown, session.ServerKeyMatched, session.ServerPublicKey?.Length,
+                session.DisconnectReason, session.ExtendedDisconnectReason, session.Error);
             if (session.State == RdpSessionState.Connected)
             {
                 session.Disconnect();

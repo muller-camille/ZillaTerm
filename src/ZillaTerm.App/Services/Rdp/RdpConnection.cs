@@ -29,6 +29,7 @@ internal sealed class RdpConnection
     private const int DispIdFatalError = 10;
     private const int DispIdWarning = 11;
     private const int DispIdRemoteDesktopSizeChange = 12;
+    private const int DispIdReceivedTSPublicKey = 16;
     private const int DispIdAuthenticationWarningDisplayed = 18;
     private const int DispIdAuthenticationWarningDismissed = 19;
     private const int DispIdLogonError = 22;
@@ -37,6 +38,9 @@ internal sealed class RdpConnection
     private const int DispIdAutoReconnecting2 = 34;
 
     private static readonly IntPtr MessageOnlyParent = new(-3);
+
+    /// <summary>Événement OnReceivedTSPublicKey : clé publique du serveur, et poursuite (ou non) de la connexion.</summary>
+    private delegate void ReceivedPublicKeyHandler(string publicKey, ref bool continueLogon);
 
     private readonly RdpSession _session;
     private readonly Dispatcher _ui;
@@ -185,6 +189,8 @@ internal sealed class RdpConnection
             ToSession(s => s.OnFullScreenChanged(this, false));
             FocusControl();
         }));
+        // Clé publique du serveur, avant l'envoi de l'identité : comparée à celle du certificat vérifié par ZillaTerm.
+        Subscribe(ocx, DispIdReceivedTSPublicKey, new ReceivedPublicKeyHandler(OnReceivedPublicKey));
         // Avertissement de Windows sur l'identité du serveur (certificat) : l'onglet le signale.
         Subscribe(ocx, DispIdAuthenticationWarningDisplayed, new Action(() =>
         {
@@ -327,6 +333,28 @@ internal sealed class RdpConnection
                 extended.SetProperty("DeviceScaleFactor", ref device);
             });
         }
+    }
+
+    /// <summary>
+    /// Clé publique présentée par le serveur pendant la connexion. Avec une clé attendue (certificat vérifié par
+    /// ZillaTerm), la connexion ne se poursuit que si c'est la même : un intermédiaire qui présenterait un autre
+    /// certificat entre la vérification et la connexion est refusé.
+    /// </summary>
+    private void OnReceivedPublicKey(string publicKey, ref bool continueLogon)
+    {
+        var key = System.Runtime.InteropServices.MemoryMarshal.AsBytes(publicKey.AsSpan()).ToArray();
+        var expected = _request.ServerPublicKey;
+        bool? matched = expected is null ? null : key.AsSpan().SequenceEqual(expected);
+        continueLogon = matched != false;
+        DebugLog.Write("rdp", $"{_label} : clé publique du serveur reçue ({key.Length} octets, SHA256 "
+            + $"{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(key))}) : "
+            + matched switch
+            {
+                null => "pas de clé attendue",
+                true => "celle du certificat vérifié",
+                false => $"DIFFÉRENTE de celle du certificat vérifié ({expected!.Length} octets) : connexion refusée",
+            });
+        ToSession(s => s.OnServerKey(this, key, matched));
     }
 
     private void OnLoginComplete()

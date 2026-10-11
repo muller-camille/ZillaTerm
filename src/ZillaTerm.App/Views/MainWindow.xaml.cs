@@ -1132,8 +1132,7 @@ public partial class MainWindow : Window
                 next = next.ForPsmTab();
             }
 
-            await TrustPsmCertificateAsync(label, next, ct);
-            return new RdpConnectionRequest(next, null);
+            return await TrustPsmCertificateAsync(label, next, ct);
         }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), settings.Server);
 
         if (session.ControlFailed && session.ConnectedAt is null && MainTabs.Items.OfType<TabItem>().Any(t => t.Tag == session))

@@ -16071,5 +16071,14 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("PsmHintTab", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} presented another certificate than the one ZillaTerm had just checked: connection refused (possible interception). Try again; if it happens again, tell the CyberArk team..
+        /// </summary>
+        public static string RdpServerKeyMismatch {
+            get {
+                return ResourceManager.GetString("RdpServerKeyMismatch", resourceCulture);
+            }
+        }
     }
 }

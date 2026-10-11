@@ -101,11 +101,11 @@ public partial class MainWindow
     /// <summary>
     /// Session PSM dans l'onglet : le certificat du PSM est lu et vérifié par ZillaTerm avant la connexion (épinglé,
     /// question au premier usage s'il n'est pas approuvé par Windows, alerte s'il change). Refusé : rien n'est envoyé
-    /// au PSM. Accepté : il est confié au contrôle (<see cref="RdpClientTrust"/>), qui vérifie la vraie connexion avec
-    /// lui sans afficher son propre avertissement (voir <see cref="RdpConnectionSettings.ForPsmTab"/>). Certificat
+    /// au PSM. Accepté : la connexion est réglée pour que le contrôle n'affiche pas son propre avertissement, et ne se
+    /// poursuit que si le PSM présente la même clé (<see cref="RdpConnectionRequest.ServerPublicKey"/>). Certificat
     /// illisible (pas de TLS, répartiteur de charge…) : Windows vérifie seul, et avertit s'il ne peut pas.
     /// </summary>
-    private async Task TrustPsmCertificateAsync(string label, RdpConnectionSettings settings, CancellationToken ct)
+    private async Task<RdpConnectionRequest> TrustPsmCertificateAsync(string label, RdpConnectionSettings settings, CancellationToken ct)
     {
         RdpCertificate certificate;
         try
@@ -116,7 +116,7 @@ public partial class MainWindow
         {
             DebugLog.Write("psm", $"{label} : certificat du PSM {settings.Server}:{settings.Port} illisible ({ex.Message}) : "
                 + $"vérifié par Windows seul, niveau d'authentification {settings.AuthenticationLevel}");
-            return;
+            return new RdpConnectionRequest(settings, null);
         }
 
         DebugLog.Write("psm", $"{label} : PSM {settings.Server}:{settings.Port}, certificat SHA256 {certificate.Sha256}, « {certificate.Subject} », "
@@ -126,16 +126,18 @@ public partial class MainWindow
             throw new OperationCanceledException(Strings.RdpCertificateDeclined);
         }
 
-        try
+        DebugLog.Write("psm", $"{label} : clé du certificat vérifiée par ZillaTerm pendant la connexion ({certificate.PublicKey.Length} octets)");
+        return new RdpConnectionRequest(settings with { AuthenticationLevel = PsmVerifiedAuthenticationLevel }, null)
         {
-            RdpClientTrust.Remember(settings.Server, settings.Port, certificate.Sha1);
-            DebugLog.Write("psm", $"{label} : certificat confié au contrôle, niveau d'authentification {settings.AuthenticationLevel}");
-        }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException or ArgumentException)
-        {
-            DebugLog.Write("psm", $"{label} : certificat non confié au contrôle ({ex.Message}) : Windows pourra demander de le confirmer.");
-        }
+            ServerPublicKey = certificate.PublicKey,
+        };
     }
+
+    /// <summary>
+    /// Niveau d'authentification du contrôle quand ZillaTerm vérifie lui-même la clé du PSM pendant la connexion :
+    /// 0, sans l'avertissement de Windows (qui ne connaît pas le certificat accepté dans ZillaTerm).
+    /// </summary>
+    private const int PsmVerifiedAuthenticationLevel = 0;
 
     private async Task CloseRdpTabAsync(TabItem tab)
     {

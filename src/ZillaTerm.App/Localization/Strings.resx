@@ -5388,4 +5388,7 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="PsmHintTab" xml:space="preserve">
     <value>The PVWA generates an RDP connection: a Windows desktop opens in a ZillaTerm tab, a remote application (PSM-SSH, WinSCP…) in Remote Desktop Connection (mstsc).</value>
   </data>
+  <data name="RdpServerKeyMismatch" xml:space="preserve">
+    <value>{0} presented another certificate than the one ZillaTerm had just checked: connection refused (possible interception). Try again; if it happens again, tell the CyberArk team.</value>
+  </data>
 </root>
