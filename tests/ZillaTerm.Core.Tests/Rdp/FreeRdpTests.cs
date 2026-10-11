@@ -97,6 +97,7 @@ public class FreeRdpTests
         // Largeur paire, 200 pixels au moins.
         Assert.Contains("/size:1000x200", lines);
         Assert.Contains("/log-level:INFO", lines);
+        Assert.Contains("/log-filters:com.freerdp.channels.rail.*:DEBUG", lines);
         Assert.Contains("FreeRDP_Username=jdoe", lines);
         Assert.Contains("FreeRDP_Domain=CORP", lines);
         Assert.Contains("FreeRDP_Password=s3cret", lines);

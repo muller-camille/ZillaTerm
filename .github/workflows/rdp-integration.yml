@@ -145,7 +145,15 @@ jobs:
       - name: Tests de sessions réelles
         run: >
           dotnet test tests/ZillaTerm.App.Tests -c Release
-          --filter Category=RdpIntegration
+          --filter "Category=RdpIntegration&FullyQualifiedName!~RemoteApp"
+          --logger "console;verbosity=detailed"
+
+      # Application distante à part, en dernier : sa session (second compte) ne doit pas gêner les autres tests.
+      - name: Application distante
+        if: always()
+        run: >
+          dotnet test tests/ZillaTerm.App.Tests -c Release --no-build
+          --filter "Category=RdpIntegration&FullyQualifiedName~RemoteApp"
           --logger "console;verbosity=detailed"
 
       - name: Journal de débogage des sessions
@@ -155,3 +163,25 @@ jobs:
           if (Test-Path $env:RDP_TEST_LOG) { Get-Content $env:RDP_TEST_LOG } else { 'Pas de journal.' }
           if (Test-Path $env:RDP_TEST_CLICKS) { 'Fenêtre de test (bureau) :'; Get-Content $env:RDP_TEST_CLICKS }
           if (Test-Path $env:RDP_TEST_REMOTEAPP_CLICKS) { 'Fenêtre de test (application distante) :'; Get-Content $env:RDP_TEST_REMOTEAPP_CLICKS }
+
+      # Côté serveur : ouvertures et fins de session, erreurs du protocole (raison d'une connexion fermée).
+      - name: Journaux du serveur Bureau à distance
+        if: always()
+        shell: pwsh
+        run: |
+          $logs = @(
+            'Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Operational',
+            'Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Admin',
+            'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational',
+            'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational',
+            'Microsoft-Windows-TerminalServices-RemoteConnectionManager/Admin'
+          )
+          foreach ($log in $logs) {
+            "==== $log"
+            Get-WinEvent -LogName $log -MaxEvents 120 -ErrorAction SilentlyContinue | Sort-Object TimeCreated |
+              ForEach-Object { '{0:HH:mm:ss.fff} {1,5} {2,-11} {3}' -f $_.TimeCreated, $_.Id, $_.LevelDisplayName, ($_.Message -replace '\s+', ' ') }
+          }
+          "==== Application (rdpinit, rdpshell)"
+          Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-30) } -ErrorAction SilentlyContinue |
+            Where-Object { $_.Message -match 'rdpinit|rdpshell|RemoteApp' } | Sort-Object TimeCreated |
+            ForEach-Object { '{0:HH:mm:ss.fff} {1,5} {2} {3}' -f $_.TimeCreated, $_.Id, $_.ProviderName, ($_.Message -replace '\s+', ' ') }

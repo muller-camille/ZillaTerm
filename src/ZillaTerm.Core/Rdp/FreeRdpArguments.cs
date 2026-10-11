@@ -69,6 +69,12 @@ public static class FreeRdpArguments
             "FreeRDP_UseRdpSecurityLayer=FALSE",
         };
 
+        if (verbose)
+        {
+            // Échanges du canal des applications distantes (RemoteApp), pour diagnostiquer une session qui se ferme.
+            lines.Add("/log-filters:com.freerdp.channels.rail.*:DEBUG");
+        }
+
         if (legacySecurity)
         {
             // ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS : ni 40, ni 56 bits.
