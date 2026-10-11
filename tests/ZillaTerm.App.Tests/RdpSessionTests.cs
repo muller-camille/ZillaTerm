@@ -72,7 +72,7 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>
-    /// Vraie session sur ce poste (127.0.0.2) avec le compte de test créé par le workflow « rdp-integration » :
+    /// Vraie session sur ce poste (127.0.0.2) avec le compte de test créé par le job « rdp » du workflow « build » :
     /// ouverture de session dans l'onglet, puis déconnexion. Ignoré sans RDP_TEST_USER / RDP_TEST_PASSWORD.
     /// </summary>
     [Fact]

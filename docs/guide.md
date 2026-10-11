@@ -1185,8 +1185,8 @@ keys to the session. A remote application is shown in this window (session surfa
 separate windows. Closing the tab closes this window (end of session as with the client's close button). Session end
 and errors: the FreeRDP code (`ERRINFO_…`, `ERRCONNECT_…`, exit code of the client) is explained in the tab. Limit: the
 FreeRDP Windows client is marked "unmaintained" by the FreeRDP project (the protocol core itself is maintained);
-ZillaTerm pins its version and updates it with its patches. The integration tests (`rdp-integration` workflow) open a
-desktop and a remote application with it on the CI machine: size, clicks, keys, refused certificate, legacy RDP
+ZillaTerm pins its version and updates it with its patches. The integration tests (`rdp` job of the `build` workflow)
+open a desktop and a remote application with it on the CI machine: size, clicks, keys, refused certificate, legacy RDP
 security key.
 
 **Windows Remote Desktop control.** Direct remote desktop from KeePass databases, and desktop PSM sessions when the

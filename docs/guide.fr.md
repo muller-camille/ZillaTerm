@@ -1259,8 +1259,8 @@ session, comme un bureau) au lieu de fenêtres à part. Fermer l'onglet ferme ce
 le bouton de fermeture du client). Fin de session et erreurs : le code de FreeRDP (`ERRINFO_…`, `ERRCONNECT_…`, code
 de sortie du client) est expliqué dans l'onglet. Limite : le client Windows de FreeRDP est marqué « non maintenu » par
 le projet FreeRDP (le cœur du protocole, lui, l'est) ; ZillaTerm en fige la version et la met à jour avec ses
-correctifs. Les tests d'intégration (workflow `rdp-integration`) ouvrent avec lui un bureau et une application distante
-sur le poste de CI : taille, clics, touches, certificat refusé, clé de l'ancienne sécurité RDP.
+correctifs. Les tests d'intégration (job `rdp` du workflow `build`) ouvrent avec lui un bureau et une application
+distante sur le poste de CI : taille, clics, touches, certificat refusé, clé de l'ancienne sécurité RDP.
 
 **Contrôle Bureau à distance de Windows.** Le bureau à distance direct des bases KeePass, et les sessions PSM de bureau
 quand le client FreeRDP n'est pas embarqué (compilation sans lui), hébergent le contrôle ActiveX de Windows
