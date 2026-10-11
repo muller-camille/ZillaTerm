@@ -1,13 +1,20 @@
 using System.Globalization;
+using System.Text;
 
 namespace ZillaTerm.Core.Rdp;
 
 /// <summary>
-/// Connexion décrite au client Bureau à distance de FreeRDP compilé pour ZillaTerm (tools/freerdp-build.sh), lancé
-/// avec le seul argument « /zillaterm » : les lignes écrites sur son entrée standard, terminées par une ligne vide.
-/// Les options de FreeRDP (« /… », « +… », « -… ») décrivent la connexion ; les textes libres (identifiant, mot de
-/// passe, programme de démarrage, arguments de l'application distante) passent par « FreeRDP_&lt;Réglage&gt;=valeur »,
-/// sans l'analyse des options (virgules, deux-points, guillemets). Rien n'est sur la ligne de commande ni sur le disque.
+/// Lancement du client FreeRDP : ligne de commande (rien de secret : fenêtre, taille, sécurité, redirections, empreintes
+/// acceptées) et fichier de connexion écrit sur son entrée standard (« - » : serveur, identifiant, programme de
+/// démarrage, application distante et ses arguments, qui portent le jeton PSM). Rien n'est écrit sur le disque.
+/// </summary>
+public sealed record FreeRdpLaunch(IReadOnlyList<string> Arguments, string ConnectionFile);
+
+/// <summary>
+/// Connexion décrite au client FreeRDP (fork muller-camille/FreeRDP, branche patches-3.32.1 : uniquement des
+/// fonctions génériques de FreeRDP). Le serveur doit présenter un certificat (TLS) ou une clé (ancienne sécurité RDP)
+/// dont l'empreinte a été acceptée par ZillaTerm avant le lancement (« /cert:deny,fingerprint:… ») : FreeRDP refuse
+/// tout autre serveur, sans rien demander.
 /// </summary>
 public static class FreeRdpArguments
 {
@@ -34,18 +41,24 @@ public static class FreeRdpArguments
     /// </summary>
     public static bool Supports(RdpConnectionSettings settings) => !settings.UsesGateway;
 
-    /// <summary>Lignes à écrire sur l'entrée standard (la ligne vide finale comprise).</summary>
     /// <param name="parentWindow">Fenêtre de l'onglet où FreeRDP crée la sienne.</param>
     /// <param name="pixels">Taille de l'onglet en pixels : résolution du bureau distant, mise à l'échelle ensuite.</param>
-    /// <param name="password">Mot de passe d'une connexion directe ; null pour une session PSM (aucun n'est demandé).</param>
+    /// <param name="password">Mot de passe d'une connexion directe (tests) ; null pour une session PSM (aucun n'est demandé).</param>
     /// <param name="verbose">Journal détaillé de FreeRDP (journal de débogage de ZillaTerm activé).</param>
+    /// <param name="fingerprints">
+    /// Empreintes SHA-256 (hexadécimal) des certificats et clés acceptés pour ce serveur : FreeRDP refuse les autres.
+    /// </param>
     /// <param name="legacySecurity">
-    /// Ancienne sécurité RDP permise si le serveur refuse TLS (PSM seulement) : sa clé est alors toujours soumise à
-    /// ZillaTerm, qui l'épingle ; chiffrement 128 bits ou FIPS seulement.
+    /// Ancienne sécurité RDP permise si le serveur refuse TLS (PSM seulement) : sa clé doit alors être l'une des
+    /// empreintes acceptées ; chiffrement 128 bits ou FIPS seulement.
+    /// </param>
+    /// <param name="configPath">
+    /// Dossier de configuration de FreeRDP (certificats et clés qu'il connaîtrait) : vide, propre à ZillaTerm ; null pour
+    /// le dossier par défaut.
     /// </param>
     /// <exception cref="ArgumentException">Valeur avec un retour à la ligne ou un caractère nul.</exception>
-    public static IReadOnlyList<string> Build(RdpConnectionSettings settings, long parentWindow, (int Width, int Height) pixels,
-        string? password, bool verbose, bool legacySecurity = false)
+    public static FreeRdpLaunch Build(RdpConnectionSettings settings, long parentWindow, (int Width, int Height) pixels,
+        string? password, bool verbose, IReadOnlyCollection<string> fingerprints, bool legacySecurity = false, string? configPath = null)
     {
         if (!Supports(settings))
         {
@@ -53,63 +66,76 @@ public static class FreeRdpArguments
         }
 
         var (width, height) = DesktopSize(pixels);
-        var lines = new List<string>
+        var arguments = new List<string>
         {
+            // Fichier de connexion sur l'entrée standard.
+            "-",
             "/parent-window:" + parentWindow.ToString(CultureInfo.InvariantCulture),
-            "/v:" + (settings.Server.Contains(':') ? $"[{Check(settings.Server)}]" : Check(settings.Server)),
-            "/port:" + settings.Port.ToString(CultureInfo.InvariantCulture),
             $"/size:{width}x{height}",
             "/smart-sizing",
             "/bpp:" + settings.ColorDepth.ToString(CultureInfo.InvariantCulture),
             "-toggle-fullscreen",
             "/log-level:" + (verbose ? "INFO" : "WARN"),
-            // L'ancienne « sécurité RDP » sans TLS n'authentifie pas le serveur : seulement si elle est permise, et le
-            // client compilé pour ZillaTerm soumet alors la clé du serveur à ZillaTerm. Réglages explicites plutôt
-            // que « /sec » : une option donnée deux fois ne garde que sa dernière valeur.
-            "FreeRDP_UseRdpSecurityLayer=FALSE",
+            // Seuls les certificats et clés acceptés par ZillaTerm : jamais de question de FreeRDP.
+            "/cert:" + string.Join(",", fingerprints.Select(f => "fingerprint:sha256:" + Fingerprint(f)).Prepend("deny")),
+            // Identifiants demandés, s'il en manquait, sur l'entrée standard déjà fermée : jamais de fenêtre de Windows.
+            "/from-stdin",
         };
 
         if (verbose)
         {
             // Échanges du canal des applications distantes (RemoteApp), pour diagnostiquer une session qui se ferme.
-            lines.Add("/log-filters:com.freerdp.channels.rail.*:DEBUG");
+            arguments.Add("/log-filters:com.freerdp.channels.rail.*:DEBUG");
         }
 
+        // Réglages par leur nom, en une seule option : une option donnée deux fois ne garde que sa dernière valeur.
+        var tune = new List<string> { "FreeRDP_UseRdpSecurityLayer:FALSE" };
         if (legacySecurity)
         {
             // ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS : ni 40, ni 56 bits.
-            lines.Add("FreeRDP_RdpSecurity=TRUE");
-            lines.Add("FreeRDP_EncryptionMethods=18");
+            tune.Add("FreeRDP_RdpSecurity:TRUE");
+            tune.Add("FreeRDP_EncryptionMethods:18");
         }
         else
         {
-            lines.Add("FreeRDP_RdpSecurity=FALSE");
+            tune.Add("FreeRDP_RdpSecurity:FALSE");
         }
 
         if (!settings.EnableCredSsp)
         {
             // Sans authentification réseau : ni NLA, ni NLA étendue (activée par défaut dans FreeRDP).
-            lines.Add("FreeRDP_NlaSecurity=FALSE");
-            lines.Add("FreeRDP_ExtSecurity=FALSE");
+            tune.Add("FreeRDP_NlaSecurity:FALSE");
+            tune.Add("FreeRDP_ExtSecurity:FALSE");
         }
 
-        lines.Add(settings.RedirectClipboard ? "+clipboard" : "-clipboard");
+        if (settings.IsRemoteApp)
+        {
+            tune.Add("FreeRDP_RemoteAppLanguageBarSupported:TRUE");
+        }
+
+        if (configPath is not null && IsPlainValue(configPath))
+        {
+            tune.Add("FreeRDP_ConfigPath:" + configPath);
+        }
+
+        arguments.Add("/tune:" + string.Join(",", tune));
+        arguments.Add(settings.RedirectClipboard ? "+clipboard" : "-clipboard");
         if (settings.RedirectDrives)
         {
-            lines.Add("/drives");
+            arguments.Add("/drives");
         }
 
         if (settings.RedirectPrinters)
         {
-            lines.Add("/printer");
+            arguments.Add("/printer");
         }
 
         if (settings.RedirectSmartCards)
         {
-            lines.Add("/smartcard");
+            arguments.Add("/smartcard");
         }
 
-        lines.Add(settings.AudioMode switch
+        arguments.Add(settings.AudioMode switch
         {
             0 => "/sound",
             1 => "/audio-mode:1",
@@ -117,55 +143,86 @@ public static class FreeRdpArguments
         });
         if (settings.AudioCapture)
         {
-            lines.Add("/microphone");
+            arguments.Add("/microphone");
         }
 
-        if (settings.LoadBalanceInfo.Length > 0)
-        {
-            lines.Add("/load-balance-info:" + Check(settings.LoadBalanceInfo));
-        }
-
-        lines.Add(settings.AutoReconnect ? "+auto-reconnect" : "-auto-reconnect");
-        lines.Add(settings.Compress ? "+compression" : "-compression");
+        arguments.Add(settings.AutoReconnect ? "+auto-reconnect" : "-auto-reconnect");
+        arguments.Add(settings.Compress ? "+compression" : "-compression");
         foreach (var (flag, option, setDisables) in Effects)
         {
             bool set = (settings.PerformanceFlags & flag) != 0;
-            lines.Add((set != setDisables ? "+" : "-") + option);
+            // Application distante : ni fond d'écran ni déplacement des fenêtres avec leur contenu, comme /app.
+            if (settings.IsRemoteApp && option is "wallpaper" or "window-drag")
+            {
+                set = true;
+            }
+
+            arguments.Add((set != setDisables ? "+" : "-") + option);
         }
 
         if (settings.ConnectToAdministerServer)
         {
-            lines.Add("/admin");
+            arguments.Add("/admin");
         }
 
+        return new FreeRdpLaunch(arguments, ConnectionFile(settings, password));
+    }
+
+    /// <summary>
+    /// Fichier de connexion (format .rdp, lu par FreeRDP sur son entrée standard) : chaque valeur va jusqu'à la fin de
+    /// sa ligne, sans analyse (virgules, deux-points, guillemets). Toujours un mot de passe, vide pour une session PSM :
+    /// FreeRDP ne demande rien et ne lit pas les identifiants enregistrés de Windows.
+    /// </summary>
+    private static string ConnectionFile(RdpConnectionSettings settings, string? password)
+    {
+        var file = new StringBuilder();
+        void Line(string key, string value) => file.Append(key).Append(':').Append(Check(value)).Append("\r\n");
+
+        Line("full address:s", settings.Server.Contains(':') ? $"[{settings.Server}]" : settings.Server);
+        Line("server port:i", settings.Port.ToString(CultureInfo.InvariantCulture));
         var (user, domain) = SplitUser(settings.UserName, settings.Domain);
-        Set(lines, "Username", user);
-        Set(lines, "Domain", domain);
-        if (password is not null)
+        if (user.Length > 0)
         {
-            Set(lines, "Password", password);
+            Line("username:s", user);
         }
 
+        if (domain.Length > 0)
+        {
+            Line("domain:s", domain);
+        }
+
+        Line("password:s", password ?? "");
         if (settings.IsRemoteApp)
         {
-            // Comme l'option /app de FreeRDP : mode RemoteApp, barre de langue, ni fond d'écran ni déplacement plein.
-            lines.Add("FreeRDP_RemoteApplicationMode=TRUE");
-            lines.Add("FreeRDP_RemoteAppLanguageBarSupported=TRUE");
-            lines.Add("FreeRDP_DisableWallpaper=TRUE");
-            lines.Add("FreeRDP_DisableFullWindowDrag=TRUE");
-            Set(lines, "RemoteApplicationProgram", settings.RemoteApplicationProgram);
-            Set(lines, "RemoteApplicationName", settings.RemoteApplicationName);
-            Set(lines, "RemoteApplicationCmdLine", settings.RemoteApplicationCmdLine);
+            Line("remoteapplicationmode:i", "1");
+            Line("remoteapplicationprogram:s", settings.RemoteApplicationProgram);
+            if (settings.RemoteApplicationName.Length > 0)
+            {
+                Line("remoteapplicationname:s", settings.RemoteApplicationName);
+            }
+
+            if (settings.RemoteApplicationCmdLine.Length > 0)
+            {
+                Line("remoteapplicationcmdline:s", settings.RemoteApplicationCmdLine);
+            }
         }
-        else
+        else if (settings.StartProgram.Length > 0)
         {
-            Set(lines, "AlternateShell", settings.StartProgram);
+            Line("alternate shell:s", settings.StartProgram);
         }
 
-        // Dossier de démarrage du programme, ou de l'application distante (FreeRDP l'envoie avec elle).
-        Set(lines, "ShellWorkingDirectory", settings.WorkDir);
-        lines.Add("");
-        return lines;
+        // Dossier de démarrage du programme, ou de l'application distante.
+        if (settings.WorkDir.Length > 0)
+        {
+            Line("shell working directory:s", settings.WorkDir);
+        }
+
+        if (settings.LoadBalanceInfo.Length > 0)
+        {
+            Line("loadbalanceinfo:s", settings.LoadBalanceInfo);
+        }
+
+        return file.ToString();
     }
 
     /// <summary>Taille du bureau distant : entre 200 et 8192 pixels, largeur paire.</summary>
@@ -187,13 +244,14 @@ public static class FreeRdpArguments
         return (userName, domain);
     }
 
-    private static void Set(List<string> lines, string name, string value)
-    {
-        if (value.Length > 0)
-        {
-            lines.Add($"FreeRDP_{name}={Check(value)}");
-        }
-    }
+    /// <summary>Empreinte SHA-256 en hexadécimal : 64 chiffres, rien d'autre (elle va dans une option de FreeRDP).</summary>
+    private static string Fingerprint(string sha256) =>
+        sha256.Length == 64 && sha256.All(char.IsAsciiHexDigit)
+            ? sha256
+            : throw new ArgumentException("Empreinte SHA-256 invalide", nameof(sha256));
+
+    /// <summary>Valeur passée telle quelle dans une liste d'options de FreeRDP : ni virgule, ni guillemet, ni retour.</summary>
+    private static bool IsPlainValue(string value) => value.AsSpan().IndexOfAny(",'\"\r\n\0") < 0 && value.Length > 0;
 
     private static string Check(string value) =>
         value.AsSpan().IndexOfAny('\r', '\n', '\0') < 0

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # Client Bureau à distance de ZillaTerm : wfreerdp (client Windows de FreeRDP), compilé depuis le fork
-# muller-camille/FreeRDP au commit figé ci-dessous (vérifié après le téléchargement) : FreeRDP 3.32.1 et les correctifs
-# de ZillaTerm (branche zillaterm-3.32.1). Lié statiquement à OpenSSL (version figée, archive vérifiée par sa somme
-# SHA-256). Un seul exécutable, sans DLL à côté.
+# muller-camille/FreeRDP au commit figé ci-dessous (vérifié après le téléchargement) : FreeRDP 3.32.1 et des correctifs
+# génériques, sans rien de propre à ZillaTerm, chacun proposable à FreeRDP (branche patches-3.32.1). Lié statiquement à
+# OpenSSL (version figée, archive vérifiée par sa somme SHA-256). Un seul exécutable, sans DLL à côté.
 #
-# Correctifs (commits de la branche) : application distante (RemoteApp) qui répond à l'échange initial du serveur, et
-# mode ZillaTerm : réglages de la connexion lus sur l'entrée standard (jamais sur la ligne de commande
-# ni sur le disque), certificats vérifiés par ZillaTerm, jamais l'ancienne sécurité RDP sans TLS, reconnexion
-# automatique interrompue dès la fermeture de l'onglet, aucune fenêtre de Windows (identifiants, certificats,
-# messages de passerelle), identifiants enregistrés de Windows jamais lus, applications distantes (RemoteApp)
-# affichées dans la fenêtre de la session quand elle est dans ZillaTerm, aucune bibliothèque chargée hors de
-# System32, sensibilité aux DPI de la fenêtre parente.
+# Correctifs (un commit chacun) : fichier de connexion lu sur l'entrée standard (« - » : jamais sur le disque),
+# ancienne sécurité RDP soumise à /cert:deny et aux empreintes (clé du serveur vérifiée, refus d'une connexion sans
+# chiffrement), empreinte de la vraie clé du serveur, journal écrit sans attendre ; client Windows : applications
+# distantes (RemoteApp) qui répondent à l'échange initial du serveur et s'affichent dans la fenêtre parente
+# (/parent-window), molette et clavier corrigés, fenêtre qui répond entre deux tentatives de reconnexion, même
+# sensibilité aux DPI que la fenêtre parente, aucune bibliothèque chargée hors du dossier de l'application et de
+# System32. ZillaTerm n'utilise que des options de FreeRDP : /cert:deny et empreintes acceptées, /from-stdin, /tune.
 #
 # Compilation croisée depuis Linux (mingw-w64, cmake, ninja, perl, make) : la CI le lance sur ubuntu-latest et met le
 # résultat en cache ; ZillaTerm l'embarque s'il est présent dans local-packages/freerdp/ au moment de la compilation.
@@ -18,7 +18,7 @@ set -euo pipefail
 
 freerdp_repository=https://github.com/muller-camille/FreeRDP
 freerdp_version=3.32.1
-freerdp_commit=cfc0d6a988f506b8bc95fcc925f00e532a985e67
+freerdp_commit=ecd01ed53dc324f41773cd31419beff5e58c5532
 openssl_version=3.5.9
 openssl_sha256=603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a
 openssl_url=https://github.com/openssl/openssl/releases/download/openssl-$openssl_version/openssl-$openssl_version.tar.gz
@@ -75,7 +75,7 @@ if strings "$ssl_prefix/lib/libcrypto.a" | grep -q "$work"; then
   exit 1
 fi
 
-# ---- FreeRDP et les correctifs de ZillaTerm, au commit figé (vérifié).
+# ---- FreeRDP et ses correctifs génériques, au commit figé (vérifié).
 src="$work/freerdp"
 rm -rf "$src"
 git init --quiet "$src"
@@ -122,7 +122,7 @@ cp "$work/openssl/LICENSE.txt" "$out/LICENSE.OpenSSL.txt" 2>/dev/null || tar xOf
 # Bibliothèques d'exécution de mingw-w64 liées statiquement (winpthreads…) : leurs licences.
 cp /usr/share/doc/mingw-w64-x86-64-dev/copyright "$out/LICENSE.mingw-w64.txt"
 {
-  echo "FreeRDP $freerdp_version + correctifs de ZillaTerm ($freerdp_repository, commit $freerdp_commit)"
+  echo "FreeRDP $freerdp_version + correctifs génériques ($freerdp_repository, branche patches-$freerdp_version, commit $freerdp_commit)"
   echo "OpenSSL $openssl_version ($openssl_url, SHA-256 $openssl_sha256)"
   echo "wfreerdp.exe SHA-256 $(sha256sum "$out/wfreerdp.exe" | cut -d' ' -f1)"
 } > "$out/BUILD.txt"

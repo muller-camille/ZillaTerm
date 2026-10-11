@@ -1170,6 +1170,7 @@ public partial class MainWindow : Window
                 VerifyCertificate = freeRdp ? VerifyFreeRdpCertificateAsync : null,
                 // Session PSM : un PSM qui n'accepte que l'ancienne sécurité RDP est permis, sa clé épinglée.
                 VerifyServerKey = freeRdp ? VerifyFreeRdpServerKeyAsync : null,
+                KnownFingerprints = freeRdp ? KnownFreeRdpFingerprints : null,
             };
         }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), psm: "");
         await ConnectRdpTabAsync(session);

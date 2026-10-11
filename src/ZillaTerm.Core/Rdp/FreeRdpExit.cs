@@ -45,6 +45,37 @@ public static class FreeRdpExit
     private const uint ErrInfo = 0x0001_0000;
     private const uint Connect = 0x0002_0000;
 
+    // Noms des codes de connexion (ERRCONNECT_*, include/freerdp/error.h), dans l'ordre de leur valeur.
+    private static readonly string[] ConnectNames =
+    [
+        "SUCCESS", "PRE_CONNECT_FAILED", "CONNECT_UNDEFINED", "POST_CONNECT_FAILED", "DNS_ERROR", "DNS_NAME_NOT_FOUND",
+        "CONNECT_FAILED", "MCS_CONNECT_INITIAL_ERROR", "TLS_CONNECT_FAILED", "AUTHENTICATION_FAILED",
+        "INSUFFICIENT_PRIVILEGES", "CONNECT_CANCELLED", "SECURITY_NEGO_CONNECT_FAILED", "CONNECT_TRANSPORT_FAILED",
+        "PASSWORD_EXPIRED", "PASSWORD_CERTAINLY_EXPIRED", "CLIENT_REVOKED", "KDC_UNREACHABLE", "ACCOUNT_DISABLED",
+        "PASSWORD_MUST_CHANGE", "LOGON_FAILURE", "WRONG_PASSWORD", "ACCESS_DENIED", "ACCOUNT_RESTRICTION",
+        "ACCOUNT_LOCKED_OUT", "ACCOUNT_EXPIRED", "LOGON_TYPE_NOT_GRANTED", "NO_OR_MISSING_CREDENTIALS",
+        "ACTIVATION_TIMEOUT", "TARGET_BOOTING", "HYBRID_REQUIRED_BY_SERVER",
+    ];
+
+    /// <summary>
+    /// Code de fin du client FreeRDP (code de sortie du processus : sa dernière erreur), ou null pour un autre code
+    /// (plantage, arrêt forcé).
+    /// </summary>
+    public static uint? FromExitCode(int exitCode)
+    {
+        uint code = unchecked((uint)exitCode);
+        uint type = code >> 16;
+        return code == 0 || (type is 1 or 2 && (code & 0xFFFF) <= 0x7FFF) ? code : null;
+    }
+
+    /// <summary>Nom FreeRDP d'un code (ERRCONNECT_… ; ERRINFO_ et code pour les autres).</summary>
+    public static string Name(uint code) => (code >> 16) switch
+    {
+        2 when (code & 0xFFFF) < (uint)ConnectNames.Length => "ERRCONNECT_" + ConnectNames[code & 0xFFFF],
+        1 => FormattableString.Invariant($"ERRINFO_0x{code & 0xFFFF:X4}"),
+        _ => "",
+    };
+
     /// <summary>Classe le code de fin d'une session ; vrai pour une fin normale.</summary>
     public static (bool Normal, FreeRdpEnd End) Classify(uint code)
     {

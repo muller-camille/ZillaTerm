@@ -27,6 +27,12 @@ internal sealed class RdpSlot : HwndHost
     public event Action<int, IntPtr, IntPtr>? ChildMouseWheel;
 
     /// <summary>
+    /// Fenêtre créée dans l'emplacement (WM_PARENTNOTIFY) : son handle, pendant sa création. Le client FreeRDP crée la
+    /// sienne une fois la connexion ouverte.
+    /// </summary>
+    public event Action<IntPtr>? ChildCreated;
+
+    /// <summary>
     /// Fenêtre d'un autre processus dans l'emplacement (client FreeRDP) : un clic dedans donne le focus clavier à
     /// l'emplacement, d'où FreeRDP prend le clavier ; la molette lui est transmise (<see cref="ChildMouseWheel"/>).
     /// </summary>
@@ -131,6 +137,12 @@ internal sealed class RdpSlot : HwndHost
                 FillRect(m.WParam, ref rect, GetStockObject(BlackBrush));
                 m.Result = 1;
                 return;
+            }
+
+            // Fenêtre enfant créée (WM_CREATE) : lParam est son handle.
+            if (m.Msg == WmParentNotify && (m.WParam.ToInt64() & 0xFFFF) == 0x0001)
+            {
+                _owner.ChildCreated?.Invoke(m.LParam);
             }
 
             if (_owner.FocusOnChildClick)

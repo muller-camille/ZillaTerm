@@ -168,12 +168,15 @@ nessuna finestra separata.
   sessione non passa mai a schermo intero, anche se il file del PVWA lo chiede.
 - **Tastiera**: quando la scheda ha la tastiera (clic nella sessione), tutti i tasti vanno alla sessione, scorciatoie
   di Windows comprese (Alt+Tab, tasto Windows). Fai clic altrove in ZillaTerm per riaverle.
-- **Certificato del PSM**: verificato da ZillaTerm con le autorità approvate da Windows (nome del PSM, date, revoca
-  quando è raggiungibile). Approvato: niente da confermare. Altrimenti (certificato autofirmato, emesso per un altro
-  nome), ZillaTerm ne mostra l'impronta e chiede di confermare una volta, poi lo memorizza, come una chiave SSH; un
-  certificato che cambia viene segnalato e accettato solo dopo conferma. Mai una connessione senza verifica, mai una
-  domanda di Windows. Un certificato del PSM emesso dall'autorità dell'azienda, da chiedere al team CyberArk, evita
-  la prima conferma.
+- **Certificato del PSM**: letto da ZillaTerm durante la barra di avanzamento, prima di qualsiasi invio al PSM (né
+  token, né utente), e verificato con le autorità approvate da Windows (nome del PSM, date, revoca quando è
+  raggiungibile). Approvato: niente da confermare. Altrimenti (certificato autofirmato, emesso per un altro nome),
+  ZillaTerm ne mostra l'impronta e chiede di confermare una volta, poi lo memorizza, come una chiave SSH. L'indirizzo di
+  un PSM con bilanciamento del carico può nascondere più server, ciascuno con il proprio certificato: un altro
+  certificato viene segnalato, poi accettato come altro server PSM (i certificati noti restano accettati) o al posto dei
+  certificati noti (rinnovo), dopo conferma. Dopo una domanda, la connessione parte con un nuovo token richiesto al
+  PVWA. Mai una connessione senza verifica, mai una domanda durante la connessione, mai una domanda di Windows. Un
+  certificato del PSM emesso dall'autorità dell'azienda, da chiedere al team CyberArk, evita le conferme.
 - **Reindirizzamenti** (appunti, unità…): quelli richiesti dal PVWA, mai di più. Nessuna immagine della sessione
   viene conservata sul disco.
 - **Riconnetti**, «Duplica la scheda»: nuova richiesta al PVWA (il token di una sessione PSM vale una sola volta);
@@ -1051,10 +1054,10 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   `%LOCALAPPDATA%\ZillaTerm\Temp`. I percorsi qui sotto sono relativi a questa cartella.
 - **Sessioni PSM**: il file RDP del PVWA (token PSM monouso) viene scritto nella cartella temporanea per `mstsc`, che
   ne verifica la firma, poi eliminato dopo 60 s o alla chiusura. In una scheda (opzione), non viene mai scritto sul
-  disco: ZillaTerm lo legge in memoria e descrive la connessione al client FreeRDP sul suo standard input (token
-  assente dalla riga di comando e dai registri). Ogni certificato presentato al client viene verificato da ZillaTerm
-  prima che la connessione prosegua (approvato da Windows, fissato o confermato); il client non mostra alcuna finestra
-  di Windows e non legge alcuna credenziale salvata di Windows.
+  disco: ZillaTerm lo legge in memoria e lo trasmette al client FreeRDP sul suo standard input (token assente dalla
+  riga di comando e dai registri). Il certificato del PSM (o la sua chiave) viene letto e verificato da ZillaTerm prima
+  dell'avvio del client (approvato da Windows, fissato o confermato); il client non ne accetta poi nessun altro, non
+  mostra alcuna finestra di Windows e non legge alcuna credenziale salvata di Windows.
 - **Digitazione simultanea** (vista parallela): disattivata a ogni apertura della vista, segnalata dal pulsante
   ambra «ATTIVA (n)», da una fascia e da una cornice ambra che nominano le sessioni interessate; le sessioni escluse
   sono segnate «esclusa», una sessione aggiunta non vi è inclusa d'ufficio, e
@@ -1221,33 +1224,51 @@ dimensione della scheda.
 
 **Client FreeRDP.** Le sessioni PSM in una scheda passano dal client Windows di FreeRDP (`wfreerdp`), compilato da
 `tools/freerdp-build.sh`: FreeRDP 3.32.1 e OpenSSL 3.5.9 a versioni fisse (commit verificato, archivio verificato
-dalla sua somma SHA-256), collegati staticamente (un solo eseguibile, che usa solo DLL di Windows), con le correzioni
-di ZillaTerm (ramo `zillaterm-3.32.1` del fork `muller-camille/FreeRDP`). ZillaTerm lo integra, lo copia al primo utilizzo in
+dalla sua somma SHA-256), collegati staticamente (un solo eseguibile, che usa solo DLL di Windows), con correzioni
+generiche, senza nulla di specifico a ZillaTerm, ciascuna destinata a essere proposta al progetto FreeRDP (ramo
+`patches-3.32.1` del fork `muller-camille/FreeRDP`): file di connessione letto dallo standard input, vecchia
+«sicurezza RDP» soggetta a `/cert:deny` e alle impronte, applicazioni remote che rispondono al server e vengono
+mostrate nella finestra padre, tastiera e rotellina, finestra che risponde tra due tentativi di riconnessione, DPI
+della finestra padre, ricerca delle librerie. ZillaTerm lo integra, lo copia al primo utilizzo in
 `%LOCALAPPDATA%\ZillaTerm\FreeRDP\<impronta>` (cartella riservata all'utente), ne verifica l'impronta SHA-256 prima
-di ogni avvio e lo tiene aperto in sola lettura durante l'esecuzione. Lo avvia con il solo argomento `/zillaterm` e
-gli descrive la connessione sul suo standard input: token PSM e password non sono né sulla riga di comando, né sul
-disco. Il client non mostra alcuna finestra di Windows (credenziali, certificato, messaggio del gateway) e non legge
-mai le credenziali salvate di Windows (`TERMSRV/…`). Ogni certificato TLS (PSM, server di reindirizzamento, gateway)
-viene trasmesso a ZillaTerm, che lo verifica prima che la connessione prosegua: catena fino a un'autorità approvata
-da Windows, nome, utilizzo, revoca quando è raggiungibile; altrimenti impronta fissata (`rdp://server:porta` tra le
-chiavi dei server accettate) o confermata dall'utente. Rafforzamento: nessuna libreria caricata fuori da System32 (i
-canali virtuali sono compilati nell'eseguibile), OpenSSL senza moduli, motori né file di configurazione caricati
-all'esecuzione, essendo le sue cartelle compilate quelle di Windows riservate agli amministratori; variabili di log,
-di proxy e di OpenSSL rimosse dal suo ambiente; mai la vecchia «sicurezza RDP» senza TLS, salvo per un PSM che accetta solo quella: la chiave del PSM, che nessun
-certificato autentica, viene allora sottoposta a ZillaTerm prima di qualsiasi invio di credenziali e fissata
-(`rdp://server:porta`, tipo `RDP-RSA`), cifratura di almeno 128 bit; più chiavi per indirizzo (PSM con bilanciamento del
-carico: una per server, ciascuna confermata una volta); viene rifiutata se questo server ha già presentato un
-certificato TLS (TLS rimosso: possibile intercettazione). Una chiave o un certificato da confermare viene rifiutato
-subito (il PSM non attende durante una domanda); la domanda viene posta a connessione chiusa e, se ti fidi, parte una
-nuova connessione con un nuovo token richiesto al PVWA (quello di una sessione PSM vale una sola volta). Il processo è in un oggetto
-processo (job object) chiuso insieme a ZillaTerm: non gli sopravvive. La sua finestra è figlia della scheda (opzione
-`/parent-window`); un clic al suo interno dà la tastiera alla scheda, da cui l'hook di tastiera di FreeRDP invia i
-tasti alla sessione. Un'applicazione remota viene mostrata in questa finestra (superficie della sessione, come un
-desktop) invece che in finestre separate. Fine della sessione ed errori: il codice di FreeRDP (`ERRINFO_…`,
-`ERRCONNECT_…`) è spiegato nella scheda. Limite: il client Windows di FreeRDP è contrassegnato come «non mantenuto»
-dal progetto FreeRDP (il nucleo del protocollo, invece, lo è); ZillaTerm ne fissa la versione e lo aggiorna con le
-sue correzioni. I test di integrazione (workflow `rdp-integration`) aprono con esso un desktop e un'applicazione
-remota sul computer di CI: dimensione, clic, tasti, certificato rifiutato.
+di ogni avvio e lo tiene aperto in sola lettura durante l'esecuzione.
+
+Lo pilota solo con opzioni standard di FreeRDP. Il file del PVWA, riscritto da ZillaTerm (PSM, utente, programma di
+avvio o applicazione remota e i suoi argomenti, che portano il token), gli viene trasmesso sul suo standard input (`-`
+come file di connessione): token PSM e password non sono né sulla riga di comando, né sul disco. Contiene una password
+vuota: il client non chiede nulla e non legge mai le credenziali salvate di Windows (`TERMSRV/…`); `/from-stdin` gli
+impedisce di aprire una finestra di credenziali di Windows. `/cert:deny` seguito dalle impronte accettate da ZillaTerm
+(`fingerprint:sha256:…`): rifiuta qualsiasi altro certificato o chiave, senza chiedere nulla. La sua cartella di
+configurazione è una cartella di ZillaTerm, lasciata vuota.
+
+**Identità del server, prima della connessione.** ZillaTerm legge da sé il certificato del PSM prima di avviare il
+client (richiesta di connessione X.224, poi negoziazione TLS interrotta appena ricevuto il certificato: né token né
+utente inviati) e lo verifica: catena fino a un'autorità approvata da Windows, nome, utilizzo, revoca quando è
+raggiungibile; altrimenti impronta fissata (`rdp://server:porta` tra le chiavi dei server accettate) o confermata
+dall'utente. Un PSM che accetta solo la vecchia «sicurezza RDP», senza TLS: ZillaTerm legge la sua chiave allo stesso
+modo (richiesta di connessione la cui risposta contiene la chiave; nient'altro viene inviato) e la fissa
+(`rdp://server:porta`, tipo `RDP-RSA`; impronta: SHA-256 della chiave in DER PKCS#1, quella che confronta FreeRDP),
+cifratura di almeno 128 bit; un PSM senza cifratura viene rifiutato, così come la chiave di un server che ha già
+presentato un certificato TLS (TLS rimosso: possibile intercettazione). Più certificati e chiavi per indirizzo (PSM con
+bilanciamento del carico: uno per server, ciascuno confermato una volta): il client li riceve tutti. Le domande
+vengono poste prima dell'avvio del client, mai durante la connessione; una volta data una risposta, la connessione
+parte con un nuovo token richiesto al PVWA (il token PSM vale una sola volta e scade presto). Se il client rifiuta
+comunque il server (altro server dietro lo stesso indirizzo), ZillaTerm ne rilegge l'identità e la sottopone se è
+nuova (al massimo due volte per connessione).
+
+Rafforzamento: nessuna libreria caricata fuori dalla sua cartella e da System32 (i canali virtuali sono compilati
+nell'eseguibile), OpenSSL senza moduli, motori né file di configurazione caricati all'esecuzione, essendo le sue
+cartelle compilate quelle di Windows riservate agli amministratori; variabili di log, di proxy e di OpenSSL rimosse
+dal suo ambiente. Il processo è in un oggetto processo (job object) chiuso insieme a ZillaTerm: non gli sopravvive. La
+sua finestra è figlia della scheda (opzione `/parent-window`); un clic al suo interno dà la tastiera alla scheda, da cui
+l'hook di tastiera di FreeRDP invia i tasti alla sessione. Un'applicazione remota viene mostrata in questa finestra
+(superficie della sessione, come un desktop) invece che in finestre separate. Chiudere la scheda chiude questa finestra
+(fine della sessione come con il pulsante di chiusura del client). Fine della sessione ed errori: il codice di FreeRDP
+(`ERRINFO_…`, `ERRCONNECT_…`, codice di uscita del client) è spiegato nella scheda. Limite: il client Windows di
+FreeRDP è contrassegnato come «non mantenuto» dal progetto FreeRDP (il nucleo del protocollo, invece, lo è); ZillaTerm
+ne fissa la versione e lo aggiorna con le sue correzioni. I test di integrazione (workflow `rdp-integration`) aprono
+con esso un desktop e un'applicazione remota sul computer di CI: dimensione, clic, tasti, certificato rifiutato,
+chiave della vecchia sicurezza RDP.
 
 **Controllo Desktop remoto di Windows.** Il desktop remoto diretto dei database KeePass, e le sessioni PSM di desktop
 quando il client FreeRDP non è integrato (compilazione senza di esso), ospitano il controllo ActiveX di Windows
@@ -1342,11 +1363,14 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 | Un elenco condiviso mostra «(illeggibile)» | Condivisione irraggiungibile o file danneggiato: la descrizione comandi riporta l'errore. Se il file è danneggiato, copia al suo posto la versione più recente della cartella `nome.versions`. |
 | Capire un errore di connessione | Impostazioni → Registro di debug, riproduci il problema, poi Impostazioni → «Mostra il file del registro». |
 | Una sessione PSM in una scheda chiede di confermare il certificato del PSM | Windows non approva questo certificato (autofirmato, o emesso per un altro nome): confronta l'impronta con il team CyberArk prima di accettare; viene poi memorizzata. Un certificato emesso dall'autorità dell'azienda per il nome del PSM elimina questa domanda. |
+| Sessione PSM: «Nuovo certificato per questo PSM» | L'indirizzo del PSM raggruppa probabilmente più server (bilanciamento del carico), ciascuno con il proprio certificato autofirmato, oppure il certificato è stato rinnovato: confronta l'impronta con l'amministratore CyberArk, poi «Fidati anche di questo» (altro server PSM) o «Sostituisci i certificati noti» (rinnovo). |
+| Sessione PSM: «Impossibile verificare l'identità di …» | ZillaTerm non è riuscito a leggere il certificato del PSM prima della connessione (PSM irraggiungibile, porta filtrata, risposta che non è Desktop remoto): il motivo segue il messaggio. Nulla è stato inviato al PSM. |
 | Una sessione PSM si apre in Connessione Desktop remoto nonostante l'opzione «in una scheda» | Connessione tramite un gateway Desktop remoto, oppure client FreeRDP impossibile da avviare sul computer (criteri del computer): la barra di stato lo dice. |
 | Alt+Tab o il tasto Windows non rispondono più | La scheda di una sessione PSM ha la tastiera: tutti i tasti vanno alla sessione. Fai clic altrove in ZillaTerm (un'altra scheda, l'elenco). |
 | Sessione PSM: «Verifica la chiave di questo PSM» | Il PSM accetta solo la vecchia «sicurezza RDP», senza TLS: solo l'impronta della sua chiave lo identifica. Accettala al primo utilizzo (viene memorizzata) e chiedi all'amministratore CyberArk di attivare TLS sul PSM. |
 | Sessione PSM: «Nuova chiave per questo PSM» | L'indirizzo del PSM raggruppa probabilmente più server (bilanciamento del carico), ciascuno con la propria chiave: fidati se l'amministratore CyberArk lo conferma. Le chiavi già accettate restano tali. |
 | Sessione PSM: «Questo server non offre più TLS» | La connessione potrebbe essere intercettata: continua solo con l'accordo dell'amministratore CyberArk (vedi il messaggio). |
+| Sessione PSM: «Il server Desktop remoto non usa alcuna cifratura…» | Il PSM (o un apparato intermedio) propone la vecchia sicurezza RDP senza cifratura: nulla proteggerebbe il token. Avvisa l'amministratore CyberArk. |
 | Una scheda di desktop remoto diretto (KeePass) mostra «Errore del controllo Desktop remoto» | Segnala il codice mostrato (se il controllo Desktop remoto manca dal computer, la connessione passa da `mstsc`). |
 | VNC: «Il server VNC non propone alcuna autenticazione supportata da ZillaTerm…» | Il server richiede un'autenticazione propria del suo produttore (account Windows, cifratura VeNCrypt…): attiva l'autenticazione «password VNC» sul server. |
 | VNC: «Nessuna risposta VNC dal server entro 30 secondi» | Porta sbagliata (5900 + numero dello schermo) o servizio diverso da VNC a questo indirizzo. |

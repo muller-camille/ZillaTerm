@@ -16262,15 +16262,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Answer the question shown: the session starts again if you trust the server..
-        /// </summary>
-        public static string FreeRdpConfirmPending {
-            get {
-                return ResourceManager.GetString("FreeRdpConfirmPending", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to New key for this PSM.
         /// </summary>
         public static string RdpKeyAnotherHeading {
@@ -16307,6 +16298,51 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to New certificate for this PSM.
+        /// </summary>
+        public static string RdpCertAnotherHeading {
+            get {
+                return ResourceManager.GetString("RdpCertAnotherHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Certificates already known for this address: {0}. Windows does not trust this one: {1}. Another certificate usually comes from another PSM server behind the load balancing, or from a renewed certificate; it can also point to an interception. Compare its fingerprint with the CyberArk administrator before trusting it..
+        /// </summary>
+        public static string RdpCertAnotherMessage {
+            get {
+                return ResourceManager.GetString("RdpCertAnotherMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Also trust it (another PSM server) and connect.
+        /// </summary>
+        public static string RdpCertTrustAnother {
+            get {
+                return ResourceManager.GetString("RdpCertTrustAnother", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Replace the known certificates (renewal) and connect.
+        /// </summary>
+        public static string RdpCertReplaceKnown {
+            get {
+                return ResourceManager.GetString("RdpCertReplaceKnown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to I have compared this fingerprint with the CyberArk administrator.
+        /// </summary>
+        public static string RdpCertAckPsm {
+            get {
+                return ResourceManager.GetString("RdpCertAckPsm", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Requesting the session from the PVWA….
         /// </summary>
         public static string PsmTabRequesting {
@@ -16330,6 +16366,24 @@ namespace ZillaTerm.App.Localization {
         public static string TabModePsmPending {
             get {
                 return ResourceManager.GetString("TabModePsmPending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Checking the identity of {0}….
+        /// </summary>
+        public static string FreeRdpChecking {
+            get {
+                return ResourceManager.GetString("FreeRdpChecking", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The identity of {0} could not be checked: {1}.
+        /// </summary>
+        public static string FreeRdpCheckFailed {
+            get {
+                return ResourceManager.GetString("FreeRdpCheckFailed", resourceCulture);
             }
         }
     }

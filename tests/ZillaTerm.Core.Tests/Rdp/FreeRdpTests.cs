@@ -6,8 +6,8 @@ using ZillaTerm.Core.Rdp;
 namespace ZillaTerm.Core.Tests.Rdp;
 
 /// <summary>
-/// Client FreeRDP de ZillaTerm : réglages écrits sur son entrée standard, messages de sa sortie, codes de fin, et
-/// vérification du certificat qu'il transmet.
+/// Client FreeRDP de ZillaTerm : ligne de commande (rien de secret), fichier de connexion écrit sur son entrée standard,
+/// empreintes acceptées et codes de fin.
 /// </summary>
 public class FreeRdpTests
 {
@@ -20,66 +20,102 @@ public class FreeRdpTests
 
     private static RdpConnectionSettings Read(string file) => RdpConnectionSettings.FromRdpFile(Encoding.UTF8.GetBytes(file));
 
+    private const string Fingerprint = "0FF792338EE757CE1FB548F52BED5BC4C8140F83A0A78ECB33D1E70D4BA17A43";
+
+    private static Dictionary<string, string> Fields(string file) =>
+        file.Split("\r\n", StringSplitOptions.RemoveEmptyEntries).ToDictionary(l => l[..l.IndexOf(':', l.IndexOf(':') + 1)], l => l[(l.IndexOf(':', l.IndexOf(':') + 1) + 1)..]);
+
     [Fact]
-    public void RemoteAppFileGivesTheApplicationAsSettingsNeverAsOptions()
+    public void RemoteAppFileGoesOnStandardInputNeverOnTheCommandLine()
     {
         var settings = Read(RemoteAppFile).ForPsmTab();
 
-        var lines = FreeRdpArguments.Build(settings, 0x1234, (1280, 800), password: null, verbose: false);
+        var launch = FreeRdpArguments.Build(settings, 0x1234, (1280, 800), password: null, verbose: false, [Fingerprint]);
 
-        Assert.Equal("", lines[^1]);
-        Assert.Contains("/parent-window:4660", lines);
-        Assert.Contains("/v:psm.corp.local", lines);
-        Assert.Contains("/port:3389", lines);
-        Assert.Contains("/size:1280x800", lines);
-        Assert.Contains("/smart-sizing", lines);
-        Assert.Contains("FreeRDP_RdpSecurity=FALSE", lines);
-        Assert.Contains("FreeRDP_UseRdpSecurityLayer=FALSE", lines);
-        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_EncryptionMethods=", StringComparison.Ordinal));
-        Assert.Contains("FreeRDP_NlaSecurity=FALSE", lines);
-        Assert.Contains("FreeRDP_ExtSecurity=FALSE", lines);
-        Assert.Contains("-clipboard", lines);
-        Assert.Contains("/drives", lines);
-        Assert.Contains("FreeRDP_RemoteApplicationMode=TRUE", lines);
-        Assert.Contains("FreeRDP_RemoteApplicationProgram=||PSMInitSession", lines);
-        Assert.Contains("FreeRDP_RemoteApplicationName=PSM-RDP", lines);
+        var arguments = launch.Arguments;
+        Assert.Equal("-", arguments[0]);
+        Assert.Contains("/parent-window:4660", arguments);
+        Assert.Contains("/size:1280x800", arguments);
+        Assert.Contains("/smart-sizing", arguments);
+        Assert.Contains("/cert:deny,fingerprint:sha256:" + Fingerprint, arguments);
+        Assert.Contains("/from-stdin", arguments);
+        Assert.Contains("/tune:FreeRDP_UseRdpSecurityLayer:FALSE,FreeRDP_RdpSecurity:FALSE,FreeRDP_NlaSecurity:FALSE,"
+            + "FreeRDP_ExtSecurity:FALSE,FreeRDP_RemoteAppLanguageBarSupported:TRUE", arguments);
+        Assert.Contains("-clipboard", arguments);
+        Assert.Contains("/drives", arguments);
+        Assert.Contains("-wallpaper", arguments);
+        Assert.Contains("-window-drag", arguments);
+        // Ni serveur, ni identifiant, ni application, ni jeton sur la ligne de commande.
+        Assert.DoesNotContain(arguments, a => a.Contains("psm.corp.local", StringComparison.Ordinal)
+            || a.Contains("jdoe", StringComparison.Ordinal) || a.Contains("PSM", StringComparison.Ordinal));
+        AssertEachOptionOnce(arguments);
+
+        var file = Fields(launch.ConnectionFile);
+        Assert.Equal("psm.corp.local", file["full address:s"]);
+        Assert.Equal("3389", file["server port:i"]);
+        Assert.Equal("jdoe", file["username:s"]);
+        // Mot de passe vide : FreeRDP ne demande rien et ne lit pas les identifiants enregistrés de Windows.
+        Assert.Equal("", file["password:s"]);
+        Assert.Equal("1", file["remoteapplicationmode:i"]);
+        Assert.Equal("||PSMInitSession", file["remoteapplicationprogram:s"]);
+        Assert.Equal("PSM-RDP", file["remoteapplicationname:s"]);
         // Virgules, deux-points et guillemets passent tels quels : aucune analyse d'option.
-        Assert.Contains("FreeRDP_RemoteApplicationCmdLine=/u admin-srv01 /a srv01.corp.local /c PSM-RDP, \"x:y\"", lines);
-        Assert.Contains("FreeRDP_Username=jdoe", lines);
-        // Ni mot de passe, ni programme de démarrage (FreeRDP lance l'application distante lui-même).
-        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_Password=", StringComparison.Ordinal));
-        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_AlternateShell=", StringComparison.Ordinal));
-        // Chaque ligne est une option ou un réglage, sauf la ligne vide finale.
-        Assert.All(lines.SkipLast(1), l => Assert.True(l[0] is '/' or '+' or '-' || l.StartsWith("FreeRDP_", StringComparison.Ordinal), l));
-        AssertEachOptionOnce(lines);
+        Assert.Equal("/u admin-srv01 /a srv01.corp.local /c PSM-RDP, \"x:y\"", file["remoteapplicationcmdline:s"]);
+        // Pas de programme de démarrage : FreeRDP lance l'application distante lui-même.
+        Assert.False(file.ContainsKey("alternate shell:s"));
     }
 
     /// <summary>
     /// PSM qui n'accepte que l'ancienne sécurité RDP : permise sur demande seulement, avec un chiffrement de 128 bits ou
-    /// FIPS (ni 40, ni 56 bits).
+    /// FIPS (ni 40, ni 56 bits) ; sa clé fait partie des empreintes acceptées comme un certificat.
     /// </summary>
     [Fact]
     public void LegacyRdpSecurityOnlyWhenAllowedAndNeverBelow128Bits()
     {
         var settings = Read(RemoteAppFile).ForPsmTab();
+        var other = new string('a', 64);
 
-        var lines = FreeRdpArguments.Build(settings, 1, (1280, 800), password: null, verbose: false, legacySecurity: true);
+        var arguments = FreeRdpArguments.Build(settings, 1, (1280, 800), null, false, [Fingerprint, other], legacySecurity: true).Arguments;
 
-        Assert.Contains("FreeRDP_RdpSecurity=TRUE", lines);
-        Assert.Contains("FreeRDP_EncryptionMethods=18", lines);
-        Assert.DoesNotContain("FreeRDP_RdpSecurity=FALSE", lines);
-        AssertEachOptionOnce(lines);
+        var tune = Assert.Single(arguments, a => a.StartsWith("/tune:", StringComparison.Ordinal));
+        Assert.Contains("FreeRDP_RdpSecurity:TRUE", tune, StringComparison.Ordinal);
+        Assert.Contains("FreeRDP_EncryptionMethods:18", tune, StringComparison.Ordinal);
+        Assert.DoesNotContain("FreeRDP_RdpSecurity:FALSE", tune, StringComparison.Ordinal);
+        Assert.Contains($"/cert:deny,fingerprint:sha256:{Fingerprint},fingerprint:sha256:{other}", arguments);
+        AssertEachOptionOnce(arguments);
+    }
+
+    /// <summary>Aucune empreinte acceptée : FreeRDP refuse tout serveur.</summary>
+    [Fact]
+    public void WithoutFingerprintEveryServerIsRefused()
+    {
+        var arguments = FreeRdpArguments.Build(Read(RemoteAppFile), 1, (800, 600), null, false, []).Arguments;
+
+        Assert.Contains("/cert:deny", arguments);
+        Assert.Throws<ArgumentException>(() => FreeRdpArguments.Build(Read(RemoteAppFile), 1, (800, 600), null, false, ["sha256:AB,ignore"]));
+    }
+
+    /// <summary>Dossier de configuration propre à ZillaTerm, sauf s'il ne peut pas passer tel quel dans « /tune ».</summary>
+    [Theory]
+    [InlineData(@"C:\Users\jdoe\AppData\Local\ZillaTerm\FreeRDP-config", true)]
+    [InlineData(@"C:\Users\o'brien\AppData", false)]
+    [InlineData(@"C:\a,b", false)]
+    public void ConfigPathOnlyWhenItCannotBreakTheOption(string path, bool used)
+    {
+        var tune = FreeRdpArguments.Build(Read(RemoteAppFile), 1, (800, 600), null, false, [], configPath: path).Arguments
+            .Single(a => a.StartsWith("/tune:", StringComparison.Ordinal));
+
+        Assert.Equal(used, tune.Contains("FreeRDP_ConfigPath:" + path, StringComparison.Ordinal));
+        Assert.Equal(used, tune.Contains("ConfigPath", StringComparison.Ordinal));
     }
 
     /// <summary>
     /// FreeRDP ne garde que la dernière valeur d'une option donnée deux fois (deux « /sec:… » : seul le second
-    /// comptait, et la sécurité RDP sans TLS restait permise) : chaque option et chaque réglage une seule fois.
+    /// comptait, et la sécurité RDP sans TLS restait permise) : chaque option une seule fois.
     /// </summary>
-    private static void AssertEachOptionOnce(IReadOnlyList<string> lines)
+    private static void AssertEachOptionOnce(IReadOnlyList<string> arguments)
     {
-        var names = lines.SkipLast(1).Select(l => l.StartsWith("FreeRDP_", StringComparison.Ordinal)
-            ? l[..l.IndexOf('=')]
-            : l.TrimStart('/', '+', '-').Split(':')[0]);
+        var names = arguments.Skip(1).Select(a => a.TrimStart('/', '+', '-').Split(':')[0]);
         Assert.All(names.GroupBy(n => n, StringComparer.OrdinalIgnoreCase), g => Assert.True(g.Count() == 1, g.Key));
     }
 
@@ -90,30 +126,34 @@ public class FreeRdpTests
                             "alternate shell:s:psm /u admin-srv01 /a srv01.corp.local /c PSM-RDP\r\n" +
                             "disable wallpaper:i:1\r\nallow font smoothing:i:1\r\naudiomode:i:2\r\n");
 
-        var lines = FreeRdpArguments.Build(settings, 1, (1001, 100), password: "s3cret", verbose: true);
+        var launch = FreeRdpArguments.Build(settings, 1, (1001, 100), password: "s3cret", verbose: true, [Fingerprint]);
 
-        Assert.Contains("/v:[fe80::1]", lines);
-        Assert.Contains("/port:3390", lines);
+        var arguments = launch.Arguments;
         // Largeur paire, 200 pixels au moins.
-        Assert.Contains("/size:1000x200", lines);
-        Assert.Contains("/log-level:INFO", lines);
-        Assert.Contains("/log-filters:com.freerdp.channels.rail.*:DEBUG", lines);
-        Assert.Contains("FreeRDP_Username=jdoe", lines);
-        Assert.Contains("FreeRDP_Domain=CORP", lines);
-        Assert.Contains("FreeRDP_Password=s3cret", lines);
-        Assert.Contains("FreeRDP_AlternateShell=psm /u admin-srv01 /a srv01.corp.local /c PSM-RDP", lines);
-        Assert.Contains("-wallpaper", lines);
-        Assert.Contains("+themes", lines);
-        Assert.Contains("+fonts", lines);
-        Assert.Contains("-aero", lines);
-        Assert.Contains("/audio-mode:2", lines);
-        Assert.Contains("+clipboard", lines);
-        Assert.Contains("FreeRDP_RdpSecurity=FALSE", lines);
-        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_NlaSecurity=", StringComparison.Ordinal));
-        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_ExtSecurity=", StringComparison.Ordinal));
-        Assert.DoesNotContain(lines, l => l.StartsWith("/sec", StringComparison.Ordinal));
-        Assert.DoesNotContain(lines, l => l.StartsWith("FreeRDP_RemoteApplication", StringComparison.Ordinal));
-        AssertEachOptionOnce(lines);
+        Assert.Contains("/size:1000x200", arguments);
+        Assert.Contains("/log-level:INFO", arguments);
+        Assert.Contains("/log-filters:com.freerdp.channels.rail.*:DEBUG", arguments);
+        Assert.Contains("-wallpaper", arguments);
+        Assert.Contains("+themes", arguments);
+        Assert.Contains("+fonts", arguments);
+        Assert.Contains("-aero", arguments);
+        Assert.Contains("/audio-mode:2", arguments);
+        Assert.Contains("+clipboard", arguments);
+        var tune = Assert.Single(arguments, a => a.StartsWith("/tune:", StringComparison.Ordinal));
+        Assert.Contains("FreeRDP_RdpSecurity:FALSE", tune, StringComparison.Ordinal);
+        Assert.DoesNotContain("NlaSecurity", tune, StringComparison.Ordinal);
+        Assert.DoesNotContain(arguments, a => a.StartsWith("/sec", StringComparison.Ordinal));
+        Assert.DoesNotContain(arguments, a => a.Contains("s3cret", StringComparison.Ordinal));
+        AssertEachOptionOnce(arguments);
+
+        var file = Fields(launch.ConnectionFile);
+        Assert.Equal("[fe80::1]", file["full address:s"]);
+        Assert.Equal("3390", file["server port:i"]);
+        Assert.Equal("jdoe", file["username:s"]);
+        Assert.Equal("CORP", file["domain:s"]);
+        Assert.Equal("s3cret", file["password:s"]);
+        Assert.Equal("psm /u admin-srv01 /a srv01.corp.local /c PSM-RDP", file["alternate shell:s"]);
+        Assert.False(file.ContainsKey("remoteapplicationmode:i"));
     }
 
     [Theory]
@@ -139,7 +179,7 @@ public class FreeRdpTests
         }
 
         Assert.Throws<ArgumentException>(() =>
-            FreeRdpArguments.Build(settings, 1, (800, 600), field == "password" ? value : null, verbose: false));
+            FreeRdpArguments.Build(settings, 1, (800, 600), field == "password" ? value : null, false, []));
     }
 
     [Fact]
@@ -150,7 +190,7 @@ public class FreeRdpTests
 
         Assert.True(FreeRdpArguments.Supports(direct));
         Assert.False(FreeRdpArguments.Supports(gateway));
-        Assert.Throws<ArgumentException>(() => FreeRdpArguments.Build(gateway, 1, (800, 600), null, false));
+        Assert.Throws<ArgumentException>(() => FreeRdpArguments.Build(gateway, 1, (800, 600), null, false, []));
     }
 
     [Fact]
@@ -165,48 +205,22 @@ public class FreeRdpTests
         Assert.False(settings.UsesGateway);
     }
 
-    [Fact]
-    public void ParsesTheClientMessages()
+    /// <summary>Code de sortie du client : sa dernière erreur FreeRDP ; tout autre code est un plantage ou un arrêt forcé.</summary>
+    [Theory]
+    [InlineData(0, 0u, "")]
+    [InlineData(0x00020008, 0x00020008u, "ERRCONNECT_TLS_CONNECT_FAILED")]
+    [InlineData(0x0002000C, 0x0002000Cu, "ERRCONNECT_SECURITY_NEGO_CONNECT_FAILED")]
+    [InlineData(0x0001000C, 0x0001000Cu, "ERRINFO_0x000C")]
+    [InlineData(1, null, "")]
+    [InlineData(-1073741819, null, "")]
+    public void ExitCodesAreFreeRdpErrors(int exitCode, uint? code, string name)
     {
-        Assert.Equal(new FreeRdpConnected(132456), FreeRdpMessage.Parse("zillaterm:connected 132456"));
-        Assert.Equal(new FreeRdpEnded(0x0001000C, "ERRINFO_LOGOFF_BY_USER"), FreeRdpMessage.Parse("zillaterm:ended 65548 ERRINFO_LOGOFF_BY_USER"));
-        Assert.Equal(new FreeRdpEnded(0, ""), FreeRdpMessage.Parse("zillaterm:ended 0"));
-        Assert.Equal(new FreeRdpReconnecting(3), FreeRdpMessage.Parse("zillaterm:reconnecting 3"));
-
-        var pem = "-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----\n";
-        var request = Assert.IsType<FreeRdpCertificateRequest>(
-            FreeRdpMessage.Parse($"zillaterm:certificate 544 3389 {Convert.ToBase64String(Encoding.ASCII.GetBytes(pem))} psm.corp.local"));
-        Assert.Equal(pem, request.Pem);
-        Assert.Equal(3389, request.Port);
-        Assert.Equal("psm.corp.local", request.Host);
-        Assert.True(request.IsGateway);
-        Assert.False(request.IsRedirect);
-
-        // Lignes du journal de FreeRDP, messages incomplets ou mal formés : pas des messages.
-        Assert.Null(FreeRdpMessage.Parse("[12:00:00:000] [42:43] [WARN][com.freerdp] - zillaterm:connected 1"));
-        Assert.Null(FreeRdpMessage.Parse("zillaterm:connected"));
-        Assert.Null(FreeRdpMessage.Parse("zillaterm:connected -1"));
-        Assert.Null(FreeRdpMessage.Parse("zillaterm:certificate 0 99999 AAAA psm.corp.local"));
-        Assert.Null(FreeRdpMessage.Parse("zillaterm:certificate 0 3389 !!! psm.corp.local"));
-        Assert.Null(FreeRdpMessage.Parse("zillaterm:certificate 0 3389 AAAA psm corp"));
-        Assert.Null(FreeRdpMessage.Parse("zillaterm:reconnecting x"));
-
-        // Clé de l'ancienne sécurité RDP : empreinte SHA-256 de l'exposant et du module.
-        var raw = new byte[4 + 256];
-        raw[0] = 1;
-        raw[2] = 1;
-        raw[^1] = 0xC3;
-        var key = Assert.IsType<FreeRdpServerKey>(FreeRdpMessage.Parse($"zillaterm:rdpkey 3389 {Convert.ToBase64String(raw)} psm.corp.local"));
-        Assert.Equal(new FreeRdpServerKey(3389, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(raw)), "psm.corp.local"), key);
-        Assert.Null(FreeRdpMessage.Parse($"zillaterm:rdpkey 0 {Convert.ToBase64String(raw)} psm.corp.local"));
-        Assert.Null(FreeRdpMessage.Parse($"zillaterm:rdpkey 3389 {Convert.ToBase64String(new byte[20])} psm.corp.local"));
-        Assert.Null(FreeRdpMessage.Parse("zillaterm:rdpkey 3389 !!! psm.corp.local"));
-        Assert.Null(FreeRdpMessage.Parse("zillaterm:unknown 1"));
+        Assert.Equal(code, FreeRdpExit.FromExitCode(exitCode));
+        if (code is { } value)
+        {
+            Assert.Equal(name, value == 0 ? "" : FreeRdpExit.Name(value));
+        }
     }
-
-    [Fact]
-    public void ErrorNamesKeepOnlyIdentifierCharacters() =>
-        Assert.Equal(new FreeRdpEnded(1, "ABC_1"), FreeRdpMessage.Parse("zillaterm:ended 1 A<B>C_1"));
 
     [Theory]
     [InlineData(0u, true, FreeRdpEnd.Normal)]
@@ -228,29 +242,4 @@ public class FreeRdpTests
     public void ClassifiesEndCodes(uint code, bool normal, FreeRdpEnd end) =>
         Assert.Equal((normal, end), FreeRdpExit.Classify(code));
 
-    [Fact]
-    public void CertificateFromThePemChainIsCheckedForTheServerName()
-    {
-        using var rsa = RSA.Create(2048);
-        var request = new CertificateRequest("CN=psm.corp.local", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        var names = new SubjectAlternativeNameBuilder();
-        names.AddDnsName("psm.corp.local");
-        request.CertificateExtensions.Add(names.Build());
-        using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
-        var pem = certificate.ExportCertificatePem() + "\n";
-
-        var good = RdpCertificateProbe.FromPemChain(pem, "psm.corp.local");
-        var other = RdpCertificateProbe.FromPemChain(pem, "srv01.corp.local");
-
-        Assert.Equal(Convert.ToHexString(SHA256.HashData(certificate.RawData)), good.Sha256);
-        Assert.Equal("CN=psm.corp.local", good.Subject);
-        // Autosigné : jamais approuvé sans question ; un autre nom est signalé en plus.
-        Assert.False(good.Trusted);
-        Assert.False(other.Trusted);
-        Assert.True(other.Problem.Length > good.Problem.Length);
-    }
-
-    [Fact]
-    public void PemWithoutCertificateIsRefused() =>
-        Assert.Throws<RdpCertificateException>(() => RdpCertificateProbe.FromPemChain("nothing here", "psm.corp.local"));
 }

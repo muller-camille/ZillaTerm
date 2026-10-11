@@ -34,16 +34,30 @@ internal static class FreeRdpClient
     public static bool IsAvailable => typeof(FreeRdpClient).Assembly.GetManifestResourceInfo(ResourceName) is not null;
 
     /// <summary>
-    /// Lance le client avec « /zillaterm », entrée et sorties redirigées, sans fenêtre de console, dans l'objet de travail.
+    /// Dossier de configuration donné au client (« /tune:FreeRDP_ConfigPath ») : à ZillaTerm, réservé à l'utilisateur,
+    /// sans certificat ni clé connus du client (seules les empreintes passées par ZillaTerm sont acceptées).
+    /// </summary>
+    public static string ConfigPath
+    {
+        get
+        {
+            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ZillaTerm", "FreeRDP-config");
+            Restrict(folder);
+            return folder;
+        }
+    }
+
+    /// <summary>
+    /// Lance le client avec ces arguments (rien de secret), entrée et sorties redirigées, sans fenêtre de console, dans
+    /// l'objet de travail.
     /// </summary>
     /// <exception cref="FreeRdpStartException">Client absent, copie impossible, empreinte fausse ou lancement refusé
     /// (stratégie AppLocker…).</exception>
-    public static Process Start()
+    public static Process Start(IEnumerable<string> arguments)
     {
         using var executable = Open();
-        var info = new ProcessStartInfo(executable.Name)
+        var info = new ProcessStartInfo(executable.Name, arguments)
         {
-            ArgumentList = { "/zillaterm" },
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardInput = true,

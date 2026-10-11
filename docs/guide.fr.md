@@ -167,12 +167,15 @@ fenêtre à part.
   jamais en plein écran, même si le fichier du PVWA le demande.
 - **Clavier** : quand l'onglet a le clavier (clic dans la session), toutes les touches vont à la session, raccourcis
   de Windows compris (Alt+Tab, touche Windows). Cliquez ailleurs dans ZillaTerm pour les retrouver.
-- **Certificat du PSM** : vérifié par ZillaTerm avec les autorités approuvées par Windows (nom du PSM, dates,
-  révocation quand elle est joignable). Approuvé : rien à confirmer. Sinon (certificat auto-signé, émis pour un autre
-  nom), ZillaTerm affiche son empreinte et demande de confirmer une fois, puis le retient, comme une clé SSH ; un
-  certificat qui change est signalé et n'est accepté qu'après confirmation. Jamais de connexion sans vérification,
-  jamais de question de Windows. Un certificat du PSM émis par l'autorité de l'entreprise, à demander à l'équipe
-  CyberArk, évite la première confirmation.
+- **Certificat du PSM** : lu par ZillaTerm pendant la barre de progression, avant tout envoi au PSM (ni jeton, ni
+  utilisateur), et vérifié avec les autorités approuvées par Windows (nom du PSM, dates, révocation quand elle est
+  joignable). Approuvé : rien à confirmer. Sinon (certificat auto-signé, émis pour un autre nom), ZillaTerm affiche son
+  empreinte et demande de confirmer une fois, puis le retient, comme une clé SSH. L'adresse d'un PSM en répartition de
+  charge peut cacher plusieurs serveurs, chacun avec son certificat : un autre certificat est signalé, puis accepté
+  comme autre serveur PSM (les certificats connus restent acceptés) ou à la place des certificats connus
+  (renouvellement), après confirmation. Après une question, la connexion part avec un nouveau jeton demandé au PVWA.
+  Jamais de connexion sans vérification, jamais de question pendant la connexion, jamais de question de Windows. Un
+  certificat du PSM émis par l'autorité de l'entreprise, à demander à l'équipe CyberArk, évite les confirmations.
 - **Redirections** (presse-papiers, disques…) : celles demandées par le PVWA, jamais plus. Aucune image de la session
   n'est gardée sur le disque.
 - **Reconnecter**, « Dupliquer l'onglet » : nouvelle demande au PVWA (le jeton d'une session PSM ne sert qu'une
@@ -1047,10 +1050,10 @@ renommé) : téléchargez-la une fois depuis la page des versions.
   le remplace. Les chemins ci-dessous sont relatifs à ce dossier.
 - **Sessions PSM** : le fichier RDP du PVWA (jeton PSM à usage unique) est écrit dans le dossier temporaire pour
   `mstsc`, qui en vérifie la signature, puis supprimé après 60 s ou à la fermeture. Dans un onglet (option), il
-  n'est jamais écrit sur le disque : ZillaTerm le lit en mémoire et décrit la connexion au client FreeRDP sur son
-  entrée standard (jeton absent de la ligne de commande et des journaux). Chaque certificat présenté au client est
-  vérifié par ZillaTerm avant que la connexion continue (approuvé par Windows, épinglé ou confirmé) ; le client ne
-  montre aucune fenêtre de Windows et ne lit aucun identifiant enregistré de Windows.
+  n'est jamais écrit sur le disque : ZillaTerm le lit en mémoire et le transmet au client FreeRDP sur son entrée
+  standard (jeton absent de la ligne de commande et des journaux). Le certificat du PSM (ou sa clé) est lu et vérifié
+  par ZillaTerm avant le lancement du client (approuvé par Windows, épinglé ou confirmé) ; le client n'en accepte alors
+  aucun autre, ne montre aucune fenêtre de Windows et ne lit aucun identifiant enregistré de Windows.
 - **Saisie simultanée** (vue parallèle) : désactivée à chaque ouverture de la vue, signalée par le bouton ambre
   « ACTIVE (n) », un bandeau et un cadre ambre qui nomment les sessions concernées ; les sessions exclues sont
   marquées « exclue », une session ajoutée n'y est pas incluse d'office, et un collage
@@ -1215,33 +1218,49 @@ taille fixe et la mise à l'échelle de ces sessions ; les connexions directes, 
 
 **Client FreeRDP.** Les sessions PSM dans un onglet passent par le client Windows de FreeRDP (`wfreerdp`), compilé par
 `tools/freerdp-build.sh` : FreeRDP 3.32.1 et OpenSSL 3.5.9 à des versions figées (commit vérifié, archive vérifiée par
-sa somme SHA-256), liés statiquement (un seul exécutable, qui n'utilise que des DLL de Windows), avec les correctifs de
-ZillaTerm (branche `zillaterm-3.32.1` du fork `muller-camille/FreeRDP`). ZillaTerm l'embarque, le copie au premier usage dans
-`%LOCALAPPDATA%\ZillaTerm\FreeRDP\<empreinte>` (dossier réservé à l'utilisateur), en vérifie l'empreinte SHA-256
-avant chaque lancement et le garde ouvert en lecture seule pendant celui-ci. Il le lance avec le seul argument
-`/zillaterm` et lui décrit la connexion sur son entrée standard : jeton PSM et mot de passe ne sont ni sur la ligne de
-commande, ni sur le disque. Le client ne montre aucune fenêtre de Windows (identifiants, certificat, message de
-passerelle) et ne lit jamais les identifiants enregistrés de Windows (`TERMSRV/…`). Chaque certificat TLS (PSM,
-serveur de redirection, passerelle) est transmis à ZillaTerm, qui le vérifie avant que la connexion continue : chaîne
-jusqu'à une autorité approuvée par Windows, nom, usage, révocation quand elle est joignable ; sinon empreinte épinglée
-(`rdp://serveur:port` parmi les clés de serveurs acceptées) ou confirmée par l'utilisateur. Durcissement : aucune
-bibliothèque chargée hors de System32 (les canaux virtuels sont compilés dans l'exécutable), OpenSSL sans module,
-moteur ni fichier de configuration chargés à l'exécution, ses dossiers compilés étant ceux de Windows réservés aux
-administrateurs ; variables de journal, de proxy et d'OpenSSL retirées de son environnement ; jamais l'ancienne
-« sécurité RDP » sans TLS, sauf pour un PSM qui n'accepte qu'elle : la clé du PSM, qui n'est authentifiée par aucun
-certificat, est alors soumise à ZillaTerm avant tout envoi d'identifiants et épinglée (`rdp://serveur:port`, type
-`RDP-RSA`), chiffrement de 128 bits au moins ; plusieurs clés par adresse (PSM en répartition de charge : une par
-serveur, chacune confirmée une fois) ; elle est refusée si ce serveur a déjà présenté un certificat TLS (retrait de TLS :
-interception possible). Une clé ou un certificat à confirmer est refusé tout de suite (le PSM ne patiente pas pendant
-une question) ; la question est posée une fois la connexion fermée et, si vous faites confiance, une nouvelle connexion
-est lancée avec un nouveau jeton demandé au PVWA (celui d'une session PSM ne sert qu'une fois). Le processus est dans un objet de travail fermé avec ZillaTerm : il ne lui survit pas.
-Sa fenêtre est une enfant de l'onglet (option `/parent-window`) ; un clic dedans donne le clavier à l'onglet, d'où
-le crochet clavier de FreeRDP envoie les touches à la session. Une application distante est affichée dans cette
-fenêtre (surface de la session, comme un bureau) au lieu de fenêtres à part. Fin de session et erreurs : le code de
-FreeRDP (`ERRINFO_…`, `ERRCONNECT_…`) est expliqué dans l'onglet. Limite : le client Windows de FreeRDP est marqué
-« non maintenu » par le projet FreeRDP (le cœur du protocole, lui, l'est) ; ZillaTerm en fige la version et la
-met à jour avec ses correctifs. Les tests d'intégration (workflow `rdp-integration`) ouvrent avec lui un bureau et une
-application distante sur le poste de CI : taille, clics, touches, certificat refusé.
+sa somme SHA-256), liés statiquement (un seul exécutable, qui n'utilise que des DLL de Windows), avec des correctifs
+génériques, sans rien de propre à ZillaTerm, chacun destiné à être proposé au projet FreeRDP (branche `patches-3.32.1`
+du fork `muller-camille/FreeRDP`) : fichier de connexion lu sur l'entrée standard, ancienne « sécurité RDP » soumise à
+`/cert:deny` et aux empreintes, applications distantes qui répondent au serveur et s'affichent dans la fenêtre parente,
+clavier et molette, fenêtre qui répond entre deux tentatives de reconnexion, DPI de la fenêtre parente, recherche des
+bibliothèques. ZillaTerm l'embarque, le copie au premier usage dans `%LOCALAPPDATA%\ZillaTerm\FreeRDP\<empreinte>`
+(dossier réservé à l'utilisateur), en vérifie l'empreinte SHA-256 avant chaque lancement et le garde ouvert en lecture
+seule pendant celui-ci.
+
+Il le pilote uniquement avec des options standard de FreeRDP. Le fichier du PVWA, réécrit par ZillaTerm (PSM,
+utilisateur, programme de démarrage ou application distante et ses arguments, qui portent le jeton), lui est transmis
+sur son entrée standard (`-` comme fichier de connexion) : jeton PSM et mot de passe ne sont ni sur la ligne de
+commande, ni sur le disque. Il contient un mot de passe vide : le client ne demande rien et ne lit jamais les
+identifiants enregistrés de Windows (`TERMSRV/…`) ; `/from-stdin` l'empêche d'ouvrir une fenêtre d'identifiants de
+Windows. `/cert:deny` suivi des empreintes acceptées par ZillaTerm (`fingerprint:sha256:…`) : il refuse tout autre
+certificat ou clé, sans rien demander. Son dossier de configuration est un dossier de ZillaTerm, laissé vide.
+
+**Identité du serveur, avant la connexion.** ZillaTerm lit lui-même le certificat du PSM avant de lancer le client
+(demande de connexion X.224, puis négociation TLS arrêtée dès le certificat reçu : ni jeton ni utilisateur envoyés) et
+le vérifie : chaîne jusqu'à une autorité approuvée par Windows, nom, usage, révocation quand elle est joignable ; sinon
+empreinte épinglée (`rdp://serveur:port` parmi les clés de serveurs acceptées) ou confirmée par l'utilisateur. Un PSM
+qui n'accepte que l'ancienne « sécurité RDP », sans TLS : ZillaTerm lit sa clé de la même façon (demande de connexion
+dont la réponse contient la clé ; rien d'autre n'est envoyé) et l'épingle (`rdp://serveur:port`, type `RDP-RSA` ;
+empreinte : SHA-256 de la clé en DER PKCS#1, celle que compare FreeRDP), chiffrement de 128 bits au moins ; un PSM sans
+chiffrement est refusé, tout comme la clé d'un serveur qui a déjà présenté un certificat TLS (retrait de TLS :
+interception possible). Plusieurs certificats et clés par adresse (PSM en répartition de charge : un par serveur,
+chacun confirmé une fois) : le client les reçoit tous. Les questions sont posées avant le lancement du client, jamais
+pendant la connexion ; une fois l'une d'elles répondue, la connexion part avec un nouveau jeton demandé au PVWA (le
+jeton PSM ne sert qu'une fois et expire vite). Si le client refuse quand même le serveur (autre serveur derrière la même
+adresse), ZillaTerm relit son identité et la soumet si elle est nouvelle (deux fois au plus par connexion).
+
+Durcissement : aucune bibliothèque chargée hors de son dossier et de System32 (les canaux virtuels sont compilés dans
+l'exécutable), OpenSSL sans module, moteur ni fichier de configuration chargés à l'exécution, ses dossiers compilés
+étant ceux de Windows réservés aux administrateurs ; variables de journal, de proxy et d'OpenSSL retirées de son
+environnement. Le processus est dans un objet de travail fermé avec ZillaTerm : il ne lui survit pas. Sa fenêtre est
+une enfant de l'onglet (option `/parent-window`) ; un clic dedans donne le clavier à l'onglet, d'où le crochet clavier
+de FreeRDP envoie les touches à la session. Une application distante est affichée dans cette fenêtre (surface de la
+session, comme un bureau) au lieu de fenêtres à part. Fermer l'onglet ferme cette fenêtre (fin de session comme avec
+le bouton de fermeture du client). Fin de session et erreurs : le code de FreeRDP (`ERRINFO_…`, `ERRCONNECT_…`, code
+de sortie du client) est expliqué dans l'onglet. Limite : le client Windows de FreeRDP est marqué « non maintenu » par
+le projet FreeRDP (le cœur du protocole, lui, l'est) ; ZillaTerm en fige la version et la met à jour avec ses
+correctifs. Les tests d'intégration (workflow `rdp-integration`) ouvrent avec lui un bureau et une application distante
+sur le poste de CI : taille, clics, touches, certificat refusé, clé de l'ancienne sécurité RDP.
 
 **Contrôle Bureau à distance de Windows.** Le bureau à distance direct des bases KeePass, et les sessions PSM de bureau
 quand le client FreeRDP n'est pas embarqué (compilation sans lui), hébergent le contrôle ActiveX de Windows
@@ -1337,11 +1356,14 @@ l'écran.
 | Une liste partagée affiche « (illisible) » | Partage injoignable ou fichier endommagé : l'info-bulle donne l'erreur. Si le fichier est endommagé, copiez la version la plus récente du dossier `nom.versions` à sa place. |
 | Comprendre un échec de connexion | Paramètres → Journal de débogage, reproduisez le problème, puis Paramètres → « Afficher le fichier du journal ». |
 | Une session PSM dans un onglet demande de confirmer le certificat du PSM | Windows n'approuve pas ce certificat (auto-signé, ou émis pour un autre nom) : comparez l'empreinte avec l'équipe CyberArk avant d'accepter ; elle est ensuite retenue. Un certificat émis par l'autorité de l'entreprise pour le nom du PSM supprime cette question. |
+| Session PSM : « Nouveau certificat pour ce PSM » | L'adresse du PSM regroupe sans doute plusieurs serveurs (répartition de charge), chacun avec son certificat auto-signé, ou le certificat a été renouvelé : comparez l'empreinte avec l'administrateur CyberArk, puis « Lui faire aussi confiance » (autre serveur PSM) ou « Remplacer les certificats connus » (renouvellement). |
+| Session PSM : « Identité de … impossible à vérifier » | ZillaTerm n'a pas pu lire le certificat du PSM avant la connexion (PSM injoignable, port filtré, réponse qui n'est pas du Bureau à distance) : la raison suit le message. Rien n'a été envoyé au PSM. |
 | Une session PSM s'ouvre dans la Connexion Bureau à distance malgré l'option « dans un onglet » | Connexion par une passerelle Bureau à distance, ou client FreeRDP impossible à lancer sur le poste (stratégie du poste) : la barre d'état le dit. |
 | Alt+Tab ou la touche Windows ne répondent plus | L'onglet d'une session PSM a le clavier : toutes les touches vont à la session. Cliquez ailleurs dans ZillaTerm (un autre onglet, la liste). |
 | Session PSM : « Vérifier la clé de ce PSM » | Le PSM n'accepte que l'ancienne « sécurité RDP », sans TLS : seule l'empreinte de sa clé l'identifie. Acceptez-la au premier usage (elle est retenue) et demandez à l'administrateur CyberArk d'activer TLS sur le PSM. |
 | Session PSM : « Nouvelle clé pour ce PSM » | L'adresse du PSM regroupe sans doute plusieurs serveurs (répartition de charge), chacun avec sa clé : confirmez-la si l'administrateur CyberArk le confirme. Les clés déjà acceptées le restent. |
 | Session PSM : « Ce serveur ne propose plus TLS » | La connexion est peut-être interceptée : ne continuez qu'avec l'accord de l'administrateur CyberArk (voir le message). |
+| Session PSM : « Le serveur Bureau à distance n'utilise aucun chiffrement… » | Le PSM (ou un équipement entre les deux) propose l'ancienne sécurité RDP sans chiffrement : rien ne protégerait le jeton. Alertez l'administrateur CyberArk. |
 | Un onglet de bureau à distance direct (KeePass) affiche « Erreur du contrôle Bureau à distance » | Signalez le code affiché (si le contrôle Bureau à distance est absent du poste, la connexion passe par `mstsc`). |
 | VNC : « Le serveur VNC ne propose aucune authentification prise en charge… » | Le serveur exige une authentification propre à son éditeur (compte Windows, chiffrement VeNCrypt…) : activez l'authentification « mot de passe VNC » sur le serveur. |
 | VNC : « Pas de réponse VNC du serveur en 30 secondes » | Mauvais port (5900 + numéro d'écran) ou service autre que VNC à cette adresse. |

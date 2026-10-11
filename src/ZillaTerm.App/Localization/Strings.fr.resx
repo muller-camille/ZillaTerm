@@ -5451,9 +5451,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="FreeRdpKeyRefused" xml:space="preserve">
     <value>Clé du serveur refusée : la session n'a pas été ouverte.</value>
   </data>
-  <data name="FreeRdpConfirmPending" xml:space="preserve">
-    <value>Répondez à la question affichée : la session reprend si vous faites confiance au serveur.</value>
-  </data>
   <data name="RdpKeyAnotherHeading" xml:space="preserve">
     <value>Nouvelle clé pour ce PSM</value>
   </data>
@@ -5466,6 +5463,21 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
     <value>J'ai vérifié avec l'administrateur CyberArk que cette adresse regroupe plusieurs serveurs PSM</value>
   </data>
+  <data name="RdpCertAnotherHeading" xml:space="preserve">
+    <value>Nouveau certificat pour ce PSM</value>
+  </data>
+  <data name="RdpCertAnotherMessage" xml:space="preserve">
+    <value>Certificats déjà connus pour cette adresse : {0}. Windows n'approuve pas celui-ci : {1}. Un autre certificat vient en général d'un autre serveur PSM derrière la répartition de charge, ou d'un certificat renouvelé ; il peut aussi signaler une interception. Comparez son empreinte avec l'administrateur CyberArk avant de lui faire confiance.</value>
+  </data>
+  <data name="RdpCertTrustAnother" xml:space="preserve">
+    <value>Lui faire aussi confiance (autre serveur PSM) et se connecter</value>
+  </data>
+  <data name="RdpCertReplaceKnown" xml:space="preserve">
+    <value>Remplacer les certificats connus (renouvellement) et se connecter</value>
+  </data>
+  <data name="RdpCertAckPsm" xml:space="preserve">
+    <value>J'ai comparé cette empreinte avec l'administrateur CyberArk</value>
+  </data>
   <data name="PsmTabRequesting" xml:space="preserve">
     <value>Demande de la session au PVWA…</value>
   </data>
@@ -5474,5 +5486,11 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="TabModePsmPending" xml:space="preserve">
     <value>Via le PSM : session gérée par CyberArk</value>
+  </data>
+  <data name="FreeRdpChecking" xml:space="preserve">
+    <value>Vérification de l'identité de {0}…</value>
+  </data>
+  <data name="FreeRdpCheckFailed" xml:space="preserve">
+    <value>Identité de {0} impossible à vérifier : {1}</value>
   </data>
 </root>

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
 using ZillaTerm.App.Localization;
@@ -10,10 +11,12 @@ namespace ZillaTerm.App.Services.Rdp;
 
 /// <summary>
 /// Une connexion avec le client FreeRDP de ZillaTerm (<see cref="FreeRdpClient"/>), dans son propre processus : sa
-/// fenêtre est une enfant de l'emplacement de l'onglet (<see cref="RdpSlot"/>). La connexion lui est décrite sur son
-/// entrée standard (<see cref="FreeRdpArguments"/>) ; il signale sur sa sortie la session ouverte, chaque certificat à
-/// vérifier (ZillaTerm répond) et sa fin. Le clavier passe par lui quand l'emplacement a le focus ; un processus bloqué
-/// est arrêté à la fermeture de l'onglet. Thread de l'interface uniquement, sauf la lecture des sorties.
+/// fenêtre est une enfant de l'emplacement de l'onglet (<see cref="RdpSlot"/>). Le certificat (TLS) ou la clé
+/// (ancienne sécurité RDP) du serveur est lu et vérifié par ZillaTerm avant le lancement, question comprise ; le client
+/// reçoit les empreintes acceptées et refuse tout autre serveur, sans rien demander (<see cref="FreeRdpArguments"/>).
+/// Sa fenêtre est repérée à sa création dans l'emplacement, sa fin par son code de sortie ; il est déconnecté en
+/// fermant sa fenêtre. Le clavier passe par lui quand l'emplacement a le focus ; un processus bloqué est arrêté à la
+/// fermeture de l'onglet. Thread de l'interface uniquement, sauf la lecture des sorties.
 /// </summary>
 internal sealed class FreeRdpConnection : IRdpConnection
 {
@@ -21,7 +24,15 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private const int WmSize = 0x0005;
     private const int WmSetFocus = 0x0007;
     private const int WmKillFocus = 0x0008;
+    private const int WmClose = 0x0010;
     private const uint SmtoAbortIfHung = 0x0002;
+
+    // Refus du certificat (TLS) ou de la clé (sécurité RDP) par le client : un autre serveur a pu répondre.
+    private const uint TlsConnectFailed = 0x0002_0008;
+    private const uint SecurityNegotiationFailed = 0x0002_000C;
+
+    /// <summary>Nouvelles connexions lancées d'elles-mêmes (autre serveur derrière la même adresse), au plus.</summary>
+    private const int MaxAutomaticRetries = 2;
 
     /// <summary>Délai laissé au client pour se déconnecter proprement avant d'être arrêté.</summary>
     private static readonly TimeSpan StopDelay = TimeSpan.FromSeconds(3);
@@ -37,11 +48,10 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private Process? _process;
     private RdpSlot? _slot;
     private IntPtr _window;
-    private FreeRdpEnded? _ended;
     private volatile bool _released;
-    private string? _refusal;
-    private Func<Task<bool>>? _askThenRetry;
     private bool _disconnecting;
+    private bool _legacySecurity;
+    private IReadOnlyCollection<string> _fingerprints = [];
 
     public FreeRdpConnection(RdpSession session, RdpConnectionRequest request, string label)
     {
@@ -60,49 +70,77 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
     public async Task StartAsync(IntPtr slot, (int Width, int Height) pixels)
     {
-        var lines = FreeRdpArguments.Build(_request.Settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled,
-            legacySecurity: _request.VerifyServerKey is not null);
-        var process = FreeRdpClient.Start();
-        _process = process;
-        DebugLog.Write("freerdp", $"{_label} : client FreeRDP lancé (processus {process.Id}), session {pixels.Width} × {pixels.Height}"
-            + (_request.Settings.IsRemoteApp ? $", application distante {_request.Settings.RemoteApplicationProgram}" : ""));
+        var settings = _request.Settings;
         _slot = _session.Host;
         _slot.FocusOnChildClick = true;
         _slot.FocusChanged += OnSlotFocus;
         _slot.ChildMouseWheel += OnSlotWheel;
+        _slot.ChildCreated += OnChildCreated;
 
-        process.OutputDataReceived += (_, e) =>
+        // Identité du serveur, vérifiée avant que le client ne parte : aucune question pendant sa connexion.
+        _session.ShowStep(Text.Format(Strings.FreeRdpChecking, settings.Server));
+        var check = await CheckServerAsync(ask: true);
+        if (_released)
         {
-            if (e.Data is { } line)
-            {
-                _ui.BeginInvoke(() => OnOutput(process, line));
-            }
-        };
-        process.ErrorDataReceived += (_, e) =>
+            _detached.TrySetResult();
+            return;
+        }
+
+        switch (check.Trust)
+        {
+            case RdpTrust.Refused:
+                DebugLog.Write("freerdp", $"{_label} : {check.What} refusé ; client non lancé");
+                _session.OnEnded(this, false, check.Error ?? (check.IsKey ? Strings.FreeRdpKeyRefused : Strings.FreeRdpTls));
+                _session.OnReleased(this);
+                _detached.TrySetResult();
+                return;
+            case RdpTrust.AcceptedAfterQuestion:
+                // Le temps de la question, la demande a pu vieillir (jeton PSM) : nouvelle connexion, nouvelle demande.
+                DebugLog.Write("freerdp", $"{_label} : {check.What} accepté après la question ; nouvelle connexion");
+                _detached.TrySetResult();
+                _session.Restart(this);
+                return;
+        }
+
+        var known = _request.KnownFingerprints?.Invoke(settings.Server, settings.Port) ?? [];
+        _fingerprints = known.Append(check.Fingerprint!).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        // Ancienne sécurité RDP permise au client seulement pour un serveur lu sans TLS : un serveur lu avec TLS qui ne la
+        // proposerait plus est refusé, puis relu (RecheckAsync), et le retrait de TLS signalé.
+        _legacySecurity = check.IsKey;
+        var launch = FreeRdpArguments.Build(settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled, _fingerprints,
+            _legacySecurity, FreeRdpClient.ConfigPath);
+        var process = FreeRdpClient.Start(launch.Arguments);
+        _process = process;
+        DebugLog.Write("freerdp", $"{_label} : client FreeRDP lancé (processus {process.Id}), session {pixels.Width} × {pixels.Height}, "
+            + $"{_fingerprints.Count} empreinte(s) acceptée(s)"
+            + (settings.IsRemoteApp ? $", application distante {settings.RemoteApplicationProgram}" : ""));
+        _session.ShowStep(Text.Format(Strings.RdpConnecting, settings.Server));
+
+        DataReceivedEventHandler log = (_, e) =>
         {
             if (e.Data is { } line && DebugLog.Enabled)
             {
                 DebugLog.Write("freerdp", DebugLog.Redact(line));
             }
         };
+        process.OutputDataReceived += log;
+        process.ErrorDataReceived += log;
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         _ = WatchAsync(process);
 
         try
         {
+            // Fichier de connexion sur l'entrée standard, puis fin de l'entrée : rien d'autre ne passera par elle.
             var input = process.StandardInput;
-            foreach (var line in lines)
-            {
-                await input.WriteLineAsync(line);
-            }
-
+            await input.WriteAsync(launch.ConnectionFile);
             await input.FlushAsync();
+            input.Close();
         }
         catch (Exception e) when (e is IOException or ObjectDisposedException)
         {
             // Client déjà arrêté, ou onglet fermé entre-temps : sa fin est signalée par WatchAsync.
-            DebugLog.Write("freerdp", $"{_label} : réglages non transmis ({e.Message})");
+            DebugLog.Write("freerdp", $"{_label} : fichier de connexion non transmis ({e.Message})");
         }
     }
 
@@ -118,9 +156,9 @@ internal sealed class FreeRdpConnection : IRdpConnection
     public void Disconnect()
     {
         _disconnecting = true;
-        Send("disconnect");
         if (_process is { } process)
         {
+            Close(process);
             _ = StopLaterAsync(process, DisconnectDelay);
         }
     }
@@ -150,6 +188,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
         {
             slot.FocusChanged -= OnSlotFocus;
             slot.ChildMouseWheel -= OnSlotWheel;
+            slot.ChildCreated -= OnChildCreated;
             slot.FocusOnChildClick = false;
         }
 
@@ -159,20 +198,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
             return;
         }
 
-        if (disconnect)
-        {
-            Send("disconnect");
-        }
-
-        // Fin de l'entrée : le client se déconnecte et s'arrête ; sinon, arrêté au bout du délai.
-        try
-        {
-            process.StandardInput.Close();
-        }
-        catch (IOException)
-        {
-        }
-
+        // La session quitte l'onglet : le client se déconnecte (fenêtre fermée) ; sinon, arrêté au bout du délai.
+        Close(process);
         _ = StopLaterAsync(process, StopDelay);
     }
 
@@ -202,82 +229,75 @@ internal sealed class FreeRdpConnection : IRdpConnection
     public Task<T> InvokeOnControlAsync<T>(Func<object, T> func) =>
         Task.FromException<T>(new NotSupportedException("Client FreeRDP : pas de contrôle de Windows"));
 
-    private async void OnOutput(Process process, string line)
-    {
-        if (process != _process)
-        {
-            return;
-        }
-
-        switch (FreeRdpMessage.Parse(line))
-        {
-            case FreeRdpConnected connected:
-                OnConnected(process, new IntPtr(connected.Window));
-                break;
-            case FreeRdpCertificateRequest certificate:
-                var answer = await AnswerAsync(_request.VerifyCertificate is { } verify ? () => verify(certificate) : null,
-                    $"certificat de {certificate.Host}:{certificate.Port}");
-                if (!answer.Accept)
-                {
-                    _refusal = Strings.FreeRdpTls;
-                }
-
-                Send(answer.Accept ? "accept" : "deny");
-                break;
-            case FreeRdpServerKey key:
-                var keyAnswer = await AnswerAsync(_request.VerifyServerKey is { } verifyKey ? () => verifyKey(key) : null,
-                    $"sécurité RDP sans TLS, clé de {key.Host}:{key.Port} SHA256 {key.Sha256}");
-                if (!keyAnswer.Accept)
-                {
-                    _refusal = Strings.FreeRdpKeyRefused;
-                }
-
-                Send(keyAnswer.Accept ? "accept" : "deny");
-                break;
-            case FreeRdpEnded ended:
-                _ended = ended;
-                break;
-            case FreeRdpReconnecting reconnecting:
-                DebugLog.Write("freerdp", $"{_label} : connexion coupée, reconnexion automatique (tentative {reconnecting.Attempt})");
-                break;
-            default:
-                if (DebugLog.Enabled)
-                {
-                    DebugLog.Write("freerdp", DebugLog.Redact(line));
-                }
-
-                break;
-        }
-    }
-
     /// <summary>
-    /// Réponse à un certificat ou une clé, refus en cas d'erreur. Une question différée est gardée pour la fin de la
-    /// connexion (<see cref="OnExited"/>).
+    /// Lit le certificat TLS du serveur, ou sa clé s'il n'accepte que l'ancienne sécurité RDP (PSM seulement), et le fait
+    /// vérifier (<see cref="RdpConnectionRequest.VerifyCertificate"/>, <see cref="RdpConnectionRequest.VerifyServerKey"/>),
+    /// avec une question au besoin si <paramref name="ask"/>. Rien n'est envoyé au serveur : ni identifiant, ni jeton.
     /// </summary>
-    private async Task<FreeRdpAnswer> AnswerAsync(Func<Task<FreeRdpAnswer>>? verify, string what)
+    private async Task<ServerCheck> CheckServerAsync(bool ask)
     {
-        var answer = FreeRdpAnswer.Refused;
-        if (!_released && verify is not null)
+        var server = _request.Settings.Server;
+        int port = _request.Settings.Port;
+        try
         {
             try
             {
-                answer = await verify();
+                var certificate = await RdpCertificateProbe.GetAsync(server, port, CancellationToken.None);
+                var what = $"certificat de {server}:{port} SHA256 {certificate.Sha256}";
+                if (!ask)
+                {
+                    return new ServerCheck(RdpTrust.Trusted, certificate.Sha256, what, false);
+                }
+
+                var trust = _request.VerifyCertificate is { } verify ? await verify(certificate, server, port) : RdpTrust.Refused;
+                return new ServerCheck(trust, certificate.Sha256, what, false);
             }
-            catch (Exception e) when (e is not OutOfMemoryException)
+            catch (RdpCertificateException e) when (e.NoTls && _request.VerifyServerKey is not null)
             {
-                DebugLog.Write("freerdp", $"{_label} : {what} non vérifié", e);
+                var key = await RdpSecurityProbe.GetAsync(server, port, CancellationToken.None);
+                var what = $"sécurité RDP sans TLS, clé de {server}:{port} SHA256 {key.Sha256}";
+                if (!ask)
+                {
+                    return new ServerCheck(RdpTrust.Trusted, key.Sha256, what, true);
+                }
+
+                var trust = await _request.VerifyServerKey(key, server, port);
+                return new ServerCheck(trust, key.Sha256, what, true);
             }
         }
+        catch (RdpCertificateException e)
+        {
+            DebugLog.Write("freerdp", $"{_label} : identité de {server}:{port} illisible : {e.Message}");
+            return new ServerCheck(RdpTrust.Refused, null, "serveur", false, Text.Format(Strings.FreeRdpCheckFailed, server, e.Message));
+        }
+        catch (SocketException e)
+        {
+            DebugLog.Write("freerdp", $"{_label} : {server}:{port} injoignable", e);
+            return new ServerCheck(RdpTrust.Refused, null, "serveur", false,
+                e.SocketErrorCode is SocketError.HostNotFound or SocketError.NoData
+                    ? Text.Format(Strings.FreeRdpNameNotFound, server)
+                    : Text.Format(Strings.FreeRdpUnreachable, server));
+        }
+        catch (Exception e) when (e is IOException or OperationCanceledException)
+        {
+            DebugLog.Write("freerdp", $"{_label} : identité de {server}:{port} illisible", e);
+            return new ServerCheck(RdpTrust.Refused, null, "serveur", false, Text.Format(Strings.FreeRdpCheckFailed, server, e.Message));
+        }
+    }
 
-        DebugLog.Write("freerdp", $"{_label} : {what} " + (answer.Accept ? "accepté" : answer.AskThenRetry is null ? "refusé" : "à confirmer après la fin de la connexion"));
-        _askThenRetry ??= answer.AskThenRetry;
-        return answer;
+    /// <summary>Fenêtre créée dans l'emplacement (pendant sa création) : traitée juste après, sur ce thread.</summary>
+    private void OnChildCreated(IntPtr window)
+    {
+        if (_process is { } process)
+        {
+            _ui.BeginInvoke(() => OnConnected(process, window));
+        }
     }
 
     /// <summary>Fenêtre de FreeRDP créée dans l'emplacement : vérifiée (enfant de l'emplacement, de ce processus).</summary>
     private void OnConnected(Process process, IntPtr window)
     {
-        if (_released || _slot is not { SlotHandle: var slot })
+        if (_released || _window != IntPtr.Zero || process != _process || _slot is not { SlotHandle: var slot })
         {
             return;
         }
@@ -285,7 +305,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
         GetWindowThreadProcessId(window, out var owner);
         if (GetParent(window) != slot || owner != process.Id)
         {
-            DebugLog.Write("freerdp", $"{_label} : fenêtre 0x{window.ToInt64():X} annoncée mais pas dans l'onglet ; ignorée");
+            DebugLog.Write("freerdp", $"{_label} : fenêtre 0x{window.ToInt64():X} créée dans l'onglet mais pas par le client ; ignorée");
             return;
         }
 
@@ -337,37 +357,40 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
     private void OnExited(Process process, int exitCode)
     {
+        bool connected = _window != IntPtr.Zero;
         _window = IntPtr.Zero;
         if (process == _process)
         {
             _process = null;
         }
 
-        var ended = _ended;
-        DebugLog.Write("freerdp", $"{_label} : client FreeRDP arrêté (code {exitCode}"
-            + (ended is null ? ", sans message de fin)" : $", {ended.Name} 0x{ended.Code:X8})"));
+        var code = FreeRdpExit.FromExitCode(exitCode);
+        DebugLog.Write("freerdp", $"{_label} : client FreeRDP arrêté (code 0x{exitCode:X8}"
+            + (code is { } known && FreeRdpExit.Name(known) is { Length: > 0 } name ? $", {name})" : ")"));
         if (!_released)
         {
-            if (ended is null)
+            bool recheck = false;
+            if (_disconnecting)
             {
-                // Arrêté après une déconnexion demandée : fin normale, pas un plantage.
-                _session.OnEnded(this, _disconnecting, _disconnecting ? null : Text.Format(Strings.FreeRdpCrashed, exitCode));
+                // Déconnexion demandée : fin normale, même arrêté au bout du délai.
+                _session.OnEnded(this, true, null);
             }
-            else if (_askThenRetry is not null && !_disconnecting)
+            else if (code is not { } value)
             {
-                _session.OnEnded(this, false, Strings.FreeRdpConfirmPending);
+                _session.OnEnded(this, false, Text.Format(Strings.FreeRdpCrashed, exitCode));
             }
             else
             {
-                var (normal, end) = FreeRdpExit.Classify(ended.Code);
-                _session.OnEnded(this, normal, normal ? null : Describe(end, ended));
+                var (normal, end) = FreeRdpExit.Classify(value);
+                // Certificat ou clé refusé par le client avant l'ouverture : un autre serveur a pu répondre.
+                recheck = !connected && value is TlsConnectFailed or SecurityNegotiationFailed;
+                _session.OnEnded(this, normal, normal ? null : Describe(end, value));
             }
 
             _session.OnReleased(this);
-            // Pas de question après une déconnexion demandée.
-            if (_askThenRetry is { } ask && !_disconnecting)
+            if (recheck)
             {
-                _ = _ui.InvokeAsync(() => AskThenRetryAsync(ask));
+                _ = _ui.InvokeAsync(RecheckAsync);
             }
         }
 
@@ -376,36 +399,40 @@ internal sealed class FreeRdpConnection : IRdpConnection
     }
 
     /// <summary>
-    /// Question posée une fois la connexion fermée (le serveur n'attend pas) ; confiance accordée : nouvelle connexion,
-    /// avec une nouvelle demande au PVWA pour une session PSM (nouveau jeton).
+    /// Le client a refusé le serveur : derrière la même adresse (répartition de charge), un autre serveur a pu répondre,
+    /// avec un certificat ou une clé encore inconnus. Relu : s'il est nouveau, il est vérifié (question au besoin) et,
+    /// accepté, une nouvelle connexion part (nouvelle demande au PVWA, nouveau jeton). Sinon, l'erreur reste affichée.
     /// </summary>
-    private async Task AskThenRetryAsync(Func<Task<bool>> ask)
+    private async Task RecheckAsync()
     {
-        bool retry = false;
-        try
+        if (_session.AutomaticRetries >= MaxAutomaticRetries)
         {
-            retry = await ask();
-        }
-        catch (Exception e) when (e is not OutOfMemoryException)
-        {
-            DebugLog.Write("freerdp", $"{_label} : question après la connexion", e);
+            DebugLog.Write("freerdp", $"{_label} : identité refusée par le client ; pas de nouvel essai automatique");
+            return;
         }
 
-        if (retry)
+        var seen = await CheckServerAsync(ask: false);
+        if (seen.Fingerprint is null || _fingerprints.Contains(seen.Fingerprint, StringComparer.OrdinalIgnoreCase))
         {
-            DebugLog.Write("freerdp", $"{_label} : confiance accordée, nouvelle connexion");
-            await _session.ReconnectAsync();
+            return;
         }
-        else
+
+        DebugLog.Write("freerdp", $"{_label} : autre serveur derrière la même adresse ({seen.What}) ; vérification");
+        var verify = await CheckServerAsync(ask: true);
+        if (verify.Trust == RdpTrust.Refused)
         {
-            _session.ShowError(_refusal ?? Strings.FreeRdpKeyRefused);
+            _session.ShowError(verify.Error ?? (verify.IsKey ? Strings.FreeRdpKeyRefused : Strings.FreeRdpTls));
+            return;
         }
+
+        _session.AutomaticRetries++;
+        await _session.ReconnectAsync();
     }
 
-    private string Describe(FreeRdpEnd end, FreeRdpEnded ended)
+    private string Describe(FreeRdpEnd end, uint code)
     {
         var server = _request.Settings.Server;
-        var text = _refusal ?? end switch
+        var text = end switch
         {
             FreeRdpEnd.TakenOver => Strings.FreeRdpTakenOver,
             FreeRdpEnd.Timeout => Strings.FreeRdpTimeout,
@@ -413,6 +440,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
             FreeRdpEnd.NameNotFound => Text.Format(Strings.FreeRdpNameNotFound, server),
             FreeRdpEnd.Unreachable => Text.Format(Strings.FreeRdpUnreachable, server),
             FreeRdpEnd.Tls => Strings.FreeRdpTls,
+            FreeRdpEnd.Negotiation when _legacySecurity => Strings.FreeRdpKeyRefused,
             FreeRdpEnd.Negotiation => Strings.FreeRdpNegotiation,
             FreeRdpEnd.Authentication => Strings.FreeRdpAuthentication,
             FreeRdpEnd.Account => Strings.FreeRdpAccount,
@@ -420,7 +448,26 @@ internal sealed class FreeRdpConnection : IRdpConnection
             _ => Strings.FreeRdpOther,
         };
         // Nom et code de FreeRDP joints : ils disent ce que le texte, général, ne dit pas.
-        return $"{text} ({(ended.Name.Length > 0 ? ended.Name + ", " : "")}0x{ended.Code:X8})";
+        var name = FreeRdpExit.Name(code);
+        return $"{text} ({(name.Length > 0 ? name + ", " : "")}0x{code:X8})";
+    }
+
+    /// <summary>Fenêtre ouverte : fermée (le client se déconnecte) ; pas encore de fenêtre : connexion abandonnée.</summary>
+    private void Close(Process process)
+    {
+        if (_window != IntPtr.Zero && PostMessage(_window, WmClose, IntPtr.Zero, IntPtr.Zero))
+        {
+            return;
+        }
+
+        try
+        {
+            process.Kill(entireProcessTree: true);
+        }
+        catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            DebugLog.Write("freerdp", $"{_label} : arrêt du client impossible : {e.Message}");
+        }
     }
 
     private async Task StopLaterAsync(Process process, TimeSpan delay)
@@ -446,31 +493,12 @@ internal sealed class FreeRdpConnection : IRdpConnection
         }
     }
 
-    /// <summary>Une ligne pour le client (réponse, ordre) ; rien s'il est déjà arrêté.</summary>
-    private void Send(string line)
-    {
-        if (_process is not { } process)
-        {
-            return;
-        }
-
-        try
-        {
-            if (process.HasExited)
-            {
-                return;
-            }
-
-            process.StandardInput.WriteLine(line);
-            process.StandardInput.Flush();
-        }
-        catch (Exception e) when (e is IOException or ObjectDisposedException or InvalidOperationException)
-        {
-            DebugLog.Write("freerdp", $"{_label} : « {line} » non transmis ({e.Message})");
-        }
-    }
-
     private static IntPtr MakeLParam(int low, int high) => new((high << 16) | (low & 0xFFFF));
+
+    /// <summary>Certificat ou clé lu, et la réponse de ZillaTerm.</summary>
+    /// <param name="Fingerprint">Empreinte SHA-256 lue ; null si rien n'a pu être lu.</param>
+    /// <param name="Error">Ce qui a empêché la lecture, à montrer ; null sinon.</param>
+    private sealed record ServerCheck(RdpTrust Trust, string? Fingerprint, string What, bool IsKey, string? Error = null);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

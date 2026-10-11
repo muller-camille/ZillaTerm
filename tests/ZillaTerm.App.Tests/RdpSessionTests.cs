@@ -323,7 +323,9 @@ public class RdpSessionTests(ITestOutputHelper output)
         return false;
     }
 
-    /// <summary>Serveur injoignable : le client s'arrête, l'onglet le dit avec le code de FreeRDP, sans fenêtre restante.</summary>
+    /// <summary>
+    /// Serveur injoignable : son identité ne peut pas être lue, le client n'est pas lancé, l'onglet le dit, sans fenêtre.
+    /// </summary>
     [Fact]
     public async Task FreeRdpReportsAnUnreachableServer()
     {
@@ -339,7 +341,7 @@ public class RdpSessionTests(ITestOutputHelper output)
             var state = await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
             output.WriteLine($"{state} : {session.Error}");
             Assert.Equal(RdpSessionState.Failed, state);
-            Assert.Contains("0x00020006", session.Error, StringComparison.Ordinal);
+            Assert.Equal(ZillaTerm.App.Localization.Text.Format(ZillaTerm.App.Localization.Strings.FreeRdpUnreachable, "127.0.0.1"), session.Error);
             Assert.False(session.HasControl);
             Assert.Empty(Win32Input.Descendants(session.Host.SlotHandle));
         });
@@ -366,15 +368,15 @@ public class RdpSessionTests(ITestOutputHelper output)
             return;
         }
 
-        var certificates = new List<FreeRdpCertificateRequest>();
+        var certificates = new List<(RdpCertificate Certificate, string Host)>();
         var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab();
         var request = new RdpConnectionRequest(settings, account.Password)
         {
             FreeRdp = true,
-            VerifyCertificate = c =>
+            VerifyCertificate = (c, host, _) =>
             {
-                certificates.Add(c);
-                return Task.FromResult(FreeRdpAnswer.Accepted);
+                certificates.Add((c, host));
+                return Task.FromResult(RdpTrust.Trusted);
             },
         };
         await RunOnStaAsync(request, async (session, window) =>
@@ -388,9 +390,10 @@ public class RdpSessionTests(ITestOutputHelper output)
             Assert.Equal(RdpSessionState.Connected, state);
             Assert.True(session.ShowsDesktop);
             Assert.Equal(Visibility.Visible, session.Host.Visibility);
+            // Certificat lu par ZillaTerm avant le lancement ; FreeRDP l'a accepté par son empreinte.
             var certificate = Assert.Single(certificates);
             Assert.Equal("127.0.0.2", certificate.Host);
-            Assert.Contains("BEGIN CERTIFICATE", certificate.Pem, StringComparison.Ordinal);
+            Assert.Equal(64, certificate.Certificate.Sha256.Length);
             Assert.False(session.CanFullScreen);
 
             await CheckSizeClicksAndKeysAsync(session, window, log);
@@ -431,7 +434,11 @@ public class RdpSessionTests(ITestOutputHelper output)
             RemoteApplicationName = "ZillaTerm test",
             RemoteApplicationCmdLine = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File {script}",
         };
-        var request = new RdpConnectionRequest(settings, account.Password) { FreeRdp = true, VerifyCertificate = _ => Task.FromResult(FreeRdpAnswer.Accepted) };
+        var request = new RdpConnectionRequest(settings, account.Password)
+        {
+            FreeRdp = true,
+            VerifyCertificate = (_, _, _) => Task.FromResult(RdpTrust.Trusted),
+        };
         await RunOnStaAsync(request, async (session, window) =>
         {
             await session.ConnectAsync();
@@ -453,11 +460,11 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>
-    /// Serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS (cas d'un PSM) : sa clé est soumise à ZillaTerm avant
-    /// tout envoi d'identifiants ; aucun certificat TLS n'est présenté. Clé inconnue : refusée tout de suite, la question
-    /// est posée une fois la connexion fermée (ici une réponse en 20 s : le serveur n'aurait pas attendu), puis une
-    /// nouvelle connexion s'ouvre avec la clé acceptée. Refusée : pas de session. Le poste de CI est passé en sécurité
-    /// RDP le temps du test.
+    /// Serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS (cas d'un PSM) : sa clé est lue par ZillaTerm avant le
+    /// lancement du client (aucun identifiant envoyé), aucun certificat TLS n'est présenté. Clé inconnue : question
+    /// (ici répondue en 5 s), puis nouvelle connexion où la clé, acceptée, est passée à FreeRDP par son empreinte : la
+    /// session s'ouvre, donc l'empreinte calculée par ZillaTerm est bien celle que FreeRDP calcule. Refusée : le client
+    /// n'est pas lancé. Le poste de CI est passé en sécurité RDP le temps du test.
     /// </summary>
     [Fact]
     [Trait("Category", "RdpIntegration")]
@@ -481,15 +488,15 @@ public class RdpSessionTests(ITestOutputHelper output)
             int asked = 0, presented = 0;
             await RunOnStaAsync(Request(async () =>
             {
-                asked++;
-                await Task.Delay(TimeSpan.FromSeconds(20));
+                await Task.Delay(TimeSpan.FromSeconds(5));
                 trusted = true;
-                return true;
+                return RdpTrust.AcceptedAfterQuestion;
             }), async session =>
             {
                 await session.ConnectAsync();
-                var state = await WaitForAsync(session, s => s == RdpSessionState.Connected, TimeSpan.FromSeconds(120));
-                output.WriteLine($"Clé acceptée après la question : {state}, clé présentée {presented} fois");
+                var state = await WaitForAsync(session, s => s is not RdpSessionState.Connecting, TimeSpan.FromSeconds(120));
+                output.WriteLine($"Clé acceptée après la question : {state} {session.Error}, clé présentée {presented} fois");
+                Assert.Equal(RdpSessionState.Connected, state);
                 Assert.Equal(1, asked);
                 Assert.Equal(2, presented);
                 session.Disconnect();
@@ -499,36 +506,38 @@ public class RdpSessionTests(ITestOutputHelper output)
 
             trusted = false;
             asked = 0;
-            await RunOnStaAsync(Request(() =>
-            {
-                asked++;
-                return Task.FromResult(false);
-            }), async session =>
+            await RunOnStaAsync(Request(() => Task.FromResult(RdpTrust.Refused)), async session =>
             {
                 var states = new List<RdpSessionState>();
                 session.StateChanged += () => states.Add(session.State);
                 await session.ConnectAsync();
                 await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
-                // La question, puis le message de la clé refusée.
-                await WaitForAsync(session, _ => asked == 1 && session.Error == ZillaTerm.App.Localization.Strings.FreeRdpKeyRefused,
-                    TimeSpan.FromSeconds(10));
                 output.WriteLine($"Clé refusée : {session.State} {session.Error}");
                 Assert.Equal(RdpSessionState.Failed, session.State);
+                Assert.Equal(ZillaTerm.App.Localization.Strings.FreeRdpKeyRefused, session.Error);
+                Assert.Equal(1, asked);
                 Assert.DoesNotContain(RdpSessionState.Connected, states);
+                Assert.Empty(Win32Input.Descendants(session.Host.SlotHandle));
             });
 
-            RdpConnectionRequest Request(Func<Task<bool>> ask) => new(settings, account.Password)
+            RdpConnectionRequest Request(Func<Task<RdpTrust>> ask) => new(settings, account.Password)
             {
                 FreeRdp = true,
-                VerifyCertificate = c => throw new Xunit.Sdk.XunitException($"Certificat TLS présenté : {c.Host}"),
-                VerifyServerKey = k =>
+                VerifyCertificate = (_, host, _) => throw new Xunit.Sdk.XunitException($"Certificat TLS présenté : {host}"),
+                VerifyServerKey = async (k, host, port) =>
                 {
                     presented++;
-                    output.WriteLine($"Clé du serveur {k.Host}:{k.Port} SHA256 {k.Sha256}");
-                    Assert.Equal("127.0.0.2", k.Host);
+                    output.WriteLine($"Clé du serveur {host}:{port} RSA {k.Bits} bits SHA256 {k.Sha256}");
+                    Assert.Equal("127.0.0.2", host);
                     // La même clé à chaque connexion : c'est elle qu'on épingle.
                     Assert.Equal(first ??= k.Sha256, k.Sha256);
-                    return Task.FromResult(trusted ? FreeRdpAnswer.Accepted : FreeRdpAnswer.Ask(ask));
+                    if (trusted)
+                    {
+                        return RdpTrust.Trusted;
+                    }
+
+                    asked++;
+                    return await ask();
                 },
             };
         }
@@ -560,10 +569,10 @@ public class RdpSessionTests(ITestOutputHelper output)
         var request = new RdpConnectionRequest(settings, account.Password)
         {
             FreeRdp = true,
-            VerifyCertificate = _ =>
+            VerifyCertificate = (_, _, _) =>
             {
                 asked++;
-                return Task.FromResult(FreeRdpAnswer.Refused);
+                return Task.FromResult(RdpTrust.Refused);
             },
         };
         await RunOnStaAsync(request, async session =>

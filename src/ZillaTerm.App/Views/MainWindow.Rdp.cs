@@ -148,122 +148,155 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Certificat présenté au client FreeRDP (PSM, redirection ou passerelle), vérifié comme pour une connexion directe
-    /// (<see cref="TrustRdpCertificate"/>) : approuvé par Windows ou épinglé, accepté tout de suite ; sinon refusé tout de
-    /// suite (le serveur ne patiente pas pendant une question) et la question est posée une fois la connexion fermée,
-    /// puis une nouvelle connexion est lancée si l'utilisateur fait confiance. La chaîne est vérifiée hors du thread de
-    /// l'interface (révocation en ligne).
+    /// Certificat TLS d'un PSM, lu par ZillaTerm avant le lancement du client FreeRDP (aucun jeton envoyé) : épinglé, ou
+    /// approuvé par Windows (noté sans question), sinon confirmé par l'utilisateur. Plusieurs par adresse : un PSM en
+    /// répartition de charge regroupe plusieurs serveurs, chacun avec son certificat (souvent auto-signé). Un certificat
+    /// inconnu alors que d'autres le sont : alerte, puis ajouté (autre serveur PSM) ou à la place des autres
+    /// (renouvellement). Le client n'acceptera que les certificats acceptés ici.
     /// </summary>
-    private async Task<FreeRdpAnswer> VerifyFreeRdpCertificateAsync(FreeRdpCertificateRequest request)
+    private Task<RdpTrust> VerifyFreeRdpCertificateAsync(RdpCertificate certificate, string server, int port)
     {
-        RdpCertificate certificate;
-        try
-        {
-            certificate = await Task.Run(() => RdpCertificateProbe.FromPemChain(request.Pem, request.Host));
-        }
-        catch (RdpCertificateException e)
-        {
-            DebugLog.Write("rdp", $"{request.Host}:{request.Port} : certificat illisible ({e.Message}) ; refusé");
-            return FreeRdpAnswer.Refused;
-        }
-
-        var kind = request.IsGateway ? "passerelle " : request.IsRedirect ? "redirection " : "";
-        DebugLog.Write("rdp", $"{kind}{request.Host}:{request.Port} : certificat SHA256 {certificate.Sha256}, « {certificate.Subject} », "
+        DebugLog.Write("rdp", $"{server}:{port} : certificat SHA256 {certificate.Sha256}, « {certificate.Subject} », "
             + $"{(certificate.Trusted ? "approuvé par Windows" : certificate.Problem)}");
-        var address = request.Port == RdpConnectionSettings.DefaultPort ? request.Host : $"{request.Host}:{request.Port}";
-        var status = KnownHosts.Check(_settings.KnownHosts, "rdp://" + request.Host, request.Port, "X.509", certificate.Sha256);
-        if (status == HostKeyStatus.Trusted || certificate.Trusted)
+        var host = "rdp://" + server;
+        if (KnownHosts.Check(_settings.KnownHosts, host, port, "X.509", certificate.Sha256) == HostKeyStatus.Trusted)
         {
-            // Approuvé par Windows : noté sans question (TrustRdpCertificate).
-            return TrustRdpCertificate(address, request.Host, request.Port, certificate) ? FreeRdpAnswer.Accepted : FreeRdpAnswer.Refused;
+            return Task.FromResult(RdpTrust.Trusted);
         }
 
-        return FreeRdpAnswer.Ask(() => Task.FromResult(TrustRdpCertificate(address, request.Host, request.Port, certificate)));
+        if (certificate.Trusted)
+        {
+            KnownHosts.RememberAnother(_settings.KnownHosts, host, port, "X.509", certificate.Sha256);
+            SaveSettings();
+            return Task.FromResult(RdpTrust.Trusted);
+        }
+
+        var address = port == RdpConnectionSettings.DefaultPort ? server : $"{server}:{port}";
+        int known = KnownHosts.CountKeys(_settings.KnownHosts, host, port, "X.509");
+        if (known == 0)
+        {
+            return Task.FromResult(TrustRdpCertificate(address, server, port, certificate) ? RdpTrust.AcceptedAfterQuestion : RdpTrust.Refused);
+        }
+
+        static string Spaced(string sha256) => string.Join(" ", sha256.Chunk(16).Select(c => new string(c)));
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        int choice = ConfirmDialog.Ask(this, new ConfirmRequest
+        {
+            Title = Strings.RdpCertificateTitle,
+            Banner = Strings.HostKeyChangedBanner,
+            Heading = Strings.RdpCertAnotherHeading,
+            Subject = address,
+            Message = Text.Format(Strings.RdpCertAnotherMessage, known, certificate.Problem),
+            Bullets =
+            [
+                Text.Format(Strings.FtpCertSubject, certificate.Subject),
+                Text.Format(Strings.FtpCertIssuer, certificate.Issuer),
+                Text.Format(Strings.FtpCertValidity, certificate.NotBefore.ToString("d", culture), certificate.NotAfter.ToString("d", culture)),
+            ],
+            Codes = [(Strings.FtpCertFingerprint, Spaced(certificate.Sha256))],
+            Kind = ConfirmKind.Danger,
+            Actions = [Strings.RdpCertTrustAnother, Strings.RdpCertReplaceKnown],
+            CancelLabel = Strings.HostKeyCancel,
+            Acknowledge = Strings.RdpCertAckPsm,
+        });
+        if (choice is not (0 or 1))
+        {
+            return Task.FromResult(RdpTrust.Refused);
+        }
+
+        if (choice == 0)
+        {
+            KnownHosts.RememberAnother(_settings.KnownHosts, host, port, "X.509", certificate.Sha256);
+        }
+        else
+        {
+            KnownHosts.Remember(_settings.KnownHosts, host, port, "X.509", certificate.Sha256);
+        }
+
+        SaveSettings();
+        return Task.FromResult(RdpTrust.AcceptedAfterQuestion);
     }
 
     /// <summary>
-    /// Clé d'un PSM qui n'accepte que l'ancienne sécurité RDP, sans TLS, épinglée (« rdp://hôte:port », type RDP-RSA).
-    /// Plusieurs clés par adresse : un PSM en répartition de charge regroupe plusieurs serveurs, chacun avec la sienne,
-    /// confirmée une fois. Une clé connue est acceptée tout de suite ; une autre est refusée tout de suite (le PSM ferme
-    /// une connexion qui attend) et la question est posée une fois la connexion fermée, puis une nouvelle connexion
-    /// (nouveau jeton PSM) est lancée si l'utilisateur fait confiance. Refusée d'office si ce serveur a déjà présenté un
-    /// certificat TLS : le retrait de TLS peut être une interception (la sécurité RDP serait imposée pour présenter une
-    /// autre clé).
+    /// Clé d'un PSM qui n'accepte que l'ancienne sécurité RDP, sans TLS, lue par ZillaTerm avant le lancement du client
+    /// (aucun jeton envoyé) et épinglée (« rdp://hôte:port », type RDP-RSA). Plusieurs clés par adresse : un PSM en
+    /// répartition de charge regroupe plusieurs serveurs, chacun avec la sienne, confirmée une fois. Refusée d'office si ce
+    /// serveur a déjà présenté un certificat TLS : le retrait de TLS peut être une interception (la sécurité RDP serait
+    /// imposée pour présenter une autre clé).
     /// </summary>
-    private Task<FreeRdpAnswer> VerifyFreeRdpServerKeyAsync(FreeRdpServerKey key)
+    private Task<RdpTrust> VerifyFreeRdpServerKeyAsync(RdpServerKey key, string server, int port)
     {
         const string KeyType = "RDP-RSA";
         static string Spaced(string sha256) => string.Join(" ", sha256.Chunk(16).Select(c => new string(c)));
-        var host = "rdp://" + key.Host;
-        var address = key.Port == RdpConnectionSettings.DefaultPort ? key.Host : $"{key.Host}:{key.Port}";
-        if (KnownHosts.Known(_settings.KnownHosts, host, key.Port, "X.509") is not null)
+        var host = "rdp://" + server;
+        var address = port == RdpConnectionSettings.DefaultPort ? server : $"{server}:{port}";
+        DebugLog.Write("rdp", $"{address} : sécurité RDP sans TLS, clé RSA {key.Bits} bits SHA256 {key.Sha256}");
+        if (KnownHosts.Known(_settings.KnownHosts, host, port, "X.509") is not null)
         {
             DebugLog.Write("rdp", $"{address} : certificat TLS connu, sécurité RDP sans TLS proposée ; refusée");
-            return Task.FromResult(FreeRdpAnswer.Ask(() =>
+            ConfirmDialog.Confirm(this, new ConfirmRequest
             {
-                ConfirmDialog.Confirm(this, new ConfirmRequest
-                {
-                    Title = Strings.RdpKeyTitle,
-                    Banner = Strings.HostKeyChangedBanner,
-                    Heading = Strings.RdpKeyDowngradeHeading,
-                    Subject = address,
-                    Message = Strings.RdpKeyDowngradeMessage,
-                    Kind = ConfirmKind.Danger,
-                    Actions = [],
-                    CancelLabel = Strings.HostKeyCancel,
-                });
-                return Task.FromResult(false);
-            }));
+                Title = Strings.RdpKeyTitle,
+                Banner = Strings.HostKeyChangedBanner,
+                Heading = Strings.RdpKeyDowngradeHeading,
+                Subject = address,
+                Message = Strings.RdpKeyDowngradeMessage,
+                Kind = ConfirmKind.Danger,
+                Actions = [],
+                CancelLabel = Strings.HostKeyCancel,
+            });
+            return Task.FromResult(RdpTrust.Refused);
         }
 
-        if (KnownHosts.Check(_settings.KnownHosts, host, key.Port, KeyType, key.Sha256) == HostKeyStatus.Trusted)
+        if (KnownHosts.Check(_settings.KnownHosts, host, port, KeyType, key.Sha256) == HostKeyStatus.Trusted)
         {
-            return Task.FromResult(FreeRdpAnswer.Accepted);
+            return Task.FromResult(RdpTrust.Trusted);
         }
 
-        return Task.FromResult(FreeRdpAnswer.Ask(() =>
+        int known = KnownHosts.CountKeys(_settings.KnownHosts, host, port, KeyType);
+        var request = known == 0
+            ? new ConfirmRequest
+            {
+                Title = Strings.RdpKeyTitle,
+                Heading = Strings.RdpKeyVerifyHeading,
+                Subject = address,
+                Message = Strings.RdpKeyMessage,
+                Codes = [(Strings.RdpKeyFingerprint, Spaced(key.Sha256))],
+                Kind = ConfirmKind.Warning,
+                Actions = [Strings.HostKeyTrust],
+                CancelLabel = Strings.HostKeyCancel,
+            }
+            : new ConfirmRequest
+            {
+                Title = Strings.RdpKeyTitle,
+                Heading = Strings.RdpKeyAnotherHeading,
+                Subject = address,
+                Message = Text.Format(Strings.RdpKeyAnotherMessage, known),
+                Codes = [(Strings.RdpKeyFingerprint, Spaced(key.Sha256))],
+                Kind = ConfirmKind.Warning,
+                Actions = [Strings.RdpKeyTrustAnother],
+                CancelLabel = Strings.HostKeyCancel,
+                Acknowledge = Strings.RdpKeyAckLoadBalanced,
+            };
+        if (!ConfirmDialog.Confirm(this, request))
         {
-            // Clés connues relues au moment de la question : une autre session a pu en ajouter une entre-temps.
-            int known = KnownHosts.CountKeys(_settings.KnownHosts, host, key.Port, KeyType);
-            if (KnownHosts.Check(_settings.KnownHosts, host, key.Port, KeyType, key.Sha256) == HostKeyStatus.Trusted)
-            {
-                return Task.FromResult(true);
-            }
+            return Task.FromResult(RdpTrust.Refused);
+        }
 
-            var request = known == 0
-                ? new ConfirmRequest
-                {
-                    Title = Strings.RdpKeyTitle,
-                    Heading = Strings.RdpKeyVerifyHeading,
-                    Subject = address,
-                    Message = Strings.RdpKeyMessage,
-                    Codes = [(Strings.RdpKeyFingerprint, Spaced(key.Sha256))],
-                    Kind = ConfirmKind.Warning,
-                    Actions = [Strings.HostKeyTrust],
-                    CancelLabel = Strings.HostKeyCancel,
-                }
-                : new ConfirmRequest
-                {
-                    Title = Strings.RdpKeyTitle,
-                    Heading = Strings.RdpKeyAnotherHeading,
-                    Subject = address,
-                    Message = Text.Format(Strings.RdpKeyAnotherMessage, known),
-                    Codes = [(Strings.RdpKeyFingerprint, Spaced(key.Sha256))],
-                    Kind = ConfirmKind.Warning,
-                    Actions = [Strings.RdpKeyTrustAnother],
-                    CancelLabel = Strings.HostKeyCancel,
-                    Acknowledge = Strings.RdpKeyAckLoadBalanced,
-                };
-            if (!ConfirmDialog.Confirm(this, request))
-            {
-                return Task.FromResult(false);
-            }
-
-            KnownHosts.RememberAnother(_settings.KnownHosts, host, key.Port, KeyType, key.Sha256);
-            SaveSettings();
-            return Task.FromResult(true);
-        }));
+        KnownHosts.RememberAnother(_settings.KnownHosts, host, port, KeyType, key.Sha256);
+        SaveSettings();
+        return Task.FromResult(RdpTrust.AcceptedAfterQuestion);
     }
+
+    /// <summary>
+    /// Empreintes SHA-256 des certificats TLS et des clés RDP acceptés pour ce serveur : le client FreeRDP n'accepte
+    /// qu'elles.
+    /// </summary>
+    private IReadOnlyCollection<string> KnownFreeRdpFingerprints(string server, int port) =>
+        KnownHosts.KnownKeys(_settings.KnownHosts, "rdp://" + server, port)
+            .Where(k => k.Algorithm is "X.509" or "RDP-RSA" && k.Sha256.Length == 64 && k.Sha256.All(char.IsAsciiHexDigit))
+            .Select(k => k.Sha256)
+            .ToList();
 
     private async Task CloseRdpTabAsync(TabItem tab)
     {

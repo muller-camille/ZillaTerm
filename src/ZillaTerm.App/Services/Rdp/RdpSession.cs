@@ -22,38 +22,40 @@ internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, stri
     public bool FreeRdp { get; init; }
 
     /// <summary>
-    /// Certificat présenté au client FreeRDP (serveur, redirection, passerelle). Sans vérification, tout certificat est
-    /// refusé.
+    /// Certificat TLS du serveur, lu par ZillaTerm avant le lancement du client FreeRDP (aucune question pendant sa
+    /// connexion). Sans vérification, tout certificat est refusé.
     /// </summary>
-    public Func<FreeRdpCertificateRequest, Task<FreeRdpAnswer>>? VerifyCertificate { get; init; }
+    public Func<RdpCertificate, string, int, Task<RdpTrust>>? VerifyCertificate { get; init; }
 
     /// <summary>
-    /// Clé d'un serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS. Fournie, elle permet cette sécurité au client
-    /// FreeRDP (PSM seulement) ; sinon, un serveur sans TLS est refusé.
+    /// Clé d'un serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS, lue par ZillaTerm avant le lancement.
+    /// Fournie, elle permet cette sécurité au client FreeRDP (PSM seulement) ; sinon, un serveur sans TLS est refusé.
     /// </summary>
-    public Func<FreeRdpServerKey, Task<FreeRdpAnswer>>? VerifyServerKey { get; init; }
+    public Func<RdpServerKey, string, int, Task<RdpTrust>>? VerifyServerKey { get; init; }
+
+    /// <summary>
+    /// Empreintes SHA-256 des certificats et clés déjà acceptés pour ce serveur (plusieurs derrière une adresse en
+    /// répartition de charge) : le client FreeRDP accepte celles-ci et celle qui vient d'être vérifiée, aucune autre.
+    /// </summary>
+    public Func<string, int, IReadOnlyCollection<string>>? KnownFingerprints { get; init; }
+}
+
+/// <summary>Réponse de ZillaTerm à un certificat ou une clé lus avant la connexion.</summary>
+internal enum RdpTrust
+{
+    Refused,
+
+    /// <summary>Connu ou approuvé, sans question.</summary>
+    Trusted,
+
+    /// <summary>Accepté par l'utilisateur après une question : la connexion repart avec une nouvelle demande.</summary>
+    AcceptedAfterQuestion,
 }
 
 /// <summary>
 /// Levée par la préparation d'une connexion confiée à un autre client (mstsc) : l'onglet ne signale aucune erreur.
 /// </summary>
 internal sealed class RdpHandedOffException(string message) : Exception(message);
-
-/// <summary>
-/// Réponse à un certificat ou à une clé présentés au client FreeRDP, donnée sans attendre l'utilisateur : le serveur
-/// ferme une connexion qui attend (constaté avec un PSM). Une question se pose après la fin de la connexion
-/// (<see cref="AskThenRetry"/>) : si l'utilisateur fait confiance, une nouvelle connexion est lancée (nouveau jeton PSM :
-/// celui de la première ne sert pas deux fois).
-/// </summary>
-internal sealed record FreeRdpAnswer(bool Accept, Func<Task<bool>>? AskThenRetry = null)
-{
-    public static readonly FreeRdpAnswer Accepted = new(true);
-
-    public static readonly FreeRdpAnswer Refused = new(false);
-
-    /// <summary>Refusé maintenant ; <paramref name="ask"/> une fois la connexion fermée, vrai pour se reconnecter.</summary>
-    public static FreeRdpAnswer Ask(Func<Task<bool>> ask) => new(false, ask);
-}
 
 /// <summary>
 /// Session Bureau à distance dans un onglet, vue du thread de l'interface. Chaque connexion (<see cref="RdpConnection"/>)
@@ -382,9 +384,37 @@ internal sealed class RdpSession : IDisposable
         }
 
         ConnectedAt = DateTime.UtcNow;
+        AutomaticRetries = 0;
         // Fenêtre du client FreeRDP créée à l'ouverture de la connexion : l'emplacement s'affiche maintenant.
         UpdateHost();
         SetState(RdpSessionState.Connected);
+    }
+
+    /// <summary>
+    /// Nouvelles connexions lancées d'elles-mêmes depuis la dernière ouverture de session (autre serveur derrière la
+    /// même adresse) : bornées, chacune consomme une demande au PVWA.
+    /// </summary>
+    internal int AutomaticRetries { get; set; }
+
+    /// <summary>
+    /// Connexion abandonnée avant d'avoir commencé, puis relancée tout de suite avec une nouvelle demande (un jeton PSM ne
+    /// sert qu'une fois) : l'onglet reste « en cours de connexion ».
+    /// </summary>
+    internal void Restart(IRdpConnection connection)
+    {
+        if (connection != _connection || _disposed)
+        {
+            return;
+        }
+
+        OnReleased(connection);
+        _dispatcher.BeginInvoke(async () =>
+        {
+            if (!_disposed && _connection is null)
+            {
+                await ConnectAsync();
+            }
+        });
     }
 
     /// <summary>Étape de la connexion affichée dans l'onglet (thread de l'interface).</summary>
