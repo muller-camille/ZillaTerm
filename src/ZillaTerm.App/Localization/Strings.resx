@@ -5436,20 +5436,11 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="RdpKeyVerifyHeading" xml:space="preserve">
     <value>Check the key of this PSM</value>
   </data>
-  <data name="RdpKeyChangedHeading" xml:space="preserve">
-    <value>The key of this PSM has changed</value>
-  </data>
   <data name="RdpKeyMessage" xml:space="preserve">
     <value>This PSM only accepts the legacy RDP security, without TLS: no certificate proves its identity, only the fingerprint of its key, remembered on this computer once trusted. Its encryption (RC4) is also weaker than TLS: ask the CyberArk administrator to enable TLS on the PSM.</value>
   </data>
-  <data name="RdpKeyChangedMessage" xml:space="preserve">
-    <value>The key presented by this PSM is not the one remembered on this computer. Only continue if the CyberArk administrator confirms the PSM key was changed; otherwise cancel and warn them.</value>
-  </data>
   <data name="RdpKeyFingerprint" xml:space="preserve">
     <value>Key fingerprint (SHA-256)</value>
-  </data>
-  <data name="RdpKeyReplace" xml:space="preserve">
-    <value>Trust the new key and connect</value>
   </data>
   <data name="RdpKeyDowngradeHeading" xml:space="preserve">
     <value>This server no longer offers TLS</value>
@@ -5459,5 +5450,20 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="FreeRdpKeyRefused" xml:space="preserve">
     <value>Server key refused: the session was not opened.</value>
+  </data>
+  <data name="FreeRdpConfirmPending" xml:space="preserve">
+    <value>Answer the question shown: the session starts again if you trust the server.</value>
+  </data>
+  <data name="RdpKeyAnotherHeading" xml:space="preserve">
+    <value>New key for this PSM</value>
+  </data>
+  <data name="RdpKeyAnotherMessage" xml:space="preserve">
+    <value>Keys already known for this address: {0}. A new key usually comes from another PSM server behind the load balancer, but it may also reveal an interception. Only trust it if the CyberArk administrator confirms that this address groups several PSM servers. The known keys stay accepted.</value>
+  </data>
+  <data name="RdpKeyTrustAnother" xml:space="preserve">
+    <value>Also trust this key and connect</value>
+  </data>
+  <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
+    <value>I have checked with the CyberArk administrator that this address groups several PSM servers</value>
   </data>
 </root>

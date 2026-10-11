@@ -16217,15 +16217,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The key of this PSM has changed.
-        /// </summary>
-        public static string RdpKeyChangedHeading {
-            get {
-                return ResourceManager.GetString("RdpKeyChangedHeading", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to This PSM only accepts the legacy RDP security, without TLS: no certificate proves its identity, only the fingerprint of its key, remembered on this computer once trusted. Its encryption (RC4) is also weaker than TLS: ask the CyberArk administrator to enable TLS on the PSM..
         /// </summary>
         public static string RdpKeyMessage {
@@ -16235,29 +16226,11 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The key presented by this PSM is not the one remembered on this computer. Only continue if the CyberArk administrator confirms the PSM key was changed; otherwise cancel and warn them..
-        /// </summary>
-        public static string RdpKeyChangedMessage {
-            get {
-                return ResourceManager.GetString("RdpKeyChangedMessage", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Key fingerprint (SHA-256).
         /// </summary>
         public static string RdpKeyFingerprint {
             get {
                 return ResourceManager.GetString("RdpKeyFingerprint", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Trust the new key and connect.
-        /// </summary>
-        public static string RdpKeyReplace {
-            get {
-                return ResourceManager.GetString("RdpKeyReplace", resourceCulture);
             }
         }
 
@@ -16285,6 +16258,51 @@ namespace ZillaTerm.App.Localization {
         public static string FreeRdpKeyRefused {
             get {
                 return ResourceManager.GetString("FreeRdpKeyRefused", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Answer the question shown: the session starts again if you trust the server..
+        /// </summary>
+        public static string FreeRdpConfirmPending {
+            get {
+                return ResourceManager.GetString("FreeRdpConfirmPending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New key for this PSM.
+        /// </summary>
+        public static string RdpKeyAnotherHeading {
+            get {
+                return ResourceManager.GetString("RdpKeyAnotherHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keys already known for this address: {0}. A new key usually comes from another PSM server behind the load balancer, but it may also reveal an interception. Only trust it if the CyberArk administrator confirms that this address groups several PSM servers. The known keys stay accepted..
+        /// </summary>
+        public static string RdpKeyAnotherMessage {
+            get {
+                return ResourceManager.GetString("RdpKeyAnotherMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Also trust this key and connect.
+        /// </summary>
+        public static string RdpKeyTrustAnother {
+            get {
+                return ResourceManager.GetString("RdpKeyTrustAnother", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to I have checked with the CyberArk administrator that this address groups several PSM servers.
+        /// </summary>
+        public static string RdpKeyAckLoadBalanced {
+            get {
+                return ResourceManager.GetString("RdpKeyAckLoadBalanced", resourceCulture);
             }
         }
     }

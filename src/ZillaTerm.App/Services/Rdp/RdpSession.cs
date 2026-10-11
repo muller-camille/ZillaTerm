@@ -22,16 +22,32 @@ internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, stri
     public bool FreeRdp { get; init; }
 
     /// <summary>
-    /// Certificat présenté au client FreeRDP (serveur, redirection, passerelle) : vrai pour l'accepter. Sans vérification,
-    /// tout certificat est refusé.
+    /// Certificat présenté au client FreeRDP (serveur, redirection, passerelle). Sans vérification, tout certificat est
+    /// refusé.
     /// </summary>
-    public Func<FreeRdpCertificateRequest, Task<bool>>? VerifyCertificate { get; init; }
+    public Func<FreeRdpCertificateRequest, Task<FreeRdpAnswer>>? VerifyCertificate { get; init; }
 
     /// <summary>
-    /// Clé d'un serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS : vrai pour l'accepter. Fournie, elle permet
-    /// cette sécurité au client FreeRDP (PSM seulement) ; sinon, un serveur sans TLS est refusé.
+    /// Clé d'un serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS. Fournie, elle permet cette sécurité au client
+    /// FreeRDP (PSM seulement) ; sinon, un serveur sans TLS est refusé.
     /// </summary>
-    public Func<FreeRdpServerKey, Task<bool>>? VerifyServerKey { get; init; }
+    public Func<FreeRdpServerKey, Task<FreeRdpAnswer>>? VerifyServerKey { get; init; }
+}
+
+/// <summary>
+/// Réponse à un certificat ou à une clé présentés au client FreeRDP, donnée sans attendre l'utilisateur : le serveur
+/// ferme une connexion qui attend (constaté avec un PSM). Une question se pose après la fin de la connexion
+/// (<see cref="AskThenRetry"/>) : si l'utilisateur fait confiance, une nouvelle connexion est lancée (nouveau jeton PSM :
+/// celui de la première ne sert pas deux fois).
+/// </summary>
+internal sealed record FreeRdpAnswer(bool Accept, Func<Task<bool>>? AskThenRetry = null)
+{
+    public static readonly FreeRdpAnswer Accepted = new(true);
+
+    public static readonly FreeRdpAnswer Refused = new(false);
+
+    /// <summary>Refusé maintenant ; <paramref name="ask"/> une fois la connexion fermée, vrai pour se reconnecter.</summary>
+    public static FreeRdpAnswer Ask(Func<Task<bool>> ask) => new(false, ask);
 }
 
 /// <summary>
@@ -383,6 +399,16 @@ internal sealed class RdpSession : IDisposable
         Error = error;
         IsFullScreen = false;
         SetState(normal ? RdpSessionState.Ended : RdpSessionState.Failed);
+    }
+
+    /// <summary>Message de la session terminée, remplacé (réponse à une question posée après sa fin).</summary>
+    internal void ShowError(string error)
+    {
+        if (_connection is null && !_disposed && State is RdpSessionState.Ended or RdpSessionState.Failed)
+        {
+            Error = error;
+            SetState(RdpSessionState.Failed);
+        }
     }
 
     internal void OnFatalError(IRdpConnection connection, int code)

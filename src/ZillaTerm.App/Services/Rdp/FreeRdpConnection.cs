@@ -39,7 +39,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private IntPtr _window;
     private FreeRdpEnded? _ended;
     private volatile bool _released;
-    private bool _keyRefused;
+    private string? _refusal;
+    private Func<Task<bool>>? _askThenRetry;
     private bool _disconnecting;
 
     public FreeRdpConnection(RdpSession session, RdpConnectionRequest request, string label)
@@ -212,40 +213,24 @@ internal sealed class FreeRdpConnection : IRdpConnection
                 OnConnected(process, new IntPtr(connected.Window));
                 break;
             case FreeRdpCertificateRequest certificate:
-                bool accept = false;
-                if (!_released && _request.VerifyCertificate is { } verify)
+                var answer = await AnswerAsync(_request.VerifyCertificate is { } verify ? () => verify(certificate) : null,
+                    $"certificat de {certificate.Host}:{certificate.Port}");
+                if (!answer.Accept)
                 {
-                    try
-                    {
-                        accept = await verify(certificate);
-                    }
-                    catch (Exception e) when (e is not OutOfMemoryException)
-                    {
-                        DebugLog.Write("freerdp", $"{_label} : certificat de {certificate.Host} non vérifié", e);
-                    }
+                    _refusal = Strings.FreeRdpTls;
                 }
 
-                DebugLog.Write("freerdp", $"{_label} : certificat de {certificate.Host}:{certificate.Port} {(accept ? "accepté" : "refusé")}");
-                Send(accept ? "accept" : "deny");
+                Send(answer.Accept ? "accept" : "deny");
                 break;
             case FreeRdpServerKey key:
-                bool trusted = false;
-                if (!_released && _request.VerifyServerKey is { } verifyKey)
+                var keyAnswer = await AnswerAsync(_request.VerifyServerKey is { } verifyKey ? () => verifyKey(key) : null,
+                    $"sécurité RDP sans TLS, clé de {key.Host}:{key.Port} SHA256 {key.Sha256}");
+                if (!keyAnswer.Accept)
                 {
-                    try
-                    {
-                        trusted = await verifyKey(key);
-                    }
-                    catch (Exception e) when (e is not OutOfMemoryException)
-                    {
-                        DebugLog.Write("freerdp", $"{_label} : clé de {key.Host} non vérifiée", e);
-                    }
+                    _refusal = Strings.FreeRdpKeyRefused;
                 }
 
-                DebugLog.Write("freerdp", $"{_label} : sécurité RDP sans TLS, clé de {key.Host}:{key.Port} SHA256 {key.Sha256} "
-                    + (trusted ? "acceptée" : "refusée"));
-                _keyRefused |= !trusted;
-                Send(trusted ? "accept" : "deny");
+                Send(keyAnswer.Accept ? "accept" : "deny");
                 break;
             case FreeRdpEnded ended:
                 _ended = ended;
@@ -261,6 +246,30 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
                 break;
         }
+    }
+
+    /// <summary>
+    /// Réponse à un certificat ou une clé, refus en cas d'erreur. Une question différée est gardée pour la fin de la
+    /// connexion (<see cref="OnExited"/>).
+    /// </summary>
+    private async Task<FreeRdpAnswer> AnswerAsync(Func<Task<FreeRdpAnswer>>? verify, string what)
+    {
+        var answer = FreeRdpAnswer.Refused;
+        if (!_released && verify is not null)
+        {
+            try
+            {
+                answer = await verify();
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                DebugLog.Write("freerdp", $"{_label} : {what} non vérifié", e);
+            }
+        }
+
+        DebugLog.Write("freerdp", $"{_label} : {what} " + (answer.Accept ? "accepté" : answer.AskThenRetry is null ? "refusé" : "à confirmer après la fin de la connexion"));
+        _askThenRetry ??= answer.AskThenRetry;
+        return answer;
     }
 
     /// <summary>Fenêtre de FreeRDP créée dans l'emplacement : vérifiée (enfant de l'emplacement, de ce processus).</summary>
@@ -342,6 +351,10 @@ internal sealed class FreeRdpConnection : IRdpConnection
                 // Arrêté après une déconnexion demandée : fin normale, pas un plantage.
                 _session.OnEnded(this, _disconnecting, _disconnecting ? null : Text.Format(Strings.FreeRdpCrashed, exitCode));
             }
+            else if (_askThenRetry is not null && !_disconnecting)
+            {
+                _session.OnEnded(this, false, Strings.FreeRdpConfirmPending);
+            }
             else
             {
                 var (normal, end) = FreeRdpExit.Classify(ended.Code);
@@ -349,16 +362,48 @@ internal sealed class FreeRdpConnection : IRdpConnection
             }
 
             _session.OnReleased(this);
+            // Pas de question après une déconnexion demandée.
+            if (_askThenRetry is { } ask && !_disconnecting)
+            {
+                _ = _ui.InvokeAsync(() => AskThenRetryAsync(ask));
+            }
         }
 
         process.Dispose();
         _detached.TrySetResult();
     }
 
+    /// <summary>
+    /// Question posée une fois la connexion fermée (le serveur n'attend pas) ; confiance accordée : nouvelle connexion,
+    /// avec une nouvelle demande au PVWA pour une session PSM (nouveau jeton).
+    /// </summary>
+    private async Task AskThenRetryAsync(Func<Task<bool>> ask)
+    {
+        bool retry = false;
+        try
+        {
+            retry = await ask();
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            DebugLog.Write("freerdp", $"{_label} : question après la connexion", e);
+        }
+
+        if (retry)
+        {
+            DebugLog.Write("freerdp", $"{_label} : confiance accordée, nouvelle connexion");
+            await _session.ReconnectAsync();
+        }
+        else
+        {
+            _session.ShowError(_refusal ?? Strings.FreeRdpKeyRefused);
+        }
+    }
+
     private string Describe(FreeRdpEnd end, FreeRdpEnded ended)
     {
         var server = _request.Settings.Server;
-        var text = _keyRefused ? Strings.FreeRdpKeyRefused : end switch
+        var text = _refusal ?? end switch
         {
             FreeRdpEnd.TakenOver => Strings.FreeRdpTakenOver,
             FreeRdpEnd.Timeout => Strings.FreeRdpTimeout,

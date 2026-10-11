@@ -5436,20 +5436,11 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="RdpKeyVerifyHeading" xml:space="preserve">
     <value>Verifica la chiave di questo PSM</value>
   </data>
-  <data name="RdpKeyChangedHeading" xml:space="preserve">
-    <value>La chiave di questo PSM è cambiata</value>
-  </data>
   <data name="RdpKeyMessage" xml:space="preserve">
     <value>Questo PSM accetta solo la vecchia sicurezza RDP, senza TLS: nessun certificato ne prova l'identità, solo l'impronta della sua chiave, memorizzata su questo computer una volta approvata. Anche la sua cifratura (RC4) è più debole di TLS: chiedi all'amministratore CyberArk di attivare TLS sul PSM.</value>
   </data>
-  <data name="RdpKeyChangedMessage" xml:space="preserve">
-    <value>La chiave presentata da questo PSM non è quella memorizzata su questo computer. Continua solo se l'amministratore CyberArk conferma che la chiave del PSM è cambiata; altrimenti annulla e avvisalo.</value>
-  </data>
   <data name="RdpKeyFingerprint" xml:space="preserve">
     <value>Impronta della chiave (SHA-256)</value>
-  </data>
-  <data name="RdpKeyReplace" xml:space="preserve">
-    <value>Fidati della nuova chiave e connettiti</value>
   </data>
   <data name="RdpKeyDowngradeHeading" xml:space="preserve">
     <value>Questo server non offre più TLS</value>
@@ -5459,5 +5450,20 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="FreeRdpKeyRefused" xml:space="preserve">
     <value>Chiave del server rifiutata: la sessione non è stata aperta.</value>
+  </data>
+  <data name="FreeRdpConfirmPending" xml:space="preserve">
+    <value>Rispondi alla domanda visualizzata: la sessione riprende se ti fidi del server.</value>
+  </data>
+  <data name="RdpKeyAnotherHeading" xml:space="preserve">
+    <value>Nuova chiave per questo PSM</value>
+  </data>
+  <data name="RdpKeyAnotherMessage" xml:space="preserve">
+    <value>Chiavi già note per questo indirizzo: {0}. Una nuova chiave proviene in genere da un altro server PSM dietro il bilanciamento del carico, ma può anche segnalare un'intercettazione. Fidati solo se l'amministratore CyberArk conferma che questo indirizzo raggruppa più server PSM. Le chiavi già note restano accettate.</value>
+  </data>
+  <data name="RdpKeyTrustAnother" xml:space="preserve">
+    <value>Fidati anche di questa chiave e connettiti</value>
+  </data>
+  <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
+    <value>Ho verificato con l'amministratore CyberArk che questo indirizzo raggruppa più server PSM</value>
   </data>
 </root>

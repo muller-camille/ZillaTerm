@@ -1227,8 +1227,11 @@ moteur ni fichier de configuration chargés à l'exécution, ses dossiers compil
 administrateurs ; variables de journal, de proxy et d'OpenSSL retirées de son environnement ; jamais l'ancienne
 « sécurité RDP » sans TLS, sauf pour un PSM qui n'accepte qu'elle : la clé du PSM, qui n'est authentifiée par aucun
 certificat, est alors soumise à ZillaTerm avant tout envoi d'identifiants et épinglée (`rdp://serveur:port`, type
-`RDP-RSA` : question au premier usage, alerte si elle change), chiffrement de 128 bits au moins ; elle est refusée si ce
-serveur a déjà présenté un certificat TLS (retrait de TLS : interception possible). Le processus est dans un objet de travail fermé avec ZillaTerm : il ne lui survit pas.
+`RDP-RSA`), chiffrement de 128 bits au moins ; plusieurs clés par adresse (PSM en répartition de charge : une par
+serveur, chacune confirmée une fois) ; elle est refusée si ce serveur a déjà présenté un certificat TLS (retrait de TLS :
+interception possible). Une clé ou un certificat à confirmer est refusé tout de suite (le PSM ne patiente pas pendant
+une question) ; la question est posée une fois la connexion fermée et, si vous faites confiance, une nouvelle connexion
+est lancée avec un nouveau jeton demandé au PVWA (celui d'une session PSM ne sert qu'une fois). Le processus est dans un objet de travail fermé avec ZillaTerm : il ne lui survit pas.
 Sa fenêtre est une enfant de l'onglet (option `/parent-window`) ; un clic dedans donne le clavier à l'onglet, d'où
 le crochet clavier de FreeRDP envoie les touches à la session. Une application distante est affichée dans cette
 fenêtre (surface de la session, comme un bureau) au lieu de fenêtres à part. Fin de session et erreurs : le code de
@@ -1334,7 +1337,8 @@ l'écran.
 | Une session PSM s'ouvre dans la Connexion Bureau à distance malgré l'option « dans un onglet » | Connexion par une passerelle Bureau à distance, ou client FreeRDP impossible à lancer sur le poste (stratégie du poste) : la barre d'état le dit. |
 | Alt+Tab ou la touche Windows ne répondent plus | L'onglet d'une session PSM a le clavier : toutes les touches vont à la session. Cliquez ailleurs dans ZillaTerm (un autre onglet, la liste). |
 | Session PSM : « Vérifier la clé de ce PSM » | Le PSM n'accepte que l'ancienne « sécurité RDP », sans TLS : seule l'empreinte de sa clé l'identifie. Acceptez-la au premier usage (elle est retenue) et demandez à l'administrateur CyberArk d'activer TLS sur le PSM. |
-| Session PSM : « La clé de ce PSM a changé » ou « Ce serveur ne propose plus TLS » | La connexion est peut-être interceptée : ne continuez qu'avec l'accord de l'administrateur CyberArk (voir le message). |
+| Session PSM : « Nouvelle clé pour ce PSM » | L'adresse du PSM regroupe sans doute plusieurs serveurs (répartition de charge), chacun avec sa clé : confirmez-la si l'administrateur CyberArk le confirme. Les clés déjà acceptées le restent. |
+| Session PSM : « Ce serveur ne propose plus TLS » | La connexion est peut-être interceptée : ne continuez qu'avec l'accord de l'administrateur CyberArk (voir le message). |
 | Un onglet de bureau à distance direct (KeePass) affiche « Erreur du contrôle Bureau à distance » | Signalez le code affiché (si le contrôle Bureau à distance est absent du poste, la connexion passe par `mstsc`). |
 | VNC : « Le serveur VNC ne propose aucune authentification prise en charge… » | Le serveur exige une authentification propre à son éditeur (compte Windows, chiffrement VeNCrypt…) : activez l'authentification « mot de passe VNC » sur le serveur. |
 | VNC : « Pas de réponse VNC du serveur en 30 secondes » | Mauvais port (5900 + numéro d'écran) ou service autre que VNC à cette adresse. |

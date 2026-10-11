@@ -5436,20 +5436,11 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="RdpKeyVerifyHeading" xml:space="preserve">
     <value>Vérifier la clé de ce PSM</value>
   </data>
-  <data name="RdpKeyChangedHeading" xml:space="preserve">
-    <value>La clé de ce PSM a changé</value>
-  </data>
   <data name="RdpKeyMessage" xml:space="preserve">
     <value>Ce PSM n'accepte que l'ancienne sécurité RDP, sans TLS : aucun certificat ne prouve son identité, seule l'empreinte de sa clé, retenue sur ce poste une fois approuvée. Son chiffrement (RC4) est aussi plus faible que TLS : demandez à l'administrateur CyberArk d'activer TLS sur le PSM.</value>
   </data>
-  <data name="RdpKeyChangedMessage" xml:space="preserve">
-    <value>La clé présentée par ce PSM n'est pas celle retenue sur ce poste. Ne continuez que si l'administrateur CyberArk confirme le changement de clé du PSM ; sinon, annulez et prévenez-le.</value>
-  </data>
   <data name="RdpKeyFingerprint" xml:space="preserve">
     <value>Empreinte de la clé (SHA-256)</value>
-  </data>
-  <data name="RdpKeyReplace" xml:space="preserve">
-    <value>Faire confiance à la nouvelle clé et se connecter</value>
   </data>
   <data name="RdpKeyDowngradeHeading" xml:space="preserve">
     <value>Ce serveur ne propose plus TLS</value>
@@ -5459,5 +5450,20 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="FreeRdpKeyRefused" xml:space="preserve">
     <value>Clé du serveur refusée : la session n'a pas été ouverte.</value>
+  </data>
+  <data name="FreeRdpConfirmPending" xml:space="preserve">
+    <value>Répondez à la question affichée : la session reprend si vous faites confiance au serveur.</value>
+  </data>
+  <data name="RdpKeyAnotherHeading" xml:space="preserve">
+    <value>Nouvelle clé pour ce PSM</value>
+  </data>
+  <data name="RdpKeyAnotherMessage" xml:space="preserve">
+    <value>Clés déjà connues pour cette adresse : {0}. Une nouvelle clé vient en général d'un autre serveur PSM derrière la répartition de charge, mais elle peut aussi signaler une interception. Ne lui faites confiance que si l'administrateur CyberArk confirme que cette adresse regroupe plusieurs serveurs PSM. Les clés déjà connues restent acceptées.</value>
+  </data>
+  <data name="RdpKeyTrustAnother" xml:space="preserve">
+    <value>Faire aussi confiance à cette clé et se connecter</value>
+  </data>
+  <data name="RdpKeyAckLoadBalanced" xml:space="preserve">
+    <value>J'ai vérifié avec l'administrateur CyberArk que cette adresse regroupe plusieurs serveurs PSM</value>
   </data>
 </root>

@@ -374,7 +374,7 @@ public class RdpSessionTests(ITestOutputHelper output)
             VerifyCertificate = c =>
             {
                 certificates.Add(c);
-                return Task.FromResult(true);
+                return Task.FromResult(FreeRdpAnswer.Accepted);
             },
         };
         await RunOnStaAsync(request, async (session, window) =>
@@ -425,7 +425,7 @@ public class RdpSessionTests(ITestOutputHelper output)
             RemoteApplicationName = "ZillaTerm test",
             RemoteApplicationCmdLine = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File {script}",
         };
-        var request = new RdpConnectionRequest(settings, account.Password) { FreeRdp = true, VerifyCertificate = _ => Task.FromResult(true) };
+        var request = new RdpConnectionRequest(settings, account.Password) { FreeRdp = true, VerifyCertificate = _ => Task.FromResult(FreeRdpAnswer.Accepted) };
         await RunOnStaAsync(request, async (session, window) =>
         {
             await session.ConnectAsync();
@@ -448,8 +448,10 @@ public class RdpSessionTests(ITestOutputHelper output)
 
     /// <summary>
     /// Serveur qui n'accepte que l'ancienne sécurité RDP, sans TLS (cas d'un PSM) : sa clé est soumise à ZillaTerm avant
-    /// tout envoi d'identifiants, la session s'ouvre si elle est acceptée et pas si elle est refusée ; aucun certificat
-    /// TLS n'est présenté. Le poste de CI est passé en sécurité RDP le temps du test.
+    /// tout envoi d'identifiants ; aucun certificat TLS n'est présenté. Clé inconnue : refusée tout de suite, la question
+    /// est posée une fois la connexion fermée (ici une réponse en 20 s : le serveur n'aurait pas attendu), puis une
+    /// nouvelle connexion s'ouvre avec la clé acceptée. Refusée : pas de session. Le poste de CI est passé en sécurité
+    /// RDP le temps du test.
     /// </summary>
     [Fact]
     [Trait("Category", "RdpIntegration")]
@@ -469,39 +471,58 @@ public class RdpSessionTests(ITestOutputHelper output)
         {
             var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab() with { EnableCredSsp = false };
             string? first = null;
-            await RunOnStaAsync(Request(accept: true), async session =>
+            bool trusted = false;
+            int asked = 0, presented = 0;
+            await RunOnStaAsync(Request(async () =>
+            {
+                asked++;
+                await Task.Delay(TimeSpan.FromSeconds(20));
+                trusted = true;
+                return true;
+            }), async session =>
             {
                 await session.ConnectAsync();
-                var state = await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90));
-                output.WriteLine($"Clé acceptée : {state} {session.Error}");
-                Assert.Equal(RdpSessionState.Connected, state);
+                var state = await WaitForAsync(session, s => s == RdpSessionState.Connected, TimeSpan.FromSeconds(120));
+                output.WriteLine($"Clé acceptée après la question : {state}, clé présentée {presented} fois");
+                Assert.Equal(1, asked);
+                Assert.Equal(2, presented);
                 session.Disconnect();
                 await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30));
             });
             Assert.NotNull(first);
 
-            await RunOnStaAsync(Request(accept: false), async session =>
+            trusted = false;
+            asked = 0;
+            await RunOnStaAsync(Request(() =>
+            {
+                asked++;
+                return Task.FromResult(false);
+            }), async session =>
             {
                 var states = new List<RdpSessionState>();
                 session.StateChanged += () => states.Add(session.State);
                 await session.ConnectAsync();
-                var state = await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
-                output.WriteLine($"Clé refusée : {state} {session.Error}");
-                Assert.Equal(RdpSessionState.Failed, state);
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
+                // La question, puis le message de la clé refusée.
+                await WaitForAsync(session, _ => asked == 1 && session.Error == ZillaTerm.App.Localization.Strings.FreeRdpKeyRefused,
+                    TimeSpan.FromSeconds(10));
+                output.WriteLine($"Clé refusée : {session.State} {session.Error}");
+                Assert.Equal(RdpSessionState.Failed, session.State);
                 Assert.DoesNotContain(RdpSessionState.Connected, states);
             });
 
-            RdpConnectionRequest Request(bool accept) => new(settings, account.Password)
+            RdpConnectionRequest Request(Func<Task<bool>> ask) => new(settings, account.Password)
             {
                 FreeRdp = true,
                 VerifyCertificate = c => throw new Xunit.Sdk.XunitException($"Certificat TLS présenté : {c.Host}"),
                 VerifyServerKey = k =>
                 {
+                    presented++;
                     output.WriteLine($"Clé du serveur {k.Host}:{k.Port} SHA256 {k.Sha256}");
                     Assert.Equal("127.0.0.2", k.Host);
                     // La même clé à chaque connexion : c'est elle qu'on épingle.
                     Assert.Equal(first ??= k.Sha256, k.Sha256);
-                    return Task.FromResult(accept);
+                    return Task.FromResult(trusted ? FreeRdpAnswer.Accepted : FreeRdpAnswer.Ask(ask));
                 },
             };
         }
@@ -536,7 +557,7 @@ public class RdpSessionTests(ITestOutputHelper output)
             VerifyCertificate = _ =>
             {
                 asked++;
-                return Task.FromResult(false);
+                return Task.FromResult(FreeRdpAnswer.Refused);
             },
         };
         await RunOnStaAsync(request, async session =>

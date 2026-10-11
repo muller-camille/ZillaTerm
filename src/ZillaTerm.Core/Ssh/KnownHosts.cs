@@ -123,6 +123,17 @@ public static class KnownHosts
         }
     }
 
+    /// <summary>
+    /// Ajoute une clé de ce type pour ce serveur sans retirer les autres : plusieurs serveurs derrière une même adresse
+    /// (PSM en répartition de charge), chacun avec sa clé. Clé « hôte:port type empreinte ».
+    /// </summary>
+    public static void RememberAnother(IDictionary<string, string> store, string host, int port, string algorithm, string sha256) =>
+        store[$"{Key(host, port)} {KeyType(algorithm)} {sha256[..Math.Min(16, sha256.Length)]}"] = Format(algorithm, sha256);
+
+    /// <summary>Nombre de clés de ce type acceptées pour ce serveur.</summary>
+    public static int CountKeys(IReadOnlyDictionary<string, string> store, string host, int port, string algorithm) =>
+        KnownKeys(store, host, port).Count(k => KeyType(k.Algorithm) == KeyType(algorithm));
+
     private static (string Algorithm, string Sha256) Parse(string value)
     {
         int space = value.IndexOf(' ');
