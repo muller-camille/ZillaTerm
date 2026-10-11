@@ -2,7 +2,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using ZillaTerm.Core.Diagnostics;
 
 namespace ZillaTerm.App.Services.Rdp;
@@ -97,14 +99,10 @@ internal static class FreeRdpClient
         var hash = SHA256.HashData(content);
         var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ZillaTerm", "FreeRDP");
         var folder = Path.Combine(root, Convert.ToHexString(hash, 0, 8));
-        if (!PrivateTemp.TryRestrict(folder))
-        {
-            throw new FreeRdpStartException(folder);
-        }
-
         var path = Path.Combine(folder, "wfreerdp.exe");
         try
         {
+            Restrict(folder);
             if (OpenVerified(path, hash) is { } existing)
             {
                 return existing;
@@ -121,6 +119,23 @@ internal static class FreeRdpClient
         {
             throw new FreeRdpStartException(e.Message, e);
         }
+    }
+
+    /// <summary>
+    /// Crée le dossier s'il manque et réserve ses droits à l'utilisateur (fichiers compris). Il est dans son profil ;
+    /// son propriétaire peut être le groupe Administrateurs (compte administrateur), d'où aucune condition dessus :
+    /// l'empreinte du client est de toute façon vérifiée avant chaque lancement.
+    /// </summary>
+    private static void Restrict(string folder)
+    {
+        var directory = Directory.CreateDirectory(folder);
+        using var identity = WindowsIdentity.GetCurrent();
+        var me = identity.User ?? throw new FreeRdpStartException(folder);
+        var restricted = new DirectorySecurity();
+        restricted.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+        restricted.AddAccessRule(new FileSystemAccessRule(me, FileSystemRights.FullControl,
+            InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+        directory.SetAccessControl(restricted);
     }
 
     private static FileStream? OpenVerified(string path, byte[] hash)
