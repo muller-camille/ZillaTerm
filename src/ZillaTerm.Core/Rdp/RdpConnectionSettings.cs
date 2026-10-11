@@ -5,9 +5,8 @@ namespace ZillaTerm.Core.Rdp;
 
 /// <summary>
 /// Réglages d'une session Bureau à distance ouverte dans un onglet de l'application : connexion directe (accès
-/// d'urgence), ou session PSM en bureau lue dans le fichier .rdp du PVWA (<see cref="FromRdpFile"/>). Le mot de passe
-/// n'en fait pas partie. Un fichier en application distante (RemoteApp : composants PSM pour SSH, WinSCP...) reste
-/// confié à Connexion Bureau à distance (mstsc).
+/// d'urgence), ou session PSM lue dans le fichier .rdp du PVWA (<see cref="FromRdpFile"/>), en bureau ou en
+/// application distante (RemoteApp). Le mot de passe n'en fait pas partie.
 /// </summary>
 public sealed record RdpConnectionSettings
 {
@@ -97,10 +96,21 @@ public sealed record RdpConnectionSettings
     public bool SmartSizing { get; init; }
 
     /// <summary>
-    /// Vrai si le fichier demande une application distante (RemoteApp) : pas de bureau, les fenêtres de l'application
-    /// s'ouvrent sur le bureau de ce poste. Un tel fichier est confié tel quel à mstsc.
+    /// Vrai si le fichier demande une application distante (RemoteApp) : pas de bureau, seulement les fenêtres de
+    /// l'application (avec mstsc, sur le bureau de ce poste ; avec FreeRDP dans ZillaTerm, dans l'onglet).
     /// </summary>
     public bool IsRemoteApp { get; init; }
+
+    /// <summary>Application distante lancée (« ||PSMInitSession » pour une session PSM).</summary>
+    public string RemoteApplicationProgram { get; init; } = "";
+
+    public string RemoteApplicationName { get; init; } = "";
+
+    /// <summary>Arguments de l'application distante (jeton de la session PSM) : jamais dans un journal.</summary>
+    public string RemoteApplicationCmdLine { get; init; } = "";
+
+    /// <summary>Vrai si la connexion passe par une passerelle Bureau à distance (toujours, ou si le serveur est injoignable).</summary>
+    public bool UsesGateway => GatewayHostname.Trim().Length > 0 && GatewayUsageMethod is 1 or 2;
 
     /// <summary>
     /// Réglages d'une connexion directe (accès d'urgence) : authentification réseau, alerte si le serveur n'est pas
@@ -170,6 +180,9 @@ public sealed record RdpConnectionSettings
             ConnectToAdministerServer = Bool("administrative session", false) || Bool("connect to console", false),
             SmartSizing = Bool("smart sizing", false),
             IsRemoteApp = Bool("remoteapplicationmode", false),
+            RemoteApplicationProgram = Text("remoteapplicationprogram"),
+            RemoteApplicationName = Text("remoteapplicationname"),
+            RemoteApplicationCmdLine = Text("remoteapplicationcmdline"),
         };
     }
 

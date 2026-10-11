@@ -59,10 +59,12 @@ public partial class MainWindow
 
     /// <summary>
     /// Réglages pour ouvrir dans un onglet la session PSM de ce fichier du PVWA, ou null pour la confier à mstsc :
-    /// option désactivée, application distante (composants PSM pour SSH, WinSCP…), fichier illisible ou contrôle
-    /// Bureau à distance absent (<paramref name="reason"/> le dit alors à l'utilisateur).
+    /// option désactivée, fichier illisible, passerelle Bureau à distance, ou ni client FreeRDP ni contrôle Bureau à
+    /// distance pour ce fichier (<paramref name="reason"/> le dit alors à l'utilisateur). Avec le client FreeRDP
+    /// embarqué (versions publiées), bureau comme application distante s'ouvrent dans l'onglet ; sans lui, seulement
+    /// un bureau, avec le contrôle de Windows.
     /// </summary>
-    private RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, out string? reason)
+    private (RdpConnectionSettings Settings, bool FreeRdp)? PsmTabSettings(byte[] rdp, string label, out string? reason)
     {
         reason = null;
         if (!_settings.PsmDesktopInTab)
@@ -81,9 +83,21 @@ public partial class MainWindow
             return null;
         }
 
+        if (settings.UsesGateway)
+        {
+            reason = Text.Format(Strings.PsmTabGateway, label);
+            DebugLog.Write("psm", "Connexion par une passerelle Bureau à distance : ouverte avec mstsc.");
+            return null;
+        }
+
+        if (FreeRdpClient.IsAvailable)
+        {
+            return (settings.ForPsmTab(), true);
+        }
+
         if (settings.IsRemoteApp)
         {
-            DebugLog.Write("psm", "Composant en application distante (RemoteApp) : ouvert avec mstsc.");
+            DebugLog.Write("psm", "Composant en application distante (RemoteApp), client FreeRDP absent : ouvert avec mstsc.");
             return null;
         }
 
@@ -94,7 +108,32 @@ public partial class MainWindow
             return null;
         }
 
-        return settings.ForPsmTab();
+        return (settings.ForPsmTab(), false);
+    }
+
+    /// <summary>
+    /// Certificat présenté au client FreeRDP (PSM, redirection ou passerelle), vérifié comme pour une connexion directe
+    /// (<see cref="TrustRdpCertificate"/>) : approuvé par Windows, ou épinglé, ou confirmé par l'utilisateur. La chaîne
+    /// est vérifiée hors du thread de l'interface (révocation en ligne).
+    /// </summary>
+    private async Task<bool> VerifyFreeRdpCertificateAsync(FreeRdpCertificateRequest request)
+    {
+        RdpCertificate certificate;
+        try
+        {
+            certificate = await Task.Run(() => RdpCertificateProbe.FromPemChain(request.Pem, request.Host));
+        }
+        catch (RdpCertificateException e)
+        {
+            DebugLog.Write("rdp", $"{request.Host}:{request.Port} : certificat illisible ({e.Message}) ; refusé");
+            return false;
+        }
+
+        var kind = request.IsGateway ? "passerelle " : request.IsRedirect ? "redirection " : "";
+        DebugLog.Write("rdp", $"{kind}{request.Host}:{request.Port} : certificat SHA256 {certificate.Sha256}, « {certificate.Subject} », "
+            + $"{(certificate.Trusted ? "approuvé par Windows" : certificate.Problem)}");
+        var address = request.Port == RdpConnectionSettings.DefaultPort ? request.Host : $"{request.Host}:{request.Port}";
+        return TrustRdpCertificate(address, request.Host, request.Port, certificate);
     }
 
     private async Task CloseRdpTabAsync(TabItem tab)
@@ -167,7 +206,7 @@ public partial class MainWindow
         var certificate = await RdpCertificateProbe.GetAsync(settings.Server, settings.Port, ct);
         DebugLog.Write("rdp", $"{settings.Server}:{settings.Port} : certificat SHA256 {certificate.Sha256}, « {certificate.Subject} », "
             + $"{(certificate.Trusted ? "approuvé par Windows" : certificate.Problem)}");
-        if (!TrustRdpCertificate(address, settings, certificate))
+        if (!TrustRdpCertificate(address, settings.Server, settings.Port, certificate))
         {
             throw new OperationCanceledException(Strings.RdpCertificateDeclined);
         }
@@ -178,10 +217,10 @@ public partial class MainWindow
     /// sans question (un certificat non approuvé présenté ensuite est un changement). Sinon : accepté s'il est celui
     /// épinglé, question au premier usage, alerte s'il a changé, qui ne s'accepte qu'après confirmation.
     /// </summary>
-    private bool TrustRdpCertificate(string address, RdpConnectionSettings settings, RdpCertificate certificate)
+    private bool TrustRdpCertificate(string address, string server, int port, RdpCertificate certificate)
     {
-        var host = "rdp://" + settings.Server;
-        var status = KnownHosts.Check(_settings.KnownHosts, host, settings.Port, "X.509", certificate.Sha256);
+        var host = "rdp://" + server;
+        var status = KnownHosts.Check(_settings.KnownHosts, host, port, "X.509", certificate.Sha256);
         if (status == HostKeyStatus.Trusted)
         {
             return true;
@@ -190,12 +229,12 @@ public partial class MainWindow
         if (!certificate.Trusted
             && !ConfirmCertificate(Strings.RdpCertificateTitle, Strings.RdpCertVerifyHeading, Strings.RdpCertChangedHeading, address,
                 (certificate.Subject, certificate.Issuer, certificate.NotBefore, certificate.NotAfter, certificate.Sha256, certificate.Problem),
-                status == HostKeyStatus.Unknown ? null : KnownHosts.Known(_settings.KnownHosts, host, settings.Port, "X.509")?.Sha256 ?? ""))
+                status == HostKeyStatus.Unknown ? null : KnownHosts.Known(_settings.KnownHosts, host, port, "X.509")?.Sha256 ?? ""))
         {
             return false;
         }
 
-        KnownHosts.Remember(_settings.KnownHosts, host, settings.Port, "X.509", certificate.Sha256);
+        KnownHosts.Remember(_settings.KnownHosts, host, port, "X.509", certificate.Sha256);
         SaveSettings();
         return true;
     }

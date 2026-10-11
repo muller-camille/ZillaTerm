@@ -16001,7 +16001,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to {0}: the Remote Desktop control could not be used ({1}), PSM session opened in Remote Desktop Connection..
+        ///   Looks up a localized string similar to {0}: the Remote Desktop client could not be used ({1}), PSM session opened in Remote Desktop Connection..
         /// </summary>
         public static string PsmTabFallback {
             get {
@@ -16037,7 +16037,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Open PSM Windows sessions (desktop) in a ZillaTerm _tab, otherwise in Remote Desktop Connection.
+        ///   Looks up a localized string similar to Open PSM Windows sessions in a ZillaTerm _tab, otherwise in Remote Desktop Connection.
         /// </summary>
         public static string PsmDesktopInTab {
             get {
@@ -16046,7 +16046,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The session takes the size of the tab. Windows checks the PSM certificate as in Remote Desktop Connection, and the redirections stay those asked by the PVWA, never more. Remote applications (PSM-SSH, WinSCP…) still open in Remote Desktop Connection..
+        ///   Looks up a localized string similar to The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection..
         /// </summary>
         public static string PsmDesktopInTabHelp {
             get {
@@ -16064,11 +16064,137 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The PVWA generates an RDP connection: a Windows desktop opens in a ZillaTerm tab, a remote application (PSM-SSH, WinSCP…) in Remote Desktop Connection (mstsc)..
+        ///   Looks up a localized string similar to The PVWA generates an RDP connection: it opens in a ZillaTerm tab (built-in FreeRDP client), Windows desktop or remote application alike..
         /// </summary>
         public static string PsmHintTab {
             get {
                 return ResourceManager.GetString("PsmHintTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The FreeRDP Remote Desktop client could not start: {0}.
+        /// </summary>
+        public static string FreeRdpStartFailed {
+            get {
+                return ResourceManager.GetString("FreeRdpStartFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The FreeRDP Remote Desktop client stopped unexpectedly (code {0})..
+        /// </summary>
+        public static string FreeRdpCrashed {
+            get {
+                return ResourceManager.GetString("FreeRdpCrashed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The session was taken over from another connection..
+        /// </summary>
+        public static string FreeRdpTakenOver {
+            get {
+                return ResourceManager.GetString("FreeRdpTakenOver", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session closed by the server (idle, or logon took too long)..
+        /// </summary>
+        public static string FreeRdpTimeout {
+            get {
+                return ResourceManager.GetString("FreeRdpTimeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server refused the connection..
+        /// </summary>
+        public static string FreeRdpDenied {
+            get {
+                return ResourceManager.GetString("FreeRdpDenied", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server not found: {0}..
+        /// </summary>
+        public static string FreeRdpNameNotFound {
+            get {
+                return ResourceManager.GetString("FreeRdpNameNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server unreachable, or connection lost: {0}..
+        /// </summary>
+        public static string FreeRdpUnreachable {
+            get {
+                return ResourceManager.GetString("FreeRdpUnreachable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No secure connection possible, or the server certificate was refused..
+        /// </summary>
+        public static string FreeRdpTls {
+            get {
+                return ResourceManager.GetString("FreeRdpTls", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server and ZillaTerm have no security mode in common (network level authentication, TLS)..
+        /// </summary>
+        public static string FreeRdpNegotiation {
+            get {
+                return ResourceManager.GetString("FreeRdpNegotiation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to User name or password refused by the server..
+        /// </summary>
+        public static string FreeRdpAuthentication {
+            get {
+                return ResourceManager.GetString("FreeRdpAuthentication", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Account locked, expired or disabled, or password to change..
+        /// </summary>
+        public static string FreeRdpAccount {
+            get {
+                return ResourceManager.GetString("FreeRdpAccount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Logon refused on this server..
+        /// </summary>
+        public static string FreeRdpAccessDenied {
+            get {
+                return ResourceManager.GetString("FreeRdpAccessDenied", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to FreeRDP Remote Desktop client error..
+        /// </summary>
+        public static string FreeRdpOther {
+            get {
+                return ResourceManager.GetString("FreeRdpOther", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: connection through a Remote Desktop gateway, PSM session opened in Remote Desktop Connection..
+        /// </summary>
+        public static string PsmTabGateway {
+            get {
+                return ResourceManager.GetString("PsmTabGateway", resourceCulture);
             }
         }
     }

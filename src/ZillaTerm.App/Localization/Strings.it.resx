@@ -5365,7 +5365,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>{0}: controllo Desktop remoto non disponibile, sessione PSM aperta in Connessione Desktop remoto.</value>
   </data>
   <data name="PsmTabFallback" xml:space="preserve">
-    <value>{0}: impossibile usare il controllo Desktop remoto ({1}), sessione PSM aperta in Connessione Desktop remoto.</value>
+    <value>{0}: impossibile usare il client Desktop remoto ({1}), sessione PSM aperta in Connessione Desktop remoto.</value>
   </data>
   <data name="PsmTabRemoteAppNow" xml:space="preserve">
     <value>Il PVWA ora restituisce un'applicazione remota invece di un desktop: riapri la connessione dall'elenco.</value>
@@ -5377,15 +5377,57 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Windows chiede di confermare l'identità di {0}: verifica il certificato prima di accettare.</value>
   </data>
   <data name="PsmDesktopInTab" xml:space="preserve">
-    <value>Apri le sessioni PSM Windows (desktop) in una sc_heda di ZillaTerm, altrimenti in Connessione Desktop remoto</value>
+    <value>Apri le sessioni PSM Windows in una sc_heda di ZillaTerm, altrimenti in Connessione Desktop remoto</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>La sessione prende la dimensione della scheda. Windows verifica il certificato del PSM come in Connessione Desktop remoto, e i reindirizzamenti restano quelli richiesti dal PVWA, mai di più. Le applicazioni remote (PSM-SSH, WinSCP…) si aprono sempre in Connessione Desktop remoto.</value>
+    <value>La sessione prende la dimensione della scheda e si apre con il client FreeRDP integrato in ZillaTerm, sia desktop sia applicazione remota (PSM-RDP, PSM-SSH, WinSCP…), senza una finestra separata. ZillaTerm verifica il certificato del PSM (attendibile per Windows, altrimenti impronta confermata una volta e poi ricordata), e i reindirizzamenti restano quelli richiesti dal PVWA, mai di più. Una connessione tramite un gateway Desktop remoto si apre sempre in Connessione Desktop remoto.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessioni PSM Windows in una scheda</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
-    <value>Il PVWA genera una connessione RDP: un desktop Windows si apre in una scheda di ZillaTerm, un'applicazione remota (PSM-SSH, WinSCP…) in Connessione Desktop remoto (mstsc).</value>
+    <value>Il PVWA genera una connessione RDP: si apre in una scheda di ZillaTerm (client FreeRDP integrato), sia desktop Windows sia applicazione remota.</value>
+  </data>
+  <data name="FreeRdpStartFailed" xml:space="preserve">
+    <value>Impossibile avviare il client Desktop remoto FreeRDP: {0}</value>
+  </data>
+  <data name="FreeRdpCrashed" xml:space="preserve">
+    <value>Il client Desktop remoto FreeRDP si è chiuso in modo imprevisto (codice {0}).</value>
+  </data>
+  <data name="FreeRdpTakenOver" xml:space="preserve">
+    <value>La sessione è stata ripresa da un'altra connessione.</value>
+  </data>
+  <data name="FreeRdpTimeout" xml:space="preserve">
+    <value>Sessione chiusa dal server (inattività o accesso troppo lungo).</value>
+  </data>
+  <data name="FreeRdpDenied" xml:space="preserve">
+    <value>Il server ha rifiutato la connessione.</value>
+  </data>
+  <data name="FreeRdpNameNotFound" xml:space="preserve">
+    <value>Server non trovato: {0}.</value>
+  </data>
+  <data name="FreeRdpUnreachable" xml:space="preserve">
+    <value>Server non raggiungibile o connessione interrotta: {0}.</value>
+  </data>
+  <data name="FreeRdpTls" xml:space="preserve">
+    <value>Connessione sicura impossibile, o certificato del server rifiutato.</value>
+  </data>
+  <data name="FreeRdpNegotiation" xml:space="preserve">
+    <value>Il server e ZillaTerm non hanno alcuna sicurezza in comune (autenticazione a livello di rete, TLS).</value>
+  </data>
+  <data name="FreeRdpAuthentication" xml:space="preserve">
+    <value>Nome utente o password rifiutati dal server.</value>
+  </data>
+  <data name="FreeRdpAccount" xml:space="preserve">
+    <value>Account bloccato, scaduto o disattivato, oppure password da cambiare.</value>
+  </data>
+  <data name="FreeRdpAccessDenied" xml:space="preserve">
+    <value>Accesso rifiutato su questo server.</value>
+  </data>
+  <data name="FreeRdpOther" xml:space="preserve">
+    <value>Errore del client Desktop remoto FreeRDP.</value>
+  </data>
+  <data name="PsmTabGateway" xml:space="preserve">
+    <value>{0}: connessione tramite un gateway Desktop remoto, sessione PSM aperta in Connessione Desktop remoto.</value>
   </data>
 </root>

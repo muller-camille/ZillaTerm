@@ -5365,7 +5365,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>{0} : contrôle Bureau à distance indisponible, session PSM ouverte dans Connexion Bureau à distance.</value>
   </data>
   <data name="PsmTabFallback" xml:space="preserve">
-    <value>{0} : contrôle Bureau à distance inutilisable ({1}), session PSM ouverte dans Connexion Bureau à distance.</value>
+    <value>{0} : client Bureau à distance inutilisable ({1}), session PSM ouverte dans Connexion Bureau à distance.</value>
   </data>
   <data name="PsmTabRemoteAppNow" xml:space="preserve">
     <value>Le PVWA renvoie maintenant une application distante au lieu d'un bureau : rouvrez la connexion depuis la liste.</value>
@@ -5377,15 +5377,57 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Windows demande de confirmer l'identité de {0} : vérifiez le certificat avant d'accepter.</value>
   </data>
   <data name="PsmDesktopInTab" xml:space="preserve">
-    <value>Ouvrir les sessions PSM Windows (bureau) dans un _onglet de ZillaTerm, sinon dans Connexion Bureau à distance</value>
+    <value>Ouvrir les sessions PSM Windows dans un _onglet de ZillaTerm, sinon dans Connexion Bureau à distance</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>La session prend la taille de l'onglet. Windows vérifie le certificat du PSM comme dans la Connexion Bureau à distance, et les redirections restent celles demandées par le PVWA, jamais plus. Les applications distantes (PSM-SSH, WinSCP…) s'ouvrent toujours dans la Connexion Bureau à distance.</value>
+    <value>La session prend la taille de l'onglet et s'ouvre avec le client FreeRDP intégré à ZillaTerm, bureau comme application distante (PSM-RDP, PSM-SSH, WinSCP…), sans fenêtre à part. ZillaTerm vérifie le certificat du PSM (approuvé par Windows, sinon empreinte confirmée une fois puis retenue), et les redirections restent celles demandées par le PVWA, jamais plus. Une connexion par une passerelle Bureau à distance s'ouvre toujours dans la Connexion Bureau à distance.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
-    <value>Le PVWA génère une connexion RDP : un bureau Windows s'ouvre dans un onglet de ZillaTerm, une application distante (PSM-SSH, WinSCP…) dans la Connexion Bureau à distance (mstsc).</value>
+    <value>Le PVWA génère une connexion RDP : elle s'ouvre dans un onglet de ZillaTerm (client FreeRDP intégré), bureau Windows comme application distante.</value>
+  </data>
+  <data name="FreeRdpStartFailed" xml:space="preserve">
+    <value>Le client Bureau à distance FreeRDP n'a pas pu démarrer : {0}</value>
+  </data>
+  <data name="FreeRdpCrashed" xml:space="preserve">
+    <value>Le client Bureau à distance FreeRDP s'est arrêté de façon inattendue (code {0}).</value>
+  </data>
+  <data name="FreeRdpTakenOver" xml:space="preserve">
+    <value>La session a été reprise depuis une autre connexion.</value>
+  </data>
+  <data name="FreeRdpTimeout" xml:space="preserve">
+    <value>Session fermée par le serveur (inactivité, ou ouverture de session trop longue).</value>
+  </data>
+  <data name="FreeRdpDenied" xml:space="preserve">
+    <value>Le serveur a refusé la connexion.</value>
+  </data>
+  <data name="FreeRdpNameNotFound" xml:space="preserve">
+    <value>Serveur introuvable : {0}.</value>
+  </data>
+  <data name="FreeRdpUnreachable" xml:space="preserve">
+    <value>Serveur injoignable, ou connexion coupée : {0}.</value>
+  </data>
+  <data name="FreeRdpTls" xml:space="preserve">
+    <value>Connexion sécurisée impossible, ou certificat du serveur refusé.</value>
+  </data>
+  <data name="FreeRdpNegotiation" xml:space="preserve">
+    <value>Le serveur et ZillaTerm n'ont aucune sécurité en commun (authentification réseau, TLS).</value>
+  </data>
+  <data name="FreeRdpAuthentication" xml:space="preserve">
+    <value>Identifiant ou mot de passe refusé par le serveur.</value>
+  </data>
+  <data name="FreeRdpAccount" xml:space="preserve">
+    <value>Compte bloqué, expiré ou désactivé, ou mot de passe à changer.</value>
+  </data>
+  <data name="FreeRdpAccessDenied" xml:space="preserve">
+    <value>Ouverture de session refusée sur ce serveur.</value>
+  </data>
+  <data name="FreeRdpOther" xml:space="preserve">
+    <value>Erreur du client Bureau à distance FreeRDP.</value>
+  </data>
+  <data name="PsmTabGateway" xml:space="preserve">
+    <value>{0} : connexion par une passerelle Bureau à distance, session PSM ouverte dans Connexion Bureau à distance.</value>
   </data>
 </root>

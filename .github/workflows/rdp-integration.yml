@@ -1,9 +1,11 @@
 name: rdp-integration
 
 # Sessions Bureau à distance réelles sur le poste de CI (connexion à 127.0.0.2) : bureau dans un onglet, taille et
-# clics d'une session réglée comme une session PSM dans l'onglet. Le poste est éphémère : on y active le Bureau à
-# distance, un compte local de test au mot de passe aléatoire, masqué dans les journaux, et une fenêtre lancée à
-# l'ouverture de session de ce compte qui note la taille de son écran et les clics reçus.
+# clics d'une session réglée comme une session PSM dans l'onglet, avec le contrôle de Windows et avec le client FreeRDP
+# de ZillaTerm (bureau, et application distante affichée dans l'onglet). Le poste est éphémère : on y active le Bureau
+# à distance et les applications distantes, deux comptes locaux de test au mot de passe aléatoire, masqué dans les
+# journaux, et une fenêtre de test qui note la taille de son écran, les clics et les touches reçus : lancée à
+# l'ouverture de session du premier compte, et comme application distante pour le second.
 on:
   workflow_dispatch:
   pull_request:
@@ -14,12 +16,19 @@ on:
       - 'tests/ZillaTerm.App.Tests/RdpSessionTests.cs'
       - 'tests/ZillaTerm.App.Tests/Win32Input.cs'
       - '.github/workflows/rdp-integration.yml'
+      - '.github/workflows/freerdp.yml'
+      - 'tools/freerdp-build.sh'
+      - 'tools/freerdp/**'
 
 permissions:
   contents: read
 
 jobs:
+  freerdp:
+    uses: ./.github/workflows/freerdp.yml
+
   rdp:
+    needs: freerdp
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -29,6 +38,12 @@ jobs:
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: 10.0.x
+
+      # Client Bureau à distance FreeRDP (freerdp.yml), embarqué dans ZillaTerm.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: freerdp
+          path: local-packages/freerdp
 
       # SSH.NET 2026.0.0 patché, compilé depuis le fork à un commit figé (comme build.yml et release.yml).
       - name: SSH.NET patché
@@ -42,14 +57,25 @@ jobs:
           $password = [Convert]::ToBase64String($bytes).Replace('/', 'x').Replace('+', 'y') + 'aA1!'
           Write-Output "::add-mask::$password"
           $user = 'cattest'
-          New-LocalUser -Name $user -Password (ConvertTo-SecureString $password -AsPlainText -Force) -PasswordNeverExpires | Out-Null
-          Add-LocalGroupMember -SID 'S-1-5-32-555' -Member $user   # Utilisateurs du Bureau à distance
-          Add-LocalGroupMember -SID 'S-1-5-32-544' -Member $user   # Administrateurs (deux sessions sans licence RDS)
+          # Second compte pour les applications distantes : sa session ne se mélange pas au bureau du premier.
+          $appUser = 'catapp'
+          foreach ($name in @($user, $appUser)) {
+            New-LocalUser -Name $name -Password (ConvertTo-SecureString $password -AsPlainText -Force) -PasswordNeverExpires | Out-Null
+            Add-LocalGroupMember -SID 'S-1-5-32-555' -Member $name   # Utilisateurs du Bureau à distance
+            Add-LocalGroupMember -SID 'S-1-5-32-544' -Member $name   # Administrateurs (sessions sans licence RDS)
+          }
 
           $ts = 'HKLM:\System\CurrentControlSet\Control\Terminal Server'
           Set-ItemProperty $ts -Name fDenyTSConnections -Value 0 -Type DWord
           # Connexions avec et sans authentification réseau (NLA) : un PSM se connecte en général sans.
           Set-ItemProperty "$ts\WinStations\RDP-Tcp" -Name UserAuthentication -Value 0 -Type DWord
+          # Applications distantes sans publication (liste d'autorisation désactivée), comme sur un hôte RemoteApp.
+          $allow = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Terminal Server\TSAppAllowList'
+          New-Item $allow -Force | Out-Null
+          Set-ItemProperty $allow -Name fDisabledAllowList -Value 1 -Type DWord
+          $policy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+          New-Item $policy -Force | Out-Null
+          Set-ItemProperty $policy -Name fAllowUnlistedRemotePrograms -Value 1 -Type DWord
           # Pas de Gestionnaire de serveur à l'ouverture de session (il couvrirait la fenêtre de test).
           New-Item 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Server\ServerManager' -Force | Out-Null
           Set-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Server\ServerManager' -Name DoNotOpenAtLogon -Value 1 -Type DWord
@@ -68,18 +94,21 @@ jobs:
           Test-NetConnection 127.0.0.2 -Port 3389 | Select-Object TcpTestSucceeded | Out-String | Write-Output
 
           "RDP_TEST_USER=$user" >> $env:GITHUB_ENV
+          "RDP_TEST_REMOTEAPP_USER=$appUser" >> $env:GITHUB_ENV
           "RDP_TEST_PASSWORD=$password" >> $env:GITHUB_ENV
 
-      # Fenêtre plein écran lancée à l'ouverture de session du compte de test : elle note la taille de l'écran de la
-      # session (« size LxH ») et chaque clic reçu (« click x,y »), lus par le test des clics.
+      # Fenêtre plein écran lancée à l'ouverture de session du premier compte (argument « run »), ou comme application
+      # distante pour le second : elle note la taille de l'écran de la session (« size LxH »), chaque clic reçu
+      # (« click x,y ») et chaque touche (« key Z »), dans un journal par compte lu par les tests.
       - name: Fenêtre de test des clics
         shell: pwsh
         run: |
           $script = @'
-          if ($env:USERNAME -ne 'cattest') { exit }
+          param([string]$mode = '')
+          if ($mode -eq 'run' -and $env:USERNAME -ne 'cattest') { exit }
           Add-Type -AssemblyName System.Windows.Forms
           Add-Type -AssemblyName System.Drawing
-          $log = 'C:\Users\Public\zt-clicks.txt'
+          $log = "C:\Users\Public\zt-clicks-$($env:USERNAME).txt"
           $form = New-Object System.Windows.Forms.Form
           $form.FormBorderStyle = 'None'
           $form.StartPosition = 'Manual'
@@ -101,12 +130,16 @@ jobs:
           $timer.Add_Tick($fit)
           $timer.Start()
           $form.Add_MouseDown({ param($s, $e) Add-Content -Path $log -Value ('click {0},{1}' -f $e.X, $e.Y) })
+          $form.KeyPreview = $true
+          $form.Add_KeyDown({ param($s, $e) Add-Content -Path $log -Value ('key {0}' -f $e.KeyCode) })
           [System.Windows.Forms.Application]::Run($form)
           '@
           Set-Content -Path 'C:\Users\Public\zt-clicktarget.ps1' -Value $script
           $run = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
-          Set-ItemProperty $run -Name ZillaTermClickTarget -Value 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Users\Public\zt-clicktarget.ps1'
-          "RDP_TEST_CLICKS=C:\Users\Public\zt-clicks.txt" >> $env:GITHUB_ENV
+          Set-ItemProperty $run -Name ZillaTermClickTarget -Value 'powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Users\Public\zt-clicktarget.ps1 run'
+          "RDP_TEST_CLICKS=C:\Users\Public\zt-clicks-cattest.txt" >> $env:GITHUB_ENV
+          "RDP_TEST_REMOTEAPP_CLICKS=C:\Users\Public\zt-clicks-catapp.txt" >> $env:GITHUB_ENV
+          "RDP_TEST_REMOTEAPP_SCRIPT=C:\Users\Public\zt-clicktarget.ps1" >> $env:GITHUB_ENV
           "RDP_TEST_LOG=$env:RUNNER_TEMP\zillaterm-rdp.log" >> $env:GITHUB_ENV
 
       - name: Tests de sessions réelles
@@ -120,4 +153,5 @@ jobs:
         shell: pwsh
         run: |
           if (Test-Path $env:RDP_TEST_LOG) { Get-Content $env:RDP_TEST_LOG } else { 'Pas de journal.' }
-          if (Test-Path $env:RDP_TEST_CLICKS) { 'Fenêtre de test :'; Get-Content $env:RDP_TEST_CLICKS }
+          if (Test-Path $env:RDP_TEST_CLICKS) { 'Fenêtre de test (bureau) :'; Get-Content $env:RDP_TEST_CLICKS }
+          if (Test-Path $env:RDP_TEST_REMOTEAPP_CLICKS) { 'Fenêtre de test (application distante) :'; Get-Content $env:RDP_TEST_REMOTEAPP_CLICKS }

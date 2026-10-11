@@ -147,6 +147,79 @@ public static class RdpCertificateProbe
         return received ?? throw new RdpCertificateException(string.Format(CultureInfo.CurrentCulture, CoreStrings.RdpTlsFailed, ""));
     }
 
+    /// <summary>
+    /// Certificat présenté au client FreeRDP pendant sa connexion (chaîne PEM transmise par lui), vérifié comme le fait
+    /// Windows pour un serveur Bureau à distance : chaîne jusqu'à une autorité approuvée par le système (certificats
+    /// intermédiaires envoyés par le serveur compris ; révocation vérifiée quand elle est joignable), nom du serveur,
+    /// dates, et usage « authentification du serveur » ou « authentification Bureau à distance » s'il est précisé.
+    /// </summary>
+    /// <exception cref="RdpCertificateException">Aucun certificat lisible.</exception>
+    public static RdpCertificate FromPemChain(string pem, string host)
+    {
+        var all = new X509Certificate2Collection();
+        try
+        {
+            all.ImportFromPem(pem);
+        }
+        catch (CryptographicException e)
+        {
+            throw new RdpCertificateException(string.Format(CultureInfo.CurrentCulture, CoreStrings.RdpTlsFailed, e.Message));
+        }
+
+        try
+        {
+            if (all.Count == 0)
+            {
+                throw new RdpCertificateException(string.Format(CultureInfo.CurrentCulture, CoreStrings.RdpTlsFailed, ""));
+            }
+
+            var leaf = all[0];
+            using var chain = new X509Chain();
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
+            chain.ChainPolicy.RevocationFlag = X509RevocationFlag.ExcludeRoot;
+            chain.ChainPolicy.UrlRetrievalTimeout = TimeSpan.FromSeconds(10);
+            // Révocation injoignable (réseau d'administration fermé) : pas un refus, comme pour mstsc.
+            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreEndRevocationUnknown
+                | X509VerificationFlags.IgnoreCertificateAuthorityRevocationUnknown
+                | X509VerificationFlags.IgnoreCtlSignerRevocationUnknown
+                | X509VerificationFlags.IgnoreRootRevocationUnknown;
+            for (int i = 1; i < all.Count; i++)
+            {
+                chain.ChainPolicy.ExtraStore.Add(all[i]);
+            }
+
+            var errors = SslPolicyErrors.None;
+            if (!chain.Build(leaf) || !ServerUsage(leaf))
+            {
+                errors |= SslPolicyErrors.RemoteCertificateChainErrors;
+            }
+
+            if (!leaf.MatchesHostname(host, allowWildcards: true, allowCommonName: true))
+            {
+                errors |= SslPolicyErrors.RemoteCertificateNameMismatch;
+            }
+
+            return new RdpCertificate(leaf.Subject, leaf.Issuer, Convert.ToHexString(SHA256.HashData(leaf.RawData)),
+                leaf.NotBefore, leaf.NotAfter, Ftp.FtpFileBrowser.Describe(errors));
+        }
+        finally
+        {
+            foreach (var certificate in all)
+            {
+                certificate.Dispose();
+            }
+        }
+    }
+
+    /// <summary>Usage du certificat : non précisé, authentification du serveur, ou authentification Bureau à distance.</summary>
+    private static bool ServerUsage(X509Certificate2 certificate)
+    {
+        const string serverAuthentication = "1.3.6.1.5.5.7.3.1";
+        const string remoteDesktopAuthentication = "1.3.6.1.4.1.311.54.1.2";
+        var usage = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>().FirstOrDefault();
+        return usage is null || usage.EnhancedKeyUsages.Cast<Oid>().Any(o => o.Value is serverAuthentication or remoteDesktopAuthentication);
+    }
+
     private static async Task ReadExactlyAsync(NetworkStream network, byte[] buffer, CancellationToken ct)
     {
         try

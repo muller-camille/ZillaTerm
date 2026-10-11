@@ -1053,9 +1053,9 @@ public partial class MainWindow : Window
 
             LogRdpFile(rdp);
             AddRecent(account, label, request.Component, request.RemoteMachine);
-            if (PsmTabSettings(rdp, label, out var mstscReason) is { } settings)
+            if (PsmTabSettings(rdp, label, out var mstscReason) is { } tab)
             {
-                await OpenPsmTabAsync(account, request, options, saved, label, rdp, settings);
+                await OpenPsmTabAsync(account, request, options, saved, label, rdp, tab.Settings, tab.FreeRdp);
             }
             else
             {
@@ -1102,13 +1102,14 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Session PSM (bureau Windows) dans un onglet, avec le contrôle Bureau à distance, à la taille de l'onglet ; Windows
-    /// vérifie le certificat du PSM comme avec mstsc (voir <see cref="RdpConnectionSettings.ForPsmTab"/>). Chaque
-    /// reconnexion demande un nouveau fichier au PVWA (le jeton d'une session PSM ne sert qu'une fois). Contrôle
-    /// inutilisable à la première connexion : le jeton n'a pas servi, le fichier est confié à mstsc.
+    /// Session PSM dans un onglet, à la taille de l'onglet : avec le client FreeRDP de ZillaTerm (bureau ou application
+    /// distante ; ZillaTerm vérifie le certificat du PSM), sinon avec le contrôle Bureau à distance (bureau seulement ;
+    /// Windows vérifie le certificat, voir <see cref="RdpConnectionSettings.ForPsmTab"/>). Chaque reconnexion demande un
+    /// nouveau fichier au PVWA (le jeton d'une session PSM ne sert qu'une fois). Client inutilisable à la première
+    /// connexion (lancement refusé…) : le jeton n'a pas servi, le fichier est confié à mstsc.
     /// </summary>
     private async Task OpenPsmTabAsync(PvwaAccount account, ConnectRequest request, PsmConnectOptions options, SavedSession? saved,
-        string label, byte[] rdp, RdpConnectionSettings settings)
+        string label, byte[] rdp, RdpConnectionSettings settings, bool freeRdp)
     {
         SetStatus(Text.Format(Strings.PsmStarted, label, request.Component));
         InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: true));
@@ -1124,7 +1125,12 @@ public partial class MainWindow : Window
                 file = await Client.PsmConnectAsync(account.Id, options, ct);
                 LogRdpFile(file);
                 next = RdpConnectionSettings.FromRdpFile(file);
-                if (next.IsRemoteApp)
+                if (next.UsesGateway)
+                {
+                    throw new InvalidOperationException(Text.Format(Strings.PsmTabGateway, label));
+                }
+
+                if (next.IsRemoteApp && !freeRdp)
                 {
                     throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
                 }
@@ -1132,13 +1138,13 @@ public partial class MainWindow : Window
                 next = next.ForPsmTab();
             }
 
-            return new RdpConnectionRequest(next, null);
+            return new RdpConnectionRequest(next, null) { FreeRdp = freeRdp, VerifyCertificate = freeRdp ? VerifyFreeRdpCertificateAsync : null };
         }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), settings.Server);
 
         if (session.ControlFailed && session.ConnectedAt is null && MainTabs.Items.OfType<TabItem>().Any(t => t.Tag == session))
         {
-            // Contrôle Bureau à distance inutilisable sur ce poste : rien n'a été envoyé au PSM, mstsc prend le relais.
-            DebugLog.Write("psm", $"Contrôle Bureau à distance inutilisable ({session.Error}) : session PSM ouverte avec mstsc.");
+            // Client Bureau à distance inutilisable sur ce poste : rien n'a été envoyé au PSM, mstsc prend le relais.
+            DebugLog.Write("psm", $"Client Bureau à distance inutilisable ({session.Error}) : session PSM ouverte avec mstsc.");
             var error = session.Error;
             await RemoveRdpTabAsync(session);
             _launcher.LaunchRdp(rdp, label);

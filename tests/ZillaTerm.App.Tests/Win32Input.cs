@@ -44,9 +44,11 @@ internal static class Win32Input
     }
 
     /// <summary>Fenêtres de premier niveau de ce processus.</summary>
-    public static List<IntPtr> ProcessWindows()
+    public static List<IntPtr> ProcessWindows() => TopLevelWindows(Environment.ProcessId);
+
+    /// <summary>Fenêtres de premier niveau du processus <paramref name="pid"/>.</summary>
+    public static List<IntPtr> TopLevelWindows(int pid)
     {
-        int pid = Environment.ProcessId;
         var list = new List<IntPtr>();
         EnumWindows((h, _) =>
         {
@@ -83,6 +85,17 @@ internal static class Win32Input
         Send(
             new Input { Type = 0, Mouse = new MouseInput { Flags = right ? 0x0008u : 0x0002u } },
             new Input { Type = 0, Mouse = new MouseInput { Flags = right ? 0x0010u : 0x0004u } });
+    }
+
+    /// <summary>Appuie puis relâche chaque touche (codes virtuels : lettres majuscules, chiffres).</summary>
+    public static void Type(string keys)
+    {
+        foreach (var key in keys)
+        {
+            Send(
+                new Input { Type = 1, Keyboard = new KeyboardInput { Vk = key } },
+                new Input { Type = 1, Keyboard = new KeyboardInput { Vk = key, Flags = 0x0002 } });
+        }
     }
 
     private static void Send(params Input[] inputs) => SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>());
@@ -162,7 +175,7 @@ internal static class Win32Input
     private static extern bool EnumChildWindows(IntPtr parent, EnumProc proc, IntPtr param);
 
     [DllImport("user32.dll")]
-    private static extern int GetWindowThreadProcessId(IntPtr window, out int processId);
+    public static extern int GetWindowThreadProcessId(IntPtr window, out int processId);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int GetClassName(IntPtr window, StringBuilder text, int max);

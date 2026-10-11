@@ -5365,7 +5365,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>{0}: Remote Desktop control unavailable, PSM session opened in Remote Desktop Connection.</value>
   </data>
   <data name="PsmTabFallback" xml:space="preserve">
-    <value>{0}: the Remote Desktop control could not be used ({1}), PSM session opened in Remote Desktop Connection.</value>
+    <value>{0}: the Remote Desktop client could not be used ({1}), PSM session opened in Remote Desktop Connection.</value>
   </data>
   <data name="PsmTabRemoteAppNow" xml:space="preserve">
     <value>The PVWA now returns a remote application instead of a desktop: open the connection again from the list.</value>
@@ -5377,15 +5377,57 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Windows asks you to confirm the identity of {0}: check the certificate before accepting.</value>
   </data>
   <data name="PsmDesktopInTab" xml:space="preserve">
-    <value>Open PSM Windows sessions (desktop) in a ZillaTerm _tab, otherwise in Remote Desktop Connection</value>
+    <value>Open PSM Windows sessions in a ZillaTerm _tab, otherwise in Remote Desktop Connection</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>The session takes the size of the tab. Windows checks the PSM certificate as in Remote Desktop Connection, and the redirections stay those asked by the PVWA, never more. Remote applications (PSM-SSH, WinSCP…) still open in Remote Desktop Connection.</value>
+    <value>The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>PSM Windows sessions in a tab</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
-    <value>The PVWA generates an RDP connection: a Windows desktop opens in a ZillaTerm tab, a remote application (PSM-SSH, WinSCP…) in Remote Desktop Connection (mstsc).</value>
+    <value>The PVWA generates an RDP connection: it opens in a ZillaTerm tab (built-in FreeRDP client), Windows desktop or remote application alike.</value>
+  </data>
+  <data name="FreeRdpStartFailed" xml:space="preserve">
+    <value>The FreeRDP Remote Desktop client could not start: {0}</value>
+  </data>
+  <data name="FreeRdpCrashed" xml:space="preserve">
+    <value>The FreeRDP Remote Desktop client stopped unexpectedly (code {0}).</value>
+  </data>
+  <data name="FreeRdpTakenOver" xml:space="preserve">
+    <value>The session was taken over from another connection.</value>
+  </data>
+  <data name="FreeRdpTimeout" xml:space="preserve">
+    <value>Session closed by the server (idle, or logon took too long).</value>
+  </data>
+  <data name="FreeRdpDenied" xml:space="preserve">
+    <value>The server refused the connection.</value>
+  </data>
+  <data name="FreeRdpNameNotFound" xml:space="preserve">
+    <value>Server not found: {0}.</value>
+  </data>
+  <data name="FreeRdpUnreachable" xml:space="preserve">
+    <value>Server unreachable, or connection lost: {0}.</value>
+  </data>
+  <data name="FreeRdpTls" xml:space="preserve">
+    <value>No secure connection possible, or the server certificate was refused.</value>
+  </data>
+  <data name="FreeRdpNegotiation" xml:space="preserve">
+    <value>The server and ZillaTerm have no security mode in common (network level authentication, TLS).</value>
+  </data>
+  <data name="FreeRdpAuthentication" xml:space="preserve">
+    <value>User name or password refused by the server.</value>
+  </data>
+  <data name="FreeRdpAccount" xml:space="preserve">
+    <value>Account locked, expired or disabled, or password to change.</value>
+  </data>
+  <data name="FreeRdpAccessDenied" xml:space="preserve">
+    <value>Logon refused on this server.</value>
+  </data>
+  <data name="FreeRdpOther" xml:space="preserve">
+    <value>FreeRDP Remote Desktop client error.</value>
+  </data>
+  <data name="PsmTabGateway" xml:space="preserve">
+    <value>{0}: connection through a Remote Desktop gateway, PSM session opened in Remote Desktop Connection.</value>
   </data>
 </root>

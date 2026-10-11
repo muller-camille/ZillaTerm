@@ -94,7 +94,7 @@ internal static class PrivateTemp
     /// Crée le dossier s'il manque ; vrai s'il appartient à l'utilisateur et que ses droits ont été réservés à lui seul
     /// (les fichiers et dossiers qu'il contient en héritent).
     /// </summary>
-    private static bool TryRestrict(string path)
+    internal static bool TryRestrict(string path)
     {
         try
         {

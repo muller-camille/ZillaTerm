@@ -56,7 +56,7 @@ public partial class RdpSessionView : UserControl
         var session = Session;
         CaptureButton.Visibility = _interventionRecording && session.ShowsDesktop ? Visibility.Visible : Visibility.Collapsed;
         Overlay.Visibility = session.ShowsDesktop ? Visibility.Collapsed : Visibility.Visible;
-        FullScreenButton.IsEnabled = session.IsConnected;
+        FullScreenButton.IsEnabled = session.IsConnected && session.CanFullScreen;
         DisconnectButton.IsEnabled = session.HasControl;
         var server = session.Server.Length > 0 ? session.Server : session.Label;
         switch (session.State)

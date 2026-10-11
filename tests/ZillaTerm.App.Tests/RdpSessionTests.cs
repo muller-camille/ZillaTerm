@@ -307,6 +307,212 @@ public class RdpSessionTests(ITestOutputHelper output)
         });
     }
 
+    // ---- Client FreeRDP de ZillaTerm : sessions PSM dans l'onglet, bureau ou application distante.
+
+    /// <summary>Client FreeRDP embarqué (obligatoire dans la compilation de CI) ; sinon le test est ignoré.</summary>
+    private bool FreeRdpPresent()
+    {
+        if (OperatingSystem.IsWindows() && FreeRdpClient.IsAvailable)
+        {
+            return true;
+        }
+
+        Assert.True(Environment.GetEnvironmentVariable("GITHUB_ACTIONS") is null || !OperatingSystem.IsWindows(),
+            "Client FreeRDP absent de la compilation de CI");
+        output.WriteLine("Client FreeRDP absent : test ignoré.");
+        return false;
+    }
+
+    /// <summary>Serveur injoignable : le client s'arrête, l'onglet le dit avec le code de FreeRDP, sans fenêtre restante.</summary>
+    [Fact]
+    public async Task FreeRdpReportsAnUnreachableServer()
+    {
+        if (!FreeRdpPresent())
+        {
+            return;
+        }
+
+        var settings = RdpConnectionSettings.Direct("127.0.0.1", 1, "jdoe").ForPsmTab();
+        await RunOnStaAsync(new RdpConnectionRequest(settings, null) { FreeRdp = true }, async session =>
+        {
+            await session.ConnectAsync();
+            var state = await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
+            output.WriteLine($"{state} : {session.Error}");
+            Assert.Equal(RdpSessionState.Failed, state);
+            Assert.Contains("0x00020006", session.Error, StringComparison.Ordinal);
+            Assert.False(session.HasControl);
+            Assert.Empty(Win32Input.Descendants(session.Host.SlotHandle));
+        });
+    }
+
+    /// <summary>
+    /// Session de bureau avec FreeRDP sur ce poste, réglée comme une session PSM dans l'onglet : certificat soumis à
+    /// ZillaTerm avant la connexion, bureau à la taille de l'onglet gardée quand la fenêtre change de taille, clics à
+    /// l'endroit visé, clavier transmis quand l'onglet a le focus.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpDesktopKeepsItsSizeAndTakesClicksAndKeys()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        var log = Environment.GetEnvironmentVariable("RDP_TEST_CLICKS");
+        if (string.IsNullOrEmpty(log))
+        {
+            output.WriteLine("Pas de fenêtre de test des clics : test ignoré.");
+            return;
+        }
+
+        var certificates = new List<FreeRdpCertificateRequest>();
+        var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab();
+        var request = new RdpConnectionRequest(settings, account.Password)
+        {
+            FreeRdp = true,
+            VerifyCertificate = c =>
+            {
+                certificates.Add(c);
+                return Task.FromResult(true);
+            },
+        };
+        await RunOnStaAsync(request, async (session, window) =>
+        {
+            await session.ConnectAsync();
+            var state = await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90));
+            Assert.Equal(RdpSessionState.Connected, state);
+            var certificate = Assert.Single(certificates);
+            Assert.Equal("127.0.0.2", certificate.Host);
+            Assert.Contains("BEGIN CERTIFICATE", certificate.Pem, StringComparison.Ordinal);
+            Assert.False(session.CanFullScreen);
+
+            await CheckSizeClicksAndKeysAsync(session, window, log);
+
+            session.Disconnect();
+            Assert.Equal(RdpSessionState.Ended,
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30)));
+        });
+    }
+
+    /// <summary>
+    /// Application distante (RemoteApp) avec FreeRDP : ses fenêtres s'affichent dans l'onglet, aucune sur le bureau de ce
+    /// poste ; la fenêtre de test (lancée comme application distante, plein écran) reçoit clics et touches.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpRemoteAppShowsInTheTab()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        var user = Environment.GetEnvironmentVariable("RDP_TEST_REMOTEAPP_USER");
+        var log = Environment.GetEnvironmentVariable("RDP_TEST_REMOTEAPP_CLICKS");
+        var script = Environment.GetEnvironmentVariable("RDP_TEST_REMOTEAPP_SCRIPT");
+        if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(log) || string.IsNullOrEmpty(script))
+        {
+            output.WriteLine("Pas de compte pour les applications distantes : test ignoré.");
+            return;
+        }
+
+        var powershell = Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
+        var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, $"{Environment.MachineName}\\{user}").ForPsmTab() with
+        {
+            IsRemoteApp = true,
+            RemoteApplicationProgram = powershell,
+            RemoteApplicationName = "ZillaTerm test",
+            RemoteApplicationCmdLine = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File {script}",
+        };
+        var request = new RdpConnectionRequest(settings, account.Password) { FreeRdp = true, VerifyCertificate = _ => Task.FromResult(true) };
+        await RunOnStaAsync(request, async (session, window) =>
+        {
+            await session.ConnectAsync();
+            var state = await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90));
+            Assert.Equal(RdpSessionState.Connected, state);
+
+            await CheckSizeClicksAndKeysAsync(session, window, log);
+
+            // Aucune fenêtre de premier niveau du client sur le bureau de ce poste : tout est dans l'onglet.
+            var slot = session.Host.SlotHandle;
+            var child = Assert.Single(Win32Input.Descendants(slot), w => Win32Input.ClassName(w) == "FreeRDP");
+            Win32Input.GetWindowThreadProcessId(child, out var freeRdp);
+            var outside = Win32Input.TopLevelWindows(freeRdp).Where(w => Win32Input.IsWindowVisible(w)).ToList();
+            Assert.True(outside.Count == 0, string.Join(", ", outside.Select(w => $"{Win32Input.ClassName(w)} « {Win32Input.Title(w)} »")));
+
+            session.Disconnect();
+            await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30));
+        });
+    }
+
+    /// <summary>Certificat refusé par ZillaTerm : FreeRDP n'ouvre pas la session (rien n'est envoyé au serveur).</summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpRefusedCertificateEndsTheConnection()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        int asked = 0;
+        var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab();
+        var request = new RdpConnectionRequest(settings, account.Password)
+        {
+            FreeRdp = true,
+            VerifyCertificate = _ =>
+            {
+                asked++;
+                return Task.FromResult(false);
+            },
+        };
+        await RunOnStaAsync(request, async session =>
+        {
+            var states = new List<RdpSessionState>();
+            session.StateChanged += () => states.Add(session.State);
+            await session.ConnectAsync();
+            var state = await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
+            output.WriteLine($"{state} : {session.Error}");
+            Assert.Equal(RdpSessionState.Failed, state);
+            Assert.DoesNotContain(RdpSessionState.Connected, states);
+            Assert.Equal(1, asked);
+        });
+    }
+
+    /// <summary>
+    /// Fenêtre de test du bureau distant (journal <paramref name="log"/>) : taille de l'onglet, gardée quand la fenêtre
+    /// rapetisse ; clics à l'endroit visé ; touches reçues (le clic a donné le clavier à l'onglet).
+    /// </summary>
+    private async Task CheckSizeClicksAndKeysAsync(RdpSession session, Window window, string log)
+    {
+        var slot = session.Host.SlotHandle;
+        var bounds = Win32Input.ScreenBounds(slot);
+        var (width, height) = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
+        output.WriteLine($"Onglet {bounds}, bureau distant attendu {width}x{height}");
+        await WaitForLineAsync(log, 0, line => line == $"size {width}x{height}", TimeSpan.FromSeconds(150));
+
+        var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+        await ClickAndCheckAsync(log, host, bounds, (0.5, 0.5), (width, height));
+
+        window.Width = 720;
+        window.Height = 540;
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        bounds = Win32Input.ScreenBounds(slot);
+        output.WriteLine($"Onglet réduit {bounds}");
+        Assert.True(bounds.Width < width - 100, $"{bounds}");
+        Assert.Equal($"size {width}x{height}", Lines(log).Last(l => l.StartsWith("size ", StringComparison.Ordinal)));
+        await ClickAndCheckAsync(log, host, bounds, (0.25, 0.25), (width, height));
+        await ClickAndCheckAsync(log, host, bounds, (0.75, 0.6), (width, height));
+
+        output.WriteLine($"Clavier : {Win32Input.ClassName(Win32Input.FocusOf(host))}");
+        int before = Lines(log).Count;
+        Win32Input.Type("ZT");
+        await WaitForLineAsync(log, before, l => l == "key Z", TimeSpan.FromSeconds(20));
+        await WaitForLineAsync(log, before, l => l == "key T", TimeSpan.FromSeconds(20));
+        Assert.Equal(RdpSessionState.Connected, session.State);
+    }
+
     /// <summary>Clique à la position relative <paramref name="at"/> de l'onglet et vérifie l'endroit reçu sur le bureau distant.</summary>
     private async Task ClickAndCheckAsync(string log, IntPtr host, Win32Input.Bounds tab, (double X, double Y) at, (int Width, int Height) desktop)
     {

@@ -20,6 +20,18 @@ internal sealed class RdpSlot : HwndHost
     /// <summary>La taille de l'emplacement a changé (thread de l'interface).</summary>
     public event Action? PixelSizeChanged;
 
+    /// <summary>L'emplacement a reçu (vrai) ou perdu (faux) le focus clavier de Windows.</summary>
+    public event Action<bool>? FocusChanged;
+
+    /// <summary>Molette reçue par l'emplacement (message, wParam, lParam), quand <see cref="FocusOnChildClick"/>.</summary>
+    public event Action<int, IntPtr, IntPtr>? ChildMouseWheel;
+
+    /// <summary>
+    /// Fenêtre d'un autre processus dans l'emplacement (client FreeRDP) : un clic dedans donne le focus clavier à
+    /// l'emplacement, d'où FreeRDP prend le clavier ; la molette lui est transmise (<see cref="ChildMouseWheel"/>).
+    /// </summary>
+    public bool FocusOnChildClick { get; set; }
+
     /// <summary>Fenêtre de l'emplacement (parent des fenêtres du contrôle), ou zéro tant qu'elle n'existe pas.</summary>
     public IntPtr SlotHandle => _window?.Handle ?? IntPtr.Zero;
 
@@ -73,6 +85,9 @@ internal sealed class RdpSlot : HwndHost
     [DllImport("user32.dll")]
     private static extern int FillRect(IntPtr hdc, ref Rect rect, IntPtr brush);
 
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetFocus(IntPtr hwnd);
+
     [DllImport("gdi32.dll")]
     private static extern IntPtr GetStockObject(int index);
 
@@ -89,7 +104,12 @@ internal sealed class RdpSlot : HwndHost
     private sealed class SlotWindow : System.Windows.Forms.NativeWindow
     {
         private const int WmSize = 0x0005;
+        private const int WmSetFocus = 0x0007;
+        private const int WmKillFocus = 0x0008;
         private const int WmEraseBackground = 0x0014;
+        private const int WmParentNotify = 0x0210;
+        private const int WmMouseWheel = 0x020A;
+        private const int WmMouseHorizontalWheel = 0x020E;
         private const int BlackBrush = 4;
 
         private readonly RdpSlot _owner;
@@ -113,10 +133,33 @@ internal sealed class RdpSlot : HwndHost
                 return;
             }
 
-            base.WndProc(ref m);
-            if (m.Msg == WmSize)
+            if (_owner.FocusOnChildClick)
             {
-                _owner.PixelSizeChanged?.Invoke();
+                switch (m.Msg)
+                {
+                    // Bouton de la souris enfoncé dans la fenêtre enfant (gauche, droit, milieu, X).
+                    case WmParentNotify when (m.WParam.ToInt64() & 0xFFFF) is 0x0201 or 0x0204 or 0x0207 or 0x020B:
+                        SetFocus(m.HWnd);
+                        break;
+                    case WmMouseWheel or WmMouseHorizontalWheel:
+                        _owner.ChildMouseWheel?.Invoke(m.Msg, m.WParam, m.LParam);
+                        m.Result = IntPtr.Zero;
+                        return;
+                }
+            }
+
+            base.WndProc(ref m);
+            switch (m.Msg)
+            {
+                case WmSize:
+                    _owner.PixelSizeChanged?.Invoke();
+                    break;
+                case WmSetFocus:
+                    _owner.FocusChanged?.Invoke(true);
+                    break;
+                case WmKillFocus:
+                    _owner.FocusChanged?.Invoke(false);
+                    break;
             }
         }
     }

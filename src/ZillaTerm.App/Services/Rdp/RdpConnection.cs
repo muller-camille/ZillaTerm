@@ -17,7 +17,7 @@ namespace ZillaTerm.App.Services.Rdp;
 /// Avant de libérer le contrôle, la connexion retire sa fenêtre de l'onglet : une libération qui tarde ne touche plus
 /// l'interface, puis le thread s'arrête.
 /// </summary>
-internal sealed class RdpConnection
+internal sealed class RdpConnection : IRdpConnection
 {
     private static readonly Guid EventsIid = new("336D5562-EFA8-482E-8CB3-C5C0FC7A7DB6");
     private const int DispIdConnecting = 1;
@@ -69,6 +69,8 @@ internal sealed class RdpConnection
     }
 
     public RdpConnectionSettings Settings => _request.Settings;
+
+    public bool CanFullScreen => true;
 
     /// <summary>Terminée quand la fenêtre du contrôle a quitté l'onglet (ou n'y est plus : thread arrêté).</summary>
     public Task Detached => _detachedTask.Task;

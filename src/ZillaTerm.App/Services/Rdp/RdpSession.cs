@@ -16,7 +16,17 @@ internal enum RdpSessionState
 }
 
 /// <summary>Ce qu'il faut pour (re)lancer une connexion : réglages et, pour une connexion directe, le mot de passe.</summary>
-internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, string? Password);
+internal sealed record RdpConnectionRequest(RdpConnectionSettings Settings, string? Password)
+{
+    /// <summary>Client FreeRDP de ZillaTerm (session PSM, application distante comprise) au lieu du contrôle de Windows.</summary>
+    public bool FreeRdp { get; init; }
+
+    /// <summary>
+    /// Certificat présenté au client FreeRDP (serveur, redirection, passerelle) : vrai pour l'accepter. Sans vérification,
+    /// tout certificat est refusé.
+    /// </summary>
+    public Func<FreeRdpCertificateRequest, Task<bool>>? VerifyCertificate { get; init; }
+}
 
 /// <summary>
 /// Session Bureau à distance dans un onglet, vue du thread de l'interface. Chaque connexion (<see cref="RdpConnection"/>)
@@ -42,8 +52,8 @@ internal sealed class RdpSession : IDisposable
     private readonly Dispatcher _dispatcher;
 
     // Connexions dont la fenêtre est peut-être encore dans l'onglet (en cours, ou en cours de libération).
-    private readonly List<RdpConnection> _attached = [];
-    private RdpConnection? _connection;
+    private readonly List<IRdpConnection> _attached = [];
+    private IRdpConnection? _connection;
     private bool _starting;
     private bool _pingPending;
     private long _pingSentAt;
@@ -109,6 +119,9 @@ internal sealed class RdpSession : IDisposable
     /// <summary>Vrai si l'onglet affiche le bureau distant (le contrôle existe).</summary>
     public bool ShowsDesktop => HasControl;
 
+    /// <summary>Plein écran possible pour la connexion en cours (contrôle de Windows seulement).</summary>
+    public bool CanFullScreen => _connection?.CanFullScreen == true;
+
     /// <summary>Ouverture de la session (fin de l'ouverture de session Windows), ou null.</summary>
     public DateTime? ConnectedAt { get; private set; }
 
@@ -163,10 +176,10 @@ internal sealed class RdpSession : IDisposable
         }
 
         Server = request.Settings.Server;
-        RdpConnection connection;
+        IRdpConnection connection;
         try
         {
-            connection = new RdpConnection(this, request, Label);
+            connection = request.FreeRdp ? new FreeRdpConnection(this, request, Label) : new RdpConnection(this, request, Label);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -318,7 +331,7 @@ internal sealed class RdpSession : IDisposable
 
     // ---- Événements de la connexion, sur le thread de l'interface ; ceux d'une connexion remplacée sont ignorés.
 
-    internal void OnLoggedIn(RdpConnection connection)
+    internal void OnLoggedIn(IRdpConnection connection)
     {
         if (connection != _connection || _disposed)
         {
@@ -329,7 +342,7 @@ internal sealed class RdpSession : IDisposable
         SetState(RdpSessionState.Connected);
     }
 
-    internal void OnDisconnected(RdpConnection connection, int reason, uint extended, string? description)
+    internal void OnDisconnected(IRdpConnection connection, int reason, uint extended, string? description)
     {
         if (connection != _connection || _disposed)
         {
@@ -350,7 +363,23 @@ internal sealed class RdpSession : IDisposable
         SetState(normal ? RdpSessionState.Ended : RdpSessionState.Failed);
     }
 
-    internal void OnFatalError(RdpConnection connection, int code)
+    /// <summary>Fin d'une session FreeRDP : <paramref name="error"/> est null pour une fin normale.</summary>
+    internal void OnEnded(IRdpConnection connection, bool normal, string? error)
+    {
+        if (connection != _connection || _disposed)
+        {
+            return;
+        }
+
+        DebugLog.Write("rdp", ConnectedAt is { } at
+            ? $"{Label} : fin de session {(DateTime.UtcNow - at).TotalSeconds:0.0} s après l'ouverture de session"
+            : $"{Label} : fin de session avant l'ouverture de session");
+        Error = error;
+        IsFullScreen = false;
+        SetState(normal ? RdpSessionState.Ended : RdpSessionState.Failed);
+    }
+
+    internal void OnFatalError(IRdpConnection connection, int code)
     {
         if (connection != _connection || _disposed)
         {
@@ -361,7 +390,7 @@ internal sealed class RdpSession : IDisposable
         SetState(RdpSessionState.Failed);
     }
 
-    internal void OnFullScreenChanged(RdpConnection connection, bool fullScreen)
+    internal void OnFullScreenChanged(IRdpConnection connection, bool fullScreen)
     {
         if (connection == _connection)
         {
@@ -369,7 +398,7 @@ internal sealed class RdpSession : IDisposable
         }
     }
 
-    internal void OnAuthenticationWarning(RdpConnection connection, bool displayed)
+    internal void OnAuthenticationWarning(IRdpConnection connection, bool displayed)
     {
         if (connection != _connection || _disposed)
         {
@@ -382,7 +411,7 @@ internal sealed class RdpSession : IDisposable
     }
 
     /// <summary>Contrôle libéré par la connexion (fin de session, erreur) : l'onglet n'a plus de contrôle.</summary>
-    internal void OnReleased(RdpConnection connection)
+    internal void OnReleased(IRdpConnection connection)
     {
         if (connection != _connection || _disposed)
         {
@@ -402,7 +431,12 @@ internal sealed class RdpSession : IDisposable
     {
         DebugLog.Write("rdp", $"{Label} : échec du contrôle Bureau à distance", ex);
         ControlFailed = true;
-        Error = ex is COMException com ? Text.Format(Strings.RdpControlError, $"0x{com.HResult:X8}") : ErrorText.Describe(ex);
+        Error = ex switch
+        {
+            COMException com => Text.Format(Strings.RdpControlError, $"0x{com.HResult:X8}"),
+            FreeRdpStartException start => Text.Format(Strings.FreeRdpStartFailed, start.Message),
+            _ => ErrorText.Describe(ex),
+        };
         SetState(RdpSessionState.Failed);
     }
 
@@ -449,7 +483,7 @@ internal sealed class RdpSession : IDisposable
         }
     }
 
-    private void OnPong(RdpConnection connection)
+    private void OnPong(IRdpConnection connection)
     {
         if (connection != _connection)
         {
