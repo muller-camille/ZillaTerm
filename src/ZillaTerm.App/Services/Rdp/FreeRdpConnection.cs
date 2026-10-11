@@ -90,9 +90,9 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
             await input.FlushAsync();
         }
-        catch (IOException e)
+        catch (Exception e) when (e is IOException or ObjectDisposedException)
         {
-            // Client déjà arrêté : sa fin (code, message) est signalée par WatchAsync.
+            // Client déjà arrêté, ou onglet fermé entre-temps : sa fin est signalée par WatchAsync.
             DebugLog.Write("freerdp", $"{_label} : réglages non transmis ({e.Message})");
         }
     }
