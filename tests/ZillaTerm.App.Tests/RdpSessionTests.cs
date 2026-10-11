@@ -493,12 +493,23 @@ public class RdpSessionTests(ITestOutputHelper output)
                 return RdpTrust.AcceptedAfterQuestion;
             }), async session =>
             {
+                var debugLog = Core.Diagnostics.DebugLog.FilePath;
+                int logged = debugLog is null ? 0 : Lines(debugLog).Count;
                 await session.ConnectAsync();
                 var state = await WaitForAsync(session, s => s is not RdpSessionState.Connecting, TimeSpan.FromSeconds(120));
                 output.WriteLine($"Clé acceptée après la question : {state} {session.Error}, clé présentée {presented} fois");
                 Assert.Equal(RdpSessionState.Connected, state);
                 Assert.Equal(1, asked);
                 Assert.Equal(2, presented);
+                if (debugLog is not null)
+                {
+                    // Session ouverte jusqu'au bout (informations d'ouverture de session du serveur) avant la déconnexion :
+                    // coupée pendant l'ouverture, elle resterait occupée et le test suivant du même compte tomberait sur
+                    // l'écran « session occupée » du serveur.
+                    output.WriteLine(await WaitForLineAsync(debugLog, logged, l => l.Contains("Logon Info", StringComparison.Ordinal),
+                        TimeSpan.FromSeconds(90)));
+                }
+
                 session.Disconnect();
                 await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30));
             });
