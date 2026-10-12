@@ -89,10 +89,11 @@ public static class FreeRdpArguments
         if (verbose)
         {
             // Échanges des canaux des applications distantes (RemoteApp), du presse-papiers et de l'affichage (tailles
-            // demandées au serveur), et messages du presse-papiers du client Windows (jamais son contenu) : session qui se
-            // ferme, copier-coller qui n'aboutit pas, bureau qui ne suit pas la taille de l'onglet.
+            // demandées au serveur), canaux dynamiques ouverts par le serveur, et messages du presse-papiers du client
+            // Windows (jamais son contenu) : session qui se ferme, copier-coller qui n'aboutit pas, bureau qui ne suit pas
+            // la taille de l'onglet.
             arguments.Add("/log-filters:com.freerdp.channels.rail.*:DEBUG,com.freerdp.channels.cliprdr.*:DEBUG,"
-                + "com.freerdp.channels.disp.*:DEBUG,com.freerdp.client.windows:DEBUG");
+                + "com.freerdp.channels.disp.*:DEBUG,com.freerdp.channels.drdynvc.*:DEBUG,com.freerdp.client.windows:DEBUG");
         }
 
         // Réglages par leur nom, en une seule option : une option donnée deux fois ne garde que sa dernière valeur.
