@@ -84,8 +84,10 @@ public static class FreeRdpArguments
 
         if (verbose)
         {
-            // Échanges du canal des applications distantes (RemoteApp), pour diagnostiquer une session qui se ferme.
-            arguments.Add("/log-filters:com.freerdp.channels.rail.*:DEBUG");
+            // Échanges des canaux des applications distantes (RemoteApp) et du presse-papiers, et messages du presse-papiers
+            // du client Windows (jamais son contenu) : session qui se ferme, copier-coller qui n'aboutit pas.
+            arguments.Add("/log-filters:com.freerdp.channels.rail.*:DEBUG,com.freerdp.channels.cliprdr.*:DEBUG,"
+                + "com.freerdp.client.windows:DEBUG");
         }
 
         // Réglages par leur nom, en une seule option : une option donnée deux fois ne garde que sa dernière valeur.

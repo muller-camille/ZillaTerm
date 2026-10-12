@@ -132,7 +132,11 @@ public class FreeRdpTests
         // Largeur paire, 200 pixels au moins.
         Assert.Contains("/size:1000x200", arguments);
         Assert.Contains("/log-level:INFO", arguments);
-        Assert.Contains("/log-filters:com.freerdp.channels.rail.*:DEBUG", arguments);
+        // Journal détaillé : canaux RemoteApp et presse-papiers, messages du presse-papiers du client Windows.
+        var filters = Assert.Single(arguments, a => a.StartsWith("/log-filters:", StringComparison.Ordinal))["/log-filters:".Length..].Split(',');
+        Assert.Equal(["com.freerdp.channels.rail.*:DEBUG", "com.freerdp.channels.cliprdr.*:DEBUG", "com.freerdp.client.windows:DEBUG"], filters);
+        // Les options sont écrites dans le journal de débogage : ni mot de passe ni jeton.
+        Assert.DoesNotContain(arguments, a => a.Contains("s3cret", StringComparison.Ordinal) || a.Contains("admin-srv01", StringComparison.Ordinal));
         Assert.Contains("-wallpaper", arguments);
         Assert.Contains("+themes", arguments);
         Assert.Contains("+fonts", arguments);

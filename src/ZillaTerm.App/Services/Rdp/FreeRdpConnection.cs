@@ -76,6 +76,12 @@ internal sealed class FreeRdpConnection : IRdpConnection
         _slot.FocusChanged += OnSlotFocus;
         _slot.ChildMouseWheel += OnSlotWheel;
         _slot.ChildCreated += OnChildCreated;
+        if (DebugLog.Enabled)
+        {
+            // Copier-coller entre le poste et la session : chaque changement du presse-papiers du poste est noté.
+            _slot.ClipboardChanged += OnClipboardChanged;
+            _slot.ListenToClipboard(true);
+        }
 
         // Identité du serveur, vérifiée avant que le client ne parte : aucune question pendant sa connexion.
         _session.ShowStep(Text.Format(Strings.FreeRdpChecking, settings.Server));
@@ -109,6 +115,14 @@ internal sealed class FreeRdpConnection : IRdpConnection
         _legacySecurity = check.IsKey;
         var launch = FreeRdpArguments.Build(settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled, _fingerprints,
             _legacySecurity, FreeRdpClient.ConfigPath);
+        if (DebugLog.Enabled)
+        {
+            // Ni jeton ni mot de passe dans les options : ils sont dans le fichier de connexion (entrée standard).
+            DebugLog.Write("freerdp", $"{_label} : redirections : presse-papiers {OnOff(settings.RedirectClipboard)}, "
+                + $"disques {OnOff(settings.RedirectDrives)}, imprimantes {OnOff(settings.RedirectPrinters)}, "
+                + $"cartes à puce {OnOff(settings.RedirectSmartCards)} ; options : {string.Join(" ", launch.Arguments)}");
+        }
+
         var process = FreeRdpClient.Start(launch.Arguments);
         _process = process;
         DebugLog.Write("freerdp", $"{_label} : client FreeRDP lancé (processus {process.Id}), session {pixels.Width} × {pixels.Height}, "
@@ -189,6 +203,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
             slot.FocusChanged -= OnSlotFocus;
             slot.ChildMouseWheel -= OnSlotWheel;
             slot.ChildCreated -= OnChildCreated;
+            slot.ClipboardChanged -= OnClipboardChanged;
+            slot.ListenToClipboard(false);
             slot.FocusOnChildClick = false;
         }
 
@@ -329,8 +345,23 @@ internal sealed class FreeRdpConnection : IRdpConnection
         if (!_released && _window != IntPtr.Zero)
         {
             PostMessage(_window, focused ? WmSetFocus : WmKillFocus, IntPtr.Zero, new IntPtr(1));
+            if (focused && DebugLog.Enabled)
+            {
+                DebugLog.Write("freerdp", $"{_label} : clavier à la session ; presse-papiers du poste : {ClipboardState.Describe()}");
+            }
         }
     }
+
+    /// <summary>Presse-papiers du poste modifié (journal de débogage) : par une copie sur le poste, ou par FreeRDP.</summary>
+    private void OnClipboardChanged()
+    {
+        if (!_released)
+        {
+            DebugLog.Write("freerdp", $"{_label} : presse-papiers du poste modifié : {ClipboardState.Describe()}");
+        }
+    }
+
+    private static string OnOff(bool on) => on ? "oui" : "non";
 
     /// <summary>Molette reçue par l'emplacement (qui a le focus) : transmise à FreeRDP, position à l'écran comprise.</summary>
     private void OnSlotWheel(int message, IntPtr wParam, IntPtr lParam)
