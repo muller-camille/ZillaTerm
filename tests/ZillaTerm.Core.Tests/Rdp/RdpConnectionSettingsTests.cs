@@ -140,6 +140,25 @@ public class RdpConnectionSettingsTests
         Assert.Equal(2, tab.AuthenticationLevel);
     }
 
+    /// <summary>
+    /// Disques du poste (option cochée par défaut) : partagés même si le fichier ne les demande pas ; option décochée, seulement
+    /// si le fichier les demande.
+    /// </summary>
+    [Theory]
+    [InlineData("", false, false)]
+    [InlineData("", true, true)]
+    [InlineData("drivestoredirect:s:*\r\n", false, true)]
+    [InlineData("drivestoredirect:s:C:;\r\n", true, true)]
+    public void PsmTabSharesTheDrivesWhenAsked(string drives, bool redirectDrives, bool expected)
+    {
+        var file = RdpConnectionSettings.FromRdpFile(Encoding.UTF8.GetBytes("full address:s:psm.corp.local\r\n" + drives));
+
+        var tab = file.ForPsmTab(redirectDrives: redirectDrives);
+
+        Assert.Equal(expected, tab.RedirectDrives);
+        Assert.Equal(file.ForPsmTab() with { RedirectDrives = expected }, tab);
+    }
+
     /// <summary>Session PSM dans l'onglet : jamais de connexion sans vérification du serveur, même si le fichier le permet.</summary>
     [Theory]
     [InlineData(0, 2)]

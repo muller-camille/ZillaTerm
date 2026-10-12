@@ -5413,7 +5413,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Open PSM Windows sessions in a ZillaTerm _tab, otherwise in Remote Desktop Connection</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection.</value>
+    <value>The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections are those asked by the PVWA, plus this computer's drives if the option below is checked. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection.</value>
   </data>
   <data name="PsmDynamicResolution" xml:space="preserve">
     <value>Resize the _remote desktop with the tab</value>
@@ -5421,8 +5421,17 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Instead of a fixed resolution with the image scaled to the tab, ZillaTerm asks the PSM server to change the resolution of the session each time the tab is resized. The display is sharper, but depending on the PSM configuration, the connection from the PSM to the target server may keep its original size: turn the option off if the target screen does not follow. Applies to new sessions.</value>
   </data>
+  <data name="PsmRedirectDrives" xml:space="preserve">
+    <value>Share this _computer's drives with PSM Windows sessions</value>
+  </data>
+  <data name="PsmRedirectDrivesHelp" xml:space="preserve">
+    <value>This computer's drives appear in the session (File Explorer › This PC), to copy files both ways; programs in the session can then read and write them. The PSM server may refuse it, depending on its configuration. Unchecked: only when the PVWA asks for it. Applies to new sessions; in Remote Desktop Connection, only when the PVWA file is not signed (its signature is checked).</value>
+  </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>PSM Windows sessions in a tab</value>
+  </data>
+  <data name="EnvPsmRedirectDrives" xml:space="preserve">
+    <value>This computer's drives shared with PSM Windows sessions</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
     <value>The PVWA generates an RDP connection: it opens in a ZillaTerm tab (built-in FreeRDP client), Windows desktop or remote application alike.</value>

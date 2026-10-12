@@ -182,8 +182,9 @@ nessuna finestra separata.
   certificati noti (rinnovo), dopo conferma. Dopo una domanda, la connessione parte con un nuovo token richiesto al
   PVWA. Mai una connessione senza verifica, mai una domanda durante la connessione, mai una domanda di Windows. Un
   certificato del PSM emesso dall'autorità dell'azienda, da chiedere al team CyberArk, evita le conferme.
-- **Reindirizzamenti** (appunti, unità…): quelli richiesti dal PVWA, mai di più. Nessuna immagine della sessione
-  viene conservata sul disco.
+- **Reindirizzamenti** (appunti, unità…): quelli richiesti dal PVWA, più i dischi di questo computer (opzione
+  «Condividi i dischi di questo computer con le sessioni PSM Windows», selezionata per impostazione predefinita; il
+  server PSM può rifiutarla). Nessuna immagine della sessione viene conservata sul disco.
 - **Riconnetti**, «Duplica la scheda»: nuova richiesta al PVWA (il token di una sessione PSM vale una sola volta);
   motivo e ticket restano quelli della prima connessione.
 - La scheda mostra l'etichetta del server (PROD, QA…) e la sua cornice colorata; «Cattura» aggiunge un'immagine al
@@ -968,6 +969,7 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | CyberArk | PSMP per dominio | Altri PSMP (indirizzo, porta, dominio servito); ogni server passa da quello del dominio più vicino al suo (vedi [PSMP per dominio](#psmp-per-dominio)); «Quale PSMP per il server» per verificare | nessuno |
 | CyberArk | Componente degli account Windows | Componente PSM degli account Windows (di dominio o locali) senza componente memorizzato per la loro piattaforma, ad esempio `WIN-PSM` | vuoto = `PSM-RDP` |
 | CyberArk | Sessioni PSM Windows in una scheda | Sessione PSM (desktop o applicazione remota) in una scheda di ZillaTerm, con il client FreeRDP integrato, alla dimensione della scheda (vedi [Aprire una sessione PSM](#3-aprire-una-sessione-psm-desktop-remoto)); diffusa dal file d'ambiente | no |
+| CyberArk | Condividi i dischi di questo computer con le sessioni PSM Windows | I dischi di questo computer compaiono nella sessione (Esplora file › Questo PC) per copiare file; il server PSM può rifiutarlo. Non selezionata: solo se il PVWA lo chiede. In Connessione Desktop remoto, solo se il file del PVWA non è firmato (`drivestoredirect:s:*` aggiunto; un file firmato viene passato così com'è). Diffusa dal file d'ambiente | sì |
 | CyberArk | Adatta la risoluzione del desktop remoto alla dimensione della scheda | Sessioni PSM in una scheda: la risoluzione segue la dimensione della scheda invece di un'immagine adattata; la connessione dal PSM alla destinazione può mantenere la dimensione originale. Per le nuove sessioni | sì |
 | CyberArk | Componente per piattaforma | Tabella Piattaforma (ID del PVWA, ad esempio `WinDomain`) / Componente PSM: «Aggiungi un componente», «Rimuovi la riga», celle modificabili; ha la precedenza sul componente degli account Windows. «Memorizza questo componente per la piattaforma» (finestra di connessione) vi aggiunge una riga | vuoto |
 | Terminale | SSH in ZillaTerm | Terminale e scheda File integrati; altrimenti Windows Terminal | sì |
@@ -1228,13 +1230,15 @@ ciascuno); oltre, un collegamento appare come un file, e aprirlo entra nella car
 
 ### Sessioni Desktop remoto
 
-Le sessioni PSM si aprono con il file RDP restituito da `PSMConnect`. Per impostazione predefinita viene passato così
-com'è a Connessione Desktop remoto (`mstsc`): ne verifica la firma e gestisce sia il desktop sia l'applicazione
+Le sessioni PSM si aprono con il file RDP restituito da `PSMConnect`. Per impostazione predefinita viene passato a
+Connessione Desktop remoto (`mstsc`) così com'è, o con `drivestoredirect:s:*` se non è firmato e i dischi di questo
+computer sono condivisi: ne verifica la firma e gestisce sia il desktop sia l'applicazione
 remota (RemoteApp). Il registro di debug ne annota la struttura (token, firma e argomenti mascherati).
 
 Con l'opzione «Sessioni PSM Windows in una scheda», il file viene letto da ZillaTerm: indirizzo e porta del PSM,
 utente, programma di avvio (`alternate shell`) o applicazione remota (`remoteapplicationprogram`, nome e argomenti),
-sicurezza, gateway, bilanciamento del carico, reindirizzamenti (`drivestoredirect:s:*` solo per le unità), effetti.
+sicurezza, gateway, bilanciamento del carico, reindirizzamenti (`drivestoredirect:s:*` solo per le unità, o tutti i
+dischi con l'opzione «Condividi i dischi di questo computer»), effetti.
 La modalità di visualizzazione del file (`screen mode id`, dimensione, schermi) viene ignorata. Una sessione PSM è
 annidata: nella propria sessione, il PSM apre la connessione al server di destinazione alla stessa dimensione, e
 cambiare poi la risoluzione della sessione PSM non la cambia per la destinazione con alcune configurazioni del PSM

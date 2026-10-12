@@ -26,6 +26,7 @@ public enum EnvironmentSetting
     DutyTextFile,
     ServerTags,
     PsmDesktopInTab,
+    PsmRedirectDrives,
 }
 
 /// <summary>
@@ -128,6 +129,9 @@ public sealed class EnvironmentProfile
     /// <summary>Sessions PSM Windows (bureau) dans un onglet de ZillaTerm plutôt que dans Connexion Bureau à distance.</summary>
     public bool? PsmDesktopInTab { get; set; }
 
+    /// <summary>Disques du poste partagés avec les sessions PSM Windows.</summary>
+    public bool? PsmRedirectDrives { get; set; }
+
     public bool? CheckForUpdates { get; set; }
 
     public TransferProtocol? UploadProtocol { get; set; }
@@ -178,6 +182,7 @@ public sealed class EnvironmentProfile
             KeepPvwaSessionAlive = settings.KeepPvwaSessionAlive,
             SshInApp = settings.SshInApp,
             PsmDesktopInTab = settings.PsmDesktopInTab,
+            PsmRedirectDrives = settings.PsmRedirectDrives,
             CheckForUpdates = settings.CheckForUpdates,
             UploadProtocol = settings.PreferredUploadProtocol,
             DutyText = string.IsNullOrWhiteSpace(settings.DutyText) ? null : NormalizeDutyText(settings.DutyText),
@@ -429,6 +434,7 @@ public sealed class EnvironmentProfile
         AddFlag(EnvironmentSetting.KeepPvwaSessionAlive, settings.KeepPvwaSessionAlive, KeepPvwaSessionAlive);
         AddFlag(EnvironmentSetting.SshInApp, settings.SshInApp, SshInApp);
         AddFlag(EnvironmentSetting.PsmDesktopInTab, settings.PsmDesktopInTab, PsmDesktopInTab);
+        AddFlag(EnvironmentSetting.PsmRedirectDrives, settings.PsmRedirectDrives, PsmRedirectDrives);
         AddFlag(EnvironmentSetting.CheckForUpdates, settings.CheckForUpdates, CheckForUpdates);
         if (UploadProtocol is { } protocol)
         {
@@ -531,6 +537,7 @@ public sealed class EnvironmentProfile
         settings.KeepPvwaSessionAlive = KeepPvwaSessionAlive ?? settings.KeepPvwaSessionAlive;
         settings.SshInApp = SshInApp ?? settings.SshInApp;
         settings.PsmDesktopInTab = PsmDesktopInTab ?? settings.PsmDesktopInTab;
+        settings.PsmRedirectDrives = PsmRedirectDrives ?? settings.PsmRedirectDrives;
         settings.CheckForUpdates = CheckForUpdates ?? settings.CheckForUpdates;
         settings.PreferredUploadProtocol = UploadProtocol ?? settings.PreferredUploadProtocol;
         if (DutyText is not null)

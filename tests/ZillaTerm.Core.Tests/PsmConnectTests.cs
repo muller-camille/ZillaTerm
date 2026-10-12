@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using ZillaTerm.Core.Rdp;
 
 namespace ZillaTerm.Core.Tests;
 
@@ -122,6 +123,40 @@ public class PsmConnectTests
 
         Assert.Equal(Rdp, Encoding.Unicode.GetString(file, 2, file.Length - 2));
         Assert.Equal(Encoding.Unicode.GetPreamble(), file[..2]);
+    }
+
+    /// <summary>Session PSM dans mstsc, disques du poste partagés : la ligne est ajoutée, encodage et fins de ligne gardés.</summary>
+    [Fact]
+    public void RdpFile_AddsAllDrives_InTheSameEncoding()
+    {
+        var utf16 = Encoding.Unicode.GetPreamble().Concat(Encoding.Unicode.GetBytes(Rdp)).ToArray();
+
+        var file = RdpFile.WithAllDrives(utf16);
+
+        Assert.Equal(Encoding.Unicode.GetPreamble(), file[..2]);
+        Assert.Equal(Rdp + "drivestoredirect:s:*\r\n", Encoding.Unicode.GetString(file, 2, file.Length - 2));
+        Assert.True(RdpConnectionSettings.FromRdpFile(file).RedirectDrives);
+    }
+
+    /// <summary>Une liste de lecteurs (ou aucun) demandée par le PVWA devient « tous » ; sans fin de ligne finale, la ligne s'ajoute.</summary>
+    [Theory]
+    [InlineData("full address:s:psm.corp.local\ndrivestoredirect:s:\nusername:s:jdoe\n",
+        "full address:s:psm.corp.local\ndrivestoredirect:s:*\nusername:s:jdoe\n")]
+    [InlineData("full address:s:psm.corp.local\r\nDrivesToRedirect:s:C:;D:;\r\n",
+        "full address:s:psm.corp.local\r\ndrivestoredirect:s:*\r\n")]
+    [InlineData("full address:s:psm.corp.local", "full address:s:psm.corp.local\ndrivestoredirect:s:*")]
+    public void RdpFile_ReplacesTheDrivesLine(string rdp, string expected) =>
+        Assert.Equal(expected, Encoding.UTF8.GetString(RdpFile.WithAllDrives(Encoding.UTF8.GetBytes(rdp))));
+
+    /// <summary>Fichier signé par le PVWA : jamais modifié (la Connexion Bureau à distance en vérifie la signature).</summary>
+    [Fact]
+    public void RdpFile_LeavesASignedFileAsIs()
+    {
+        var signed = Encoding.UTF8.GetBytes(Rdp + "signscope:s:Full Address,Alternate Shell\r\nsignature:s:AQABAAEAAAA=\r\n");
+
+        Assert.True(RdpFile.IsSigned(signed));
+        Assert.Same(signed, RdpFile.WithAllDrives(signed));
+        Assert.False(RdpFile.IsSigned(Encoding.UTF8.GetBytes(Rdp + "signature:s:\r\n")));
     }
 
     [Theory]

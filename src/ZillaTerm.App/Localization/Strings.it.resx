@@ -5413,7 +5413,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Apri le sessioni PSM Windows in una sc_heda di ZillaTerm, altrimenti in Connessione Desktop remoto</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>La sessione prende la dimensione della scheda e si apre con il client FreeRDP integrato in ZillaTerm, sia desktop sia applicazione remota (PSM-RDP, PSM-SSH, WinSCP…), senza una finestra separata. ZillaTerm verifica il certificato del PSM (attendibile per Windows, altrimenti impronta confermata una volta e poi ricordata), e i reindirizzamenti restano quelli richiesti dal PVWA, mai di più. Una connessione tramite un gateway Desktop remoto si apre sempre in Connessione Desktop remoto.</value>
+    <value>La sessione prende la dimensione della scheda e si apre con il client FreeRDP integrato in ZillaTerm, sia desktop sia applicazione remota (PSM-RDP, PSM-SSH, WinSCP…), senza una finestra separata. ZillaTerm verifica il certificato del PSM (attendibile per Windows, altrimenti impronta confermata una volta e poi ricordata), e i reindirizzamenti sono quelli richiesti dal PVWA, più i dischi di questo computer se l'opzione qui sotto è selezionata. Una connessione tramite un gateway Desktop remoto si apre sempre in Connessione Desktop remoto.</value>
   </data>
   <data name="PsmDynamicResolution" xml:space="preserve">
     <value>Adatta la _risoluzione del desktop remoto alla dimensione della scheda</value>
@@ -5421,8 +5421,17 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Invece di una risoluzione fissa con l'immagine adattata alla scheda, ZillaTerm chiede al server PSM di cambiare la risoluzione della sessione a ogni ridimensionamento della scheda. La visualizzazione è più nitida, ma a seconda della configurazione del PSM la connessione dal PSM al server di destinazione può mantenere la dimensione originale: disattiva l'opzione se lo schermo della destinazione non si adegua. Si applica alle nuove sessioni.</value>
   </data>
+  <data name="PsmRedirectDrives" xml:space="preserve">
+    <value>Condividi i _dischi di questo computer con le sessioni PSM Windows</value>
+  </data>
+  <data name="PsmRedirectDrivesHelp" xml:space="preserve">
+    <value>I dischi di questo computer compaiono nella sessione (Esplora file › Questo PC), per copiare file nei due sensi; i programmi della sessione possono allora leggerli e scriverci. Il server PSM può rifiutarlo, secondo la sua configurazione. Non selezionata: solo se il PVWA lo chiede. Si applica alle nuove sessioni; in Connessione Desktop remoto, solo se il file del PVWA non è firmato (la sua firma viene verificata).</value>
+  </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessioni PSM Windows in una scheda</value>
+  </data>
+  <data name="EnvPsmRedirectDrives" xml:space="preserve">
+    <value>Dischi di questo computer condivisi con le sessioni PSM Windows</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
     <value>Il PVWA genera una connessione RDP: si apre in una scheda di ZillaTerm (client FreeRDP integrato), sia desktop Windows sia applicazione remota.</value>

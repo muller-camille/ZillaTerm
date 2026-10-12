@@ -172,8 +172,9 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   the connection starts with a new token requested from the PVWA. Never a connection without a check, never a
   question during the connection, never a question from Windows. A PSM certificate issued by the company authority,
   to ask the CyberArk team for, avoids the confirmations.
-- **Redirections** (clipboard, drives…): those the PVWA asks for, never more. No picture of the session is kept on
-  disk.
+- **Redirections** (clipboard, drives…): those the PVWA asks for, plus this computer's drives (option "Share this
+  computer's drives with PSM Windows sessions", on by default; the PSM server may refuse it). No picture of the session
+  is kept on disk.
 - **Reconnect**, "Duplicate tab": new request to the PVWA (a PSM session token is used only once); reason and ticket
   stay those of the first connection.
 - The tab shows the server's tag (PROD, QA…) and its coloured frame; "Capture" adds a picture to the log of an
@@ -905,6 +906,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | CyberArk | PSMP by domain | Other PSMPs (address, port, domain served); each server goes through the one of the domain closest to its own (see [PSMP by domain](#psmp-by-domain)); "Which PSMP for the server" to check | none |
 | CyberArk | Windows accounts component | PSM component of Windows accounts (domain or local) without a component remembered for their platform, for example `WIN-PSM` | empty = `PSM-RDP` |
 | CyberArk | PSM Windows sessions in a tab | PSM session (desktop or remote application) in a ZillaTerm tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); spread by the environment file | no |
+| CyberArk | Share this computer's drives with PSM Windows sessions | This computer's drives appear in the session (File Explorer › This PC) to copy files; the PSM server may refuse it. Unchecked: only when the PVWA asks for it. In Remote Desktop Connection, only when the PVWA file is not signed (`drivestoredirect:s:*` added; a signed file is given as is). Spread by the environment file | yes |
 | CyberArk | Resize the remote desktop with the tab | PSM sessions in a tab: the resolution follows the size of the tab instead of a scaled picture; the connection from the PSM to the target may keep its original size. For new sessions | yes |
 | CyberArk | Component per platform | Platform (PVWA ID, for example `WinDomain`) / PSM component table: "Add a component", "Remove the line", editable cells; takes precedence over the Windows accounts component. "Remember this component for platform" (connection window) adds a line to it | empty |
 | Terminal | SSH in ZillaTerm | Built-in terminal and Files tab; otherwise Windows Terminal | yes |
@@ -1146,13 +1148,15 @@ resolved (one round trip each); beyond that, a link shows as a file and opening 
 
 ### Remote desktop sessions
 
-PSM sessions open with the RDP file returned by `PSMConnect`. By default it is handed as is to Remote Desktop
-Connection (`mstsc`): it checks its signature and handles a desktop as well as a remote application (RemoteApp). The
+PSM sessions open with the RDP file returned by `PSMConnect`. By default it is handed to Remote Desktop Connection
+(`mstsc`) as is, or with `drivestoredirect:s:*` when it is not signed and this computer's drives are shared: it checks
+its signature and handles a desktop as well as a remote application (RemoteApp). The
 debug log records its structure (token, signature and arguments masked).
 
 With the "PSM Windows sessions in a tab" option, the file is read by ZillaTerm: PSM address and port, user, start
 program (`alternate shell`) or remote application (`remoteapplicationprogram`, name and arguments), security,
-gateway, load balancing, redirections (`drivestoredirect:s:*` only for drives), effects. The file's display mode
+gateway, load balancing, redirections (`drivestoredirect:s:*` only for drives, or every drive with the option "Share
+this computer's drives"), effects. The file's display mode
 (`screen mode id`, size, monitors) is ignored. A PSM session is nested: inside its own session, the PSM opens the
 connection to the target server at the same size, and changing the PSM session's resolution afterwards does not
 change it for the target with some PSM configurations (cut-off desktop, shifted clicks). The option "Resize the remote
