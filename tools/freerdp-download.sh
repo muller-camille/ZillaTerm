@@ -10,8 +10,8 @@
 set -euo pipefail
 
 repository=muller-camille/FreeRDP
-release=wfreerdp-3.32.1-4
-sums_sha256=e53970f111f8a8dd3c8036d1fcc83f5144292a6d952047a0125a2052079c88fc
+release=wfreerdp-3.32.1-5
+sums_sha256=b2a8a24e826e5932183861b51920c9444bb1537c64a19b6e673b306c7665ff32
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 . "$root/tools/fork-release.sh"
