@@ -5170,14 +5170,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to New folder….
-        /// </summary>
-        public static string NewFolderEntry {
-            get {
-                return ResourceManager.GetString("NewFolderEntry", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to New folder in {0}.
@@ -6323,6 +6315,42 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Connection lost: reconnecting….
+        /// </summary>
+        public static string RdpReconnecting {
+            get {
+                return ResourceManager.GetString("RdpReconnecting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: connection lost, reconnecting….
+        /// </summary>
+        public static string RdpReconnectingStatus {
+            get {
+                return ResourceManager.GetString("RdpReconnectingStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Attempt {0} of {1}: the session resumes by itself once the network is back..
+        /// </summary>
+        public static string RdpReconnectAttempt {
+            get {
+                return ResourceManager.GetString("RdpReconnectAttempt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The session resumes by itself once the network is back..
+        /// </summary>
+        public static string RdpReconnectWaiting {
+            get {
+                return ResourceManager.GetString("RdpReconnectWaiting", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Remote desktop session opened: {0}.
         /// </summary>
         public static string RdpOpened {
@@ -6557,14 +6585,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to (root).
-        /// </summary>
-        public static string RootFolder {
-            get {
-                return ResourceManager.GetString("RootFolder", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to Add a member to the safe {0}.
@@ -7301,6 +7321,15 @@ namespace ZillaTerm.App.Localization {
         public static string SessionClosedByServer {
             get {
                 return ResourceManager.GetString("SessionClosedByServer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server has not answered for {0} s: the connection may be lost. ZillaTerm keeps checking and says so if it is..
+        /// </summary>
+        public static string SshNotResponding {
+            get {
+                return ResourceManager.GetString("SshNotResponding", resourceCulture);
             }
         }
 
@@ -10510,6 +10539,60 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to {0} changed on the server: the copy opened in the editor was replaced by the current version.
+        /// </summary>
+        public static string EditRefreshed {
+            get {
+                return ResourceManager.GetString("EditRefreshed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: the server version could not be read ({1}); the copy opened in the editor may be out of date.
+        /// </summary>
+        public static string EditStaleCopy {
+            get {
+                return ResourceManager.GetString("EditStaleCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” changed on the server, and your copy has changes not sent back.
+        /// </summary>
+        public static string EditReloadHeading {
+            get {
+                return ResourceManager.GetString("EditReloadHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reloading the server version loses the changes in your copy. If you keep your copy, sending it back will warn that the file changed on the server..
+        /// </summary>
+        public static string EditReloadMessage {
+            get {
+                return ResourceManager.GetString("EditReloadMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reload the server version.
+        /// </summary>
+        public static string EditReloadAction {
+            get {
+                return ResourceManager.GetString("EditReloadAction", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keep my copy.
+        /// </summary>
+        public static string EditKeepMine {
+            get {
+                return ResourceManager.GetString("EditKeepMine", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Save the result to a CSV file?.
         /// </summary>
         public static string ImportSaveHeading {
@@ -11762,6 +11845,15 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Connection interrupted.
+        /// </summary>
+        public static string TabStateInterrupted {
+            get {
+                return ResourceManager.GetString("TabStateInterrupted", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Through the PSMP {0}: session managed by CyberArk.
         /// </summary>
         public static string TabModePsmp {
@@ -12802,6 +12894,33 @@ namespace ZillaTerm.App.Localization {
         public static string ServerPromptAdd {
             get {
                 return ResourceManager.GetString("ServerPromptAdd", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add to My servers.
+        /// </summary>
+        public static string AddToMyServersTitle {
+            get {
+                return ResourceManager.GetString("AddToMyServersTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Where should {0} go in “My servers”?.
+        /// </summary>
+        public static string AddToMyServersQuestion {
+            get {
+                return ResourceManager.GetString("AddToMyServersQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Tag:.
+        /// </summary>
+        public static string ServerPromptTag {
+            get {
+                return ResourceManager.GetString("ServerPromptTag", resourceCulture);
             }
         }
 
@@ -15640,14 +15759,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Which environment is {0} in?.
-        /// </summary>
-        public static string TagPromptHeading {
-            get {
-                return ResourceManager.GetString("TagPromptHeading", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to Its color marks the tab and the outline of the session: you see at a glance where you work..
@@ -15667,14 +15778,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to _Add to My servers.
-        /// </summary>
-        public static string TagPromptAdd {
-            get {
-                return ResourceManager.GetString("TagPromptAdd", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to _No tag.
@@ -16051,6 +16154,24 @@ namespace ZillaTerm.App.Localization {
         public static string PsmDesktopInTabHelp {
             get {
                 return ResourceManager.GetString("PsmDesktopInTabHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Resize the _remote desktop with the tab.
+        /// </summary>
+        public static string PsmDynamicResolution {
+            get {
+                return ResourceManager.GetString("PsmDynamicResolution", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Instead of a fixed resolution with the image scaled to the tab, ZillaTerm asks the PSM server to change the resolution of the session each time the tab is resized. The display is sharper, but depending on the PSM configuration, the connection from the PSM to the target server may keep its original size: turn the option off if the target screen does not follow. Applies to new sessions..
+        /// </summary>
+        public static string PsmDynamicResolutionHelp {
+            get {
+                return ResourceManager.GetString("PsmDynamicResolutionHelp", resourceCulture);
             }
         }
 

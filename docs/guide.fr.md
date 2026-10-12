@@ -164,7 +164,11 @@ fenêtre à part.
   y sont placées comme sur un bureau ; aucune ne s'ouvre sur celui du poste.
 - **Taille** : la session prend la taille de l'onglet à la connexion et la garde. Si la fenêtre change de taille,
   l'image est mise à l'échelle : le PSM a ouvert sa connexion vers le serveur à cette taille. La session ne passe
-  jamais en plein écran, même si le fichier du PVWA le demande.
+  jamais en plein écran, même si le fichier du PVWA le demande. Avec l'option « Adapter la résolution du bureau distant
+  à la taille de l'onglet » (Paramètres, page CyberArk, activée par défaut), la résolution de la session PSM suit
+  l'onglet à chaque redimensionnement, sans mise à l'échelle ; selon la configuration du PSM, la connexion vers le
+  serveur cible peut garder sa taille d'origine : désactivez alors l'option, la session garde une taille fixe et son
+  image est mise à l'échelle de l'onglet.
 - **Clavier** : quand l'onglet a le clavier (clic dans la session), toutes les touches vont à la session, raccourcis
   de Windows compris (Alt+Tab, touche Windows). Cliquez ailleurs dans ZillaTerm pour les retrouver.
 - **Certificat du PSM** : lu par ZillaTerm pendant la barre de progression, avant tout envoi au PSM (ni jeton, ni
@@ -203,9 +207,9 @@ fenêtre à part.
   de session vers le domaine lui-même : le serveur est toujours demandé, « Options avancées… » compris. La fenêtre « Choisir le serveur » demande sur lequel ouvrir la session :
   la liste propose les serveurs déjà utilisés avec ce compte (sessions récentes, « Mes serveurs ») puis ses machines
   autorisées ; un compte limité à ses machines refuse les autres. « Garder ce serveur dans « Mes serveurs » », avec
-  le dossier voulu, l'y ajoute après une connexion réussie, nommé `compte@serveur` (choix mémorisé pour la fois
-  suivante ; la case disparaît si ce serveur y est déjà). « Options avancées… » ouvre la fenêtre complète avec ce
-  serveur.
+  le dossier et l'[étiquette](#étiquettes-prod-qa-dev) voulus (choisis dans la même fenêtre), l'y ajoute après une
+  connexion réussie, nommé `compte@serveur` (choix et dossier mémorisés pour la fois suivante ; la case disparaît si
+  ce serveur y est déjà). « Options avancées… » ouvre la fenêtre complète avec ce serveur.
 - **Motif et ticket** : si le PVWA refuse la demande (motif ou ticket exigé, composant non configuré…), la fenêtre
   dit quoi faire, suivi du message d'origine du PVWA, et vous pouvez corriger puis réessayer.
 - Le bouton « Options avancées… » de la barre d'outils (ou clic droit → « Options avancées… ») ouvre cette fenêtre,
@@ -500,7 +504,11 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   même qu'un fichier dont les premiers octets sont binaires. À chaque enregistrement, ZillaTerm
   propose de le renvoyer sur le serveur (« Renvoyer » ou « Pas maintenant ») : envoi en SFTP, droits du fichier
   conservés. Si le fichier a changé sur le serveur depuis son ouverture, une alerte le dit et demande confirmation
-  (« Remplacer par ma version ») avant de l'écraser.
+  (« Remplacer par ma version ») avant de l'écraser. Rouvrir un fichier déjà ouvert le télécharge de nouveau, à chaque
+  fois : si son contenu a changé sur le serveur (modifié dans le terminal, par quelqu'un d'autre, avant une
+  reconnexion…), la copie ouverte dans l'éditeur est remplacée par la version actuelle ; sinon elle n'est pas touchée.
+  Seule exception : si votre copie a des modifications non renvoyées et que le fichier a aussi changé sur le serveur,
+  ZillaTerm demande s'il faut « Recharger la version du serveur » ou « Garder ma copie ».
 - **Suivre un fichier (tail -f)** : clic droit sur un ou plusieurs fichiers → « Suivre (tail -f) ». Une fenêtre
   montre la fin du fichier puis chaque nouvelle ligne dès qu'elle est écrite, comme `tail -f`, en lisant le fichier
   par SFTP chaque seconde : aucune commande n'est lancée sur le serveur. Un fichier tronqué ou remplacé par une
@@ -566,16 +574,18 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
 
 ![« Mes serveurs » rangés en dossiers](captures/fr/my-servers.png)
 
-- **Ajouter** un compte : clic droit dans « Disponibles » → « Ajouter à Mes serveurs » puis le dossier voulu,
-  ou glissez le compte sur l'onglet « Mes serveurs », ou bouton « Ajouter » de la barre d'outils. Pour un compte de
-  domaine, le serveur est demandé (facultatif : sans serveur, il le sera à chaque connexion). Son
-  [étiquette](#étiquettes-prod-qa-dev) est ensuite demandée, avec une proposition d'après son nom.
+- **Ajouter** un compte : clic droit dans « Disponibles » → « Ajouter à Mes serveurs », ou bouton « Ajouter » de la
+  barre d'outils. Une fenêtre demande le dossier (le dernier choisi est proposé ; tapez un nom pour en créer un,
+  `Prod/Web` pour un sous-dossier) et l'[étiquette](#étiquettes-prod-qa-dev), proposée d'après son nom. Pour un
+  compte de domaine, la même fenêtre demande le serveur (facultatif : sans serveur, il le sera à chaque connexion).
+  Vous pouvez aussi glisser le compte sur un dossier de « Mes serveurs » : la fenêtre s'ouvre alors sur ce dossier
+  (pas du tout pour un compte de serveur s'il n'y a aucune étiquette).
 - **Ajouter une session ouverte** : clic droit sur l'onglet de la session (ou dans son terminal) → « Ajouter à Mes
-  serveurs » puis le dossier voulu. Le serveur garde le type de connexion et la machine cible ; l'entrée est grisée
-  s'il y est déjà.
+  serveurs » : même fenêtre (dossier et étiquette). Le serveur garde le type de connexion et la machine cible ;
+  l'entrée est grisée s'il y est déjà.
 - **Ajouter une session récente** : clic droit dans « Sessions récentes » sur l'accueil → « Ajouter à Mes
-  serveurs » puis le dossier voulu. Le serveur garde le type de connexion (PSM, SSH ou fichiers seuls), le composant
-  PSM et la machine cible utilisés.
+  serveurs » : même fenêtre (dossier et étiquette). Le serveur garde le type de connexion (PSM, SSH ou fichiers
+  seuls), le composant PSM et la machine cible utilisés.
 - **Dossiers** : clic droit → nouveau dossier ou sous-dossier, renommer, supprimer ; glissez serveurs et dossiers
   pour les déplacer. Supprimer un dossier compte et supprime tous ses serveurs de ce PVWA, même ceux que la recherche
   masque ; ceux d'un autre PVWA restent. Retirer un serveur ou supprimer un dossier demande confirmation (les
@@ -625,7 +635,9 @@ Une session ouverte depuis « Disponibles » ou les sessions récentes prend l'�
 qui a le même compte (et la même machine cible). L'étiquette s'applique à l'ouverture : changez-la, puis rouvrez la
 session pour voir la nouvelle couleur.
 
-- **À l'ajout** d'un serveur dans « Mes serveurs », l'étiquette est demandée. Une étiquette est proposée d'après le
+- **À l'ajout** d'un serveur dans « Mes serveurs », l'étiquette est demandée dans la même fenêtre que le dossier (et
+  que le serveur d'un compte de domaine) ; elle suit le dossier et le serveur saisis tant que vous n'en cochez pas une
+  vous-même. Une étiquette est proposée d'après le
   nom du serveur, son adresse, son safe puis ses dossiers (« prd », « prod », « production » → PROD ; « rec »,
   « recette », « qual », « uat », « preprod », « staging », « test » → QA ; « dev » → DEV ; une étiquette ajoutée dans
   les Paramètres se reconnaît à son nom). Rien n'est proposé quand le texte nomme deux environnements. Vérifiez-la :
@@ -947,6 +959,7 @@ disent sous leur case (« ⚠ Effet : … »).
 | CyberArk | PSMP par domaine | Autres PSMP (adresse, port, domaine servi) ; chaque serveur passe par celui du domaine le plus proche du sien (voir [PSMP par domaine](#psmp-par-domaine)) ; « Quel PSMP pour le serveur » pour vérifier | aucun |
 | CyberArk | Composant des comptes Windows | Composant PSM des comptes Windows (domaine ou locaux) sans composant mémorisé pour leur plateforme, par exemple `WIN-PSM` | vide = `PSM-RDP` |
 | CyberArk | Sessions PSM Windows dans un onglet | Session PSM (bureau ou application distante) dans un onglet de ZillaTerm, avec le client FreeRDP embarqué, à la taille de l'onglet (voir [Ouvrir une session PSM](#3-ouvrir-une-session-psm-bureau-à-distance)) ; diffusé par le fichier d'environnement | non |
+| CyberArk | Adapter la résolution du bureau distant à la taille de l'onglet | Sessions PSM dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine. Pour les nouvelles sessions | oui |
 | CyberArk | Composant par plateforme | Tableau Plateforme (ID du PVWA, par exemple `WinDomain`) / Composant PSM : « Ajouter un composant », « Enlever la ligne », cellules modifiables ; prioritaire sur le composant des comptes Windows. « Mémoriser ce composant pour la plateforme » (fenêtre de connexion) y ajoute une ligne | vide |
 | Terminal | SSH dans ZillaTerm | Terminal et onglet Fichiers intégrés ; sinon Windows Terminal | oui |
 | Terminal | Couleurs du terminal, taille de police | Palette (Campbell, One Half, Solarized…) et taille de police des terminaux SSH | Campbell, 14 |
@@ -1213,8 +1226,10 @@ utilisateur, programme de démarrage (`alternate shell`) ou application distante
 arguments), sécurité, passerelle, répartition de charge, redirections (`drivestoredirect:s:*` seulement pour les
 disques), effets. Le mode d'affichage du fichier (`screen mode id`, taille, écrans) est ignoré. Une session PSM est
 imbriquée : dans sa propre session, le PSM ouvre la connexion vers le serveur cible à la même taille, et changer
-ensuite la résolution de la session PSM ne la change pas pour la cible (bureau tronqué, clics décalés). D'où la
-taille fixe et la mise à l'échelle de ces sessions ; les connexions directes, elles, suivent la taille de l'onglet.
+ensuite la résolution de la session PSM ne la change pas pour la cible avec certaines configurations du PSM (bureau
+tronqué, clics décalés). L'option « Adapter la résolution du bureau distant à la taille de l'onglet », activée par
+défaut, change la résolution de la session PSM ; désactivée, ces sessions gardent une taille fixe, mise à l'échelle de
+l'onglet. Les connexions directes, elles, suivent la taille de l'onglet.
 
 **Client FreeRDP.** Les sessions PSM dans un onglet passent par le client Windows de FreeRDP (`wfreerdp`), compilé par
 le workflow de release du fork `muller-camille/FreeRDP` (branche `ci`) et publié dans ses releases ;
@@ -1249,7 +1264,14 @@ interception possible). Plusieurs certificats et clés par adresse (PSM en répa
 chacun confirmé une fois) : le client les reçoit tous. Les questions sont posées avant le lancement du client, jamais
 pendant la connexion ; une fois l'une d'elles répondue, la connexion part avec un nouveau jeton demandé au PVWA (le
 jeton PSM ne sert qu'une fois et expire vite). Si le client refuse quand même le serveur (autre serveur derrière la même
-adresse), ZillaTerm relit son identité et la soumet si elle est nouvelle (deux fois au plus par connexion).
+adresse), ZillaTerm relit son identité et la soumet si elle est nouvelle (deux fois au plus par connexion). Après une
+coupure réseau, FreeRDP tente de reprendre la session (une tentative toutes les 15 secondes, 20 au plus) ; pendant ce
+temps, l'onglet affiche « Connexion perdue : reconnexion en cours… » avec la tentative en cours, la session est
+masquée et ZillaTerm reste utilisable (les tentatives se font à côté de la fenêtre de la session) ; la session
+réapparaît dès qu'elle est reprise. Si c'est un autre serveur qui répond à la même adresse, la
+tentative est refusée (identité non vérifiée) et s'arrête aussitôt : la session est perdue, et ZillaTerm refait une
+demande au PVWA (nouveau jeton), puis vérifie le serveur qui répond avant de s'y connecter (question s'il est inconnu ;
+deux fois au plus avant une nouvelle ouverture de session).
 
 Durcissement : aucune bibliothèque chargée hors de son dossier et de System32 (les canaux virtuels sont compilés dans
 l'exécutable), OpenSSL sans module, moteur ni fichier de configuration chargés à l'exécution, ses dossiers compilés
@@ -1362,8 +1384,11 @@ l'écran.
 | Session PSM : « Identité de … impossible à vérifier » | ZillaTerm n'a pas pu lire le certificat du PSM avant la connexion (PSM injoignable, port filtré, réponse qui n'est pas du Bureau à distance) : la raison suit le message. Rien n'a été envoyé au PSM. |
 | Une session PSM s'ouvre dans la Connexion Bureau à distance malgré l'option « dans un onglet » | Connexion par une passerelle Bureau à distance, ou client FreeRDP impossible à lancer sur le poste (stratégie du poste) : la barre d'état le dit. |
 | Alt+Tab ou la touche Windows ne répondent plus | L'onglet d'une session PSM a le clavier : toutes les touches vont à la session. Cliquez ailleurs dans ZillaTerm (un autre onglet, la liste). |
+| Session PSM dans un onglet : Ctrl+V d'un fichier ou d'un texte copié sur le poste ne fait rien | Le PVWA n'autorise peut-être pas le presse-papiers, ou le PSM n'autorise que le texte. Paramètres → Journal de débogage, reproduisez (copie, clic dans la session, collage), puis « Afficher le fichier du journal » : les lignes `freerdp` donnent les redirections demandées par le PVWA (`presse-papiers oui/non`), chaque changement du presse-papiers du poste (programme, formats : fichiers, texte ; jamais le contenu) et les échanges du presse-papiers avec le PSM (`cliprdr` : `CB_STREAM_FILECLIP_ENABLED` absent des drapeaux du serveur signifie pas de copie de fichiers). |
 | Session PSM : « Vérifier la clé de ce PSM » | Le PSM n'accepte que l'ancienne « sécurité RDP », sans TLS : seule l'empreinte de sa clé l'identifie. Acceptez-la au premier usage (elle est retenue) et demandez à l'administrateur CyberArk d'activer TLS sur le PSM. |
 | Session PSM : « Nouvelle clé pour ce PSM » | L'adresse du PSM regroupe sans doute plusieurs serveurs (répartition de charge), chacun avec sa clé : confirmez-la si l'administrateur CyberArk le confirme. Les clés déjà acceptées le restent. |
+| Session SSH ou PSMP : « La connexion a été coupée par le serveur ou le réseau » ou « Session fermée par le serveur » après une veille, un verrouillage ou une pause | La connexion est perdue : le poste s'est mis en veille, le réseau ou le VPN a changé, un pare-feu l'a oubliée, ou le PSMP a fermé la session (inactivité). ZillaTerm le détecte en une minute au plus (demande de maintien toutes les 15 s, à laquelle le serveur doit répondre) : « Reconnecter » ouvre une nouvelle session ; l'onglet Fichiers propose de rouvrir la sienne. |
+| Session SSH ou PSMP : « Le serveur ne répond pas depuis N s », terminal grisé | Ce que vous avez tapé est resté sans réponse, comme la demande que ZillaTerm envoie alors au serveur (au bout de 2 s). Tout revient dès que le serveur répond ; sinon la connexion est déclarée perdue au bout d'une minute environ. « Reconnecter » ouvre tout de suite une nouvelle session. |
 | Session PSM : « Ce serveur ne propose plus TLS » | La connexion est peut-être interceptée : ne continuez qu'avec l'accord de l'administrateur CyberArk (voir le message). |
 | Session PSM : « Le serveur Bureau à distance n'utilise aucun chiffrement… » | Le PSM (ou un équipement entre les deux) propose l'ancienne sécurité RDP sans chiffrement : rien ne protégerait le jeton. Alertez l'administrateur CyberArk. |
 | Un onglet de bureau à distance direct (KeePass) affiche « Erreur du contrôle Bureau à distance » | Signalez le code affiché (si le contrôle Bureau à distance est absent du poste, la connexion passe par `mstsc`). |

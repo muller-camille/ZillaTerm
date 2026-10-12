@@ -344,7 +344,16 @@ public partial class MainWindow
     {
         if (_current is { } account && _currentSaved is null)
         {
-            AddToCurrent(account, SelectedSavedFolder() ?? "");
+            AddToCurrent(account, SelectedSavedFolder() ?? _settings.KeepChosenServerFolder, chooseFolder: true);
+        }
+    }
+
+    /// <summary>« Ajouter à Mes serveurs » du menu d'un compte : fenêtre du dossier et de l'étiquette.</summary>
+    private void OnAddAccountToCurrent(object sender, RoutedEventArgs e)
+    {
+        if (_current is { } account)
+        {
+            AddToCurrent(account, _settings.KeepChosenServerFolder, chooseFolder: true);
         }
     }
 
@@ -356,40 +365,45 @@ public partial class MainWindow
     };
 
     /// <summary>
-    /// Compte ajouté à « Mes serveurs ». Pour un compte de domaine, le serveur est demandé (facultatif : sans serveur, il
-    /// le sera à chaque connexion).
+    /// Compte ajouté à « Mes serveurs » : une fenêtre demande le dossier et l'étiquette, et pour un compte de domaine le
+    /// serveur (facultatif : sans serveur, il le sera à chaque connexion). Glissé sur un dossier
+    /// (<paramref name="chooseFolder"/> faux), un compte d'un serveur est ajouté sans fenêtre s'il n'y a pas d'étiquette à
+    /// choisir.
     /// </summary>
-    private void AddToCurrent(PvwaAccount account, string folder)
+    private void AddToCurrent(PvwaAccount account, string folder, bool chooseFolder)
     {
-        if (AccountClassifier.NeedsRemoteMachine(account, _domains))
+        bool askServer = AccountClassifier.NeedsRemoteMachine(account, _domains);
+        if (!askServer && !chooseFolder && _settings.ServerTags.Count == 0)
         {
-            if (AskServer(account, adding: true) is not { } choice)
-            {
-                return;
-            }
-
-            if (choice.Server.Length > 0)
-            {
-                // Composant non figé : celui retenu pour la plateforme au moment de la connexion, comme sans serveur.
-                ShowAddedToCurrent(SessionLibrary.AddConnection(_settings, account, PvwaHost, folder,
-                    AccountClassifier.DefaultMode(account, HasPsmp), null, choice.Server));
-                return;
-            }
+            ShowAddedToCurrent(SessionLibrary.AddSession(_settings, account, PvwaHost, folder, HasPsmp), null);
+            return;
         }
 
-        ShowAddedToCurrent(SessionLibrary.AddSession(_settings, account, PvwaHost, folder, HasPsmp));
+        var accountName = $"{account.UserName}@{account.Address}";
+        if (AskAdd(account, folder, askServer ? null : accountName,
+            server => server.Length > 0 ? ($"{account.UserName}@{server}", server) : (accountName, null)) is not { } choice)
+        {
+            return;
+        }
+
+        // Composant non figé : celui retenu pour la plateforme au moment de la connexion, comme sans serveur.
+        ShowAddedToCurrent(askServer && choice.Server.Length > 0
+            ? SessionLibrary.AddConnection(_settings, account, PvwaHost, choice.Folder, AccountClassifier.DefaultMode(account, HasPsmp),
+                null, choice.Server)
+            : SessionLibrary.AddSession(_settings, account, PvwaHost, choice.Folder, HasPsmp), choice.ChosenTag);
     }
 
     /// <summary>
-    /// Fenêtre « Choisir le serveur » d'un compte de domaine ; null si elle est annulée. À la connexion, le choix « Garder
-    /// dans « Mes serveurs » » et le dossier sont mémorisés.
+    /// Fenêtre « Ajouter à « Mes serveurs » » : dossier (le dernier choisi proposé) et étiquette (devinée d'après le nom,
+    /// l'adresse, le safe ou le dossier), et serveur si <paramref name="name"/> est null ; null si elle est annulée.
     /// </summary>
-    private ServerPromptDialog? AskServer(PvwaAccount account, bool adding)
+    /// <param name="target">Nom et machine cible du serveur ajouté, d'après le serveur saisi (vide sans question).</param>
+    private ServerPromptDialog? AskAdd(PvwaAccount account, string folder, string? name, Func<string, (string Name, string? Machine)> target)
     {
-        var dialog = new ServerPromptDialog(account, SessionLibrary.KnownMachines(_settings, account, PvwaHost),
-            _settings.SessionFolderList.OrderBy(f => f, StringComparer.OrdinalIgnoreCase),
-            server => SessionLibrary.FindSession(_settings, account, PvwaHost, server) is not null,
-            _settings.KeepChosenServer, _settings.KeepChosenServerFolder, adding, AccountClassifier.IsDomainAccount(account, _domains))
+        var dialog = new ServerPromptDialog(account, name is null ? SessionLibrary.KnownMachines(_settings, account, PvwaHost) : [],
+            _settings.SessionFolderList.OrderBy(f => f, StringComparer.OrdinalIgnoreCase), _ => false, keep: false, folder,
+            adding: true, AccountClassifier.IsDomainAccount(account, _domains), _settings.ServerTags,
+            (server, inFolder) => GuessTag(account, target(server), inFolder), name)
         {
             Owner = this,
         };
@@ -398,85 +412,87 @@ public partial class MainWindow
             return null;
         }
 
-        if (!adding && (dialog.KeepChoice != _settings.KeepChosenServer || (dialog.Keep && dialog.Folder != _settings.KeepChosenServerFolder)))
+        RememberFolder(dialog.Folder);
+        return dialog;
+    }
+
+    /// <summary>
+    /// Fenêtre « Choisir le serveur » d'un compte de domaine à la connexion ; null si elle est annulée. Le choix « Garder
+    /// dans « Mes serveurs » » et le dossier sont mémorisés ; l'étiquette du serveur gardé y est choisie aussi.
+    /// </summary>
+    private ServerPromptDialog? AskServer(PvwaAccount account)
+    {
+        var dialog = new ServerPromptDialog(account, SessionLibrary.KnownMachines(_settings, account, PvwaHost),
+            _settings.SessionFolderList.OrderBy(f => f, StringComparer.OrdinalIgnoreCase),
+            server => SessionLibrary.FindSession(_settings, account, PvwaHost, server) is not null,
+            _settings.KeepChosenServer, _settings.KeepChosenServerFolder, adding: false, AccountClassifier.IsDomainAccount(account, _domains),
+            _settings.ServerTags, (server, folder) => GuessTag(account, ($"{account.UserName}@{server}", server), folder))
+        {
+            Owner = this,
+        };
+        if (dialog.ShowDialog() != true)
+        {
+            return null;
+        }
+
+        if (dialog.KeepChoice != _settings.KeepChosenServer)
         {
             _settings.KeepChosenServer = dialog.KeepChoice;
-            _settings.KeepChosenServerFolder = dialog.Keep ? dialog.Folder : _settings.KeepChosenServerFolder;
             SaveSettings();
+        }
+
+        if (dialog.Keep)
+        {
+            RememberFolder(dialog.Folder);
         }
 
         return dialog;
     }
 
-    /// <summary>
-    /// Étiquette (PROD, QA, DEV…) d'un serveur ajouté à « Mes serveurs » : celle devinée d'après son nom, son adresse, son
-    /// safe ou son dossier est proposée. Faux si l'ajout est annulé ; sans étiquette dans les Paramètres, rien n'est demandé.
-    /// </summary>
-    private bool AskTag(SavedSession session)
+    /// <summary>Dernier dossier choisi pour ajouter un serveur : proposé la fois suivante.</summary>
+    private void RememberFolder(string folder)
     {
-        if (_settings.ServerTags.Count == 0)
+        if (folder != _settings.KeepChosenServerFolder)
         {
-            return true;
+            _settings.KeepChosenServerFolder = folder;
+            SaveSettings();
         }
-
-        var guess = ServerTagGuess.ForServer(_settings.ServerTags, session.Name, session.RemoteMachine, session.Address,
-            session.SafeName, session.Folder);
-        var dialog = new TagPromptDialog(session.Name, _settings.ServerTags, session.Tag ?? guess?.Name, guess is not null) { Owner = this };
-        if (dialog.ShowDialog() != true)
-        {
-            return false;
-        }
-
-        session.Tag = dialog.ChosenTag;
-        return true;
     }
 
+    /// <summary>Étiquette (PROD, QA, DEV…) devinée d'après le nom, la machine cible, l'adresse, le safe ou le dossier.</summary>
+    private string? GuessTag(PvwaAccount account, (string Name, string? Machine) target, string folder) =>
+        ServerTagGuess.ForServer(_settings.ServerTags, target.Name, target.Machine, account.Address, account.SafeName, folder)?.Name;
+
     /// <summary>Connexion récente ajoutée à « Mes serveurs » avec son mode, son composant et sa machine cible.</summary>
-    private void AddToCurrent(PvwaAccount account, RecentSession recent, string folder) =>
-        ShowAddedToCurrent(SessionLibrary.AddFromRecent(_settings, account, recent, PvwaHost, folder));
-
-    private void ShowAddedToCurrent(SavedSession session)
+    private void AddToCurrent(PvwaAccount account, RecentSession recent)
     {
-        if (!AskTag(session))
+        var machine = string.IsNullOrWhiteSpace(recent.RemoteMachine) ? null : recent.RemoteMachine.Trim();
+        var name = string.IsNullOrWhiteSpace(recent.Label) ? $"{account.UserName}@{account.Address}" : recent.Label.Trim();
+        if (AskAdd(account, _settings.KeepChosenServerFolder, name, _ => (name, machine)) is { } choice)
         {
-            // Ajout annulé : le serveur, ajouté juste avant, est retiré.
-            _settings.Sessions.Remove(session);
-            return;
+            ShowAddedToCurrent(SessionLibrary.AddFromRecent(_settings, account, recent, PvwaHost, choice.Folder), choice.ChosenTag);
         }
+    }
 
+    /// <summary>Session ouverte ajoutée à « Mes serveurs » avec son type, son composant et sa machine cible.</summary>
+    private void AddToCurrent(PvwaAccount account, ConnectRequest request)
+    {
+        var name = request.RemoteMachine is { } machine ? $"{account.UserName}@{machine}" : $"{account.UserName}@{account.Address}";
+        if (AskAdd(account, _settings.KeepChosenServerFolder, name, _ => (name, request.RemoteMachine)) is { } choice)
+        {
+            ShowAddedToCurrent(SessionLibrary.AddConnection(_settings, account, PvwaHost, choice.Folder, request.Mode, request.Component,
+                request.RemoteMachine), choice.ChosenTag);
+        }
+    }
+
+    private void ShowAddedToCurrent(SavedSession session, string? tag)
+    {
+        session.Tag = tag;
         Expand(session.Folder);
         SaveAndRefreshSaved();
         SetStatus(session.Folder.Length > 0
             ? Text.Format(Strings.AddedToMyServersFolder, session.Name, session.Folder)
             : Text.Format(Strings.AddedToMyServers, session.Name));
-    }
-
-    /// <summary>
-    /// Sous-menu « Ajouter aux serveurs courants » : racine, dossiers existants, nouveau dossier. <paramref name="add"/>
-    /// reçoit le dossier choisi ; null = rien à ajouter.
-    /// </summary>
-    private void BuildAddToCurrentMenu(MenuItem parent, Action<string>? add)
-    {
-        parent.Items.Clear();
-        if (add is null)
-        {
-            return;
-        }
-
-        parent.Items.Add(MenuEntry(Strings.RootFolder, () => add("")));
-        foreach (var folder in _settings.SessionFolderList.OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
-        {
-            parent.Items.Add(MenuEntry(folder.Replace("/", " › "), () => add(folder)));
-        }
-
-        parent.Items.Add(new Separator());
-        parent.Items.Add(MenuEntry(Strings.NewFolderEntry, () =>
-        {
-            if (AskFolderName(Strings.NewFolder, "", "") is { } path)
-            {
-                add(path);
-            }
-        }));
     }
 
     private static MenuItem MenuEntry(string text, Action action)
@@ -731,7 +747,7 @@ public partial class MainWindow
 
         if (e.Data.GetData(AccountDragFormat) is PvwaAccount account)
         {
-            AddToCurrent(account, target);
+            AddToCurrent(account, target, chooseFolder: false);
             return;
         }
 

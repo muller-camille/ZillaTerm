@@ -368,6 +368,9 @@
   <data name="SessionClosedByServer" xml:space="preserve">
     <value>Session closed by the server.</value>
   </data>
+  <data name="SshNotResponding" xml:space="preserve">
+    <value>The server has not answered for {0} s: the connection may be lost. ZillaTerm keeps checking and says so if it is.</value>
+  </data>
   <data name="ConnectionCancelled" xml:space="preserve">
     <value>Connection cancelled.</value>
   </data>
@@ -379,12 +382,6 @@
   </data>
   <data name="AddedToMyServers" xml:space="preserve">
     <value>{0} added to My servers</value>
-  </data>
-  <data name="RootFolder" xml:space="preserve">
-    <value>(root)</value>
-  </data>
-  <data name="NewFolderEntry" xml:space="preserve">
-    <value>New folder…</value>
   </data>
   <data name="NewFolderIn" xml:space="preserve">
     <value>New folder in {0}</value>
@@ -2007,6 +2004,18 @@ Your changes stay in the editor: save again to retry.</value>
   <data name="RdpNotResponding" xml:space="preserve">
     <value>{0}: Remote Desktop is not responding. The rest of ZillaTerm stays usable; you can close this tab.</value>
   </data>
+  <data name="RdpReconnecting" xml:space="preserve">
+    <value>Connection lost: reconnecting…</value>
+  </data>
+  <data name="RdpReconnectingStatus" xml:space="preserve">
+    <value>{0}: connection lost, reconnecting…</value>
+  </data>
+  <data name="RdpReconnectAttempt" xml:space="preserve">
+    <value>Attempt {0} of {1}: the session resumes by itself once the network is back.</value>
+  </data>
+  <data name="RdpReconnectWaiting" xml:space="preserve">
+    <value>The session resumes by itself once the network is back.</value>
+  </data>
   <data name="RdpDisconnectCodes" xml:space="preserve">
     <value>code {0}, extended code {1}</value>
   </data>
@@ -3534,6 +3543,24 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="EditReplaceAnyway" xml:space="preserve">
     <value>Replace with my version</value>
   </data>
+  <data name="EditRefreshed" xml:space="preserve">
+    <value>{0} changed on the server: the copy opened in the editor was replaced by the current version</value>
+  </data>
+  <data name="EditStaleCopy" xml:space="preserve">
+    <value>{0}: the server version could not be read ({1}); the copy opened in the editor may be out of date</value>
+  </data>
+  <data name="EditReloadHeading" xml:space="preserve">
+    <value>“{0}” changed on the server, and your copy has changes not sent back</value>
+  </data>
+  <data name="EditReloadMessage" xml:space="preserve">
+    <value>Reloading the server version loses the changes in your copy. If you keep your copy, sending it back will warn that the file changed on the server.</value>
+  </data>
+  <data name="EditReloadAction" xml:space="preserve">
+    <value>Reload the server version</value>
+  </data>
+  <data name="EditKeepMine" xml:space="preserve">
+    <value>Keep my copy</value>
+  </data>
   <data name="ImportSaveHeading" xml:space="preserve">
     <value>Save the result to a CSV file?</value>
   </data>
@@ -3951,6 +3978,9 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="TabStateFailed" xml:space="preserve">
     <value>Connection failed</value>
   </data>
+  <data name="TabStateInterrupted" xml:space="preserve">
+    <value>Connection interrupted</value>
+  </data>
   <data name="TabModePsmp" xml:space="preserve">
     <value>Through the PSMP {0}: session managed by CyberArk</value>
   </data>
@@ -4298,6 +4328,15 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="ServerPromptAdd" xml:space="preserve">
     <value>_Add</value>
+  </data>
+  <data name="AddToMyServersTitle" xml:space="preserve">
+    <value>Add to My servers</value>
+  </data>
+  <data name="AddToMyServersQuestion" xml:space="preserve">
+    <value>Where should {0} go in “My servers”?</value>
+  </data>
+  <data name="ServerPromptTag" xml:space="preserve">
+    <value>_Tag:</value>
   </data>
   <data name="ServerPromptRequired" xml:space="preserve">
     <value>Enter the name of the server.</value>
@@ -5244,17 +5283,11 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="TagPromptTitle" xml:space="preserve">
     <value>Server tag</value>
   </data>
-  <data name="TagPromptHeading" xml:space="preserve">
-    <value>Which environment is {0} in?</value>
-  </data>
   <data name="TagPromptHelp" xml:space="preserve">
     <value>Its color marks the tab and the outline of the session: you see at a glance where you work.</value>
   </data>
   <data name="TagPromptGuessed" xml:space="preserve">
     <value>Suggested from its name, address, safe or folder: check it.</value>
-  </data>
-  <data name="TagPromptAdd" xml:space="preserve">
-    <value>_Add to My servers</value>
   </data>
   <data name="TagNone" xml:space="preserve">
     <value>_No tag</value>
@@ -5381,6 +5414,12 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
     <value>The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection.</value>
+  </data>
+  <data name="PsmDynamicResolution" xml:space="preserve">
+    <value>Resize the _remote desktop with the tab</value>
+  </data>
+  <data name="PsmDynamicResolutionHelp" xml:space="preserve">
+    <value>Instead of a fixed resolution with the image scaled to the tab, ZillaTerm asks the PSM server to change the resolution of the session each time the tab is resized. The display is sharper, but depending on the PSM configuration, the connection from the PSM to the target server may keep its original size: turn the option off if the target screen does not follow. Applies to new sessions.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>PSM Windows sessions in a tab</value>

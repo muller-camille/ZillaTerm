@@ -157,7 +157,10 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   there as on a desktop; none opens on this computer's desktop.
 - **Size**: the session takes the size of the tab when it connects and keeps it. If the window changes size, the
   picture is scaled: the PSM opened its connection to the server at that size. The session never goes full screen,
-  even if the PVWA file asks for it.
+  even if the PVWA file asks for it. With the option "Resize the remote desktop with the tab" (Settings, CyberArk page,
+  on by default), the resolution of the PSM session follows the tab each time it is resized, without scaling;
+  depending on the PSM configuration, the connection to the target server may keep its original size: turn the option
+  off then, the session keeps a fixed size and its picture is scaled to the tab.
 - **Keyboard**: when the tab has the keyboard (click in the session), all keys go to the session, Windows shortcuts
   included (Alt+Tab, Windows key). Click elsewhere in ZillaTerm to get them back.
 - **PSM certificate**: read by ZillaTerm while the progress bar shows, before anything is sent to the PSM (neither
@@ -194,9 +197,10 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   to them, opens on its own address; the target machine stays optional. Never a session to the domain
   itself: the server is always asked, "Advanced options…" included. The "Choose the server" window asks which one to open the session on: the list offers
   the servers already used with this account (recent sessions, "My servers"), then its allowed machines; an account
-  restricted to its machines refuses the others. "Keep this server in “My servers”", with the folder you want, adds
-  it after a successful connection, named `account@server` (the choice is remembered for next time; the box
-  disappears when the server is already there). "Advanced options…" opens the full window with this server.
+  restricted to its machines refuses the others. "Keep this server in “My servers”", with the folder and the
+  [tag](#tags-prod-qa-dev) you want (chosen in the same window), adds it after a successful connection, named
+  `account@server` (the choice and the folder are remembered for next time; the box disappears when the server is
+  already there). "Advanced options…" opens the full window with this server.
 - **Reason and ticket**: if the PVWA refuses the request (reason or ticket required, component not configured…), the
   window says what to do, followed by the original PVWA message, and you can fix it and try again.
 - The "Advanced options…" toolbar button (or right-click → "Advanced options…") opens this window, "Advanced
@@ -473,7 +477,10 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   executable or an office document is downloaded instead of opened, as is any file whose first bytes are binary. Every time you save, ZillaTerm offers to send it back to the
   server ("Send back" or "Not now"): sent over SFTP, the file's permissions are kept. If the file changed on the
   server since you opened it, a warning says so and asks for confirmation ("Replace with my version") before
-  overwriting it.
+  overwriting it. Opening a file that is already open downloads it again, every time: if its content changed on the
+  server (edited in the terminal, by someone else, before a reconnection…), the copy opened in the editor is replaced
+  by the current version; otherwise it is left as is. Only exception: if your copy has changes not sent back and the
+  file also changed on the server, ZillaTerm asks whether to "Reload the server version" or "Keep my copy".
 - **Follow a file (tail -f)**: right-click one or several files → "Follow (tail -f)". A window shows the end of the
   file, then each new line as soon as it is written, like `tail -f`, reading the file over SFTP every second: no
   command runs on the server. A file truncated or replaced by a rotation is read again from the start; the last
@@ -532,16 +539,17 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
 
 ![My servers organized in folders](captures/en/my-servers.png)
 
-- **Add** an account: right-click in "Available" → "Add to My servers" then the folder you want, or drag the account
-  onto the "My servers" tab, or the "Add" toolbar button. For a domain account, the server is asked (optional:
-  without a server, it is asked at each connection). Its [tag](#tags-prod-qa-dev) is then asked, with a suggestion
-  from its name.
-- **Add an open session**: right-click the session tab (or in its terminal) → "Add to My servers" then the folder
-  you want. The server keeps the connection type and the target machine; the entry is greyed out when it is already
-  there.
-- **Add a recent connection**: right-click in the recent sessions of the home page → "Add to My servers" then the
-  folder you want. The server keeps the connection type (PSM, SSH or files only), the PSM component and the target machine
-  used.
+- **Add** an account: right-click in "Available" → "Add to My servers", or the "Add" toolbar button. One window asks
+  for the folder (the last one chosen is offered; type a name to create a new one, `Prod/Web` for a subfolder) and the
+  [tag](#tags-prod-qa-dev), suggested from its name. For a domain account, the same window asks for the server
+  (optional: without a server, it is asked at each connection). You can also drag the account onto a folder of
+  "My servers": the window then opens on that folder (not at all for a server account when no tag is defined).
+- **Add an open session**: right-click the session tab (or in its terminal) → "Add to My servers": same window
+  (folder and tag). The server keeps the connection type and the target machine; the entry is greyed out when it is
+  already there.
+- **Add a recent connection**: right-click in the recent sessions of the home page → "Add to My servers": same window
+  (folder and tag). The server keeps the connection type (PSM, SSH or files only), the PSM component and the target
+  machine used.
 - **Folders**: right-click → new folder or subfolder, rename, delete; drag servers and folders to move them. Deleting a
   folder counts and deletes all its servers of this PVWA, even those hidden by the search; those of another PVWA stay.
   Removing a server or deleting a folder asks for confirmation (the accounts stay in "Available"). The "Properties /
@@ -590,7 +598,8 @@ A session opened from "Available" or the recent sessions takes the tag of the "M
 account (and the same target machine). The tag applies when the session opens: change it, then reopen the session to
 see the new color.
 
-- **When adding** a server to "My servers", the tag is asked. A tag is suggested from the server name, its address,
+- **When adding** a server to "My servers", the tag is asked in the same window as the folder (and the server
+  of a domain account); it follows the folder and the server you type until you pick one yourself. A tag is suggested from the server name, its address,
   its safe, then its folders ("prd", "prod", "production" → PROD; "rec", "recette", "qual", "uat", "preprod",
   "staging", "test" → QA; "dev" → DEV; a tag added in the Settings is recognized by its name). Nothing is suggested
   when the text names two environments. Check it: it is only a suggestion. "No tag" is possible; "Cancel" does not
@@ -892,6 +901,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | CyberArk | PSMP by domain | Other PSMPs (address, port, domain served); each server goes through the one of the domain closest to its own (see [PSMP by domain](#psmp-by-domain)); "Which PSMP for the server" to check | none |
 | CyberArk | Windows accounts component | PSM component of Windows accounts (domain or local) without a component remembered for their platform, for example `WIN-PSM` | empty = `PSM-RDP` |
 | CyberArk | PSM Windows sessions in a tab | PSM session (desktop or remote application) in a ZillaTerm tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); spread by the environment file | no |
+| CyberArk | Resize the remote desktop with the tab | PSM sessions in a tab: the resolution follows the size of the tab instead of a scaled picture; the connection from the PSM to the target may keep its original size. For new sessions | yes |
 | CyberArk | Component per platform | Platform (PVWA ID, for example `WinDomain`) / PSM component table: "Add a component", "Remove the line", editable cells; takes precedence over the Windows accounts component. "Remember this component for platform" (connection window) adds a line to it | empty |
 | Terminal | SSH in ZillaTerm | Built-in terminal and Files tab; otherwise Windows Terminal | yes |
 | Terminal | Terminal colours, font size | Palette (Campbell, One Half, Solarized…) and font size of the SSH terminals | Campbell, 14 |
@@ -1141,8 +1151,9 @@ program (`alternate shell`) or remote application (`remoteapplicationprogram`, n
 gateway, load balancing, redirections (`drivestoredirect:s:*` only for drives), effects. The file's display mode
 (`screen mode id`, size, monitors) is ignored. A PSM session is nested: inside its own session, the PSM opens the
 connection to the target server at the same size, and changing the PSM session's resolution afterwards does not
-change it for the target (cut-off desktop, shifted clicks). Hence the fixed size and scaling of these sessions;
-direct connections follow the tab size.
+change it for the target with some PSM configurations (cut-off desktop, shifted clicks). The option "Resize the remote
+desktop with the tab", on by default, changes the resolution of the PSM session; turned off, these sessions keep a
+fixed size, scaled to the tab. Direct connections follow the tab size.
 
 **FreeRDP client.** PSM sessions in a tab go through the FreeRDP Windows client (`wfreerdp`), built by the release
 workflow of the `muller-camille/FreeRDP` fork (branch `ci`) and published in its releases; `tools/freerdp-download.sh`
@@ -1175,7 +1186,13 @@ certificates and keys per address (load-balanced PSM: one per server, each confi
 all. Questions come before the client is launched, never during the connection; once one is answered, the connection
 starts with a new token requested from the PVWA (the PSM token only works once and expires quickly). If the client
 still refuses the server (another server behind the same address), ZillaTerm reads its identity again and asks about
-it if it is new (twice at most per connection).
+it if it is new (twice at most per connection). After a network cut, FreeRDP tries to resume the session (one attempt
+every 15 seconds, 20 at most); ZillaTerm stays usable (the attempts run beside the session window). Meanwhile the tab
+shows "Connection lost: reconnecting…" with the current attempt, the session being hidden; it shows again as soon as
+it is resumed. If another
+server answers at the same address, the attempt is refused (identity not checked) and stops at once: the session is
+lost, and ZillaTerm makes a new request to the PVWA (new token), then checks the server that answers before connecting
+to it (question if it is unknown; twice at most before the next session opening).
 
 Hardening: no library loaded from outside its folder and System32 (the virtual channels are compiled into the
 executable), OpenSSL with no module, engine or configuration file loaded at run time, its compiled-in folders being
@@ -1285,8 +1302,11 @@ sh or fish, following is not set up and nothing stays on screen.
 | PSM session: "The identity of … could not be checked" | ZillaTerm could not read the PSM certificate before the connection (PSM unreachable, port filtered, answer that is not Remote Desktop): the reason follows the message. Nothing was sent to the PSM. |
 | A PSM session opens in Remote Desktop Connection despite the "in a tab" option | Connection through a Remote Desktop gateway, or FreeRDP client cannot be launched on the computer (computer policy): the status bar says so. |
 | Alt+Tab or the Windows key no longer respond | The tab of a PSM session has the keyboard: all keys go to the session. Click elsewhere in ZillaTerm (another tab, the list). |
+| PSM session in a tab: Ctrl+V of a file or text copied on the computer does nothing | The PVWA may not allow the clipboard, or the PSM may only allow text. Settings → Debug log, reproduce (copy, click in the session, paste), then "Show the debug log file": the `freerdp` lines give the redirections asked by the PVWA (`presse-papiers oui/non`), each change of the computer clipboard (program, formats: files, text; never the contents) and the clipboard exchanges with the PSM (`cliprdr`: `CB_STREAM_FILECLIP_ENABLED` missing from the server flags means no file copy). |
 | PSM session: "Check the key of this PSM" | The PSM only accepts the legacy "RDP security", without TLS: only the fingerprint of its key identifies it. Accept it on first use (it is remembered) and ask the CyberArk administrator to enable TLS on the PSM. |
 | PSM session: "New key for this PSM" | The PSM address probably groups several servers (load balancing), each with its own key: trust it if the CyberArk administrator confirms. The keys already accepted stay accepted. |
+| SSH or PSMP session: "The connection was cut by the server or the network" or "Session closed by the server" after sleep, a lock or a break | The connection is lost: the computer went to sleep, the network or VPN changed, a firewall forgot it, or the PSMP closed the session (inactivity). ZillaTerm detects it within a minute (keep-alive request every 15 s, which the server must answer): "Reconnect" opens a new session; the Files tab offers to reopen its own. |
+| SSH or PSMP session: "The server has not answered for N s", terminal grayed out | What you typed got no answer, nor did the request ZillaTerm then sends to the server (after 2 s). Everything comes back as soon as the server answers; otherwise the connection is declared lost after about a minute. "Reconnect" opens a new session right away. |
 | PSM session: "This server no longer offers TLS" | The connection may be intercepted: only continue with the CyberArk administrator's agreement (see the message). |
 | PSM session: "The Remote Desktop server uses no encryption…" | The PSM (or a device in between) offers the old RDP security without encryption: nothing would protect the token. Alert the CyberArk administrator. |
 | A direct remote desktop tab (KeePass) shows "Remote Desktop control error" | Report the code shown (if the Remote Desktop control is missing from the computer, the connection goes through `mstsc`). |

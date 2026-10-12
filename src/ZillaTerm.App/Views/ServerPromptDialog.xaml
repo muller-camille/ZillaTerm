@@ -7,7 +7,8 @@
         Width="500" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
     <!-- Compte de domaine : il est enregistré pour son domaine, pas pour un serveur ; on demande sur lequel ouvrir la
-         session, et s'il faut le garder dans « Mes serveurs ». -->
+         session, et s'il faut le garder dans « Mes serveurs » (dossier, étiquette). Sert aussi à « Ajouter à Mes
+         serveurs » : dossier et étiquette, et serveur pour un compte de domaine. -->
     <DockPanel>
         <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
                 BorderThickness="0,0,0,1" Padding="16,12">
@@ -35,17 +36,36 @@
             <TextBlock x:Name="QuestionText" Style="{StaticResource SectionTitle}" TextWrapping="Wrap" />
             <TextBlock x:Name="HintText" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
 
-            <Label Content="{x:Static loc:Strings.ServerLabel}" Target="{Binding ElementName=ServerBox}" Padding="0,0,0,4" />
-            <ComboBox x:Name="ServerBox" IsEditable="True" IsTextSearchEnabled="False" />
-            <TextBlock x:Name="ServerHint" Style="{StaticResource OptionHelp}" Margin="0,4,0,0" />
+            <StackPanel x:Name="ServerPanel">
+                <Label Content="{x:Static loc:Strings.ServerLabel}" Target="{Binding ElementName=ServerBox}" Padding="0,0,0,4" />
+                <ComboBox x:Name="ServerBox" IsEditable="True" IsTextSearchEnabled="False" />
+                <TextBlock x:Name="ServerHint" Style="{StaticResource OptionHelp}" Margin="0,4,0,0" />
+            </StackPanel>
 
             <StackPanel x:Name="KeepPanel" Margin="0,10,0,0">
                 <CheckBox x:Name="KeepBox" Content="{x:Static loc:Strings.ServerPromptKeep}" Checked="OnKeepChanged"
                           Unchecked="OnKeepChanged" />
-                <DockPanel x:Name="FolderPanel" Margin="20,6,0,0">
-                    <Label Content="{x:Static loc:Strings.ServerPromptFolder}" Target="{Binding ElementName=FolderBox}" />
-                    <ComboBox x:Name="FolderBox" IsEditable="True" ToolTip="{x:Static loc:Strings.ServerPromptFolderTip}" />
-                </DockPanel>
+                <!-- Dossier et étiquette du serveur gardé (ou ajouté) dans « Mes serveurs ». -->
+                <Grid x:Name="SavePanel" Margin="20,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Label Content="{x:Static loc:Strings.ServerPromptFolder}" Target="{Binding ElementName=FolderBox}" VerticalAlignment="Center" />
+                    <ComboBox x:Name="FolderBox" Grid.Column="1" IsEditable="True" ToolTip="{x:Static loc:Strings.ServerPromptFolderTip}" />
+                    <Label x:Name="TagLabel" Grid.Row="1" Content="{x:Static loc:Strings.ServerPromptTag}" Margin="0,8,0,0"
+                           VerticalAlignment="Top" ToolTip="{x:Static loc:Strings.TagPromptHelp}" />
+                    <!-- Une case par étiquette (pastille de sa couleur), puis « Aucune étiquette ». -->
+                    <StackPanel x:Name="TagPanel" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0">
+                        <WrapPanel x:Name="TagChoices" AutomationProperties.Name="{x:Static loc:Strings.TagPromptTitle}" />
+                        <TextBlock x:Name="GuessText" Text="{x:Static loc:Strings.TagPromptGuessed}" Style="{StaticResource OptionHelp}"
+                                   Visibility="Collapsed" Margin="0,2,0,0" />
+                    </StackPanel>
+                </Grid>
             </StackPanel>
             <TextBlock x:Name="AlreadySavedText" Style="{StaticResource OptionHelp}" Margin="0,10,0,0" Visibility="Collapsed"
                        Text="{x:Static loc:Strings.ServerPromptAlreadySaved}" />

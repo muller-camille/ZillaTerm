@@ -822,9 +822,18 @@ public partial class MainWindow : Window
         var account = recent.IsForHost(PvwaHost) ? _byId.GetValueOrDefault(recent.AccountId) : null;
         foreach (var item in ((ContextMenu)sender).Items.OfType<MenuItem>().Where(i => i.Tag as string == "addcurrent"))
         {
-            BuildAddToCurrentMenu(item, account is null ? null : folder => AddToCurrent(account, recent, folder));
             item.IsEnabled = account is not null;
             item.ToolTip = account is null ? Text.Format(Strings.AccountGone, recent.Label) : null;
+        }
+    }
+
+    /// <summary>« Ajouter à Mes serveurs » d'une connexion récente : fenêtre du dossier et de l'étiquette.</summary>
+    private void OnAddRecentToCurrent(object sender, RoutedEventArgs e)
+    {
+        if (RecentList.SelectedItem is RecentSession recent && recent.IsForHost(PvwaHost)
+            && _byId.GetValueOrDefault(recent.AccountId) is { } account)
+        {
+            AddToCurrent(account, recent);
         }
     }
 
@@ -932,10 +941,11 @@ public partial class MainWindow : Window
 
         // Compte de domaine sans serveur choisi : on demande lequel, avec l'option de le garder dans « Mes serveurs ».
         string? keepFolder = null;
+        string? keepTag = null;
         bool needsMachine = AccountClassifier.NeedsRemoteMachine(account, _domains);
         if (!showDialog && needsMachine && string.IsNullOrWhiteSpace(request.RemoteMachine))
         {
-            if (AskServer(account, adding: false) is not { } choice)
+            if (AskServer(account) is not { } choice)
             {
                 SetStatus("");
                 return;
@@ -943,6 +953,7 @@ public partial class MainWindow : Window
 
             request = request with { RemoteMachine = choice.Server.Length > 0 ? choice.Server : null };
             keepFolder = choice.Keep ? choice.Folder : null;
+            keepTag = choice.ChosenTag;
             showDialog = choice.Advanced;
         }
 
@@ -981,7 +992,7 @@ public partial class MainWindow : Window
                         && SessionLibrary.FindSession(_settings, account, PvwaHost, machine) is null)
                     {
                         ShowAddedToCurrent(SessionLibrary.AddConnection(_settings, account, PvwaHost, keepFolder, request.Mode,
-                            request.Component, machine));
+                            request.Component, machine), keepTag);
                     }
 
                     return;
@@ -1117,6 +1128,8 @@ public partial class MainWindow : Window
         string? mstscReason = null;
         bool toMstsc = false;
         int attempts = 0;
+        // Même mode d'affichage pour toutes les connexions de l'onglet (reconnexions comprises).
+        bool dynamicResolution = _settings.PsmDynamicResolution;
         session = AddRdpTab(label, async ct =>
         {
             bool initial = attempts++ == 0;
@@ -1138,7 +1151,7 @@ public partial class MainWindow : Window
             if (initial)
             {
                 first = file;
-                if (PsmTabSettings(file, label, freeRdp, out mstscReason) is not { } tab)
+                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, out mstscReason) is not { } tab)
                 {
                     toMstsc = true;
                     throw new RdpHandedOffException("session PSM confiée à mstsc");
@@ -1159,7 +1172,7 @@ public partial class MainWindow : Window
                     throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
                 }
 
-                settings = settings.ForPsmTab();
+                settings = settings.ForPsmTab(dynamicResolution);
             }
 
             ShowPsmAddress(session, settings.Server);
@@ -1467,9 +1480,6 @@ public partial class MainWindow : Window
         {
             switch (item.Tag as string)
             {
-                case "addcurrent" when account is not null:
-                    BuildAddToCurrentMenu(item, folder => AddToCurrent(account, folder));
-                    break;
                 case "ssh":
                     item.IsEnabled = HasPsmp;
                     item.ToolTip = HasPsmp ? null : Strings.SetPsmpAddress;

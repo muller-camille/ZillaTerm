@@ -33,6 +33,12 @@ internal sealed class RdpSlot : HwndHost
     public event Action<IntPtr>? ChildCreated;
 
     /// <summary>
+    /// Le presse-papiers de Windows a changé (WM_CLIPBOARDUPDATE), tant que <see cref="ListenToClipboard"/> est actif :
+    /// journal de débogage des sessions FreeRDP (copier-coller entre le poste et la session).
+    /// </summary>
+    public event Action? ClipboardChanged;
+
+    /// <summary>
     /// Fenêtre d'un autre processus dans l'emplacement (client FreeRDP) : un clic dedans donne le focus clavier à
     /// l'emplacement, d'où FreeRDP prend le clavier ; la molette lui est transmise (<see cref="ChildMouseWheel"/>).
     /// </summary>
@@ -72,6 +78,19 @@ internal sealed class RdpSlot : HwndHost
         return ((int)Math.Round(ActualWidth * toDevice.M11), (int)Math.Round(ActualHeight * toDevice.M22));
     }
 
+    /// <summary>Suit (vrai) ou non les changements du presse-papiers (<see cref="ClipboardChanged"/>).</summary>
+    public void ListenToClipboard(bool listen)
+    {
+        if (_window is not { Handle: var handle } || handle == IntPtr.Zero || listen == _window.ListensToClipboard)
+        {
+            return;
+        }
+
+        _window.ListensToClipboard = listen
+            ? AddClipboardFormatListener(handle)
+            : !RemoveClipboardFormatListener(handle);
+    }
+
     protected override HandleRef BuildWindowCore(HandleRef hwndParent)
     {
         _window = new SlotWindow(this, hwndParent.Handle);
@@ -80,6 +99,7 @@ internal sealed class RdpSlot : HwndHost
 
     protected override void DestroyWindowCore(HandleRef hwnd)
     {
+        ListenToClipboard(false);
         _window?.DestroyHandle();
         _window = null;
     }
@@ -90,6 +110,14 @@ internal sealed class RdpSlot : HwndHost
 
     [DllImport("user32.dll")]
     private static extern int FillRect(IntPtr hdc, ref Rect rect, IntPtr brush);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool AddClipboardFormatListener(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
 
     [DllImport("user32.dll")]
     private static extern IntPtr SetFocus(IntPtr hwnd);
@@ -116,9 +144,13 @@ internal sealed class RdpSlot : HwndHost
         private const int WmParentNotify = 0x0210;
         private const int WmMouseWheel = 0x020A;
         private const int WmMouseHorizontalWheel = 0x020E;
+        private const int WmClipboardUpdate = 0x031D;
         private const int BlackBrush = 4;
 
         private readonly RdpSlot _owner;
+
+        /// <summary>Inscrite auprès de Windows pour les changements du presse-papiers.</summary>
+        public bool ListensToClipboard { get; set; }
 
         public SlotWindow(RdpSlot owner, IntPtr parent)
         {
@@ -136,6 +168,13 @@ internal sealed class RdpSlot : HwndHost
             {
                 FillRect(m.WParam, ref rect, GetStockObject(BlackBrush));
                 m.Result = 1;
+                return;
+            }
+
+            if (m.Msg == WmClipboardUpdate)
+            {
+                _owner.ClipboardChanged?.Invoke();
+                m.Result = IntPtr.Zero;
                 return;
             }
 

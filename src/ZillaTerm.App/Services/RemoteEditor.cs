@@ -53,14 +53,6 @@ public sealed class RemoteEditor : IDisposable
 
     public async Task EditAsync(RemoteEntry entry)
     {
-        var open = _files.FirstOrDefault(f => f.RemotePath == entry.FullPath);
-        if (open is not null)
-        {
-            // Déjà ouvert : on rouvre l'éditeur sur la même copie.
-            LaunchEditor(open.LocalPath);
-            return;
-        }
-
         // Double-clic puis Entrée (ou F4) pendant la copie : une seule copie locale, ouverte par la première demande.
         if (!_opening.Add(entry.FullPath))
         {
@@ -69,13 +61,124 @@ public sealed class RemoteEditor : IDisposable
 
         try
         {
-            await OpenNewAsync(entry);
+            if (_files.FirstOrDefault(f => f.RemotePath == entry.FullPath) is { } open)
+            {
+                await ReopenAsync(open, entry);
+            }
+            else
+            {
+                await OpenNewAsync(entry);
+            }
         }
         finally
         {
             _opening.Remove(entry.FullPath);
         }
     }
+
+    /// <summary>
+    /// Fichier déjà ouvert : il est téléchargé de nouveau à chaque fois (la date du serveur, souvent à la seconde près, ne
+    /// suffit pas), et l'éditeur rouvert sur la même copie, remplacée si le contenu du serveur est différent.
+    /// </summary>
+    private async Task ReopenAsync(EditedFile file, RemoteEntry entry)
+    {
+        // Question ou renvoi en cours pour ce fichier : la copie n'est pas touchée.
+        if (_busy.Add(file))
+        {
+            try
+            {
+                await RefreshAsync(file, entry);
+            }
+            finally
+            {
+                _busy.Remove(file);
+                // Enregistré dans l'éditeur pendant la vérification : le renvoi est proposé maintenant.
+                if (_savedAgain.Remove(file))
+                {
+                    _ = OnSavedAsync(file);
+                }
+            }
+        }
+
+        if (!_disposed && _files.Contains(file))
+        {
+            LaunchEditor(file.LocalPath);
+        }
+    }
+
+    /// <summary>Nouvelle copie du serveur ; remplace la copie si son contenu diffère (avec accord si la copie a des modifications non renvoyées).</summary>
+    private async Task RefreshAsync(EditedFile file, RemoteEntry entry)
+    {
+        // Renvoi coupé : c'est notre écriture partielle qui a changé le fichier du serveur, la copie est celle à renvoyer.
+        if (file.WriteInterrupted)
+        {
+            return;
+        }
+
+        _status(Text.Format(Strings.EditOpening, file.Name), false);
+        string? fresh = null;
+        try
+        {
+            var browser = await _session.GetBrowserAsync();
+            // Date et taille relevées avant la copie, comme à l'ouverture : un changement pendant la copie sera signalé au renvoi.
+            var (time, length) = await browser.GetStatAsync(file.RemotePath, CancellationToken.None);
+            // À côté de la copie (même dossier : remplacement d'un seul coup) ; un nom commençant par un point n'est jamais
+            // celui d'une copie (LocalCopyName les retire).
+            fresh = Path.Combine(Path.GetDirectoryName(file.LocalPath)!, "." + Guid.NewGuid().ToString("N")[..8]);
+            var check = await browser.DownloadAsync(entry, fresh, null, CancellationToken.None);
+            if (!check.Matches)
+            {
+                throw CopyRejected(check);
+            }
+
+            if (_disposed || !_files.Contains(file))
+            {
+                return;
+            }
+
+            // Modifications non renvoyées (y compris un enregistrement fait pendant la copie) : jamais écrasées sans accord.
+            var result = await Task.Run(() => file.Refresh(fresh, time, length, keepUnsent: true));
+            if (result == EditedFile.RefreshResult.Conflict && !_disposed && ConfirmDialog.Confirm(_owner, new ConfirmRequest
+                {
+                    Title = Strings.FileEdit.Replace("_", ""),
+                    Heading = Text.Format(Strings.EditReloadHeading, file.Name),
+                    Subject = $"{_session.Label}:{file.RemotePath}",
+                    Message = Strings.EditReloadMessage,
+                    Kind = ConfirmKind.Warning,
+                    Actions = [Strings.EditReloadAction],
+                    DangerAction = 0,
+                    CancelLabel = Strings.EditKeepMine,
+                }) && !_disposed && _files.Contains(file))
+            {
+                result = await Task.Run(() => file.Refresh(fresh, time, length, keepUnsent: false));
+            }
+
+            _status(Text.Format(result == EditedFile.RefreshResult.Replaced ? Strings.EditRefreshed : Strings.EditOpened, file.Name), false);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // Serveur injoignable, fichier supprimé, copie verrouillée par l'éditeur : l'ancienne copie est rouverte.
+            _status(Text.Format(Strings.EditStaleCopy, file.Name, ErrorText.Describe(ex)), true);
+        }
+        finally
+        {
+            if (fresh is not null)
+            {
+                try
+                {
+                    File.Delete(fresh);
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    // Supprimé avec le dossier de la session.
+                }
+            }
+        }
+    }
+
+    /// <summary>Copie différente de l'original ou non vérifiée : jamais ouverte, son enregistrement remplacerait le fichier du serveur.</summary>
+    private static IOException CopyRejected(TransferCheck check) =>
+        new(check.Verified ? Text.Format(Strings.TransferMismatch, 1) : $"{Text.Format(Strings.TransferNotVerified, 1)} ({check.Error})");
 
     private async Task OpenNewAsync(RemoteEntry entry)
     {
@@ -104,10 +207,7 @@ public sealed class RemoteEditor : IDisposable
             var check = await browser.DownloadAsync(entry, local, null, CancellationToken.None);
             if (!check.Matches)
             {
-                // Copie différente de l'original ou non vérifiée : jamais ouverte, son enregistrement remplacerait le
-                // fichier du serveur.
-                throw new IOException(check.Verified ? Text.Format(Strings.TransferMismatch, 1)
-                    : $"{Text.Format(Strings.TransferNotVerified, 1)} ({check.Error})");
+                throw CopyRejected(check);
             }
 
             // Copie lue et hachée hors du fil de l'interface (fichier volumineux accepté plus haut).

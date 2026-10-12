@@ -25,6 +25,7 @@ public partial class SshSessionView : UserControl
         Terminal.TerminalResized += session.Resize;
         session.ScreenUpdated += Terminal.Refresh;
         session.StateChanged += UpdateOverlay;
+        session.ResponseChanged += UpdateOverlay;
         UpdateOverlay();
         Terminal.ScrollStateChanged += UpdateHistoryBar;
         Terminal.SearchRequested += ShowSearch;
@@ -280,11 +281,22 @@ public partial class SshSessionView : UserControl
     {
         switch (Session.State)
         {
+            case RemoteSessionState.Connected when Session.IsNotResponding:
+                // Saisie restée sans réponse : terminal grisé et bandeau, jusqu'à ce que le serveur réponde ou que la
+                // connexion soit déclarée perdue ; « Reconnecter » n'attend pas.
+                _wasConnected = true;
+                Overlay.Visibility = Visibility.Collapsed;
+                EndBanner.Visibility = Visibility.Visible;
+                EndText.Text = Text.Format(Strings.SshNotResponding, (int)Session.NotRespondingFor.TotalSeconds);
+                Terminal.Opacity = 0.45;
+                break;
             case RemoteSessionState.Connected:
                 _wasConnected = true;
                 Overlay.Visibility = EndBanner.Visibility = Visibility.Collapsed;
+                Terminal.Opacity = 1;
                 break;
             case RemoteSessionState.Connecting:
+                Terminal.Opacity = 1;
                 EndBanner.Visibility = Visibility.Collapsed;
                 Overlay.Visibility = Visibility.Visible;
                 OverlayText.Text = _connectingText;
@@ -293,6 +305,7 @@ public partial class SshSessionView : UserControl
                 ReconnectButton.Visibility = Visibility.Collapsed;
                 break;
             default:
+                Terminal.Opacity = 1;
                 var title = Session.State == RemoteSessionState.Failed ? Strings.ConnectionImpossible : Strings.SessionEnded;
                 if (_wasConnected)
                 {

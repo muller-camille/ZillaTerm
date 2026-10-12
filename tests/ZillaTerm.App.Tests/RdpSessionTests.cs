@@ -1,6 +1,8 @@
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using ZillaTerm.App.Services.Rdp;
 using ZillaTerm.Core.Rdp;
@@ -405,6 +407,167 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>
+    /// Redimensionnement dynamique (option expérimentale) avec FreeRDP : quand la fenêtre change de taille, le bureau
+    /// distant prend la nouvelle taille de l'onglet (largeur paire), sans mise à l'échelle ; un clic arrive à l'endroit visé.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpDynamicResolutionFollowsTheTab()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        var log = Environment.GetEnvironmentVariable("RDP_TEST_CLICKS");
+        if (string.IsNullOrEmpty(log))
+        {
+            output.WriteLine("Pas de fenêtre de test des clics : test ignoré.");
+            return;
+        }
+
+        var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab(dynamicResolution: true);
+        var request = new RdpConnectionRequest(settings, account.Password)
+        {
+            FreeRdp = true,
+            VerifyCertificate = (_, _, _) => Task.FromResult(RdpTrust.Trusted),
+        };
+        await RunOnStaAsync(request, async (session, window) =>
+        {
+            await session.ConnectAsync();
+            var state = await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90));
+            Assert.Equal(RdpSessionState.Connected, state);
+
+            var slot = session.Host.SlotHandle;
+            var bounds = Win32Input.ScreenBounds(slot);
+            var (width, height) = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
+            output.WriteLine($"Onglet {bounds}, bureau distant attendu {width}x{height}");
+            await WaitForLineAsync(log, 0, line => line == $"size {width}x{height}", TimeSpan.FromSeconds(150));
+
+            // Session prête (un clic reçu) avant de changer sa taille : une session reprise qui reçoit une nouvelle taille
+            // pendant sa reprise peut être coupée par le serveur juste après (vu en CI : raison 17 du gestionnaire de
+            // sessions, ERRINFO_RPC_INITIATED_DISCONNECT).
+            var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+            await ClickAndCheckAsync(log, host, bounds, (0.5, 0.5), (width, height));
+
+            // Fenêtre réduite : FreeRDP demande la nouvelle taille au serveur une fois le redimensionnement terminé.
+            int before = Lines(log).Count;
+            window.Width = 720;
+            window.Height = 540;
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            bounds = Win32Input.ScreenBounds(slot);
+            var resized = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
+            output.WriteLine($"Onglet réduit {bounds}, bureau distant attendu {resized.Width}x{resized.Height}");
+            Assert.True(resized.Width < width - 100, $"{bounds}");
+            await WaitForLineAsync(log, before, line => line == $"size {resized.Width}x{resized.Height}", TimeSpan.FromSeconds(30));
+
+            await ClickAndCheckAsync(log, host, bounds, (0.25, 0.25), resized);
+            await ClickAndCheckAsync(log, host, bounds, (0.75, 0.6), resized);
+            Assert.Equal(RdpSessionState.Connected, session.State);
+
+            session.Disconnect();
+            Assert.Equal(RdpSessionState.Ended,
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30)));
+        });
+    }
+
+    /// <summary>
+    /// Réseau perdu pendant une session FreeRDP (relais TCP coupé) : pendant la reconnexion automatique, l'onglet le dit
+    /// (session masquée, tentative en cours) et l'application reste utilisable ; un clic sur un bouton est traité tout de
+    /// suite, même après un clic sur la zone de la session. Le réseau revenu, la session reprend, s'affiche de nouveau et
+    /// reçoit les clics.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpReconnectionKeepsTheApplicationResponsive()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        var log = Environment.GetEnvironmentVariable("RDP_TEST_CLICKS");
+        if (string.IsNullOrEmpty(log) || Core.Diagnostics.DebugLog.FilePath is not { } debugLog)
+        {
+            output.WriteLine("Pas de fenêtre de test des clics ou de journal de débogage : test ignoré.");
+            return;
+        }
+
+        await using var relay = new TcpRelay(new IPEndPoint(IPAddress.Parse("127.0.0.2"), 3389));
+        var settings = RdpConnectionSettings.Direct("127.0.0.1", relay.Port, account.User).ForPsmTab();
+        var request = new RdpConnectionRequest(settings, account.Password)
+        {
+            FreeRdp = true,
+            VerifyCertificate = (_, _, _) => Task.FromResult(RdpTrust.Trusted),
+        };
+        // Bouton au-dessus de la session, créé avec la fenêtre (sur son thread).
+        Button? probe = null;
+        int probed = 0;
+        UIElement Content(UIElement host)
+        {
+            probe = new Button { Content = "Test", Height = 30 };
+            probe.Click += (_, _) => Interlocked.Increment(ref probed);
+            var panel = new DockPanel();
+            DockPanel.SetDock(probe, Dock.Top);
+            panel.Children.Add(probe);
+            panel.Children.Add(host);
+            return panel;
+        }
+
+        await RunOnStaAsync(request, async (session, window) =>
+        {
+            await session.ConnectAsync();
+            Assert.Equal(RdpSessionState.Connected,
+                await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90)));
+            var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+            var bounds = Win32Input.ScreenBounds(session.Host.SlotHandle);
+            var desktop = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
+            await WaitForLineAsync(log, 0, line => line == $"size {desktop.Width}x{desktop.Height}", TimeSpan.FromSeconds(150));
+            await ClickAndCheckAsync(log, host, bounds, (0.5, 0.5), desktop);
+
+            // Réseau coupé : FreeRDP se reconnecte, une tentative par délai (15 s), refusée tant que le relais est coupé.
+            int logged = Lines(debugLog).Count;
+            relay.Cut();
+            output.WriteLine(await WaitForLineAsync(debugLog, logged, l => l.Contains("retry 2/", StringComparison.Ordinal),
+                TimeSpan.FromSeconds(60)));
+            Assert.True(await WaitUntilAsync(() => session.IsReconnecting && session.ReconnectAttempt >= 2, TimeSpan.FromSeconds(5)),
+                $"Reconnexion non signalée (tentative {session.ReconnectAttempt} sur {session.ReconnectAttempts})");
+            Assert.False(session.ShowsDesktop);
+            Assert.NotEqual(Visibility.Visible, session.Host.Visibility);
+            Assert.Equal(20, session.ReconnectAttempts);
+
+            Assert.NotNull(probe);
+            var center = probe.PointToScreen(new Point(probe.ActualWidth / 2, probe.ActualHeight / 2));
+            int before = Volatile.Read(ref probed);
+            Win32Input.BringToFront(host);
+            await Task.Delay(300);
+            Win32Input.Click((bounds.Left + bounds.Width / 2, bounds.Top + bounds.Height / 2));
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            Win32Input.Click(((int)center.X, (int)center.Y));
+            while (Volatile.Read(ref probed) == before && watch.Elapsed < TimeSpan.FromSeconds(5))
+            {
+                await Task.Delay(50);
+            }
+
+            output.WriteLine($"Clic sur le bouton pendant la reconnexion : {(probed > before ? $"traité en {watch.ElapsedMilliseconds} ms" : "non traité")}");
+            Assert.True(Volatile.Read(ref probed) > before, "Application figée pendant la reconnexion de FreeRDP");
+            Assert.Equal(RdpSessionState.Connected, session.State);
+
+            // Réseau revenu : la tentative suivante reprend la session, affichée de nouveau.
+            relay.Restore();
+            Assert.True(await WaitUntilAsync(() => !session.IsReconnecting, TimeSpan.FromSeconds(60)), "Reprise de la session non signalée");
+            Assert.True(session.ShowsDesktop);
+            Assert.Equal(Visibility.Visible, session.Host.Visibility);
+            await ClickAndCheckAsync(log, host, bounds, (0.25, 0.25), desktop);
+            Assert.Equal(RdpSessionState.Connected, session.State);
+
+            session.Disconnect();
+            Assert.Equal(RdpSessionState.Ended,
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30)));
+        }, Content);
+    }
+
+    /// <summary>
     /// Application distante (RemoteApp) avec FreeRDP : ses fenêtres s'affichent dans l'onglet, aucune sur le bureau de ce
     /// poste ; la fenêtre de test (lancée comme application distante, plein écran) reçoit clics et touches.
     /// </summary>
@@ -684,6 +847,23 @@ public class RdpSessionTests(ITestOutputHelper output)
         }
     }
 
+    /// <summary>Attend que <paramref name="condition"/> soit vraie (vérifiée sur le thread de la fenêtre) ; faux après le délai.</summary>
+    private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        while (!condition())
+        {
+            if (watch.Elapsed > timeout)
+            {
+                return false;
+            }
+
+            await Task.Delay(100);
+        }
+
+        return true;
+    }
+
     /// <summary>Lignes du journal de la fenêtre de test (écrit par une autre session : lu sans le bloquer).</summary>
     private static List<string> Lines(string path)
     {
@@ -747,8 +927,12 @@ public class RdpSessionTests(ITestOutputHelper output)
     private static Task RunOnStaAsync(RdpConnectionRequest request, Func<RdpSession, Task> scenario) =>
         RunOnStaAsync(request, (session, _) => scenario(session));
 
-    /// <summary>Comme ci-dessus, avec la fenêtre (placée en haut à gauche de l'écran principal).</summary>
-    private static async Task RunOnStaAsync(RdpConnectionRequest request, Func<RdpSession, Window, Task> scenario)
+    /// <summary>
+    /// Comme ci-dessus, avec la fenêtre (placée en haut à gauche de l'écran principal) ; <paramref name="content"/> place
+    /// l'emplacement de la session parmi d'autres éléments.
+    /// </summary>
+    private static async Task RunOnStaAsync(RdpConnectionRequest request, Func<RdpSession, Window, Task> scenario,
+        Func<UIElement, UIElement>? content = null)
     {
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
@@ -763,7 +947,7 @@ public class RdpSessionTests(ITestOutputHelper output)
                 WindowStartupLocation = WindowStartupLocation.Manual,
                 Left = 0,
                 Top = 0,
-                Content = session.Host,
+                Content = content is null ? session.Host : content(session.Host),
             };
             window.Show();
             window.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, async () =>

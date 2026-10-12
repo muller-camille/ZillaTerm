@@ -37,8 +37,12 @@ public class FreeRdpTests
         Assert.Contains("/parent-window:4660", arguments);
         Assert.Contains("/size:1280x800", arguments);
         Assert.Contains("/smart-sizing", arguments);
+        Assert.DoesNotContain("/dynamic-resolution", arguments);
         Assert.Contains("/cert:deny,fingerprint:sha256:" + Fingerprint, arguments);
         Assert.Contains("/from-stdin", arguments);
+        // Sans le journal de débogage : avertissements seulement, et la reconnexion automatique (affichée par l'onglet).
+        Assert.Contains("/log-level:WARN", arguments);
+        Assert.Contains("/log-filters:com.freerdp.client.common:INFO", arguments);
         Assert.Contains("/tune:FreeRDP_UseRdpSecurityLayer:FALSE,FreeRDP_RdpSecurity:FALSE,FreeRDP_NlaSecurity:FALSE,"
             + "FreeRDP_ExtSecurity:FALSE,FreeRDP_RemoteAppLanguageBarSupported:TRUE", arguments);
         Assert.Contains("-clipboard", arguments);
@@ -82,6 +86,22 @@ public class FreeRdpTests
         Assert.Contains("FreeRDP_EncryptionMethods:18", tune, StringComparison.Ordinal);
         Assert.DoesNotContain("FreeRDP_RdpSecurity:FALSE", tune, StringComparison.Ordinal);
         Assert.Contains($"/cert:deny,fingerprint:sha256:{Fingerprint},fingerprint:sha256:{other}", arguments);
+        AssertEachOptionOnce(arguments);
+    }
+
+    /// <summary>
+    /// Redimensionnement dynamique : FreeRDP adapte la résolution à la taille de sa fenêtre au lieu de mettre l'image à
+    /// l'échelle (les deux options s'excluent dans FreeRDP).
+    /// </summary>
+    [Fact]
+    public void DynamicResolutionReplacesSmartSizing()
+    {
+        var arguments = FreeRdpArguments.Build(Read(RemoteAppFile).ForPsmTab(dynamicResolution: true), 1, (1280, 800), null, false,
+            [Fingerprint]).Arguments;
+
+        Assert.Contains("/dynamic-resolution", arguments);
+        Assert.DoesNotContain("/smart-sizing", arguments);
+        Assert.Contains("/size:1280x800", arguments);
         AssertEachOptionOnce(arguments);
     }
 
@@ -132,7 +152,13 @@ public class FreeRdpTests
         // Largeur paire, 200 pixels au moins.
         Assert.Contains("/size:1000x200", arguments);
         Assert.Contains("/log-level:INFO", arguments);
-        Assert.Contains("/log-filters:com.freerdp.channels.rail.*:DEBUG", arguments);
+        // Journal détaillé : reconnexion automatique, canaux RemoteApp, presse-papiers, affichage et dynamiques, messages du
+        // presse-papiers du client Windows.
+        var filters = Assert.Single(arguments, a => a.StartsWith("/log-filters:", StringComparison.Ordinal))["/log-filters:".Length..].Split(',');
+        Assert.Equal(["com.freerdp.client.common:INFO", "com.freerdp.channels.rail.*:DEBUG", "com.freerdp.channels.cliprdr.*:DEBUG",
+            "com.freerdp.channels.disp.*:DEBUG", "com.freerdp.channels.drdynvc.*:DEBUG", "com.freerdp.client.windows:DEBUG"], filters);
+        // Les options sont écrites dans le journal de débogage : ni mot de passe ni jeton.
+        Assert.DoesNotContain(arguments, a => a.Contains("s3cret", StringComparison.Ordinal) || a.Contains("admin-srv01", StringComparison.Ordinal));
         Assert.Contains("-wallpaper", arguments);
         Assert.Contains("+themes", arguments);
         Assert.Contains("+fonts", arguments);
@@ -242,4 +268,29 @@ public class FreeRdpTests
     public void ClassifiesEndCodes(uint code, bool normal, FreeRdpEnd end) =>
         Assert.Equal((normal, end), FreeRdpExit.Classify(code));
 
+    /// <summary>
+    /// Reconnexion automatique lue dans le journal de FreeRDP (lignes telles qu'il les écrit) : connexion perdue,
+    /// tentatives numérotées à partir de 1, session reprise ; les autres lignes ne changent rien.
+    /// </summary>
+    [Theory]
+    [InlineData("[14:15:49:231] [11540:00002364] [INFO][com.freerdp.client.common] - [client_auto_reconnect_ex]: Network disconnect!",
+        FreeRdpReconnectionStep.Lost, 0, 0)]
+    [InlineData("[15:12:12:001] [10116:000084d0] [WARN][com.freerdp.client.common] - [client_auto_reconnect_ex]: "
+        + "Disconnected by server hitting a bug or resource limit [ERRINFO_GRAPHICS_SUBSYSTEM_FAILED]", FreeRdpReconnectionStep.Lost, 0, 0)]
+    [InlineData("[14:15:49:232] [11540:00002364] [INFO][com.freerdp.client.common] - [client_auto_reconnect_do]: Attempting reconnect (0 of 20)",
+        FreeRdpReconnectionStep.Attempt, 1, 20)]
+    [InlineData("[15:13:30:016] [10116:000084d0] [INFO][com.freerdp.client.common] - [client_auto_reconnect_do]: Attempting reconnect (5 of 20)",
+        FreeRdpReconnectionStep.Attempt, 6, 20)]
+    [InlineData("[14:16:05:120] [11540:00002364] [INFO][com.freerdp.client.common] - [client_auto_reconnect_do]: Reconnected",
+        FreeRdpReconnectionStep.Reconnected, 0, 0)]
+    [InlineData("[15:14:12:364] [10116:000084d0] [WARN][com.freerdp.client.common] - [client_auto_reconnect_do]: "
+        + "Autoreconnect aborted: server certificate or key refused", FreeRdpReconnectionStep.None, 0, 0)]
+    [InlineData("[15:12:27:809] [10116:000084d0] [INFO][com.freerdp.client.common] - [client_common_retry_dialog]: "
+        + "[connection] retry 3/20, delaying 15000ms before next attempt", FreeRdpReconnectionStep.None, 0, 0)]
+    [InlineData("Network disconnect!", FreeRdpReconnectionStep.None, 0, 0)]
+    [InlineData("", FreeRdpReconnectionStep.None, 0, 0)]
+    public void ReconnectionStepsAreReadFromTheLog(string line, FreeRdpReconnectionStep step, int attempt, int max)
+    {
+        Assert.Equal((step, attempt, max), FreeRdpReconnection.Read(line));
+    }
 }

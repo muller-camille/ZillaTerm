@@ -368,6 +368,9 @@
   <data name="SessionClosedByServer" xml:space="preserve">
     <value>Session fermée par le serveur.</value>
   </data>
+  <data name="SshNotResponding" xml:space="preserve">
+    <value>Le serveur ne répond pas depuis {0} s : la connexion est peut-être perdue. ZillaTerm continue de vérifier et le dira si elle l'est.</value>
+  </data>
   <data name="ConnectionCancelled" xml:space="preserve">
     <value>Connexion annulée.</value>
   </data>
@@ -379,12 +382,6 @@
   </data>
   <data name="AddedToMyServers" xml:space="preserve">
     <value>{0} ajouté à Mes serveurs</value>
-  </data>
-  <data name="RootFolder" xml:space="preserve">
-    <value>(racine)</value>
-  </data>
-  <data name="NewFolderEntry" xml:space="preserve">
-    <value>Nouveau dossier…</value>
   </data>
   <data name="NewFolderIn" xml:space="preserve">
     <value>Nouveau dossier dans {0}</value>
@@ -2007,6 +2004,18 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour réessay
   <data name="RdpNotResponding" xml:space="preserve">
     <value>{0} : le Bureau à distance ne répond pas. Le reste de ZillaTerm reste utilisable ; vous pouvez fermer cet onglet.</value>
   </data>
+  <data name="RdpReconnecting" xml:space="preserve">
+    <value>Connexion perdue : reconnexion en cours…</value>
+  </data>
+  <data name="RdpReconnectingStatus" xml:space="preserve">
+    <value>{0} : connexion perdue, reconnexion en cours…</value>
+  </data>
+  <data name="RdpReconnectAttempt" xml:space="preserve">
+    <value>Tentative {0} sur {1} : la session reprend d'elle-même dès que le réseau revient.</value>
+  </data>
+  <data name="RdpReconnectWaiting" xml:space="preserve">
+    <value>La session reprend d'elle-même dès que le réseau revient.</value>
+  </data>
   <data name="RdpDisconnectCodes" xml:space="preserve">
     <value>code {0}, code étendu {1}</value>
   </data>
@@ -3534,6 +3543,24 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="EditReplaceAnyway" xml:space="preserve">
     <value>Remplacer par ma version</value>
   </data>
+  <data name="EditRefreshed" xml:space="preserve">
+    <value>{0} a changé sur le serveur : la copie ouverte dans l'éditeur a été remplacée par la version actuelle</value>
+  </data>
+  <data name="EditStaleCopy" xml:space="preserve">
+    <value>{0} : la version du serveur n'a pas pu être lue ({1}) ; la copie ouverte dans l'éditeur n'est peut-être pas à jour</value>
+  </data>
+  <data name="EditReloadHeading" xml:space="preserve">
+    <value>« {0} » a changé sur le serveur, et votre copie a des modifications non renvoyées</value>
+  </data>
+  <data name="EditReloadMessage" xml:space="preserve">
+    <value>Recharger la version du serveur fait perdre les modifications de votre copie. Si vous gardez votre copie, son renvoi signalera que le fichier a changé sur le serveur.</value>
+  </data>
+  <data name="EditReloadAction" xml:space="preserve">
+    <value>Recharger la version du serveur</value>
+  </data>
+  <data name="EditKeepMine" xml:space="preserve">
+    <value>Garder ma copie</value>
+  </data>
   <data name="ImportSaveHeading" xml:space="preserve">
     <value>Enregistrer le résultat dans un fichier CSV ?</value>
   </data>
@@ -3951,6 +3978,9 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="TabStateFailed" xml:space="preserve">
     <value>Échec de la connexion</value>
   </data>
+  <data name="TabStateInterrupted" xml:space="preserve">
+    <value>Connexion interrompue</value>
+  </data>
   <data name="TabModePsmp" xml:space="preserve">
     <value>Via le PSMP {0} : session gérée par CyberArk</value>
   </data>
@@ -4298,6 +4328,15 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="ServerPromptAdd" xml:space="preserve">
     <value>A_jouter</value>
+  </data>
+  <data name="AddToMyServersTitle" xml:space="preserve">
+    <value>Ajouter à « Mes serveurs »</value>
+  </data>
+  <data name="AddToMyServersQuestion" xml:space="preserve">
+    <value>Où ranger {0} dans « Mes serveurs » ?</value>
+  </data>
+  <data name="ServerPromptTag" xml:space="preserve">
+    <value>É_tiquette :</value>
   </data>
   <data name="ServerPromptRequired" xml:space="preserve">
     <value>Saisissez le nom du serveur.</value>
@@ -5244,17 +5283,11 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="TagPromptTitle" xml:space="preserve">
     <value>Étiquette du serveur</value>
   </data>
-  <data name="TagPromptHeading" xml:space="preserve">
-    <value>Dans quel environnement est {0} ?</value>
-  </data>
   <data name="TagPromptHelp" xml:space="preserve">
     <value>Sa couleur marque l'onglet et le contour de la session : vous voyez d'un coup d'œil où vous travaillez.</value>
   </data>
   <data name="TagPromptGuessed" xml:space="preserve">
     <value>Proposée d'après son nom, son adresse, son safe ou son dossier : vérifiez-la.</value>
-  </data>
-  <data name="TagPromptAdd" xml:space="preserve">
-    <value>_Ajouter à Mes serveurs</value>
   </data>
   <data name="TagNone" xml:space="preserve">
     <value>Aucu_ne étiquette</value>
@@ -5381,6 +5414,12 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
     <value>La session prend la taille de l'onglet et s'ouvre avec le client FreeRDP intégré à ZillaTerm, bureau comme application distante (PSM-RDP, PSM-SSH, WinSCP…), sans fenêtre à part. ZillaTerm vérifie le certificat du PSM (approuvé par Windows, sinon empreinte confirmée une fois puis retenue), et les redirections restent celles demandées par le PVWA, jamais plus. Une connexion par une passerelle Bureau à distance s'ouvre toujours dans la Connexion Bureau à distance.</value>
+  </data>
+  <data name="PsmDynamicResolution" xml:space="preserve">
+    <value>Adapter la _résolution du bureau distant à la taille de l'onglet</value>
+  </data>
+  <data name="PsmDynamicResolutionHelp" xml:space="preserve">
+    <value>Au lieu d'une résolution fixe et d'une image mise à l'échelle dans l'onglet, ZillaTerm demande au serveur PSM de changer la résolution de la session à chaque redimensionnement de l'onglet. L'affichage est plus net, mais selon la configuration du PSM, la connexion du PSM vers le serveur cible peut garder sa taille d'origine : désactivez l'option si l'écran de la cible ne suit pas. S'applique aux nouvelles sessions.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>

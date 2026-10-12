@@ -31,7 +31,10 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private const uint TlsConnectFailed = 0x0002_0008;
     private const uint SecurityNegotiationFailed = 0x0002_000C;
 
-    /// <summary>Nouvelles connexions lancées d'elles-mêmes (autre serveur derrière la même adresse), au plus.</summary>
+    /// <summary>
+    /// Nouvelles connexions lancées d'elles-mêmes (autre serveur derrière la même adresse), au plus, depuis la dernière
+    /// ouverture de session.
+    /// </summary>
     private const int MaxAutomaticRetries = 2;
 
     /// <summary>Délai laissé au client pour se déconnecter proprement avant d'être arrêté.</summary>
@@ -76,6 +79,12 @@ internal sealed class FreeRdpConnection : IRdpConnection
         _slot.FocusChanged += OnSlotFocus;
         _slot.ChildMouseWheel += OnSlotWheel;
         _slot.ChildCreated += OnChildCreated;
+        if (DebugLog.Enabled)
+        {
+            // Copier-coller entre le poste et la session : chaque changement du presse-papiers du poste est noté.
+            _slot.ClipboardChanged += OnClipboardChanged;
+            _slot.ListenToClipboard(true);
+        }
 
         // Identité du serveur, vérifiée avant que le client ne parte : aucune question pendant sa connexion.
         _session.ShowStep(Text.Format(Strings.FreeRdpChecking, settings.Server));
@@ -109,6 +118,14 @@ internal sealed class FreeRdpConnection : IRdpConnection
         _legacySecurity = check.IsKey;
         var launch = FreeRdpArguments.Build(settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled, _fingerprints,
             _legacySecurity, FreeRdpClient.ConfigPath);
+        if (DebugLog.Enabled)
+        {
+            // Ni jeton ni mot de passe dans les options : ils sont dans le fichier de connexion (entrée standard).
+            DebugLog.Write("freerdp", $"{_label} : redirections : presse-papiers {OnOff(settings.RedirectClipboard)}, "
+                + $"disques {OnOff(settings.RedirectDrives)}, imprimantes {OnOff(settings.RedirectPrinters)}, "
+                + $"cartes à puce {OnOff(settings.RedirectSmartCards)} ; options : {string.Join(" ", launch.Arguments)}");
+        }
+
         var process = FreeRdpClient.Start(launch.Arguments);
         _process = process;
         DebugLog.Write("freerdp", $"{_label} : client FreeRDP lancé (processus {process.Id}), session {pixels.Width} × {pixels.Height}, "
@@ -118,9 +135,21 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
         DataReceivedEventHandler log = (_, e) =>
         {
-            if (e.Data is { } line && DebugLog.Enabled)
+            if (e.Data is not { } line)
+            {
+                return;
+            }
+
+            if (DebugLog.Enabled)
             {
                 DebugLog.Write("freerdp", DebugLog.Redact(line));
+            }
+
+            // Connexion perdue et reconnexion automatique : l'onglet le dit (voir RdpSession.IsReconnecting).
+            var (step, attempt, max) = FreeRdpReconnection.Read(line);
+            if (step != FreeRdpReconnectionStep.None)
+            {
+                _ui.BeginInvoke(() => _session.OnReconnection(this, step, attempt, max));
             }
         };
         process.OutputDataReceived += log;
@@ -189,6 +218,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
             slot.FocusChanged -= OnSlotFocus;
             slot.ChildMouseWheel -= OnSlotWheel;
             slot.ChildCreated -= OnChildCreated;
+            slot.ClipboardChanged -= OnClipboardChanged;
+            slot.ListenToClipboard(false);
             slot.FocusOnChildClick = false;
         }
 
@@ -329,8 +360,23 @@ internal sealed class FreeRdpConnection : IRdpConnection
         if (!_released && _window != IntPtr.Zero)
         {
             PostMessage(_window, focused ? WmSetFocus : WmKillFocus, IntPtr.Zero, new IntPtr(1));
+            if (focused && DebugLog.Enabled)
+            {
+                DebugLog.Write("freerdp", $"{_label} : clavier à la session ; presse-papiers du poste : {ClipboardState.Describe()}");
+            }
         }
     }
+
+    /// <summary>Presse-papiers du poste modifié (journal de débogage) : par une copie sur le poste, ou par FreeRDP.</summary>
+    private void OnClipboardChanged()
+    {
+        if (!_released)
+        {
+            DebugLog.Write("freerdp", $"{_label} : presse-papiers du poste modifié : {ClipboardState.Describe()}");
+        }
+    }
+
+    private static string OnOff(bool on) => on ? "oui" : "non";
 
     /// <summary>Molette reçue par l'emplacement (qui a le focus) : transmise à FreeRDP, position à l'écran comprise.</summary>
     private void OnSlotWheel(int message, IntPtr wParam, IntPtr lParam)
@@ -370,6 +416,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
         if (!_released)
         {
             bool recheck = false;
+            bool renew = false;
             if (_disconnecting)
             {
                 // Déconnexion demandée : fin normale, même arrêté au bout du délai.
@@ -382,8 +429,12 @@ internal sealed class FreeRdpConnection : IRdpConnection
             else
             {
                 var (normal, end) = FreeRdpExit.Classify(value);
+                bool refused = value is TlsConnectFailed or SecurityNegotiationFailed;
                 // Certificat ou clé refusé par le client avant l'ouverture : un autre serveur a pu répondre.
-                recheck = !connected && value is TlsConnectFailed or SecurityNegotiationFailed;
+                recheck = !connected && refused;
+                // Après l'ouverture, seule une reconnexion automatique de FreeRDP (coupure réseau) peut être refusée : un
+                // autre serveur répond à cette adresse (répartition de charge), la session est perdue.
+                renew = connected && refused;
                 _session.OnEnded(this, normal, normal ? null : Describe(end, value));
             }
 
@@ -391,6 +442,10 @@ internal sealed class FreeRdpConnection : IRdpConnection
             if (recheck)
             {
                 _ = _ui.InvokeAsync(RecheckAsync);
+            }
+            else if (renew)
+            {
+                _ = _ui.InvokeAsync(RenewAsync);
             }
         }
 
@@ -425,6 +480,25 @@ internal sealed class FreeRdpConnection : IRdpConnection
             return;
         }
 
+        _session.AutomaticRetries++;
+        await _session.ReconnectAsync();
+    }
+
+    /// <summary>
+    /// Session perdue, reconnexion refusée par le client (autre serveur derrière la même adresse) : le jeton PSM a déjà
+    /// servi, nouvelle connexion avec une nouvelle demande au PVWA. Le serveur qui répondra est vérifié avant le
+    /// lancement du client, comme à chaque connexion (question s'il est inconnu) : rien n'est accepté sans vérification.
+    /// </summary>
+    private async Task RenewAsync()
+    {
+        if (_session.AutomaticRetries >= MaxAutomaticRetries)
+        {
+            DebugLog.Write("freerdp", $"{_label} : reconnexion refusée par le client ; pas de nouvel essai automatique");
+            return;
+        }
+
+        DebugLog.Write("freerdp", $"{_label} : reconnexion refusée par le client (autre serveur à la même adresse) ; "
+            + "nouvelle demande de connexion");
         _session.AutomaticRetries++;
         await _session.ReconnectAsync();
     }

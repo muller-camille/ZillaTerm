@@ -121,6 +121,94 @@ public sealed class EditedFile : IDisposable
         }
     }
 
+    /// <summary>Résultat de <see cref="Refresh"/>.</summary>
+    public enum RefreshResult
+    {
+        /// <summary>La copie avait déjà ce contenu : elle n'est pas touchée (l'éditeur ne propose pas de la recharger).</summary>
+        Unchanged,
+
+        /// <summary>La copie a été remplacée par la nouvelle.</summary>
+        Replaced,
+
+        /// <summary>Contenu du serveur inchangé, la copie a des modifications non renvoyées : elle est gardée.</summary>
+        KeptUnsent,
+
+        /// <summary>
+        /// Contenu changé sur le serveur et modifications non renvoyées dans la copie : rien n'est touché, à l'utilisateur de
+        /// choisir (<see cref="Refresh"/> avec <c>keepUnsent</c> faux pour recharger).
+        /// </summary>
+        Conflict,
+    }
+
+    /// <summary>
+    /// Nouvelle copie du fichier du serveur, téléchargée à la réouverture : elle remplace la copie locale (déplacée dessus,
+    /// sans être signalée comme un enregistrement) quand leurs contenus diffèrent, et devient la référence des renvois.
+    /// </summary>
+    /// <param name="freshCopy">Copie vérifiée, dans le même dossier que <see cref="LocalPath"/> ; laissée en place sauf si elle remplace la copie.</param>
+    /// <param name="remoteWriteTime">Date de modification du fichier sur le serveur, relevée avant la copie.</param>
+    /// <param name="remoteLength">Taille du fichier sur le serveur, relevée avant la copie.</param>
+    /// <param name="keepUnsent">Vrai : des modifications non renvoyées ne sont jamais écrasées (<see cref="RefreshResult.Conflict"/>).</param>
+    /// <remarks>Lit et hache les deux copies : hors du fil de l'interface pour un gros fichier.</remarks>
+    public RefreshResult Refresh(string freshCopy, DateTime remoteWriteTime, long remoteLength, bool keepUnsent)
+    {
+        string hash;
+        using (var stream = new FileStream(freshCopy, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.SequentialScan))
+        {
+            hash = Convert.ToHexString(SHA256.HashData(stream));
+        }
+
+        // Relue si elle a changé : un enregistrement fait pendant le téléchargement compte.
+        var local = CurrentLocalHash();
+        string seen, sent;
+        DateTime time;
+        long length;
+        bool interrupted;
+        lock (_lock)
+        {
+            bool unsent = local != _sentHash;
+            if (local != hash && unsent && keepUnsent)
+            {
+                if (hash != _sentHash)
+                {
+                    return RefreshResult.Conflict;
+                }
+
+                // Le serveur a toujours le contenu de l'ouverture (ou du dernier renvoi) : seule sa date a pu bouger.
+                RemoteWriteTime = remoteWriteTime;
+                RemoteLength = remoteLength;
+                return RefreshResult.KeptUnsent;
+            }
+
+            (seen, sent, time, length, interrupted) = (_seenHash, _sentHash, RemoteWriteTime, RemoteLength, WriteInterrupted);
+            // Avant le déplacement : la surveillance, qui le verra, ne le signale pas comme un enregistrement.
+            _sentHash = _seenHash = hash;
+            RemoteWriteTime = remoteWriteTime;
+            RemoteLength = remoteLength;
+            WriteInterrupted = false;
+            if (local == hash)
+            {
+                return RefreshResult.Unchanged;
+            }
+        }
+
+        try
+        {
+            // Remplacement d'un seul coup : l'éditeur qui a la copie ouverte ne lit jamais un contenu à moitié écrit.
+            File.Move(freshCopy, LocalPath, overwrite: true);
+            return RefreshResult.Replaced;
+        }
+        catch
+        {
+            // Copie verrouillée par l'éditeur : elle reste telle quelle, avec ses références.
+            lock (_lock)
+            {
+                (_seenHash, _sentHash, RemoteWriteTime, RemoteLength, WriteInterrupted) = (seen, sent, time, length, interrupted);
+            }
+
+            throw;
+        }
+    }
+
     // Fichiers qui ne se lisent pas dans un éditeur de texte : archives, images, exécutables, documents bureautiques...
     private static readonly HashSet<string> BinaryExtensions = new(StringComparer.OrdinalIgnoreCase)
     {

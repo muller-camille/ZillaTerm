@@ -123,6 +123,23 @@ public class RdpConnectionSettingsTests
         Assert.Equal("PSM@0123abcd", tab.StartProgram);
     }
 
+    /// <summary>
+    /// Redimensionnement dynamique (option expérimentale) : la résolution suit l'onglet, sans image mise à l'échelle, même
+    /// si le fichier en demande une ; le reste des règles de l'onglet ne change pas.
+    /// </summary>
+    [Fact]
+    public void PsmTabWithDynamicResolutionFollowsTheTabSize()
+    {
+        var file = RdpConnectionSettings.FromRdpFile(Encoding.UTF8.GetBytes(
+            "full address:s:psm.corp.local\r\nauthentication level:i:0\r\nbitmapcachepersistenable:i:1\r\nsmart sizing:i:1\r\n"));
+
+        var tab = file.ForPsmTab(dynamicResolution: true);
+
+        Assert.Equal(file.ForPsmTab() with { SmartSizing = false }, tab);
+        Assert.False(tab.BitmapPersistence);
+        Assert.Equal(2, tab.AuthenticationLevel);
+    }
+
     /// <summary>Session PSM dans l'onglet : jamais de connexion sans vérification du serveur, même si le fichier le permet.</summary>
     [Theory]
     [InlineData(0, 2)]

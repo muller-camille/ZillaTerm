@@ -154,17 +154,25 @@ public partial class MainWindow
         switch (tab.Tag)
         {
             case RemoteSession session:
-                session.StateChanged += () => header.SetState(session.State switch
+                void Follow() => header.SetState(session.State switch
                 {
+                    RemoteSessionState.Connected when session is SshSession { IsNotResponding: true } => SessionTabState.Interrupted,
                     RemoteSessionState.Connected => SessionTabState.Connected,
                     RemoteSessionState.Closed => SessionTabState.Ended,
                     RemoteSessionState.Failed => SessionTabState.Failed,
                     _ => SessionTabState.Connecting,
                 });
+                session.StateChanged += Follow;
+                if (session is SshSession ssh)
+                {
+                    ssh.ResponseChanged += Follow;
+                }
+
                 break;
             case RdpSession rdp:
                 rdp.StateChanged += () => header.SetState(rdp.State switch
                 {
+                    RdpSessionState.Connected when rdp.IsReconnecting => SessionTabState.Interrupted,
                     RdpSessionState.Connected => SessionTabState.Connected,
                     RdpSessionState.Ended => SessionTabState.Ended,
                     RdpSessionState.Failed => SessionTabState.Failed,
@@ -229,8 +237,8 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// « Ajouter à Mes serveurs » d'une session CyberArk : sous-menu des dossiers, ou grisé si ce compte et cette machine y
-    /// sont déjà ; masqué pour une connexion directe.
+    /// « Ajouter à Mes serveurs » d'une session CyberArk : fenêtre du dossier et de l'étiquette, ou grisé si ce compte et
+    /// cette machine y sont déjà ; masqué pour une connexion directe.
     /// </summary>
     private void RefreshAddSaved(MenuItem item, RemoteSession? session)
     {
@@ -244,8 +252,6 @@ public partial class MainWindow
         item.Visibility = Visibility.Visible;
         item.IsEnabled = !saved;
         item.ToolTip = saved ? Strings.ToolAlreadyInMyServers : null;
-        BuildAddToCurrentMenu(item, saved ? null : folder => ShowAddedToCurrent(SessionLibrary.AddConnection(_settings, account,
-            PvwaHost, folder, request.Mode, request.Component, request.RemoteMachine)));
     }
 
     /// <summary>Actions communes au menu de l'en-tête d'un onglet et au menu du clic droit dans son terminal.</summary>
@@ -285,9 +291,17 @@ public partial class MainWindow
                 ToggleParallel(session);
             }
         };
-        // Session CyberArk : « Ajouter à Mes serveurs » avec son type et sa machine cible (sous-menu des dossiers).
+        // Session CyberArk : « Ajouter à Mes serveurs » avec son type et sa machine cible (fenêtre du dossier et de l'étiquette).
         var addSaved = new MenuItem { Header = Strings.MenuAddToMyServers, Icon = MenuIcon(FindResource("IconBookmark")), Visibility = Visibility.Collapsed };
         ToolTipService.SetShowOnDisabled(addSaved, true);
+        addSaved.Click += (_, _) =>
+        {
+            if (!IsOffline && tab.Tag is RemoteSession { Account: { } account, Request: { } request }
+                && SessionLibrary.FindSession(_settings, account, PvwaHost, request.RemoteMachine) is null)
+            {
+                AddToCurrent(account, request);
+            }
+        };
         var close = new MenuItem { Header = Strings.MenuTabClose, Icon = MenuIcon(FindResource("IconClose")), InputGestureText = Strings.ShortcutTabClose };
         close.Click += (_, _) => CloseSessionTab(tab, owner());
         return new SessionActions(reconnect, copy, detach, parallel, addSaved, close, () =>

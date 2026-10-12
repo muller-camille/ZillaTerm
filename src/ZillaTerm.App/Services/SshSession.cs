@@ -40,6 +40,10 @@ public sealed class SshSession : RemoteSession
     // Numéro de la connexion en cours : la préparation du shell d'une connexion précédente s'arrête à la reconnexion.
     private int _connection;
 
+    // Saisie restée sans réponse du serveur (voir ServerResponseWatch), vérifiée deux fois par seconde pendant l'attente.
+    private readonly ServerResponseWatch _response = new();
+    private readonly DispatcherTimer _responseTimer;
+
     /// <param name="account">Compte CyberArk ; null pour une connexion directe (accès d'urgence KeePass).</param>
     public SshSession(PvwaAccount? account, string label, SshConnector connector, Dispatcher dispatcher,
         bool followTerminal, SavedSession? saved)
@@ -51,6 +55,8 @@ public sealed class SshSession : RemoteSession
         Emulator.EraseMarkerReceived += ReleaseHeldInput;
         _holdTimer = new DispatcherTimer(DispatcherPriority.Normal, dispatcher) { Interval = FolderTrackingWait };
         _holdTimer.Tick += (_, _) => ReleaseHeldInput();
+        _responseTimer = new DispatcherTimer(DispatcherPriority.Normal, dispatcher) { Interval = TimeSpan.FromMilliseconds(500) };
+        _responseTimer.Tick += (_, _) => CheckResponse();
         Emulator.WorkingDirectoryChanged += dir =>
         {
             TerminalDirectory = dir;
@@ -63,6 +69,18 @@ public sealed class SshSession : RemoteSession
 
     /// <summary>Dossier courant du shell (OSC 7), pour l'option « suivre le terminal ».</summary>
     public event Action<string>? TerminalDirectoryChanged;
+
+    /// <summary><see cref="IsNotResponding"/> a changé, ou son temps d'attente (une fois par demi-seconde).</summary>
+    public event Action? ResponseChanged;
+
+    /// <summary>
+    /// Le serveur ne répond plus : ce qui a été tapé est resté sans réponse, comme une demande à laquelle il doit répondre.
+    /// Dit au bout de quelques secondes, bien avant que la connexion soit déclarée perdue ; retombe dès qu'il répond.
+    /// </summary>
+    public bool IsNotResponding => _response.IsSilent;
+
+    /// <summary>Temps écoulé depuis la saisie restée sans réponse.</summary>
+    public TimeSpan NotRespondingFor => _response.SilentFor(DateTime.UtcNow);
 
     public TerminalEmulator Emulator { get; } = new(100, 30);
 
@@ -92,6 +110,7 @@ public sealed class SshSession : RemoteSession
         _client = null;
         int connection = ++_connection;
         _userTyped = false;
+        StopResponseWatch();
         DropHeldInput();
         _lastData = default;
         try
@@ -110,7 +129,7 @@ public sealed class SshSession : RemoteSession
 
             _client = client;
             DebugLog.Write("ssh", $"{Label} : connecté ({client.ConnectionInfo.ServerVersion}, {client.ConnectionInfo.CurrentServerEncryption}, bannière {!string.IsNullOrWhiteSpace(connector.Banner)})");
-            client.KeepAliveInterval = TimeSpan.FromSeconds(30);
+            SshConnector.KeepAlive(client);
             if (connection > 1 && Emulator.CursorColumn > 0)
             {
                 // Reconnexion : la nouvelle session commence sur une nouvelle ligne, après l'invite de la précédente.
@@ -226,6 +245,12 @@ public sealed class SshSession : RemoteSession
     public void SendInput(string text)
     {
         _userTyped = true;
+        if (_client is { } client && State == RemoteSessionState.Connected)
+        {
+            _response.Typed(DateTime.UtcNow, client.ReceivedMessageCount);
+            _responseTimer.Start();
+        }
+
         if (_heldInput is not null)
         {
             _heldInput.Append(text);
@@ -319,8 +344,64 @@ public sealed class SshSession : RemoteSession
         }
     }
 
+    /// <summary>
+    /// Saisie en attente de réponse : demande au serveur quand il tarde, serveur dit muet quand il tarde trop, jusqu'à ce
+    /// qu'il envoie quelque chose.
+    /// </summary>
+    private void CheckResponse()
+    {
+        bool wasSilent = _response.IsSilent;
+        if (_client is not { } client || State != RemoteSessionState.Connected)
+        {
+            _response.Stop();
+        }
+        else if (_response.Check(DateTime.UtcNow, client.ReceivedMessageCount))
+        {
+            // Hors du fil de l'interface : un envoi peut attendre le réseau.
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    client.SendServerAliveRequest();
+                }
+                catch (Exception ex) when (ex is ObjectDisposedException or Renci.SshNet.Common.SshException or InvalidOperationException
+                                               or IOException or System.Net.Sockets.SocketException)
+                {
+                    // Connexion en train de se fermer : sa fin est signalée par ailleurs.
+                }
+            });
+        }
+
+        if (!_response.IsWatching)
+        {
+            _responseTimer.Stop();
+        }
+
+        if (_response.IsSilent != wasSilent)
+        {
+            DebugLog.Write("ssh", _response.IsSilent ? $"{Label} : le serveur ne répond pas à la saisie" : $"{Label} : le serveur répond de nouveau");
+        }
+
+        if (_response.IsSilent || wasSilent)
+        {
+            ResponseChanged?.Invoke();
+        }
+    }
+
+    private void StopResponseWatch()
+    {
+        bool wasSilent = _response.IsSilent;
+        _response.Stop();
+        _responseTimer.Stop();
+        if (wasSilent)
+        {
+            ResponseChanged?.Invoke();
+        }
+    }
+
     protected override void CloseConnections()
     {
+        StopResponseWatch();
         DropHeldInput();
         DisposeInBackground(_shell, _client);
         _shell = null;

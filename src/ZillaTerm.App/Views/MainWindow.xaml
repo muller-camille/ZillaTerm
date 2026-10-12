@@ -64,7 +64,7 @@
                 <MenuItem Header="{x:Static loc:Strings.MenuCpmReconcile}" Click="OnCpmReconcile" />
             </MenuItem>
             <Separator />
-            <MenuItem Tag="addcurrent" Header="{x:Static loc:Strings.MenuAddToMyServers}">
+            <MenuItem Tag="addcurrent" Header="{x:Static loc:Strings.MenuAddToMyServers}" Click="OnAddAccountToCurrent">
                 <MenuItem.Icon>
                     <Image Source="{DynamicResource IconBookmark}" Width="16" Height="16" />
                 </MenuItem.Icon>
@@ -109,7 +109,8 @@
                 </MenuItem.Icon>
             </MenuItem>
             <Separator />
-            <MenuItem Tag="addcurrent" Header="{x:Static loc:Strings.MenuAddToMyServers}" ToolTipService.ShowOnDisabled="True">
+            <MenuItem Tag="addcurrent" Header="{x:Static loc:Strings.MenuAddToMyServers}" ToolTipService.ShowOnDisabled="True"
+                      Click="OnAddRecentToCurrent">
                 <MenuItem.Icon>
                     <Image Source="{DynamicResource IconBookmark}" Width="16" Height="16" />
                 </MenuItem.Icon>

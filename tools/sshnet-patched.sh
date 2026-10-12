@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# SSH.NET patché pour ZillaTerm : la version 2026.0.0 publiée, plus deux commits, en attendant une version de SSH.NET
-# qui les intègre : la ligne « longname » des listes SFTP version 3 (noms du propriétaire et du groupe) et le transfert
-# X11 des shells (comme ssh -X, cookie factice vérifié puis remplacé avant d'atteindre le serveur X local).
+# SSH.NET patché pour ZillaTerm : la version 2026.0.0 publiée, plus cinq commits, en attendant une version de SSH.NET
+# qui les intègre : la ligne « longname » des listes SFTP version 3 (noms du propriétaire et du groupe), le transfert
+# X11 des shells (comme ssh -X, cookie factice vérifié puis remplacé avant d'atteindre le serveur X local), la fermeture
+# du shell signalée quand le serveur coupe la connexion, un maintien de la connexion auquel le serveur doit répondre
+# (KeepAliveCountMax, comme ServerAliveCountMax d'OpenSSH : connexion morte détectée), et le nombre de messages reçus
+# du serveur avec une demande à laquelle il doit répondre (serveur muet signalé pendant la saisie).
 #
 # Paquet compilé par le workflow « release » du fork muller-camille/SSH.NET (branche ci) depuis un commit figé, et
 # publié dans une release ; téléchargé ici, vérifié par sa somme SHA-256 figée ci-dessous et par l'attestation de
@@ -11,8 +14,8 @@
 set -euo pipefail
 
 repository=muller-camille/SSH.NET
-version=2026.0.1-zillaterm.2.gc3245ef61d
-sha256=a336b523da95a2bbe6aba2a1adbc1fcc51c04f0fb9172f7d7d7d287ceb88f80c
+version=2026.0.1-zillaterm.5.gb26b7bee6b
+sha256=ab429ada9c2ccab7043dacc78996d77b30767310425a81ca651e1e931b163882
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 . "$root/tools/fork-release.sh"

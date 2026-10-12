@@ -12,6 +12,9 @@ public enum SessionTabState
 {
     Connecting,
     Connected,
+
+    /// <summary>Connexion perdue ou serveur muet : reconnexion ou vérification en cours.</summary>
+    Interrupted,
     Ended,
     Failed,
 }
@@ -95,7 +98,7 @@ public sealed class SessionTabHeader : StackPanel
             _ => "StateConnectingBrush",
         };
         _dot.SetResourceReference(Shape.StrokeProperty, key);
-        if (state is SessionTabState.Connected or SessionTabState.Failed)
+        if (state is SessionTabState.Connected or SessionTabState.Interrupted or SessionTabState.Failed)
         {
             _dot.SetResourceReference(Shape.FillProperty, key);
         }
@@ -122,6 +125,7 @@ public sealed class SessionTabHeader : StackPanel
     public static string StateText(SessionTabState state) => state switch
     {
         SessionTabState.Connected => Strings.TabStateConnected,
+        SessionTabState.Interrupted => Strings.TabStateInterrupted,
         SessionTabState.Ended => Strings.TabStateEnded,
         SessionTabState.Failed => Strings.TabStateFailed,
         _ => Strings.TabStateConnecting,

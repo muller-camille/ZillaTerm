@@ -96,14 +96,33 @@ public sealed class SshConnector
         ConnectAsync(info => new ScpClient(info, RemotePathTransformation.ShellQuote), ct, "SCP");
 
     /// <summary>
-    /// Explorateur de fichiers : connexion SFTP maintenue par un keep-alive (30 s), SCP ouvert à la demande pour les
-    /// envois qui le demandent.
+    /// Explorateur de fichiers : connexion SFTP maintenue (voir <see cref="KeepAlive"/>), SCP ouvert à la demande pour
+    /// les envois qui le demandent.
     /// </summary>
     public async Task<IRemoteFiles> OpenFileBrowserAsync(CancellationToken ct)
     {
         var sftp = await ConnectSftpAsync(ct).ConfigureAwait(false);
-        sftp.KeepAliveInterval = TimeSpan.FromSeconds(30);
+        KeepAlive(sftp);
         return new RemoteFileBrowser(sftp, ConnectScpAsync);
+    }
+
+    /// <summary>Intervalle entre deux demandes de maintien de la connexion.</summary>
+    public static readonly TimeSpan KeepAliveInterval = TimeSpan.FromSeconds(15);
+
+    /// <summary>Demandes de maintien laissées sans réponse, au plus, avant que la connexion soit tenue pour perdue.</summary>
+    public const int KeepAliveCountMax = 4;
+
+    /// <summary>
+    /// Maintien d'une connexion ouverte (comme ServerAliveInterval et ServerAliveCountMax d'OpenSSH) : une demande à
+    /// laquelle le serveur doit répondre toutes les 15 s. Sans rien recevoir du serveur pendant quatre intervalles, la
+    /// connexion est tenue pour perdue (poste en veille, changement de réseau ou de VPN, pare-feu qui l'a oubliée) :
+    /// erreur de la connexion au bout d'une minute environ, au lieu d'un terminal ou d'une liste de fichiers figés
+    /// jusqu'à ce que le réseau abandonne.
+    /// </summary>
+    public static void KeepAlive(BaseClient client)
+    {
+        client.KeepAliveCountMax = KeepAliveCountMax;
+        client.KeepAliveInterval = KeepAliveInterval;
     }
 
     /// <param name="purpose">Nom de la connexion dans le journal (par défaut, son type).</param>
