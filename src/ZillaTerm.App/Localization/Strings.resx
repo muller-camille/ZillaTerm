@@ -380,12 +380,6 @@
   <data name="AddedToMyServers" xml:space="preserve">
     <value>{0} added to My servers</value>
   </data>
-  <data name="RootFolder" xml:space="preserve">
-    <value>(root)</value>
-  </data>
-  <data name="NewFolderEntry" xml:space="preserve">
-    <value>New folder…</value>
-  </data>
   <data name="NewFolderIn" xml:space="preserve">
     <value>New folder in {0}</value>
   </data>
@@ -4299,6 +4293,15 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="ServerPromptAdd" xml:space="preserve">
     <value>_Add</value>
   </data>
+  <data name="AddToMyServersTitle" xml:space="preserve">
+    <value>Add to My servers</value>
+  </data>
+  <data name="AddToMyServersQuestion" xml:space="preserve">
+    <value>Where should {0} go in “My servers”?</value>
+  </data>
+  <data name="ServerPromptTag" xml:space="preserve">
+    <value>_Tag:</value>
+  </data>
   <data name="ServerPromptRequired" xml:space="preserve">
     <value>Enter the name of the server.</value>
   </data>
@@ -5244,17 +5247,11 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="TagPromptTitle" xml:space="preserve">
     <value>Server tag</value>
   </data>
-  <data name="TagPromptHeading" xml:space="preserve">
-    <value>Which environment is {0} in?</value>
-  </data>
   <data name="TagPromptHelp" xml:space="preserve">
     <value>Its color marks the tab and the outline of the session: you see at a glance where you work.</value>
   </data>
   <data name="TagPromptGuessed" xml:space="preserve">
     <value>Suggested from its name, address, safe or folder: check it.</value>
-  </data>
-  <data name="TagPromptAdd" xml:space="preserve">
-    <value>_Add to My servers</value>
   </data>
   <data name="TagNone" xml:space="preserve">
     <value>_No tag</value>

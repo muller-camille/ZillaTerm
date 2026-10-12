@@ -197,9 +197,10 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   to them, opens on its own address; the target machine stays optional. Never a session to the domain
   itself: the server is always asked, "Advanced options…" included. The "Choose the server" window asks which one to open the session on: the list offers
   the servers already used with this account (recent sessions, "My servers"), then its allowed machines; an account
-  restricted to its machines refuses the others. "Keep this server in “My servers”", with the folder you want, adds
-  it after a successful connection, named `account@server` (the choice is remembered for next time; the box
-  disappears when the server is already there). "Advanced options…" opens the full window with this server.
+  restricted to its machines refuses the others. "Keep this server in “My servers”", with the folder and the
+  [tag](#tags-prod-qa-dev) you want (chosen in the same window), adds it after a successful connection, named
+  `account@server` (the choice and the folder are remembered for next time; the box disappears when the server is
+  already there). "Advanced options…" opens the full window with this server.
 - **Reason and ticket**: if the PVWA refuses the request (reason or ticket required, component not configured…), the
   window says what to do, followed by the original PVWA message, and you can fix it and try again.
 - The "Advanced options…" toolbar button (or right-click → "Advanced options…") opens this window, "Advanced
@@ -535,16 +536,17 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
 
 ![My servers organized in folders](captures/en/my-servers.png)
 
-- **Add** an account: right-click in "Available" → "Add to My servers" then the folder you want, or drag the account
-  onto the "My servers" tab, or the "Add" toolbar button. For a domain account, the server is asked (optional:
-  without a server, it is asked at each connection). Its [tag](#tags-prod-qa-dev) is then asked, with a suggestion
-  from its name.
-- **Add an open session**: right-click the session tab (or in its terminal) → "Add to My servers" then the folder
-  you want. The server keeps the connection type and the target machine; the entry is greyed out when it is already
-  there.
-- **Add a recent connection**: right-click in the recent sessions of the home page → "Add to My servers" then the
-  folder you want. The server keeps the connection type (PSM, SSH or files only), the PSM component and the target machine
-  used.
+- **Add** an account: right-click in "Available" → "Add to My servers", or the "Add" toolbar button. One window asks
+  for the folder (the last one chosen is offered; type a name to create a new one, `Prod/Web` for a subfolder) and the
+  [tag](#tags-prod-qa-dev), suggested from its name. For a domain account, the same window asks for the server
+  (optional: without a server, it is asked at each connection). You can also drag the account onto a folder of
+  "My servers": the window then opens on that folder (not at all for a server account when no tag is defined).
+- **Add an open session**: right-click the session tab (or in its terminal) → "Add to My servers": same window
+  (folder and tag). The server keeps the connection type and the target machine; the entry is greyed out when it is
+  already there.
+- **Add a recent connection**: right-click in the recent sessions of the home page → "Add to My servers": same window
+  (folder and tag). The server keeps the connection type (PSM, SSH or files only), the PSM component and the target
+  machine used.
 - **Folders**: right-click → new folder or subfolder, rename, delete; drag servers and folders to move them. Deleting a
   folder counts and deletes all its servers of this PVWA, even those hidden by the search; those of another PVWA stay.
   Removing a server or deleting a folder asks for confirmation (the accounts stay in "Available"). The "Properties /
@@ -593,7 +595,8 @@ A session opened from "Available" or the recent sessions takes the tag of the "M
 account (and the same target machine). The tag applies when the session opens: change it, then reopen the session to
 see the new color.
 
-- **When adding** a server to "My servers", the tag is asked. A tag is suggested from the server name, its address,
+- **When adding** a server to "My servers", the tag is asked in the same window as the folder (and the server
+  of a domain account); it follows the folder and the server you type until you pick one yourself. A tag is suggested from the server name, its address,
   its safe, then its folders ("prd", "prod", "production" → PROD; "rec", "recette", "qual", "uat", "preprod",
   "staging", "test" → QA; "dev" → DEV; a tag added in the Settings is recognized by its name). Nothing is suggested
   when the text names two environments. Check it: it is only a suggestion. "No tag" is possible; "Cancel" does not

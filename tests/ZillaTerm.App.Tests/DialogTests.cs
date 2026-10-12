@@ -1344,8 +1344,9 @@ public sealed class DialogTests
     }
 
     /// <summary>
-    /// Ajout dans « Mes serveurs » : l'étiquette devinée est cochée et signalée ; une autre, ou aucune, peut être choisie.
-    /// Propriétés : l'étiquette se change, une étiquette absente des Paramètres reste proposée.
+    /// Ajout dans « Mes serveurs » : une seule fenêtre demande le dossier et l'étiquette ; l'étiquette devinée (nom, dossier)
+    /// est cochée et signalée, et suit le dossier saisi tant qu'aucune n'a été choisie. Propriétés : l'étiquette se change,
+    /// une étiquette absente des Paramètres reste proposée.
     /// </summary>
     [Fact]
     public void ServerTagIsAskedAndEditable()
@@ -1358,20 +1359,48 @@ public sealed class DialogTests
         RunWithTheme(() =>
         {
             var tags = ServerTagRules.Defaults();
-            var prompt = new TagPromptDialog("root@prd-lnx01.corp.local", tags, "PROD", guessed: true);
+            var account = new PvwaAccount { Id = "7_1", UserName = "root", Address = "srv01.corp.local", PlatformId = "UnixSSH", SafeName = "LNX" };
+            string? Guess(string name, string folder) =>
+                ServerTagGuess.ForServer(tags, name, null, account.Address, account.SafeName, folder)?.Name;
+            var prompt = new ServerPromptDialog(account, [], ["Prod", "Recette"], _ => false, keep: false, folder: "Prod", adding: true,
+                domainAccount: false, tags, (_, folder) => Guess("root@srv01.corp.local", folder), name: "root@srv01.corp.local");
+            Assert.Equal(Strings.AddToMyServersTitle, prompt.Title);
+            Assert.Equal(Text.Format(Strings.AddToMyServersQuestion, "root@srv01.corp.local"), prompt.QuestionText.Text);
+            Assert.Equal(Visibility.Collapsed, prompt.ServerPanel.Visibility);
+            Assert.Equal(Visibility.Collapsed, prompt.KeepBox.Visibility);
+            Assert.Equal(Visibility.Visible, prompt.KeepPanel.Visibility);
+            Assert.True(prompt.SavePanel.IsEnabled);
+            Assert.Equal("Prod", prompt.Folder);
             Assert.Equal("PROD", prompt.ChosenTag);
             Assert.Equal(Visibility.Visible, prompt.GuessText.Visibility);
-            var buttons = prompt.Choices.Children.OfType<System.Windows.Controls.RadioButton>().ToList();
+            Assert.True(prompt.Validate(required: false));
+
+            // Dossier changé : l'étiquette devinée suit.
+            prompt.FolderBox.Text = "Recette";
+            Assert.Equal("Recette", prompt.Folder);
+            Assert.Equal("QA", prompt.ChosenTag);
+            prompt.FolderBox.Text = "";
+            Assert.Null(prompt.ChosenTag);
+            Assert.Equal(Visibility.Collapsed, prompt.GuessText.Visibility);
+
+            // Étiquette cochée par l'utilisateur : gardée quel que soit le dossier.
+            var buttons = prompt.TagChoices.Children.OfType<System.Windows.Controls.RadioButton>().ToList();
             Assert.Equal(4, buttons.Count);
+            buttons[2].RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            buttons[2].IsChecked = true;
+            Assert.Equal("DEV", prompt.ChosenTag);
+            prompt.FolderBox.Text = "Prod";
+            Assert.Equal("DEV", prompt.ChosenTag);
             buttons[3].IsChecked = true;
             Assert.Null(prompt.ChosenTag);
-            buttons[1].IsChecked = true;
-            Assert.Equal("QA", prompt.ChosenTag);
             prompt.Close();
 
-            var none = new TagPromptDialog("srv01", tags, null, guessed: false);
+            // Sans étiquette dans les Paramètres : seul le dossier est demandé.
+            var none = new ServerPromptDialog(account, [], [], _ => false, keep: false, folder: "", adding: true, domainAccount: false,
+                [], null, name: "root@srv01.corp.local");
             Assert.Null(none.ChosenTag);
-            Assert.Equal(Visibility.Collapsed, none.GuessText.Visibility);
+            Assert.Equal(Visibility.Collapsed, none.TagPanel.Visibility);
+            Assert.Equal(Visibility.Collapsed, none.TagLabel.Visibility);
             none.Close();
 
             var saved = new SavedSession { Name = "root@srv01", UserName = "root", Address = "srv01", Mode = ConnectMode.Ssh, Tag = "OLD" };
@@ -1429,10 +1458,30 @@ public sealed class DialogTests
             Assert.True(dialog.Validate(required: false));
             dialog.Close();
 
+            // Serveur à garder : son étiquette se choisit dans la même fenêtre, devinée d'après le serveur saisi.
+            var tags = ServerTagRules.Defaults();
+            var tagged = new ServerPromptDialog(account, [], ["Prod"], _ => false, keep: false, folder: "", tags: tags,
+                guessTag: (server, folder) => ServerTagGuess.ForServer(tags, $"adm-t1@{server}", server, account.Address, account.SafeName,
+                    folder)?.Name);
+            Assert.Equal(Visibility.Visible, tagged.KeepBox.Visibility);
+            Assert.Equal(Visibility.Visible, tagged.TagPanel.Visibility);
+            Assert.False(tagged.SavePanel.IsEnabled);
+            tagged.ServerBox.Text = "srvprd01.corp.local";
+            Assert.Equal("PROD", tagged.ChosenTag);
+            tagged.KeepBox.IsChecked = true;
+            Assert.True(tagged.SavePanel.IsEnabled);
+            Assert.True(tagged.Keep);
+            tagged.ServerBox.Text = "srvdev01.corp.local";
+            Assert.Equal("DEV", tagged.ChosenTag);
+            tagged.Close();
+
             // Compte limité à ses machines : un autre serveur est refusé.
             account.RemoteMachinesAccess.AccessRestrictedToRemoteMachines = true;
             var restricted = new ServerPromptDialog(account, ["srv01.corp.local"], [], _ => false, keep: false, folder: "", adding: true);
-            Assert.Equal(Visibility.Collapsed, restricted.KeepPanel.Visibility);
+            // Ajout : dossier demandé directement, sans case « Garder ».
+            Assert.Equal(Visibility.Collapsed, restricted.KeepBox.Visibility);
+            Assert.Equal(Visibility.Visible, restricted.KeepPanel.Visibility);
+            Assert.Equal(Visibility.Visible, restricted.ServerPanel.Visibility);
             Assert.Equal(Strings.ServerPromptAdd, restricted.OkButton.Content);
             restricted.ServerBox.Text = "srv09.corp.local";
             Assert.False(restricted.Validate(required: false));

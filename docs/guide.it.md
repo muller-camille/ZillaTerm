@@ -207,9 +207,10 @@ nessuna finestra separata.
   indirizzo; la macchina di destinazione resta facoltativa. Mai una sessione verso il dominio stesso: il server viene sempre chiesto, «Opzioni avanzate…» comprese. La finestra «Scegli il server» chiede su quale aprire la sessione:
   l'elenco propone i server già usati con questo account (sessioni recenti, «I miei server»), poi le sue macchine
   autorizzate; un account limitato alle sue macchine rifiuta le altre. «Mantieni questo server in «I miei server»»,
-  con la cartella desiderata, lo aggiunge dopo una connessione riuscita, con il nome `account@server` (la scelta
-  viene ricordata per la volta successiva; la casella scompare se il server è già presente). «Opzioni avanzate…»
-  apre la finestra completa con questo server.
+  con la cartella e l'[etichetta](#etichette-prod-qa-dev) desiderate (scelte nella stessa finestra), lo aggiunge dopo
+  una connessione riuscita, con il nome `account@server` (la scelta e la cartella vengono ricordate per la volta
+  successiva; la casella scompare se il server è già presente). «Opzioni avanzate…» apre la finestra completa con
+  questo server.
 - **Motivo e ticket**: se il PVWA rifiuta la richiesta (motivo o ticket richiesto, componente non configurato…), la
   finestra dice cosa fare, seguito dal messaggio originale del PVWA, e puoi correggere e riprovare.
 - Il pulsante «Opzioni avanzate…» della barra degli strumenti (o clic destro → «Opzioni avanzate…») apre questa
@@ -571,16 +572,18 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
 
 ![I miei server organizzati in cartelle](captures/it/my-servers.png)
 
-- **Aggiungere** un account: clic destro in «Disponibili» → «Aggiungi a «I miei server»» e poi la cartella desiderata,
-  oppure trascina l'account sulla scheda «I miei server», oppure il pulsante «Aggiungi» della barra degli strumenti.
-  Per un account di dominio viene chiesto il server (facoltativo: senza server, verrà chiesto a ogni connessione).
-  Viene poi chiesta la sua [etichetta](#etichette-prod-qa-dev), con una proposta in base al nome.
+- **Aggiungere** un account: clic destro in «Disponibili» → «Aggiungi a «I miei server»», oppure il pulsante
+  «Aggiungi» della barra degli strumenti. Una finestra chiede la cartella (viene proposta l'ultima scelta; scrivi un
+  nome per crearne una, `Prod/Web` per una sottocartella) e l'[etichetta](#etichette-prod-qa-dev), proposta in base al
+  nome. Per un account di dominio, la stessa finestra chiede il server (facoltativo: senza server, verrà chiesto a ogni
+  connessione). Puoi anche trascinare l'account su una cartella di «I miei server»: la finestra si apre allora su
+  quella cartella (per niente per un account di un server se non c'è alcuna etichetta).
 - **Aggiungere una sessione aperta**: clic destro sulla scheda della sessione (o nel suo terminale) → «Aggiungi a
-  «I miei server»» e poi la cartella desiderata. Il server mantiene il tipo di connessione e la macchina di destinazione;
-  la voce è disattivata se è già presente.
-- **Aggiungere una connessione recente**: clic destro nelle sessioni recenti della home → «Aggiungi a «I miei server»»
-  e poi la cartella desiderata. Il server mantiene il tipo di connessione (PSM, SSH o solo file), il componente PSM e la
-  macchina di destinazione usati.
+  «I miei server»»: stessa finestra (cartella ed etichetta). Il server mantiene il tipo di connessione e la macchina di
+  destinazione; la voce è disattivata se è già presente.
+- **Aggiungere una connessione recente**: clic destro nelle sessioni recenti della home → «Aggiungi a «I miei server»»:
+  stessa finestra (cartella ed etichetta). Il server mantiene il tipo di connessione (PSM, SSH o solo file), il
+  componente PSM e la macchina di destinazione usati.
 - **Cartelle**: clic destro → nuova cartella o sottocartella, rinomina, elimina; trascina server e cartelle per
   spostarli. Eliminare una cartella conta ed elimina tutti i suoi server di questo PVWA, anche quelli nascosti dalla
   ricerca; quelli di un altro PVWA restano. Rimuovere un server o eliminare una cartella chiede conferma (gli
@@ -630,7 +633,9 @@ Una sessione aperta da «Disponibili» o dalle sessioni recenti prende l'etichet
 lo stesso account (e la stessa macchina di destinazione). L'etichetta si applica all'apertura: dopo averla cambiata,
 riaprire la sessione per vedere il nuovo colore.
 
-- **All'aggiunta** di un server in «I miei server», viene chiesta l'etichetta. Un'etichetta viene proposta in base al
+- **All'aggiunta** di un server in «I miei server», l'etichetta viene chiesta nella stessa finestra della cartella (e
+  del server di un account di dominio); segue la cartella e il server digitati finché non ne scegli una tu.
+  Un'etichetta viene proposta in base al
   nome del server, al suo indirizzo, al suo safe e poi alle sue cartelle («prd», «prod», «production», «produzione» →
   PROD; «rec», «recette», «qual», «uat», «preprod», «staging», «test», «collaudo» → QA; «dev», «sviluppo» → DEV;
   un'etichetta aggiunta nelle Impostazioni si riconosce dal suo nome). Non viene proposto nulla quando il testo nomina

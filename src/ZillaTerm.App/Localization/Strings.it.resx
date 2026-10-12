@@ -380,12 +380,6 @@
   <data name="AddedToMyServers" xml:space="preserve">
     <value>{0} aggiunto a «I miei server»</value>
   </data>
-  <data name="RootFolder" xml:space="preserve">
-    <value>(radice)</value>
-  </data>
-  <data name="NewFolderEntry" xml:space="preserve">
-    <value>Nuova cartella…</value>
-  </data>
   <data name="NewFolderIn" xml:space="preserve">
     <value>Nuova cartella in {0}</value>
   </data>
@@ -4299,6 +4293,15 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="ServerPromptAdd" xml:space="preserve">
     <value>A_ggiungi</value>
   </data>
+  <data name="AddToMyServersTitle" xml:space="preserve">
+    <value>Aggiungi a «I miei server»</value>
+  </data>
+  <data name="AddToMyServersQuestion" xml:space="preserve">
+    <value>Dove mettere {0} in «I miei server»?</value>
+  </data>
+  <data name="ServerPromptTag" xml:space="preserve">
+    <value>_Etichetta:</value>
+  </data>
   <data name="ServerPromptRequired" xml:space="preserve">
     <value>Inserisci il nome del server.</value>
   </data>
@@ -5244,17 +5247,11 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="TagPromptTitle" xml:space="preserve">
     <value>Etichetta del server</value>
   </data>
-  <data name="TagPromptHeading" xml:space="preserve">
-    <value>In quale ambiente si trova {0}?</value>
-  </data>
   <data name="TagPromptHelp" xml:space="preserve">
     <value>Il suo colore contrassegna la scheda e il contorno della sessione: si vede a colpo d'occhio dove si lavora.</value>
   </data>
   <data name="TagPromptGuessed" xml:space="preserve">
     <value>Proposta in base al nome, all'indirizzo, al safe o alla cartella: verificatela.</value>
-  </data>
-  <data name="TagPromptAdd" xml:space="preserve">
-    <value>_Aggiungi a I miei server</value>
   </data>
   <data name="TagNone" xml:space="preserve">
     <value>_Nessuna etichetta</value>

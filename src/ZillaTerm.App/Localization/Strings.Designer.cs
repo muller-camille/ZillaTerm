@@ -5170,14 +5170,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to New folder….
-        /// </summary>
-        public static string NewFolderEntry {
-            get {
-                return ResourceManager.GetString("NewFolderEntry", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to New folder in {0}.
@@ -6557,14 +6549,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to (root).
-        /// </summary>
-        public static string RootFolder {
-            get {
-                return ResourceManager.GetString("RootFolder", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to Add a member to the safe {0}.
@@ -12806,6 +12790,33 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Add to My servers.
+        /// </summary>
+        public static string AddToMyServersTitle {
+            get {
+                return ResourceManager.GetString("AddToMyServersTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Where should {0} go in “My servers”?.
+        /// </summary>
+        public static string AddToMyServersQuestion {
+            get {
+                return ResourceManager.GetString("AddToMyServersQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Tag:.
+        /// </summary>
+        public static string ServerPromptTag {
+            get {
+                return ResourceManager.GetString("ServerPromptTag", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Enter the name of the server..
         /// </summary>
         public static string ServerPromptRequired {
@@ -15640,14 +15651,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Which environment is {0} in?.
-        /// </summary>
-        public static string TagPromptHeading {
-            get {
-                return ResourceManager.GetString("TagPromptHeading", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to Its color marks the tab and the outline of the session: you see at a glance where you work..
@@ -15667,14 +15670,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to _Add to My servers.
-        /// </summary>
-        public static string TagPromptAdd {
-            get {
-                return ResourceManager.GetString("TagPromptAdd", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to _No tag.

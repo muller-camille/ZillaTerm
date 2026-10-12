@@ -206,9 +206,9 @@ fenêtre à part.
   de session vers le domaine lui-même : le serveur est toujours demandé, « Options avancées… » compris. La fenêtre « Choisir le serveur » demande sur lequel ouvrir la session :
   la liste propose les serveurs déjà utilisés avec ce compte (sessions récentes, « Mes serveurs ») puis ses machines
   autorisées ; un compte limité à ses machines refuse les autres. « Garder ce serveur dans « Mes serveurs » », avec
-  le dossier voulu, l'y ajoute après une connexion réussie, nommé `compte@serveur` (choix mémorisé pour la fois
-  suivante ; la case disparaît si ce serveur y est déjà). « Options avancées… » ouvre la fenêtre complète avec ce
-  serveur.
+  le dossier et l'[étiquette](#étiquettes-prod-qa-dev) voulus (choisis dans la même fenêtre), l'y ajoute après une
+  connexion réussie, nommé `compte@serveur` (choix et dossier mémorisés pour la fois suivante ; la case disparaît si
+  ce serveur y est déjà). « Options avancées… » ouvre la fenêtre complète avec ce serveur.
 - **Motif et ticket** : si le PVWA refuse la demande (motif ou ticket exigé, composant non configuré…), la fenêtre
   dit quoi faire, suivi du message d'origine du PVWA, et vous pouvez corriger puis réessayer.
 - Le bouton « Options avancées… » de la barre d'outils (ou clic droit → « Options avancées… ») ouvre cette fenêtre,
@@ -569,16 +569,18 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
 
 ![« Mes serveurs » rangés en dossiers](captures/fr/my-servers.png)
 
-- **Ajouter** un compte : clic droit dans « Disponibles » → « Ajouter à Mes serveurs » puis le dossier voulu,
-  ou glissez le compte sur l'onglet « Mes serveurs », ou bouton « Ajouter » de la barre d'outils. Pour un compte de
-  domaine, le serveur est demandé (facultatif : sans serveur, il le sera à chaque connexion). Son
-  [étiquette](#étiquettes-prod-qa-dev) est ensuite demandée, avec une proposition d'après son nom.
+- **Ajouter** un compte : clic droit dans « Disponibles » → « Ajouter à Mes serveurs », ou bouton « Ajouter » de la
+  barre d'outils. Une fenêtre demande le dossier (le dernier choisi est proposé ; tapez un nom pour en créer un,
+  `Prod/Web` pour un sous-dossier) et l'[étiquette](#étiquettes-prod-qa-dev), proposée d'après son nom. Pour un
+  compte de domaine, la même fenêtre demande le serveur (facultatif : sans serveur, il le sera à chaque connexion).
+  Vous pouvez aussi glisser le compte sur un dossier de « Mes serveurs » : la fenêtre s'ouvre alors sur ce dossier
+  (pas du tout pour un compte de serveur s'il n'y a aucune étiquette).
 - **Ajouter une session ouverte** : clic droit sur l'onglet de la session (ou dans son terminal) → « Ajouter à Mes
-  serveurs » puis le dossier voulu. Le serveur garde le type de connexion et la machine cible ; l'entrée est grisée
-  s'il y est déjà.
+  serveurs » : même fenêtre (dossier et étiquette). Le serveur garde le type de connexion et la machine cible ;
+  l'entrée est grisée s'il y est déjà.
 - **Ajouter une session récente** : clic droit dans « Sessions récentes » sur l'accueil → « Ajouter à Mes
-  serveurs » puis le dossier voulu. Le serveur garde le type de connexion (PSM, SSH ou fichiers seuls), le composant
-  PSM et la machine cible utilisés.
+  serveurs » : même fenêtre (dossier et étiquette). Le serveur garde le type de connexion (PSM, SSH ou fichiers
+  seuls), le composant PSM et la machine cible utilisés.
 - **Dossiers** : clic droit → nouveau dossier ou sous-dossier, renommer, supprimer ; glissez serveurs et dossiers
   pour les déplacer. Supprimer un dossier compte et supprime tous ses serveurs de ce PVWA, même ceux que la recherche
   masque ; ceux d'un autre PVWA restent. Retirer un serveur ou supprimer un dossier demande confirmation (les
@@ -628,7 +630,9 @@ Une session ouverte depuis « Disponibles » ou les sessions récentes prend l'�
 qui a le même compte (et la même machine cible). L'étiquette s'applique à l'ouverture : changez-la, puis rouvrez la
 session pour voir la nouvelle couleur.
 
-- **À l'ajout** d'un serveur dans « Mes serveurs », l'étiquette est demandée. Une étiquette est proposée d'après le
+- **À l'ajout** d'un serveur dans « Mes serveurs », l'étiquette est demandée dans la même fenêtre que le dossier (et
+  que le serveur d'un compte de domaine) ; elle suit le dossier et le serveur saisis tant que vous n'en cochez pas une
+  vous-même. Une étiquette est proposée d'après le
   nom du serveur, son adresse, son safe puis ses dossiers (« prd », « prod », « production » → PROD ; « rec »,
   « recette », « qual », « uat », « preprod », « staging », « test » → QA ; « dev » → DEV ; une étiquette ajoutée dans
   les Paramètres se reconnaît à son nom). Rien n'est proposé quand le texte nomme deux environnements. Vérifiez-la :
