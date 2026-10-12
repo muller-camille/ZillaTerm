@@ -164,10 +164,11 @@ fenêtre à part.
   y sont placées comme sur un bureau ; aucune ne s'ouvre sur celui du poste.
 - **Taille** : la session prend la taille de l'onglet à la connexion et la garde. Si la fenêtre change de taille,
   l'image est mise à l'échelle : le PSM a ouvert sa connexion vers le serveur à cette taille. La session ne passe
-  jamais en plein écran, même si le fichier du PVWA le demande. Avec l'option expérimentale « Adapter la résolution du
-  bureau distant à la taille de l'onglet » (Paramètres, page CyberArk), la résolution de la session PSM suit l'onglet
-  à chaque redimensionnement, sans mise à l'échelle ; selon la configuration du PSM, la connexion vers le serveur cible
-  peut garder sa taille d'origine : désactivez alors l'option.
+  jamais en plein écran, même si le fichier du PVWA le demande. Avec l'option « Adapter la résolution du bureau distant
+  à la taille de l'onglet » (Paramètres, page CyberArk, activée par défaut), la résolution de la session PSM suit
+  l'onglet à chaque redimensionnement, sans mise à l'échelle ; selon la configuration du PSM, la connexion vers le
+  serveur cible peut garder sa taille d'origine : désactivez alors l'option, la session garde une taille fixe et son
+  image est mise à l'échelle de l'onglet.
 - **Clavier** : quand l'onglet a le clavier (clic dans la session), toutes les touches vont à la session, raccourcis
   de Windows compris (Alt+Tab, touche Windows). Cliquez ailleurs dans ZillaTerm pour les retrouver.
 - **Certificat du PSM** : lu par ZillaTerm pendant la barre de progression, avant tout envoi au PSM (ni jeton, ni
@@ -954,7 +955,7 @@ disent sous leur case (« ⚠ Effet : … »).
 | CyberArk | PSMP par domaine | Autres PSMP (adresse, port, domaine servi) ; chaque serveur passe par celui du domaine le plus proche du sien (voir [PSMP par domaine](#psmp-par-domaine)) ; « Quel PSMP pour le serveur » pour vérifier | aucun |
 | CyberArk | Composant des comptes Windows | Composant PSM des comptes Windows (domaine ou locaux) sans composant mémorisé pour leur plateforme, par exemple `WIN-PSM` | vide = `PSM-RDP` |
 | CyberArk | Sessions PSM Windows dans un onglet | Session PSM (bureau ou application distante) dans un onglet de ZillaTerm, avec le client FreeRDP embarqué, à la taille de l'onglet (voir [Ouvrir une session PSM](#3-ouvrir-une-session-psm-bureau-à-distance)) ; diffusé par le fichier d'environnement | non |
-| CyberArk | Adapter la résolution du bureau distant à la taille de l'onglet (expérimental) | Sessions PSM dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine. Pour les nouvelles sessions | non |
+| CyberArk | Adapter la résolution du bureau distant à la taille de l'onglet | Sessions PSM dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine. Pour les nouvelles sessions | oui |
 | CyberArk | Composant par plateforme | Tableau Plateforme (ID du PVWA, par exemple `WinDomain`) / Composant PSM : « Ajouter un composant », « Enlever la ligne », cellules modifiables ; prioritaire sur le composant des comptes Windows. « Mémoriser ce composant pour la plateforme » (fenêtre de connexion) y ajoute une ligne | vide |
 | Terminal | SSH dans ZillaTerm | Terminal et onglet Fichiers intégrés ; sinon Windows Terminal | oui |
 | Terminal | Couleurs du terminal, taille de police | Palette (Campbell, One Half, Solarized…) et taille de police des terminaux SSH | Campbell, 14 |
@@ -1221,10 +1222,10 @@ utilisateur, programme de démarrage (`alternate shell`) ou application distante
 arguments), sécurité, passerelle, répartition de charge, redirections (`drivestoredirect:s:*` seulement pour les
 disques), effets. Le mode d'affichage du fichier (`screen mode id`, taille, écrans) est ignoré. Une session PSM est
 imbriquée : dans sa propre session, le PSM ouvre la connexion vers le serveur cible à la même taille, et changer
-ensuite la résolution de la session PSM ne la change pas pour la cible (bureau tronqué, clics décalés). D'où la
-taille fixe et la mise à l'échelle de ces sessions par défaut (l'option expérimentale « Adapter la résolution du bureau
-distant à la taille de l'onglet » change la résolution de la session PSM, à essayer avec votre PSM) ; les connexions
-directes, elles, suivent la taille de l'onglet.
+ensuite la résolution de la session PSM ne la change pas pour la cible avec certaines configurations du PSM (bureau
+tronqué, clics décalés). L'option « Adapter la résolution du bureau distant à la taille de l'onglet », activée par
+défaut, change la résolution de la session PSM ; désactivée, ces sessions gardent une taille fixe, mise à l'échelle de
+l'onglet. Les connexions directes, elles, suivent la taille de l'onglet.
 
 **Client FreeRDP.** Les sessions PSM dans un onglet passent par le client Windows de FreeRDP (`wfreerdp`), compilé par
 le workflow de release du fork `muller-camille/FreeRDP` (branche `ci`) et publié dans ses releases ;

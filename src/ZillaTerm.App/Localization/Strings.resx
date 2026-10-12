@@ -5380,7 +5380,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection.</value>
   </data>
   <data name="PsmDynamicResolution" xml:space="preserve">
-    <value>Resize the remote desktop with the tab (_experimental)</value>
+    <value>Resize the _remote desktop with the tab</value>
   </data>
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Instead of a fixed resolution with the image scaled to the tab, ZillaTerm asks the PSM server to change the resolution of the session each time the tab is resized. The display is sharper, but depending on the PSM configuration, the connection from the PSM to the target server may keep its original size: turn the option off if the target screen does not follow. Applies to new sessions.</value>

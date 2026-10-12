@@ -5380,7 +5380,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>La sessione prende la dimensione della scheda e si apre con il client FreeRDP integrato in ZillaTerm, sia desktop sia applicazione remota (PSM-RDP, PSM-SSH, WinSCP…), senza una finestra separata. ZillaTerm verifica il certificato del PSM (attendibile per Windows, altrimenti impronta confermata una volta e poi ricordata), e i reindirizzamenti restano quelli richiesti dal PVWA, mai di più. Una connessione tramite un gateway Desktop remoto si apre sempre in Connessione Desktop remoto.</value>
   </data>
   <data name="PsmDynamicResolution" xml:space="preserve">
-    <value>Adatta la _risoluzione del desktop remoto alla dimensione della scheda (sperimentale)</value>
+    <value>Adatta la _risoluzione del desktop remoto alla dimensione della scheda</value>
   </data>
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Invece di una risoluzione fissa con l'immagine adattata alla scheda, ZillaTerm chiede al server PSM di cambiare la risoluzione della sessione a ogni ridimensionamento della scheda. La visualizzazione è più nitida, ma a seconda della configurazione del PSM la connessione dal PSM al server di destinazione può mantenere la dimensione originale: disattiva l'opzione se lo schermo della destinazione non si adegua. Si applica alle nuove sessioni.</value>

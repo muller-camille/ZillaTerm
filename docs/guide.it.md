@@ -165,10 +165,12 @@ nessuna finestra separata.
   vi sono collocate come su un desktop; nessuna si apre su quello del computer.
 - **Dimensione**: la sessione prende la dimensione della scheda alla connessione e la mantiene. Se la finestra cambia
   dimensione, l'immagine viene ridimensionata: il PSM ha aperto la sua connessione al server a quella dimensione. La
-  sessione non passa mai a schermo intero, anche se il file del PVWA lo chiede. Con l'opzione sperimentale «Adatta la
-  risoluzione del desktop remoto alla dimensione della scheda» (Impostazioni, pagina CyberArk), la risoluzione della
-  sessione PSM segue la scheda a ogni ridimensionamento, senza adattare l'immagine; a seconda della configurazione del
-  PSM, la connessione al server di destinazione può mantenere la dimensione originale: disattiva allora l'opzione.
+  sessione non passa mai a schermo intero, anche se il file del PVWA lo chiede. Con l'opzione «Adatta la risoluzione
+  del desktop remoto alla dimensione della scheda» (Impostazioni, pagina CyberArk, attiva per impostazione
+  predefinita), la risoluzione della sessione PSM segue la scheda a ogni ridimensionamento, senza adattare l'immagine;
+  a seconda della configurazione del PSM, la connessione al server di destinazione può mantenere la dimensione
+  originale: disattiva allora l'opzione, la sessione mantiene una dimensione fissa e la sua immagine viene adattata
+  alla scheda.
 - **Tastiera**: quando la scheda ha la tastiera (clic nella sessione), tutti i tasti vanno alla sessione, scorciatoie
   di Windows comprese (Alt+Tab, tasto Windows). Fai clic altrove in ZillaTerm per riaverle.
 - **Certificato del PSM**: letto da ZillaTerm durante la barra di avanzamento, prima di qualsiasi invio al PSM (né
@@ -958,7 +960,7 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | CyberArk | PSMP per dominio | Altri PSMP (indirizzo, porta, dominio servito); ogni server passa da quello del dominio più vicino al suo (vedi [PSMP per dominio](#psmp-per-dominio)); «Quale PSMP per il server» per verificare | nessuno |
 | CyberArk | Componente degli account Windows | Componente PSM degli account Windows (di dominio o locali) senza componente memorizzato per la loro piattaforma, ad esempio `WIN-PSM` | vuoto = `PSM-RDP` |
 | CyberArk | Sessioni PSM Windows in una scheda | Sessione PSM (desktop o applicazione remota) in una scheda di ZillaTerm, con il client FreeRDP integrato, alla dimensione della scheda (vedi [Aprire una sessione PSM](#3-aprire-una-sessione-psm-desktop-remoto)); diffusa dal file d'ambiente | no |
-| CyberArk | Adatta la risoluzione del desktop remoto alla dimensione della scheda (sperimentale) | Sessioni PSM in una scheda: la risoluzione segue la dimensione della scheda invece di un'immagine adattata; la connessione dal PSM alla destinazione può mantenere la dimensione originale. Per le nuove sessioni | no |
+| CyberArk | Adatta la risoluzione del desktop remoto alla dimensione della scheda | Sessioni PSM in una scheda: la risoluzione segue la dimensione della scheda invece di un'immagine adattata; la connessione dal PSM alla destinazione può mantenere la dimensione originale. Per le nuove sessioni | sì |
 | CyberArk | Componente per piattaforma | Tabella Piattaforma (ID del PVWA, ad esempio `WinDomain`) / Componente PSM: «Aggiungi un componente», «Rimuovi la riga», celle modificabili; ha la precedenza sul componente degli account Windows. «Memorizza questo componente per la piattaforma» (finestra di connessione) vi aggiunge una riga | vuoto |
 | Terminale | SSH in ZillaTerm | Terminale e scheda File integrati; altrimenti Windows Terminal | sì |
 | Terminale | Colori del terminale, dimensione carattere | Tavolozza (Campbell, One Half, Solarized…) e dimensione del carattere dei terminali SSH | Campbell, 14 |
@@ -1227,10 +1229,10 @@ utente, programma di avvio (`alternate shell`) o applicazione remota (`remoteapp
 sicurezza, gateway, bilanciamento del carico, reindirizzamenti (`drivestoredirect:s:*` solo per le unità), effetti.
 La modalità di visualizzazione del file (`screen mode id`, dimensione, schermi) viene ignorata. Una sessione PSM è
 annidata: nella propria sessione, il PSM apre la connessione al server di destinazione alla stessa dimensione, e
-cambiare poi la risoluzione della sessione PSM non la cambia per la destinazione (desktop tagliato, clic spostati).
-Da qui la dimensione fissa e il ridimensionamento dell'immagine di queste sessioni per impostazione predefinita
-(l'opzione sperimentale «Adatta la risoluzione del desktop remoto alla dimensione della scheda» cambia la risoluzione
-della sessione PSM, da provare con il proprio PSM); le connessioni dirette seguono la dimensione della scheda.
+cambiare poi la risoluzione della sessione PSM non la cambia per la destinazione con alcune configurazioni del PSM
+(desktop tagliato, clic spostati). L'opzione «Adatta la risoluzione del desktop remoto alla dimensione della scheda»,
+attiva per impostazione predefinita, cambia la risoluzione della sessione PSM; disattivata, queste sessioni mantengono
+una dimensione fissa, adattata alla scheda. Le connessioni dirette seguono la dimensione della scheda.
 
 **Client FreeRDP.** Le sessioni PSM in una scheda passano dal client Windows di FreeRDP (`wfreerdp`), compilato dal
 workflow di release del fork `muller-camille/FreeRDP` (ramo `ci`) e pubblicato nelle sue release;

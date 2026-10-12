@@ -16050,7 +16050,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Resize the remote desktop with the tab (_experimental).
+        ///   Looks up a localized string similar to Resize the _remote desktop with the tab.
         /// </summary>
         public static string PsmDynamicResolution {
             get {

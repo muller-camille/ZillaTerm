@@ -79,6 +79,22 @@ public sealed class AppSettingsTests : IDisposable
         Assert.False(File.Exists(path));
     }
 
+    /// <summary>
+    /// Sessions PSM dans l'onglet : la résolution suit l'onglet par défaut, aussi avec un fichier de réglages qui ne
+    /// mentionne pas l'option ; l'option désactivée le reste.
+    /// </summary>
+    [Fact]
+    public void PsmDynamicResolutionIsOnByDefaultAndKept()
+    {
+        Assert.True(new AppSettings().PsmDynamicResolution);
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "dynamic.json");
+        File.WriteAllText(path, "{}");
+        Assert.True(AppSettings.Load(path).PsmDynamicResolution);
+        new AppSettings { PsmDynamicResolution = false }.Save(path);
+        Assert.False(AppSettings.Load(path).PsmDynamicResolution);
+    }
+
     /// <summary>Thème de l'interface : celui de Windows par défaut, le choix gardé, une valeur inconnue ramenée au défaut.</summary>
     [Fact]
     public void ThemeDefaultsToWindowsAndIsKept()
