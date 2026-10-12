@@ -27,6 +27,8 @@ public partial class FileBrowserPanel : UserControl
     private FileNameFilter? _filter;
     private string? _shownDirectory;
     private bool _resettingFilter;
+    // Lettres tapées dans la liste (sélection par le début du nom).
+    private readonly TypeAhead _typeAhead = new();
 
     /// <summary>
     /// Opérations en cours (renommage, suppression, droits, glisser vers l'Explorateur), par connexion : elles ne bloquent
@@ -727,12 +729,18 @@ public partial class FileBrowserPanel : UserControl
         else if (e.Key is Key.Enter or Key.Down && FileList.Items.Count > 0)
         {
             var first = FileList.Items.OfType<RemoteEntry>().FirstOrDefault(i => !i.IsParentLink) ?? FileList.Items[0];
-            FileList.SelectedItem = first;
-            FileList.ScrollIntoView(first);
-            FileList.UpdateLayout();
-            (FileList.ItemContainerGenerator.ContainerFromItem(first) as ListViewItem)?.Focus();
+            SelectAndFocus(first);
             e.Handled = true;
         }
+    }
+
+    /// <summary>Sélectionne seulement <paramref name="item"/>, l'amène à l'écran et lui donne le clavier.</summary>
+    private void SelectAndFocus(object item)
+    {
+        FileList.SelectedItem = item;
+        FileList.ScrollIntoView(item);
+        FileList.UpdateLayout();
+        (FileList.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem)?.Focus();
     }
 
     /// <summary>Ctrl+F dans l'onglet Fichiers : curseur dans le filtre du dossier ; faux sans dossier affiché.</summary>
@@ -856,6 +864,32 @@ public partial class FileBrowserPanel : UserControl
                 e.Handled = true;
                 break;
         }
+    }
+
+    /// <summary>
+    /// Lettres tapées dans la liste : sélection de l'élément dont le nom commence ainsi, comme dans l'Explorateur (la même
+    /// lettre de nouveau passe au suivant).
+    /// </summary>
+    private void OnListTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (e.Text.Length == 0 || e.Text.Any(char.IsControl))
+        {
+            return;
+        }
+
+        var items = FileList.Items.OfType<RemoteEntry>().ToList();
+        // Point de départ : l'élément qui a le clavier (sélection multiple), sinon la sélection.
+        var focused = Keyboard.FocusedElement is ListViewItem container
+            ? FileList.ItemContainerGenerator.ItemFromContainer(container)
+            : FileList.SelectedItem;
+        int current = items.FindIndex(i => ReferenceEquals(i, focused));
+        int index = _typeAhead.Find(items.ConvertAll(i => i.DisplayName), current, e.Text, DateTime.UtcNow);
+        if (index >= 0)
+        {
+            SelectAndFocus(items[index]);
+        }
+
+        e.Handled = true;
     }
 
     private void OnMenuOpened(object sender, RoutedEventArgs e)

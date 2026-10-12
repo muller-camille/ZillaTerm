@@ -567,6 +567,9 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
   `*.log;*.gz`), senza distinguere maiuscole e minuscole. `..` resta per risalire; la barra di stato dice quanti
   elementi sono visualizzati. Si svuota quando cambi cartella; `Ctrl+F` nella scheda File, `Esc` o ✕ lo svuota,
   `Invio` o `↓` passa al primo elemento.
+- **Andare a un file con la tastiera**: nell'elenco, digita l'inizio del suo nome, come in Esplora file: `p` seleziona
+  l'elemento successivo il cui nome inizia con «p», `p` di nuovo quello dopo; digitate di seguito, le lettere formano l'inizio
+  del nome (`pro` → `profile`). Dopo una pausa di un secondo, una lettera avvia una nuova ricerca.
 - Inoltre: nuova cartella, download, copia del percorso, visualizzazione dei file nascosti.
 - **Segui la cartella del terminale**: se la casella è selezionata, ogni `cd` nel terminale sposta il browser nella
   stessa cartella (vedi [Funzionamento tecnico](#funzionamento-tecnico)). Dopo `sudo -i` o `su`, riseleziona la
@@ -920,6 +923,7 @@ caratteri per intervento (gli altri eventi continuano a essere conservati oltre)
 | Desktop remoto | Schermo intero / ritorno | `Ctrl+Alt+Pausa` |
 | File | Aprire la cartella o modificare il file / modificare / rinominare / cartella superiore / eliminare / aggiornare | Doppio clic o `Invio` / `F4` / `F2` / `Backspace` / `Canc` / `F5` |
 | File | Ordinare per una colonna, poi invertire | Clic sulla sua intestazione |
+| File | Andare all'elemento il cui nome inizia con queste lettere (la stessa lettera di nuovo: il successivo) | Digitare l'inizio del nome |
 | Database KeePass | Connettere / modificare / eliminare una voce | Doppio clic o `Invio` / `F2` / `Canc` |
 
 In un terminale, `Ctrl+K`, `Ctrl+B` e `F6` vengono inviati al server (`F6` alle applicazioni come mc); `Ctrl+Tab`,

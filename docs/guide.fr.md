@@ -563,6 +563,9 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   compte des majuscules. `..` reste pour remonter ; la barre d'état dit combien d'éléments sont affichés. Il est vidé
   quand vous changez de dossier ; `Ctrl+F` dans l'onglet Fichiers, `Échap` ou ✕ le vide, `Entrée` ou `↓` passe au
   premier élément.
+- **Aller à un fichier au clavier** : dans la liste, tapez le début de son nom, comme dans l'Explorateur : `p`
+  sélectionne l'élément suivant dont le nom commence par « p », `p` de nouveau celui d'après ; tapées à la suite, les lettres
+  forment le début du nom (`pro` → `profile`). Après une seconde de pause, une lettre commence une nouvelle recherche.
 - Aussi : nouveau dossier, téléchargement, copie du chemin, affichage des fichiers cachés.
 - **Suivre le dossier du terminal** : quand la case est cochée, chaque `cd` dans le terminal déplace le navigateur
   dans le même dossier (voir [Fonctionnement technique](#fonctionnement-technique)). Après un `sudo -i` ou un `su`,
@@ -916,6 +919,7 @@ caractères par intervention (les autres événements continuent d'être gardés
 | Bureau à distance | Plein écran / retour | `Ctrl+Alt+Pause` |
 | Fichiers | Ouvrir le dossier ou modifier le fichier / modifier / renommer / dossier parent / supprimer / actualiser | Double-clic ou `Entrée` / `F4` / `F2` / `Retour arrière` / `Suppr` / `F5` |
 | Fichiers | Trier par une colonne, puis inverser | Clic sur son en-tête |
+| Fichiers | Aller à l'élément dont le nom commence par ces lettres (la même lettre de nouveau : le suivant) | Taper le début du nom |
 | Base KeePass | Se connecter / modifier / supprimer une entrée | Double-clic ou `Entrée` / `F2` / `Suppr` |
 
 Dans un terminal, `Ctrl+K`, `Ctrl+B` et `F6` sont envoyés au serveur (`F6` aux applications comme mc) ; `Ctrl+Tab`,

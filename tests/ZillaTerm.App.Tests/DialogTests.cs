@@ -619,6 +619,45 @@ public sealed class DialogTests
         });
     }
 
+    /// <summary>Onglet Fichiers : une lettre tapée dans la liste sélectionne l'élément qui commence par elle, la même lettre le suivant.</summary>
+    [Fact]
+    public void TypingInTheFileListSelectsByName()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var panel = new FileBrowserPanel();
+            panel.Initialize(new AppSettings(), () => { }, new TransferHistory());
+            var window = new Window { Content = panel, Width = 600, Height = 400 };
+            window.Show();
+            RemoteEntry E(string name) => new(name, "/etc/" + name, false, false, 10, new DateTime(2026, 10, 1), "-rw-r--r--");
+            panel.FileList.ItemsSource = new List<RemoteEntry> { RemoteEntry.ParentLink("/etc"), E("hosts"), E("passwd"), E("profile"), E("shadow") };
+            panel.FileList.SelectedItems.Add(panel.FileList.Items[1]);
+            panel.FileList.SelectedItems.Add(panel.FileList.Items[4]);
+
+            string Type(string text)
+            {
+                var input = System.Windows.Input.InputManager.Current;
+                panel.FileList.RaiseEvent(new System.Windows.Input.TextCompositionEventArgs(System.Windows.Input.Keyboard.PrimaryDevice,
+                    new System.Windows.Input.TextComposition(input, panel.FileList, text))
+                {
+                    RoutedEvent = System.Windows.Input.TextCompositionManager.TextInputEvent,
+                });
+                return string.Join(",", panel.FileList.SelectedItems.Cast<RemoteEntry>().Select(e => e.Name));
+            }
+
+            Assert.Equal("passwd", Type("p"));
+            Assert.Equal("profile", Type("p"));
+            Assert.Equal("passwd", Type("P"));
+            Assert.Equal("passwd", Type("x"));
+            window.Close();
+        });
+    }
+
     /// <summary>
     /// Panneau à sa largeur par défaut : les colonnes sans la place sont masquées et « +n » le signale (noms dans
     /// l'infobulle) ; le menu de l'en-tête choisit les colonnes (gardé dans les réglages) et propose d'élargir le panneau.
