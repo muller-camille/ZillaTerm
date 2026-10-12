@@ -110,7 +110,7 @@ public sealed class SshSession : RemoteSession
 
             _client = client;
             DebugLog.Write("ssh", $"{Label} : connecté ({client.ConnectionInfo.ServerVersion}, {client.ConnectionInfo.CurrentServerEncryption}, bannière {!string.IsNullOrWhiteSpace(connector.Banner)})");
-            client.KeepAliveInterval = TimeSpan.FromSeconds(30);
+            SshConnector.KeepAlive(client);
             if (connection > 1 && Emulator.CursorColumn > 0)
             {
                 // Reconnexion : la nouvelle session commence sur une nouvelle ligne, après l'invite de la précédente.

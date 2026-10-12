@@ -12,6 +12,22 @@ public class SshSupportTests
     [InlineData("/", "..", "/")]
     public void CombinesRemotePaths(string dir, string name, string expected) => Assert.Equal(expected, RemotePath.Combine(dir, name));
 
+    /// <summary>
+    /// Maintien des connexions SSH : des demandes auxquelles le serveur doit répondre (keepalive@openssh.com), et la
+    /// connexion tenue pour perdue après quatre intervalles de 15 s sans rien recevoir du serveur.
+    /// </summary>
+    [Fact]
+    public void KeepAliveNeedsAnswersAndGivesUpAfterAMinute()
+    {
+        using var client = new Renci.SshNet.SshClient("srv01.corp.local", "jdoe", "x");
+
+        SshConnector.KeepAlive(client);
+
+        Assert.Equal(4, client.KeepAliveCountMax);
+        Assert.Equal(TimeSpan.FromSeconds(15), client.KeepAliveInterval);
+        Assert.Equal(TimeSpan.FromMinutes(1), client.KeepAliveInterval * client.KeepAliveCountMax);
+    }
+
     [Fact]
     public void ParentAndName()
     {

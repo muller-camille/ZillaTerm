@@ -26,8 +26,9 @@
 
   <ItemGroup>
     <!-- SSH, SFTP et SCP vers le PSM for SSH (licence MIT). -->
-    <!-- SSH.NET 2026.0.0 patché (noms du propriétaire et du groupe en SFTP) : tools/sshnet-patched.sh, nuget.config. -->
-    <PackageReference Include="SSH.NET" Version="2026.0.1-zillaterm.2.gc3245ef61d" />
+    <!-- SSH.NET 2026.0.0 patché (noms en SFTP, X11, fin de connexion signalée, maintien avec réponse) :
+         tools/sshnet-patched.sh, nuget.config. -->
+    <PackageReference Include="SSH.NET" Version="2026.0.1-zillaterm.4.ge29f02320b" />
     <!-- Argon2d / Argon2id, dérivation de clé des coffres KeePass (KDBX 4) (licence MIT). -->
     <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="1.3.1" />
     <!-- FTP et FTPS (TLS explicite et implicite) des entrées KeePass, onglet Fichiers (licence MIT). -->
