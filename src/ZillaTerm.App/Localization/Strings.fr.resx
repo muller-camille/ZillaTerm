@@ -368,6 +368,9 @@
   <data name="SessionClosedByServer" xml:space="preserve">
     <value>Session fermée par le serveur.</value>
   </data>
+  <data name="SshNotResponding" xml:space="preserve">
+    <value>Le serveur ne répond pas depuis {0} s : la connexion est peut-être perdue. ZillaTerm continue de vérifier et le dira si elle l'est.</value>
+  </data>
   <data name="ConnectionCancelled" xml:space="preserve">
     <value>Connexion annulée.</value>
   </data>
@@ -2000,6 +2003,18 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour réessay
   </data>
   <data name="RdpNotResponding" xml:space="preserve">
     <value>{0} : le Bureau à distance ne répond pas. Le reste de ZillaTerm reste utilisable ; vous pouvez fermer cet onglet.</value>
+  </data>
+  <data name="RdpReconnecting" xml:space="preserve">
+    <value>Connexion perdue : reconnexion en cours…</value>
+  </data>
+  <data name="RdpReconnectingStatus" xml:space="preserve">
+    <value>{0} : connexion perdue, reconnexion en cours…</value>
+  </data>
+  <data name="RdpReconnectAttempt" xml:space="preserve">
+    <value>Tentative {0} sur {1} : la session reprend d'elle-même dès que le réseau revient.</value>
+  </data>
+  <data name="RdpReconnectWaiting" xml:space="preserve">
+    <value>La session reprend d'elle-même dès que le réseau revient.</value>
   </data>
   <data name="RdpDisconnectCodes" xml:space="preserve">
     <value>code {0}, code étendu {1}</value>
@@ -3944,6 +3959,9 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="TabStateFailed" xml:space="preserve">
     <value>Échec de la connexion</value>
+  </data>
+  <data name="TabStateInterrupted" xml:space="preserve">
+    <value>Connexion interrompue</value>
   </data>
   <data name="TabModePsmp" xml:space="preserve">
     <value>Via le PSMP {0} : session gérée par CyberArk</value>

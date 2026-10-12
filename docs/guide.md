@@ -1184,8 +1184,9 @@ all. Questions come before the client is launched, never during the connection; 
 starts with a new token requested from the PVWA (the PSM token only works once and expires quickly). If the client
 still refuses the server (another server behind the same address), ZillaTerm reads its identity again and asks about
 it if it is new (twice at most per connection). After a network cut, FreeRDP tries to resume the session (one attempt
-every 15 seconds, 20 at most); meanwhile the session area is gray, its clicks and keys are ignored and ZillaTerm stays
-usable (the attempts run beside the session window). If another
+every 15 seconds, 20 at most); ZillaTerm stays usable (the attempts run beside the session window). Meanwhile the tab
+shows "Connection lost: reconnecting…" with the current attempt, the session being hidden; it shows again as soon as
+it is resumed. If another
 server answers at the same address, the attempt is refused (identity not checked) and stops at once: the session is
 lost, and ZillaTerm makes a new request to the PVWA (new token), then checks the server that answers before connecting
 to it (question if it is unknown; twice at most before the next session opening).
@@ -1302,6 +1303,7 @@ sh or fish, following is not set up and nothing stays on screen.
 | PSM session: "Check the key of this PSM" | The PSM only accepts the legacy "RDP security", without TLS: only the fingerprint of its key identifies it. Accept it on first use (it is remembered) and ask the CyberArk administrator to enable TLS on the PSM. |
 | PSM session: "New key for this PSM" | The PSM address probably groups several servers (load balancing), each with its own key: trust it if the CyberArk administrator confirms. The keys already accepted stay accepted. |
 | SSH or PSMP session: "The connection was cut by the server or the network" or "Session closed by the server" after sleep, a lock or a break | The connection is lost: the computer went to sleep, the network or VPN changed, a firewall forgot it, or the PSMP closed the session (inactivity). ZillaTerm detects it within a minute (keep-alive request every 15 s, which the server must answer): "Reconnect" opens a new session; the Files tab offers to reopen its own. |
+| SSH or PSMP session: "The server has not answered for N s", terminal grayed out | What you typed got no answer, nor did the request ZillaTerm then sends to the server (after 2 s). Everything comes back as soon as the server answers; otherwise the connection is declared lost after about a minute. "Reconnect" opens a new session right away. |
 | PSM session: "This server no longer offers TLS" | The connection may be intercepted: only continue with the CyberArk administrator's agreement (see the message). |
 | PSM session: "The Remote Desktop server uses no encryption…" | The PSM (or a device in between) offers the old RDP security without encryption: nothing would protect the token. Alert the CyberArk administrator. |
 | A direct remote desktop tab (KeePass) shows "Remote Desktop control error" | Report the code shown (if the Remote Desktop control is missing from the computer, the connection goes through `mstsc`). |

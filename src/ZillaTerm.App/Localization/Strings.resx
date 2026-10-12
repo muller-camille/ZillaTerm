@@ -368,6 +368,9 @@
   <data name="SessionClosedByServer" xml:space="preserve">
     <value>Session closed by the server.</value>
   </data>
+  <data name="SshNotResponding" xml:space="preserve">
+    <value>The server has not answered for {0} s: the connection may be lost. ZillaTerm keeps checking and says so if it is.</value>
+  </data>
   <data name="ConnectionCancelled" xml:space="preserve">
     <value>Connection cancelled.</value>
   </data>
@@ -2000,6 +2003,18 @@ Your changes stay in the editor: save again to retry.</value>
   </data>
   <data name="RdpNotResponding" xml:space="preserve">
     <value>{0}: Remote Desktop is not responding. The rest of ZillaTerm stays usable; you can close this tab.</value>
+  </data>
+  <data name="RdpReconnecting" xml:space="preserve">
+    <value>Connection lost: reconnecting…</value>
+  </data>
+  <data name="RdpReconnectingStatus" xml:space="preserve">
+    <value>{0}: connection lost, reconnecting…</value>
+  </data>
+  <data name="RdpReconnectAttempt" xml:space="preserve">
+    <value>Attempt {0} of {1}: the session resumes by itself once the network is back.</value>
+  </data>
+  <data name="RdpReconnectWaiting" xml:space="preserve">
+    <value>The session resumes by itself once the network is back.</value>
   </data>
   <data name="RdpDisconnectCodes" xml:space="preserve">
     <value>code {0}, extended code {1}</value>
@@ -3944,6 +3959,9 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="TabStateFailed" xml:space="preserve">
     <value>Connection failed</value>
+  </data>
+  <data name="TabStateInterrupted" xml:space="preserve">
+    <value>Connection interrupted</value>
   </data>
   <data name="TabModePsmp" xml:space="preserve">
     <value>Through the PSMP {0}: session managed by CyberArk</value>

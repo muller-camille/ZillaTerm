@@ -135,9 +135,21 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
         DataReceivedEventHandler log = (_, e) =>
         {
-            if (e.Data is { } line && DebugLog.Enabled)
+            if (e.Data is not { } line)
+            {
+                return;
+            }
+
+            if (DebugLog.Enabled)
             {
                 DebugLog.Write("freerdp", DebugLog.Redact(line));
+            }
+
+            // Connexion perdue et reconnexion automatique : l'onglet le dit (voir RdpSession.IsReconnecting).
+            var (step, attempt, max) = FreeRdpReconnection.Read(line);
+            if (step != FreeRdpReconnectionStep.None)
+            {
+                _ui.BeginInvoke(() => _session.OnReconnection(this, step, attempt, max));
             }
         };
         process.OutputDataReceived += log;

@@ -154,17 +154,25 @@ public partial class MainWindow
         switch (tab.Tag)
         {
             case RemoteSession session:
-                session.StateChanged += () => header.SetState(session.State switch
+                void Follow() => header.SetState(session.State switch
                 {
+                    RemoteSessionState.Connected when session is SshSession { IsNotResponding: true } => SessionTabState.Interrupted,
                     RemoteSessionState.Connected => SessionTabState.Connected,
                     RemoteSessionState.Closed => SessionTabState.Ended,
                     RemoteSessionState.Failed => SessionTabState.Failed,
                     _ => SessionTabState.Connecting,
                 });
+                session.StateChanged += Follow;
+                if (session is SshSession ssh)
+                {
+                    ssh.ResponseChanged += Follow;
+                }
+
                 break;
             case RdpSession rdp:
                 rdp.StateChanged += () => header.SetState(rdp.State switch
                 {
+                    RdpSessionState.Connected when rdp.IsReconnecting => SessionTabState.Interrupted,
                     RdpSessionState.Connected => SessionTabState.Connected,
                     RdpSessionState.Ended => SessionTabState.Ended,
                     RdpSessionState.Failed => SessionTabState.Failed,

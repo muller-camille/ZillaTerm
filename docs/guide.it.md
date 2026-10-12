@@ -1269,8 +1269,9 @@ vengono poste prima dell'avvio del client, mai durante la connessione; una volta
 parte con un nuovo token richiesto al PVWA (il token PSM vale una sola volta e scade presto). Se il client rifiuta
 comunque il server (altro server dietro lo stesso indirizzo), ZillaTerm ne rilegge l'identità e la sottopone se è
 nuova (al massimo due volte per connessione). Dopo un'interruzione di rete, FreeRDP tenta di riprendere la sessione
-(un tentativo ogni 15 secondi, al massimo 20); nel frattempo l'area della sessione è grigia, i suoi clic e tasti vengono
-ignorati e ZillaTerm resta utilizzabile (i tentativi avvengono accanto alla finestra della sessione). Se
+(un tentativo ogni 15 secondi, al massimo 20); nel frattempo la scheda mostra «Connessione persa: riconnessione in
+corso…» con il tentativo in corso, la sessione è nascosta e ZillaTerm resta utilizzabile (i tentativi avvengono accanto
+alla finestra della sessione); la sessione riappare appena viene ripresa. Se
 risponde un altro server allo stesso indirizzo, il tentativo viene rifiutato (identità non verificata) e si ferma
 subito: la sessione è persa, e ZillaTerm fa una nuova richiesta al PVWA (nuovo token), poi verifica il server che
 risponde prima di connettersi (domanda se è sconosciuto; al massimo due volte prima di una nuova apertura di sessione).
@@ -1390,6 +1391,7 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 | Sessione PSM: «Verifica la chiave di questo PSM» | Il PSM accetta solo la vecchia «sicurezza RDP», senza TLS: solo l'impronta della sua chiave lo identifica. Accettala al primo utilizzo (viene memorizzata) e chiedi all'amministratore CyberArk di attivare TLS sul PSM. |
 | Sessione PSM: «Nuova chiave per questo PSM» | L'indirizzo del PSM raggruppa probabilmente più server (bilanciamento del carico), ciascuno con la propria chiave: fidati se l'amministratore CyberArk lo conferma. Le chiavi già accettate restano tali. |
 | Sessione SSH o PSMP: «La connessione è stata interrotta dal server o dalla rete» o «Sessione chiusa dal server» dopo una sospensione, un blocco o una pausa | La connessione è persa: il computer è andato in sospensione, la rete o la VPN sono cambiate, un firewall l'ha dimenticata, oppure il PSMP ha chiuso la sessione (inattività). ZillaTerm lo rileva entro un minuto (richiesta di mantenimento ogni 15 s, a cui il server deve rispondere): «Riconnetti» apre una nuova sessione; la scheda File propone di riaprire la propria. |
+| Sessione SSH o PSMP: «Il server non risponde da N s», terminale in grigio | Ciò che hai digitato non ha ricevuto risposta, come la richiesta che ZillaTerm invia allora al server (dopo 2 s). Tutto torna appena il server risponde; altrimenti la connessione viene dichiarata persa dopo circa un minuto. «Riconnetti» apre subito una nuova sessione. |
 | Sessione PSM: «Questo server non offre più TLS» | La connessione potrebbe essere intercettata: continua solo con l'accordo dell'amministratore CyberArk (vedi il messaggio). |
 | Sessione PSM: «Il server Desktop remoto non usa alcuna cifratura…» | Il PSM (o un apparato intermedio) propone la vecchia sicurezza RDP senza cifratura: nulla proteggerebbe il token. Avvisa l'amministratore CyberArk. |
 | Una scheda di desktop remoto diretto (KeePass) mostra «Errore del controllo Desktop remoto» | Segnala il codice mostrato (se il controllo Desktop remoto manca dal computer, la connessione passa da `mstsc`). |

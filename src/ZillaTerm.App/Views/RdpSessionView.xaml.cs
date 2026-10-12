@@ -68,6 +68,16 @@ public partial class RdpSessionView : UserControl
                 OverlayProgress.Visibility = Visibility.Visible;
                 ReconnectButton.Visibility = Visibility.Collapsed;
                 break;
+            case RdpSessionState.Connected when session.IsReconnecting:
+                // Connexion perdue : FreeRDP se reconnecte de lui-même ; la session, masquée, reprend avec le réseau.
+                StatusLine.Text = Text.Format(Strings.RdpReconnectingStatus, session.Label);
+                OverlayText.Text = Strings.RdpReconnecting;
+                OverlayDetail.Text = session.ReconnectAttempt > 0
+                    ? Text.Format(Strings.RdpReconnectAttempt, session.ReconnectAttempt, session.ReconnectAttempts)
+                    : Strings.RdpReconnectWaiting;
+                OverlayProgress.Visibility = Visibility.Visible;
+                ReconnectButton.Visibility = Visibility.Collapsed;
+                break;
             case RdpSessionState.Connected:
                 StatusLine.Text = Text.Format(Strings.RdpConnected, session.Label, server);
                 OverlayProgress.Visibility = Visibility.Collapsed;
@@ -93,9 +103,9 @@ public partial class RdpSessionView : UserControl
             StatusLine.Text = Text.Format(Strings.RdpNotResponding, session.Label);
         }
 
-        if (session.IsNotResponding || session.IsAuthenticationWarningOpen)
+        if (session.IsNotResponding || session.IsAuthenticationWarningOpen || session.IsReconnecting)
         {
-            StatusLine.SetResourceReference(TextBlock.ForegroundProperty, "ErrorBrush");
+            StatusLine.SetResourceReference(TextBlock.ForegroundProperty, session.IsReconnecting ? "WarningBrush" : "ErrorBrush");
             StatusLine.FontWeight = FontWeights.SemiBold;
         }
         else

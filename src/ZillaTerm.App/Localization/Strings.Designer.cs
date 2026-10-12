@@ -6315,6 +6315,42 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Connection lost: reconnecting….
+        /// </summary>
+        public static string RdpReconnecting {
+            get {
+                return ResourceManager.GetString("RdpReconnecting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: connection lost, reconnecting….
+        /// </summary>
+        public static string RdpReconnectingStatus {
+            get {
+                return ResourceManager.GetString("RdpReconnectingStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Attempt {0} of {1}: the session resumes by itself once the network is back..
+        /// </summary>
+        public static string RdpReconnectAttempt {
+            get {
+                return ResourceManager.GetString("RdpReconnectAttempt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The session resumes by itself once the network is back..
+        /// </summary>
+        public static string RdpReconnectWaiting {
+            get {
+                return ResourceManager.GetString("RdpReconnectWaiting", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Remote desktop session opened: {0}.
         /// </summary>
         public static string RdpOpened {
@@ -7285,6 +7321,15 @@ namespace ZillaTerm.App.Localization {
         public static string SessionClosedByServer {
             get {
                 return ResourceManager.GetString("SessionClosedByServer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server has not answered for {0} s: the connection may be lost. ZillaTerm keeps checking and says so if it is..
+        /// </summary>
+        public static string SshNotResponding {
+            get {
+                return ResourceManager.GetString("SshNotResponding", resourceCulture);
             }
         }
 
@@ -11742,6 +11787,15 @@ namespace ZillaTerm.App.Localization {
         public static string TabStateFailed {
             get {
                 return ResourceManager.GetString("TabStateFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connection interrupted.
+        /// </summary>
+        public static string TabStateInterrupted {
+            get {
+                return ResourceManager.GetString("TabStateInterrupted", resourceCulture);
             }
         }
 

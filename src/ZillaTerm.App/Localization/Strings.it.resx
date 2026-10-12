@@ -368,6 +368,9 @@
   <data name="SessionClosedByServer" xml:space="preserve">
     <value>Sessione chiusa dal server.</value>
   </data>
+  <data name="SshNotResponding" xml:space="preserve">
+    <value>Il server non risponde da {0} s: la connessione potrebbe essere persa. ZillaTerm continua a verificare e lo dirà se lo è.</value>
+  </data>
   <data name="ConnectionCancelled" xml:space="preserve">
     <value>Connessione annullata.</value>
   </data>
@@ -2000,6 +2003,18 @@ Le modifiche restano nell'editor: salva di nuovo per riprovare.</value>
   </data>
   <data name="RdpNotResponding" xml:space="preserve">
     <value>{0}: Desktop remoto non risponde. Il resto di ZillaTerm resta utilizzabile; puoi chiudere questa scheda.</value>
+  </data>
+  <data name="RdpReconnecting" xml:space="preserve">
+    <value>Connessione persa: riconnessione in corso…</value>
+  </data>
+  <data name="RdpReconnectingStatus" xml:space="preserve">
+    <value>{0}: connessione persa, riconnessione in corso…</value>
+  </data>
+  <data name="RdpReconnectAttempt" xml:space="preserve">
+    <value>Tentativo {0} di {1}: la sessione riprende da sola appena la rete torna disponibile.</value>
+  </data>
+  <data name="RdpReconnectWaiting" xml:space="preserve">
+    <value>La sessione riprende da sola appena la rete torna disponibile.</value>
   </data>
   <data name="RdpDisconnectCodes" xml:space="preserve">
     <value>codice {0}, codice esteso {1}</value>
@@ -3944,6 +3959,9 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="TabStateFailed" xml:space="preserve">
     <value>Connessione non riuscita</value>
+  </data>
+  <data name="TabStateInterrupted" xml:space="preserve">
+    <value>Connessione interrotta</value>
   </data>
   <data name="TabModePsmp" xml:space="preserve">
     <value>Tramite il PSMP {0}: sessione gestita da CyberArk</value>

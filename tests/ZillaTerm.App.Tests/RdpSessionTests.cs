@@ -472,9 +472,10 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>
-    /// Réseau perdu pendant une session FreeRDP (relais TCP coupé) : pendant la reconnexion automatique, l'application
-    /// reste utilisable ; un clic sur un bouton est traité tout de suite, même après un clic sur la session, dont la
-    /// fenêtre partage la file d'entrée de l'application. Le réseau revenu, la session reprend et reçoit les clics.
+    /// Réseau perdu pendant une session FreeRDP (relais TCP coupé) : pendant la reconnexion automatique, l'onglet le dit
+    /// (session masquée, tentative en cours) et l'application reste utilisable ; un clic sur un bouton est traité tout de
+    /// suite, même après un clic sur la zone de la session. Le réseau revenu, la session reprend, s'affiche de nouveau et
+    /// reçoit les clics.
     /// </summary>
     [Fact]
     [Trait("Category", "RdpIntegration")]
@@ -529,6 +530,11 @@ public class RdpSessionTests(ITestOutputHelper output)
             relay.Cut();
             output.WriteLine(await WaitForLineAsync(debugLog, logged, l => l.Contains("retry 2/", StringComparison.Ordinal),
                 TimeSpan.FromSeconds(60)));
+            Assert.True(await WaitUntilAsync(() => session.IsReconnecting && session.ReconnectAttempt >= 2, TimeSpan.FromSeconds(5)),
+                $"Reconnexion non signalée (tentative {session.ReconnectAttempt} sur {session.ReconnectAttempts})");
+            Assert.False(session.ShowsDesktop);
+            Assert.NotEqual(Visibility.Visible, session.Host.Visibility);
+            Assert.Equal(20, session.ReconnectAttempts);
 
             Assert.NotNull(probe);
             var center = probe.PointToScreen(new Point(probe.ActualWidth / 2, probe.ActualHeight / 2));
@@ -547,8 +553,11 @@ public class RdpSessionTests(ITestOutputHelper output)
             Assert.True(Volatile.Read(ref probed) > before, "Application figée pendant la reconnexion de FreeRDP");
             Assert.Equal(RdpSessionState.Connected, session.State);
 
-            // Réseau revenu : la tentative suivante reprend la session.
+            // Réseau revenu : la tentative suivante reprend la session, affichée de nouveau.
             relay.Restore();
+            Assert.True(await WaitUntilAsync(() => !session.IsReconnecting, TimeSpan.FromSeconds(60)), "Reprise de la session non signalée");
+            Assert.True(session.ShowsDesktop);
+            Assert.Equal(Visibility.Visible, session.Host.Visibility);
             await ClickAndCheckAsync(log, host, bounds, (0.25, 0.25), desktop);
             Assert.Equal(RdpSessionState.Connected, session.State);
 
@@ -836,6 +845,23 @@ public class RdpSessionTests(ITestOutputHelper output)
                 output.WriteLine("Rien reçu : nouvel essai");
             }
         }
+    }
+
+    /// <summary>Attend que <paramref name="condition"/> soit vraie (vérifiée sur le thread de la fenêtre) ; faux après le délai.</summary>
+    private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        while (!condition())
+        {
+            if (watch.Elapsed > timeout)
+            {
+                return false;
+            }
+
+            await Task.Delay(100);
+        }
+
+        return true;
     }
 
     /// <summary>Lignes du journal de la fenêtre de test (écrit par une autre session : lu sans le bloquer).</summary>

@@ -155,7 +155,17 @@ internal sealed class RdpSession : IDisposable
     /// Vrai si l'onglet affiche le bureau distant : le contrôle de Windows dès sa création, le client FreeRDP dès que sa
     /// fenêtre existe (connexion ouverte). Avant, l'onglet montre la progression de la connexion.
     /// </summary>
-    public bool ShowsDesktop => _connection is { HasWindow: true };
+    public bool ShowsDesktop => _connection is { HasWindow: true } && !IsReconnecting;
+
+    /// <summary>
+    /// Connexion perdue, le client se reconnecte de lui-même (FreeRDP) : la session est masquée et l'onglet le dit, avec la
+    /// tentative en cours (<see cref="ReconnectAttempt"/> sur <see cref="ReconnectAttempts"/>, 0 avant la première).
+    /// </summary>
+    public bool IsReconnecting { get; private set; }
+
+    public int ReconnectAttempt { get; private set; }
+
+    public int ReconnectAttempts { get; private set; }
 
     /// <summary>Plein écran possible pour la connexion en cours (contrôle de Windows seulement).</summary>
     public bool CanFullScreen => _connection?.CanFullScreen == true;
@@ -417,6 +427,36 @@ internal sealed class RdpSession : IDisposable
         });
     }
 
+    /// <summary>Reconnexion automatique du client, lue dans son journal (thread de l'interface).</summary>
+    internal void OnReconnection(IRdpConnection connection, Core.Rdp.FreeRdpReconnectionStep step, int attempt, int max)
+    {
+        if (connection != _connection || _disposed || step == Core.Rdp.FreeRdpReconnectionStep.None)
+        {
+            return;
+        }
+
+        bool reconnecting = step != Core.Rdp.FreeRdpReconnectionStep.Reconnected;
+        if (reconnecting != IsReconnecting)
+        {
+            DebugLog.Write("rdp", reconnecting ? $"{Label} : connexion perdue, reconnexion automatique" : $"{Label} : session reprise");
+        }
+
+        IsReconnecting = reconnecting;
+        if (step == Core.Rdp.FreeRdpReconnectionStep.Attempt)
+        {
+            ReconnectAttempt = attempt;
+            ReconnectAttempts = max;
+        }
+        else
+        {
+            ReconnectAttempt = 0;
+            ReconnectAttempts = 0;
+        }
+
+        UpdateHost();
+        StateChanged?.Invoke();
+    }
+
     /// <summary>Étape de la connexion affichée dans l'onglet (thread de l'interface).</summary>
     internal void ShowStep(string? step)
     {
@@ -514,6 +554,7 @@ internal sealed class RdpSession : IDisposable
         _watchdog.Stop();
         _pingPending = false;
         IsNotResponding = false;
+        IsReconnecting = false;
         IsAuthenticationWarningOpen = false;
         UpdateHost();
         StateChanged?.Invoke();
@@ -544,6 +585,7 @@ internal sealed class RdpSession : IDisposable
         _watchdog.Stop();
         _pingPending = false;
         IsNotResponding = false;
+        IsReconnecting = false;
         connection.Release(disconnect);
         UpdateHost();
     }
