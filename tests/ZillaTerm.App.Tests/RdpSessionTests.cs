@@ -405,6 +405,66 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>
+    /// Redimensionnement dynamique (option expérimentale) avec FreeRDP : quand la fenêtre change de taille, le bureau
+    /// distant prend la nouvelle taille de l'onglet (largeur paire), sans mise à l'échelle ; un clic arrive à l'endroit visé.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpDynamicResolutionFollowsTheTab()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        var log = Environment.GetEnvironmentVariable("RDP_TEST_CLICKS");
+        if (string.IsNullOrEmpty(log))
+        {
+            output.WriteLine("Pas de fenêtre de test des clics : test ignoré.");
+            return;
+        }
+
+        var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab(dynamicResolution: true);
+        var request = new RdpConnectionRequest(settings, account.Password)
+        {
+            FreeRdp = true,
+            VerifyCertificate = (_, _, _) => Task.FromResult(RdpTrust.Trusted),
+        };
+        await RunOnStaAsync(request, async (session, window) =>
+        {
+            await session.ConnectAsync();
+            var state = await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90));
+            Assert.Equal(RdpSessionState.Connected, state);
+
+            var slot = session.Host.SlotHandle;
+            var bounds = Win32Input.ScreenBounds(slot);
+            var (width, height) = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
+            output.WriteLine($"Onglet {bounds}, bureau distant attendu {width}x{height}");
+            await WaitForLineAsync(log, 0, line => line == $"size {width}x{height}", TimeSpan.FromSeconds(150));
+
+            // Fenêtre réduite : FreeRDP demande la nouvelle taille au serveur une fois le redimensionnement terminé.
+            int before = Lines(log).Count;
+            window.Width = 720;
+            window.Height = 540;
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            bounds = Win32Input.ScreenBounds(slot);
+            var resized = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
+            output.WriteLine($"Onglet réduit {bounds}, bureau distant attendu {resized.Width}x{resized.Height}");
+            Assert.True(resized.Width < width - 100, $"{bounds}");
+            await WaitForLineAsync(log, before, line => line == $"size {resized.Width}x{resized.Height}", TimeSpan.FromSeconds(30));
+
+            var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+            await ClickAndCheckAsync(log, host, bounds, (0.25, 0.25), resized);
+            await ClickAndCheckAsync(log, host, bounds, (0.75, 0.6), resized);
+            Assert.Equal(RdpSessionState.Connected, session.State);
+
+            session.Disconnect();
+            Assert.Equal(RdpSessionState.Ended,
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30)));
+        });
+    }
+
+    /// <summary>
     /// Application distante (RemoteApp) avec FreeRDP : ses fenêtres s'affichent dans l'onglet, aucune sur le bureau de ce
     /// poste ; la fenêtre de test (lancée comme application distante, plein écran) reçoit clics et touches.
     /// </summary>

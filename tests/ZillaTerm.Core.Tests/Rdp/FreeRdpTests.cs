@@ -37,6 +37,7 @@ public class FreeRdpTests
         Assert.Contains("/parent-window:4660", arguments);
         Assert.Contains("/size:1280x800", arguments);
         Assert.Contains("/smart-sizing", arguments);
+        Assert.DoesNotContain("/dynamic-resolution", arguments);
         Assert.Contains("/cert:deny,fingerprint:sha256:" + Fingerprint, arguments);
         Assert.Contains("/from-stdin", arguments);
         Assert.Contains("/tune:FreeRDP_UseRdpSecurityLayer:FALSE,FreeRDP_RdpSecurity:FALSE,FreeRDP_NlaSecurity:FALSE,"
@@ -82,6 +83,22 @@ public class FreeRdpTests
         Assert.Contains("FreeRDP_EncryptionMethods:18", tune, StringComparison.Ordinal);
         Assert.DoesNotContain("FreeRDP_RdpSecurity:FALSE", tune, StringComparison.Ordinal);
         Assert.Contains($"/cert:deny,fingerprint:sha256:{Fingerprint},fingerprint:sha256:{other}", arguments);
+        AssertEachOptionOnce(arguments);
+    }
+
+    /// <summary>
+    /// Redimensionnement dynamique : FreeRDP adapte la résolution à la taille de sa fenêtre au lieu de mettre l'image à
+    /// l'échelle (les deux options s'excluent dans FreeRDP).
+    /// </summary>
+    [Fact]
+    public void DynamicResolutionReplacesSmartSizing()
+    {
+        var arguments = FreeRdpArguments.Build(Read(RemoteAppFile).ForPsmTab(dynamicResolution: true), 1, (1280, 800), null, false,
+            [Fingerprint]).Arguments;
+
+        Assert.Contains("/dynamic-resolution", arguments);
+        Assert.DoesNotContain("/smart-sizing", arguments);
+        Assert.Contains("/size:1280x800", arguments);
         AssertEachOptionOnce(arguments);
     }
 
@@ -132,9 +149,10 @@ public class FreeRdpTests
         // Largeur paire, 200 pixels au moins.
         Assert.Contains("/size:1000x200", arguments);
         Assert.Contains("/log-level:INFO", arguments);
-        // Journal détaillé : canaux RemoteApp et presse-papiers, messages du presse-papiers du client Windows.
+        // Journal détaillé : canaux RemoteApp, presse-papiers et affichage, messages du presse-papiers du client Windows.
         var filters = Assert.Single(arguments, a => a.StartsWith("/log-filters:", StringComparison.Ordinal))["/log-filters:".Length..].Split(',');
-        Assert.Equal(["com.freerdp.channels.rail.*:DEBUG", "com.freerdp.channels.cliprdr.*:DEBUG", "com.freerdp.client.windows:DEBUG"], filters);
+        Assert.Equal(["com.freerdp.channels.rail.*:DEBUG", "com.freerdp.channels.cliprdr.*:DEBUG", "com.freerdp.channels.disp.*:DEBUG",
+            "com.freerdp.client.windows:DEBUG"], filters);
         // Les options sont écrites dans le journal de débogage : ni mot de passe ni jeton.
         Assert.DoesNotContain(arguments, a => a.Contains("s3cret", StringComparison.Ordinal) || a.Contains("admin-srv01", StringComparison.Ordinal));
         Assert.Contains("-wallpaper", arguments);

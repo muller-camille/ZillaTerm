@@ -5382,6 +5382,12 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
     <value>La session prend la taille de l'onglet et s'ouvre avec le client FreeRDP intégré à ZillaTerm, bureau comme application distante (PSM-RDP, PSM-SSH, WinSCP…), sans fenêtre à part. ZillaTerm vérifie le certificat du PSM (approuvé par Windows, sinon empreinte confirmée une fois puis retenue), et les redirections restent celles demandées par le PVWA, jamais plus. Une connexion par une passerelle Bureau à distance s'ouvre toujours dans la Connexion Bureau à distance.</value>
   </data>
+  <data name="PsmDynamicResolution" xml:space="preserve">
+    <value>Adapter la _résolution du bureau distant à la taille de l'onglet (expérimental)</value>
+  </data>
+  <data name="PsmDynamicResolutionHelp" xml:space="preserve">
+    <value>Au lieu d'une résolution fixe et d'une image mise à l'échelle dans l'onglet, ZillaTerm demande au serveur PSM de changer la résolution de la session à chaque redimensionnement de l'onglet. L'affichage est plus net, mais selon la configuration du PSM, la connexion du PSM vers le serveur cible peut garder sa taille d'origine : désactivez l'option si l'écran de la cible ne suit pas. S'applique aux nouvelles sessions.</value>
+  </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>
   </data>

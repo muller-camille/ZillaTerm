@@ -16055,6 +16055,24 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Resize the remote desktop with the tab (_experimental).
+        /// </summary>
+        public static string PsmDynamicResolution {
+            get {
+                return ResourceManager.GetString("PsmDynamicResolution", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Instead of a fixed resolution with the image scaled to the tab, ZillaTerm asks the PSM server to change the resolution of the session each time the tab is resized. The display is sharper, but depending on the PSM configuration, the connection from the PSM to the target server may keep its original size: turn the option off if the target screen does not follow. Applies to new sessions..
+        /// </summary>
+        public static string PsmDynamicResolutionHelp {
+            get {
+                return ResourceManager.GetString("PsmDynamicResolutionHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to PSM Windows sessions in a tab.
         /// </summary>
         public static string EnvPsmDesktopInTab {

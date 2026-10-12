@@ -115,9 +115,11 @@ public partial class MainWindow
     /// <summary>
     /// Réglages de l'onglet pour ce fichier du PVWA, ou null pour le confier à mstsc : fichier illisible, passerelle
     /// Bureau à distance, application distante sans le client FreeRDP (<paramref name="reason"/> le dit à
-    /// l'utilisateur quand il le faut).
+    /// l'utilisateur quand il le faut). <paramref name="dynamicResolution"/> : résolution qui suit la taille de l'onglet
+    /// (option expérimentale) au lieu d'une image mise à l'échelle.
     /// </summary>
-    private static RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, bool freeRdp, out string? reason)
+    private static RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, bool freeRdp, bool dynamicResolution,
+        out string? reason)
     {
         reason = null;
         RdpConnectionSettings settings;
@@ -144,7 +146,7 @@ public partial class MainWindow
             return null;
         }
 
-        return settings.ForPsmTab();
+        return settings.ForPsmTab(dynamicResolution);
     }
 
     /// <summary>

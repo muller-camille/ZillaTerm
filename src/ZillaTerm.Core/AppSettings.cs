@@ -81,6 +81,12 @@ public sealed class AppSettings
     /// </summary>
     public bool PsmDesktopInTab { get; set; }
 
+    /// <summary>
+    /// Sessions PSM dans l'onglet : la résolution du bureau distant suit la taille de l'onglet au lieu d'une image mise à
+    /// l'échelle (expérimental, désactivé par défaut : la connexion du PSM vers la cible peut garder sa taille).
+    /// </summary>
+    public bool PsmDynamicResolution { get; set; }
+
     /// <summary>Journal de débogage (déroulement des connexions, sans secret), désactivé par défaut.</summary>
     public bool DebugLogEnabled { get; set; }
 

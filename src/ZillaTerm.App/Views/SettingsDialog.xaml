@@ -250,6 +250,11 @@
                             <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDesktopInTab}" />
                         </CheckBox>
                         <TextBlock Style="{StaticResource OptionHelp}" Margin="22,0,0,10" Text="{x:Static loc:Strings.PsmDesktopInTabHelp}" />
+                        <CheckBox x:Name="PsmDynamicResolutionBox" Margin="22,0,0,2"
+                                  IsEnabled="{Binding IsChecked, ElementName=PsmDesktopInTabBox}">
+                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDynamicResolution}" />
+                        </CheckBox>
+                        <TextBlock Style="{StaticResource OptionHelp}" Margin="44,0,0,10" Text="{x:Static loc:Strings.PsmDynamicResolutionHelp}" />
                         <!-- Composant par plateforme : prioritaire sur celui des comptes Windows (voir AppSettings.ResolveComponent). -->
                         <TextBlock Text="{x:Static loc:Strings.PlatformComponentsSection}" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,6" Text="{x:Static loc:Strings.PlatformComponentsHelp}" />

@@ -42,7 +42,10 @@ public static class FreeRdpArguments
     public static bool Supports(RdpConnectionSettings settings) => !settings.UsesGateway;
 
     /// <param name="parentWindow">Fenêtre de l'onglet où FreeRDP crée la sienne.</param>
-    /// <param name="pixels">Taille de l'onglet en pixels : résolution du bureau distant, mise à l'échelle ensuite.</param>
+    /// <param name="pixels">
+    /// Taille de l'onglet en pixels : résolution du bureau distant, mise à l'échelle ensuite
+    /// (<see cref="RdpConnectionSettings.SmartSizing"/>) ou adaptée à chaque redimensionnement de l'onglet.
+    /// </param>
     /// <param name="password">Mot de passe d'une connexion directe (tests) ; null pour une session PSM (aucun n'est demandé).</param>
     /// <param name="verbose">Journal détaillé de FreeRDP (journal de débogage de ZillaTerm activé).</param>
     /// <param name="fingerprints">
@@ -72,7 +75,8 @@ public static class FreeRdpArguments
             "-",
             "/parent-window:" + parentWindow.ToString(CultureInfo.InvariantCulture),
             $"/size:{width}x{height}",
-            "/smart-sizing",
+            // Image mise à l'échelle, ou résolution qui suit la taille de la fenêtre : l'un ou l'autre pour FreeRDP.
+            settings.SmartSizing ? "/smart-sizing" : "/dynamic-resolution",
             "/bpp:" + settings.ColorDepth.ToString(CultureInfo.InvariantCulture),
             "-toggle-fullscreen",
             "/log-level:" + (verbose ? "INFO" : "WARN"),
@@ -84,10 +88,11 @@ public static class FreeRdpArguments
 
         if (verbose)
         {
-            // Échanges des canaux des applications distantes (RemoteApp) et du presse-papiers, et messages du presse-papiers
-            // du client Windows (jamais son contenu) : session qui se ferme, copier-coller qui n'aboutit pas.
+            // Échanges des canaux des applications distantes (RemoteApp), du presse-papiers et de l'affichage (tailles
+            // demandées au serveur), et messages du presse-papiers du client Windows (jamais son contenu) : session qui se
+            // ferme, copier-coller qui n'aboutit pas, bureau qui ne suit pas la taille de l'onglet.
             arguments.Add("/log-filters:com.freerdp.channels.rail.*:DEBUG,com.freerdp.channels.cliprdr.*:DEBUG,"
-                + "com.freerdp.client.windows:DEBUG");
+                + "com.freerdp.channels.disp.*:DEBUG,com.freerdp.client.windows:DEBUG");
         }
 
         // Réglages par leur nom, en une seule option : une option donnée deux fois ne garde que sa dernière valeur.

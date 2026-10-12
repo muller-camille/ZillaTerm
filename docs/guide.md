@@ -157,7 +157,10 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   there as on a desktop; none opens on this computer's desktop.
 - **Size**: the session takes the size of the tab when it connects and keeps it. If the window changes size, the
   picture is scaled: the PSM opened its connection to the server at that size. The session never goes full screen,
-  even if the PVWA file asks for it.
+  even if the PVWA file asks for it. With the experimental option "Resize the remote desktop with the tab" (Settings,
+  CyberArk page), the resolution of the PSM session follows the tab each time it is resized, without scaling;
+  depending on the PSM configuration, the connection to the target server may keep its original size: turn the option
+  off then.
 - **Keyboard**: when the tab has the keyboard (click in the session), all keys go to the session, Windows shortcuts
   included (Alt+Tab, Windows key). Click elsewhere in ZillaTerm to get them back.
 - **PSM certificate**: read by ZillaTerm while the progress bar shows, before anything is sent to the PSM (neither
@@ -892,6 +895,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | CyberArk | PSMP by domain | Other PSMPs (address, port, domain served); each server goes through the one of the domain closest to its own (see [PSMP by domain](#psmp-by-domain)); "Which PSMP for the server" to check | none |
 | CyberArk | Windows accounts component | PSM component of Windows accounts (domain or local) without a component remembered for their platform, for example `WIN-PSM` | empty = `PSM-RDP` |
 | CyberArk | PSM Windows sessions in a tab | PSM session (desktop or remote application) in a ZillaTerm tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); spread by the environment file | no |
+| CyberArk | Resize the remote desktop with the tab (experimental) | PSM sessions in a tab: the resolution follows the size of the tab instead of a scaled picture; the connection from the PSM to the target may keep its original size. For new sessions | no |
 | CyberArk | Component per platform | Platform (PVWA ID, for example `WinDomain`) / PSM component table: "Add a component", "Remove the line", editable cells; takes precedence over the Windows accounts component. "Remember this component for platform" (connection window) adds a line to it | empty |
 | Terminal | SSH in ZillaTerm | Built-in terminal and Files tab; otherwise Windows Terminal | yes |
 | Terminal | Terminal colours, font size | Palette (Campbell, One Half, Solarized…) and font size of the SSH terminals | Campbell, 14 |
@@ -1141,8 +1145,9 @@ program (`alternate shell`) or remote application (`remoteapplicationprogram`, n
 gateway, load balancing, redirections (`drivestoredirect:s:*` only for drives), effects. The file's display mode
 (`screen mode id`, size, monitors) is ignored. A PSM session is nested: inside its own session, the PSM opens the
 connection to the target server at the same size, and changing the PSM session's resolution afterwards does not
-change it for the target (cut-off desktop, shifted clicks). Hence the fixed size and scaling of these sessions;
-direct connections follow the tab size.
+change it for the target (cut-off desktop, shifted clicks). Hence the fixed size and scaling of these sessions by
+default (the experimental option "Resize the remote desktop with the tab" changes the resolution of the PSM session,
+to be tried with your PSM); direct connections follow the tab size.
 
 **FreeRDP client.** PSM sessions in a tab go through the FreeRDP Windows client (`wfreerdp`), built by the release
 workflow of the `muller-camille/FreeRDP` fork (branch `ci`) and published in its releases; `tools/freerdp-download.sh`
