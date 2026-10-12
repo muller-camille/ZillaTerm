@@ -1261,7 +1261,9 @@ chacun confirmé une fois) : le client les reçoit tous. Les questions sont pos�
 pendant la connexion ; une fois l'une d'elles répondue, la connexion part avec un nouveau jeton demandé au PVWA (le
 jeton PSM ne sert qu'une fois et expire vite). Si le client refuse quand même le serveur (autre serveur derrière la même
 adresse), ZillaTerm relit son identité et la soumet si elle est nouvelle (deux fois au plus par connexion). Après une
-coupure réseau, FreeRDP tente de reprendre la session ; si c'est un autre serveur qui répond à la même adresse, la
+coupure réseau, FreeRDP tente de reprendre la session (une tentative toutes les 15 secondes, 20 au plus) ; pendant ce
+temps, la zone de la session est grise, ses clics et touches sont ignorés et ZillaTerm reste utilisable (les
+tentatives se font à côté de la fenêtre de la session). Si c'est un autre serveur qui répond à la même adresse, la
 tentative est refusée (identité non vérifiée) et s'arrête aussitôt : la session est perdue, et ZillaTerm refait une
 demande au PVWA (nouveau jeton), puis vérifie le serveur qui répond avant de s'y connecter (question s'il est inconnu ;
 deux fois au plus avant une nouvelle ouverture de session).

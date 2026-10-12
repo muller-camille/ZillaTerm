@@ -1183,7 +1183,9 @@ certificates and keys per address (load-balanced PSM: one per server, each confi
 all. Questions come before the client is launched, never during the connection; once one is answered, the connection
 starts with a new token requested from the PVWA (the PSM token only works once and expires quickly). If the client
 still refuses the server (another server behind the same address), ZillaTerm reads its identity again and asks about
-it if it is new (twice at most per connection). After a network cut, FreeRDP tries to resume the session; if another
+it if it is new (twice at most per connection). After a network cut, FreeRDP tries to resume the session (one attempt
+every 15 seconds, 20 at most); meanwhile the session area is gray, its clicks and keys are ignored and ZillaTerm stays
+usable (the attempts run beside the session window). If another
 server answers at the same address, the attempt is refused (identity not checked) and stops at once: the session is
 lost, and ZillaTerm makes a new request to the PVWA (new token), then checks the server that answers before connecting
 to it (question if it is unknown; twice at most before the next session opening).
