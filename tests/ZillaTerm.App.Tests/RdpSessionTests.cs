@@ -442,6 +442,12 @@ public class RdpSessionTests(ITestOutputHelper output)
             output.WriteLine($"Onglet {bounds}, bureau distant attendu {width}x{height}");
             await WaitForLineAsync(log, 0, line => line == $"size {width}x{height}", TimeSpan.FromSeconds(150));
 
+            // Session prête (un clic reçu) avant de changer sa taille : une session reprise qui reçoit une nouvelle taille
+            // pendant sa reprise peut être coupée par le serveur juste après (vu en CI : raison 17 du gestionnaire de
+            // sessions, ERRINFO_RPC_INITIATED_DISCONNECT).
+            var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+            await ClickAndCheckAsync(log, host, bounds, (0.5, 0.5), (width, height));
+
             // Fenêtre réduite : FreeRDP demande la nouvelle taille au serveur une fois le redimensionnement terminé.
             int before = Lines(log).Count;
             window.Width = 720;
@@ -453,7 +459,6 @@ public class RdpSessionTests(ITestOutputHelper output)
             Assert.True(resized.Width < width - 100, $"{bounds}");
             await WaitForLineAsync(log, before, line => line == $"size {resized.Width}x{resized.Height}", TimeSpan.FromSeconds(30));
 
-            var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
             await ClickAndCheckAsync(log, host, bounds, (0.25, 0.25), resized);
             await ClickAndCheckAsync(log, host, bounds, (0.75, 0.6), resized);
             Assert.Equal(RdpSessionState.Connected, session.State);
