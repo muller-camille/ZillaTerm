@@ -87,6 +87,12 @@ public sealed class AppSettings
     /// </summary>
     public bool PsmDynamicResolution { get; set; } = true;
 
+    /// <summary>
+    /// Sessions PSM Windows (onglet et Connexion Bureau à distance) : tous les disques de ce poste partagés avec la session
+    /// (activé par défaut). Désactivé : seulement si le fichier du PVWA le demande. Le serveur PSM peut le refuser.
+    /// </summary>
+    public bool PsmRedirectDrives { get; set; } = true;
+
     /// <summary>Journal de débogage (déroulement des connexions, sans secret), désactivé par défaut.</summary>
     public bool DebugLogEnabled { get; set; }
 

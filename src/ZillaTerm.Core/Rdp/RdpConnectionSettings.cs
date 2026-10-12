@@ -192,15 +192,18 @@ public sealed record RdpConnectionSettings
     /// à la taille de sa propre session, qui ne doit plus changer. Pas de cache d'images sur le disque de ce poste (écran
     /// d'une session d'administration). Jamais de connexion sans vérification du serveur : le niveau d'authentification 1
     /// (refus) reste 1, les autres deviennent 2 (avertissement de Windows si le certificat présenté n'est ni approuvé
-    /// par Windows ni celui que ZillaTerm a vérifié juste avant). Les redirections restent celles du fichier, jamais plus.
+    /// par Windows ni celui que ZillaTerm a vérifié juste avant). Les redirections restent celles du fichier, plus les
+    /// disques du poste si <paramref name="redirectDrives"/>.
     /// </summary>
     /// <param name="dynamicResolution">
     /// Redimensionnement dynamique (expérimental) : la résolution du bureau distant suit la taille de l'onglet au lieu
     /// d'une image mise à l'échelle. La connexion du PSM vers la cible peut garder sa taille d'origine.
     /// </param>
-    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false) => this with
+    /// <param name="redirectDrives">Tous les disques du poste partagés avec la session, même si le fichier ne le demande pas.</param>
+    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false, bool redirectDrives = false) => this with
     {
         SmartSizing = !dynamicResolution,
+        RedirectDrives = RedirectDrives || redirectDrives,
         BitmapPersistence = false,
         AuthenticationLevel = AuthenticationLevel == 1 ? 1 : 2,
     };

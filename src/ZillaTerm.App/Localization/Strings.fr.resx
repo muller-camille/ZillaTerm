@@ -5413,7 +5413,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Ouvrir les sessions PSM Windows dans un _onglet de ZillaTerm, sinon dans Connexion Bureau à distance</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>La session prend la taille de l'onglet et s'ouvre avec le client FreeRDP intégré à ZillaTerm, bureau comme application distante (PSM-RDP, PSM-SSH, WinSCP…), sans fenêtre à part. ZillaTerm vérifie le certificat du PSM (approuvé par Windows, sinon empreinte confirmée une fois puis retenue), et les redirections restent celles demandées par le PVWA, jamais plus. Une connexion par une passerelle Bureau à distance s'ouvre toujours dans la Connexion Bureau à distance.</value>
+    <value>La session prend la taille de l'onglet et s'ouvre avec le client FreeRDP intégré à ZillaTerm, bureau comme application distante (PSM-RDP, PSM-SSH, WinSCP…), sans fenêtre à part. ZillaTerm vérifie le certificat du PSM (approuvé par Windows, sinon empreinte confirmée une fois puis retenue), et les redirections sont celles demandées par le PVWA, plus les disques du poste si l'option ci-dessous est cochée. Une connexion par une passerelle Bureau à distance s'ouvre toujours dans la Connexion Bureau à distance.</value>
   </data>
   <data name="PsmDynamicResolution" xml:space="preserve">
     <value>Adapter la _résolution du bureau distant à la taille de l'onglet</value>
@@ -5421,8 +5421,17 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Au lieu d'une résolution fixe et d'une image mise à l'échelle dans l'onglet, ZillaTerm demande au serveur PSM de changer la résolution de la session à chaque redimensionnement de l'onglet. L'affichage est plus net, mais selon la configuration du PSM, la connexion du PSM vers le serveur cible peut garder sa taille d'origine : désactivez l'option si l'écran de la cible ne suit pas. S'applique aux nouvelles sessions.</value>
   </data>
+  <data name="PsmRedirectDrives" xml:space="preserve">
+    <value>Partager les _disques de ce poste avec les sessions PSM Windows</value>
+  </data>
+  <data name="PsmRedirectDrivesHelp" xml:space="preserve">
+    <value>Les disques de ce poste apparaissent dans la session (Explorateur › Ce PC), pour copier des fichiers dans les deux sens ; les programmes de la session peuvent alors les lire et y écrire. Le serveur PSM peut le refuser, selon sa configuration. Décochée : seulement si le PVWA le demande. S'applique aux nouvelles sessions ; dans la Connexion Bureau à distance, seulement si le fichier du PVWA n'est pas signé (sa signature est vérifiée).</value>
+  </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>
+  </data>
+  <data name="EnvPsmRedirectDrives" xml:space="preserve">
+    <value>Disques du poste partagés avec les sessions PSM Windows</value>
   </data>
   <data name="PsmHintTab" xml:space="preserve">
     <value>Le PVWA génère une connexion RDP : elle s'ouvre dans un onglet de ZillaTerm (client FreeRDP intégré), bureau Windows comme application distante.</value>

@@ -95,6 +95,19 @@ public sealed class AppSettingsTests : IDisposable
         Assert.False(AppSettings.Load(path).PsmDynamicResolution);
     }
 
+    /// <summary>Disques du poste partagés avec les sessions PSM Windows : par défaut, y compris pour des réglages plus anciens.</summary>
+    [Fact]
+    public void PsmRedirectDrivesIsOnByDefaultAndKept()
+    {
+        Assert.True(new AppSettings().PsmRedirectDrives);
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "drives.json");
+        File.WriteAllText(path, "{}");
+        Assert.True(AppSettings.Load(path).PsmRedirectDrives);
+        new AppSettings { PsmRedirectDrives = false }.Save(path);
+        Assert.False(AppSettings.Load(path).PsmRedirectDrives);
+    }
+
     /// <summary>Thème de l'interface : celui de Windows par défaut, le choix gardé, une valeur inconnue ramenée au défaut.</summary>
     [Fact]
     public void ThemeDefaultsToWindowsAndIsKept()
