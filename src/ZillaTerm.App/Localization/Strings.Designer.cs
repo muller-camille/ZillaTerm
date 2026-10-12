@@ -10539,6 +10539,69 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to {0} changed on the server: copying it again….
+        /// </summary>
+        public static string EditRefreshing {
+            get {
+                return ResourceManager.GetString("EditRefreshing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} changed on the server: the copy opened in the editor was replaced by the current version.
+        /// </summary>
+        public static string EditRefreshed {
+            get {
+                return ResourceManager.GetString("EditRefreshed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: the server version could not be read ({1}); the copy opened in the editor may be out of date.
+        /// </summary>
+        public static string EditStaleCopy {
+            get {
+                return ResourceManager.GetString("EditStaleCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” changed on the server, and your copy has changes not sent back.
+        /// </summary>
+        public static string EditReloadHeading {
+            get {
+                return ResourceManager.GetString("EditReloadHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reloading the server version loses the changes in your copy. If you keep your copy, sending it back will warn that the file changed on the server..
+        /// </summary>
+        public static string EditReloadMessage {
+            get {
+                return ResourceManager.GetString("EditReloadMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reload the server version.
+        /// </summary>
+        public static string EditReloadAction {
+            get {
+                return ResourceManager.GetString("EditReloadAction", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keep my copy.
+        /// </summary>
+        public static string EditKeepMine {
+            get {
+                return ResourceManager.GetString("EditKeepMine", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Save the result to a CSV file?.
         /// </summary>
         public static string ImportSaveHeading {

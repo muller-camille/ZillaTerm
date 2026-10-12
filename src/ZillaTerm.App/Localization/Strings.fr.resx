@@ -3543,6 +3543,27 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="EditReplaceAnyway" xml:space="preserve">
     <value>Remplacer par ma version</value>
   </data>
+  <data name="EditRefreshing" xml:space="preserve">
+    <value>{0} a changé sur le serveur : nouvelle copie…</value>
+  </data>
+  <data name="EditRefreshed" xml:space="preserve">
+    <value>{0} a changé sur le serveur : la copie ouverte dans l'éditeur a été remplacée par la version actuelle</value>
+  </data>
+  <data name="EditStaleCopy" xml:space="preserve">
+    <value>{0} : la version du serveur n'a pas pu être lue ({1}) ; la copie ouverte dans l'éditeur n'est peut-être pas à jour</value>
+  </data>
+  <data name="EditReloadHeading" xml:space="preserve">
+    <value>« {0} » a changé sur le serveur, et votre copie a des modifications non renvoyées</value>
+  </data>
+  <data name="EditReloadMessage" xml:space="preserve">
+    <value>Recharger la version du serveur fait perdre les modifications de votre copie. Si vous gardez votre copie, son renvoi signalera que le fichier a changé sur le serveur.</value>
+  </data>
+  <data name="EditReloadAction" xml:space="preserve">
+    <value>Recharger la version du serveur</value>
+  </data>
+  <data name="EditKeepMine" xml:space="preserve">
+    <value>Garder ma copie</value>
+  </data>
   <data name="ImportSaveHeading" xml:space="preserve">
     <value>Enregistrer le résultat dans un fichier CSV ?</value>
   </data>

@@ -3543,6 +3543,27 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="EditReplaceAnyway" xml:space="preserve">
     <value>Replace with my version</value>
   </data>
+  <data name="EditRefreshing" xml:space="preserve">
+    <value>{0} changed on the server: copying it again…</value>
+  </data>
+  <data name="EditRefreshed" xml:space="preserve">
+    <value>{0} changed on the server: the copy opened in the editor was replaced by the current version</value>
+  </data>
+  <data name="EditStaleCopy" xml:space="preserve">
+    <value>{0}: the server version could not be read ({1}); the copy opened in the editor may be out of date</value>
+  </data>
+  <data name="EditReloadHeading" xml:space="preserve">
+    <value>“{0}” changed on the server, and your copy has changes not sent back</value>
+  </data>
+  <data name="EditReloadMessage" xml:space="preserve">
+    <value>Reloading the server version loses the changes in your copy. If you keep your copy, sending it back will warn that the file changed on the server.</value>
+  </data>
+  <data name="EditReloadAction" xml:space="preserve">
+    <value>Reload the server version</value>
+  </data>
+  <data name="EditKeepMine" xml:space="preserve">
+    <value>Keep my copy</value>
+  </data>
   <data name="ImportSaveHeading" xml:space="preserve">
     <value>Save the result to a CSV file?</value>
   </data>

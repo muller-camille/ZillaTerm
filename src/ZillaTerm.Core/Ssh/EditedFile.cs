@@ -121,6 +121,53 @@ public sealed class EditedFile : IDisposable
         }
     }
 
+    /// <summary>
+    /// Remplace la copie locale par <paramref name="freshCopy"/>, nouvelle copie du fichier du serveur (changé depuis
+    /// l'ouverture), déplacée sur la copie locale : ce contenu devient celui du serveur, sans être signalé comme enregistré.
+    /// </summary>
+    /// <param name="freshCopy">Copie vérifiée, dans le même dossier que <see cref="LocalPath"/>.</param>
+    /// <param name="remoteWriteTime">Date de modification du fichier sur le serveur, relevée avant la copie.</param>
+    /// <param name="remoteLength">Taille du fichier sur le serveur, relevée avant la copie.</param>
+    /// <remarks>Lit et hache toute la copie : hors du fil de l'interface pour un gros fichier.</remarks>
+    public void Refresh(string freshCopy, DateTime remoteWriteTime, long remoteLength)
+    {
+        string hash;
+        using (var stream = new FileStream(freshCopy, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.SequentialScan))
+        {
+            hash = Convert.ToHexString(SHA256.HashData(stream));
+        }
+
+        string seen, sent;
+        DateTime time;
+        long length;
+        bool interrupted;
+        lock (_lock)
+        {
+            (seen, sent, time, length, interrupted) = (_seenHash, _sentHash, RemoteWriteTime, RemoteLength, WriteInterrupted);
+            // Avant le déplacement : la surveillance, qui le verra, ne le signale pas comme un enregistrement.
+            _sentHash = _seenHash = hash;
+            RemoteWriteTime = remoteWriteTime;
+            RemoteLength = remoteLength;
+            WriteInterrupted = false;
+        }
+
+        try
+        {
+            // Remplacement d'un seul coup : l'éditeur qui a la copie ouverte ne lit jamais un contenu à moitié écrit.
+            File.Move(freshCopy, LocalPath, overwrite: true);
+        }
+        catch
+        {
+            // Copie verrouillée par l'éditeur : elle reste telle quelle, avec ses références.
+            lock (_lock)
+            {
+                (_seenHash, _sentHash, RemoteWriteTime, RemoteLength, WriteInterrupted) = (seen, sent, time, length, interrupted);
+            }
+
+            throw;
+        }
+    }
+
     // Fichiers qui ne se lisent pas dans un éditeur de texte : archives, images, exécutables, documents bureautiques...
     private static readonly HashSet<string> BinaryExtensions = new(StringComparer.OrdinalIgnoreCase)
     {

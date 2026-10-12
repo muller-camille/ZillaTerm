@@ -3543,6 +3543,27 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="EditReplaceAnyway" xml:space="preserve">
     <value>Sostituisci con la mia versione</value>
   </data>
+  <data name="EditRefreshing" xml:space="preserve">
+    <value>{0} è cambiato sul server: nuova copia…</value>
+  </data>
+  <data name="EditRefreshed" xml:space="preserve">
+    <value>{0} è cambiato sul server: la copia aperta nell'editor è stata sostituita dalla versione attuale</value>
+  </data>
+  <data name="EditStaleCopy" xml:space="preserve">
+    <value>{0}: non è stato possibile leggere la versione del server ({1}); la copia aperta nell'editor potrebbe non essere aggiornata</value>
+  </data>
+  <data name="EditReloadHeading" xml:space="preserve">
+    <value>«{0}» è cambiato sul server, e la tua copia ha modifiche non rimandate</value>
+  </data>
+  <data name="EditReloadMessage" xml:space="preserve">
+    <value>Ricaricare la versione del server fa perdere le modifiche della tua copia. Se tieni la tua copia, il suo rinvio segnalerà che il file è cambiato sul server.</value>
+  </data>
+  <data name="EditReloadAction" xml:space="preserve">
+    <value>Ricarica la versione del server</value>
+  </data>
+  <data name="EditKeepMine" xml:space="preserve">
+    <value>Tieni la mia copia</value>
+  </data>
   <data name="ImportSaveHeading" xml:space="preserve">
     <value>Salvare il risultato in un file CSV?</value>
   </data>

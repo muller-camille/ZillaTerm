@@ -509,7 +509,10 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
   aperto, come ogni file i cui primi byte sono binari. A ogni salvataggio,
   ZillaTerm propone di rinviarlo al server («Rimanda» o «Non ora»): invio in SFTP, permessi del file conservati.
   Se il file è cambiato sul server dopo l'apertura, un avviso lo dice e chiede conferma («Sostituisci con la mia
-  versione») prima di sovrascriverlo.
+  versione») prima di sovrascriverlo. Riaprire un file già aperto rilegge la sua data e dimensione sul server: se è
+  cambiato (modificato nel terminale, da qualcun altro, prima di una riconnessione…), la copia aperta nell'editor viene
+  sostituita dalla versione attuale; se la tua copia ha modifiche non rimandate, ZillaTerm chiede prima se «Ricarica la
+  versione del server» o «Tieni la mia copia».
 - **Seguire un file (tail -f)**: clic destro su uno o più file → «Segui (tail -f)». Una finestra mostra la fine del
   file, poi ogni nuova riga appena viene scritta, come `tail -f`, leggendo il file via SFTP ogni secondo: nessun
   comando viene eseguito sul server. Un file troncato o sostituito da una rotazione viene riletto dall'inizio;

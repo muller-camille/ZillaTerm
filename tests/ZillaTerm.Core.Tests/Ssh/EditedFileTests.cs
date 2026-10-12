@@ -113,6 +113,60 @@ public sealed class EditedFileTests : IDisposable
         Assert.True(file.HasUnsentChanges);
     }
 
+    /// <summary>
+    /// Fichier rouvert après un changement sur le serveur : la nouvelle copie remplace l'ancienne sans être prise pour un
+    /// enregistrement, et devient la référence des enregistrements suivants.
+    /// </summary>
+    [Fact]
+    public async Task Refresh_ReplacesTheCopyWithoutRaisingSaved()
+    {
+        var path = Write("app.conf", "port=80\n");
+        using var file = new EditedFile("/etc/app/app.conf", path, new DateTime(2026, 1, 1), 8, Delay);
+        var saves = Count(file);
+        file.MarkWriteInterrupted();
+
+        var fresh = Write("app.conf.new", "port=8443\n");
+        file.Refresh(fresh, new DateTime(2026, 3, 3), 10);
+
+        Assert.Equal("port=8443\n", File.ReadAllText(path));
+        Assert.False(File.Exists(fresh));
+        Assert.Equal(new DateTime(2026, 3, 3), file.RemoteWriteTime);
+        Assert.Equal(10, file.RemoteLength);
+        Assert.False(file.WriteInterrupted);
+        Assert.False(await file.HasUnsentChangesAsync());
+        await Task.Delay(Delay * 6);
+        Assert.Equal(0, saves.Count);
+
+        File.WriteAllText(path, "port=80\n");
+        await saves.WaitForAsync(1, Wait);
+        Assert.True(file.HasUnsentChanges);
+    }
+
+    /// <summary>Copie verrouillée par l'éditeur : elle reste, avec la date, la taille et la référence d'avant.</summary>
+    [Fact]
+    public void Refresh_OnALockedCopy_KeepsEverything()
+    {
+        var path = Write("b.txt", "v1");
+        using var file = new EditedFile("/b.txt", path, new DateTime(2026, 1, 1), 2, Delay);
+        var fresh = Write("b.txt.new", "v2");
+
+        using (new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                // Hors de Windows, un fichier ouvert se remplace : rien à vérifier ici.
+                return;
+            }
+
+            var error = Record.Exception(() => file.Refresh(fresh, new DateTime(2026, 3, 3), 2));
+            Assert.True(error is IOException or UnauthorizedAccessException, error?.ToString());
+        }
+
+        Assert.Equal("v1", File.ReadAllText(path));
+        Assert.Equal(new DateTime(2026, 1, 1), file.RemoteWriteTime);
+        Assert.False(file.HasUnsentChanges);
+    }
+
     [Fact]
     public void InterruptedWrite_IsRememberedUntilTheNextSuccessfulSend()
     {
