@@ -528,6 +528,9 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   matches a mask with `*` and `?` (`*.log`, `app?.conf`; several separated by `;`: `*.log;*.gz`), ignoring case.
   `..` stays to go up; the status bar says how many items are shown. It is cleared when you change folder; `Ctrl+F`
   in the Files tab, `Esc` or ✕ clears, `Enter` or `↓` goes to the first item.
+- **Go to a file with the keyboard**: in the list, type the start of its name, as in Explorer: `p` selects the next
+  item whose name starts with "p", `p` again the one after; typed in a row, the letters form the start of the name (`pro` →
+  `profile`). After a one-second pause, a letter starts a new search.
 - Also: new folder, download, copy path, show hidden files.
 - **Follow the terminal folder**: when ticked, every `cd` in the terminal moves the browser to the same folder (see
   [How it works](#how-it-works)). After `sudo -i` or `su`, tick the box again at the shell prompt to re-enable
@@ -860,6 +863,7 @@ Terminal text is capped at 64 million characters per intervention (the other eve
 | Remote desktop | Full screen / back | `Ctrl+Alt+Break` |
 | Files | Open the folder or edit the file / edit / rename / parent folder / delete / refresh | Double-click or `Enter` / `F4` / `F2` / `Backspace` / `Del` / `F5` |
 | Files | Sort by a column, then reverse | Click its header |
+| Files | Go to the item whose name starts with these letters (the same letter again: the next one) | Type the start of the name |
 | KeePass database | Connect / edit / delete an entry | Double-click or `Enter` / `F2` / `Del` |
 
 In a terminal, `Ctrl+K`, `Ctrl+B` and `F6` are sent to the server (`F6` to applications such as mc); `Ctrl+Tab`,
