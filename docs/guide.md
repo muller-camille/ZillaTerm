@@ -1180,7 +1180,10 @@ certificates and keys per address (load-balanced PSM: one per server, each confi
 all. Questions come before the client is launched, never during the connection; once one is answered, the connection
 starts with a new token requested from the PVWA (the PSM token only works once and expires quickly). If the client
 still refuses the server (another server behind the same address), ZillaTerm reads its identity again and asks about
-it if it is new (twice at most per connection).
+it if it is new (twice at most per connection). After a network cut, FreeRDP tries to resume the session; if another
+server answers at the same address, the attempt is refused (identity not checked) and stops at once: the session is
+lost, and ZillaTerm makes a new request to the PVWA (new token), then checks the server that answers before connecting
+to it (question if it is unknown; twice at most before the next session opening).
 
 Hardening: no library loaded from outside its folder and System32 (the virtual channels are compiled into the
 executable), OpenSSL with no module, engine or configuration file loaded at run time, its compiled-in folders being

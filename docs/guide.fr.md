@@ -1255,7 +1255,11 @@ interception possible). Plusieurs certificats et clés par adresse (PSM en répa
 chacun confirmé une fois) : le client les reçoit tous. Les questions sont posées avant le lancement du client, jamais
 pendant la connexion ; une fois l'une d'elles répondue, la connexion part avec un nouveau jeton demandé au PVWA (le
 jeton PSM ne sert qu'une fois et expire vite). Si le client refuse quand même le serveur (autre serveur derrière la même
-adresse), ZillaTerm relit son identité et la soumet si elle est nouvelle (deux fois au plus par connexion).
+adresse), ZillaTerm relit son identité et la soumet si elle est nouvelle (deux fois au plus par connexion). Après une
+coupure réseau, FreeRDP tente de reprendre la session ; si c'est un autre serveur qui répond à la même adresse, la
+tentative est refusée (identité non vérifiée) et s'arrête aussitôt : la session est perdue, et ZillaTerm refait une
+demande au PVWA (nouveau jeton), puis vérifie le serveur qui répond avant de s'y connecter (question s'il est inconnu ;
+deux fois au plus avant une nouvelle ouverture de session).
 
 Durcissement : aucune bibliothèque chargée hors de son dossier et de System32 (les canaux virtuels sont compilés dans
 l'exécutable), OpenSSL sans module, moteur ni fichier de configuration chargés à l'exécution, ses dossiers compilés

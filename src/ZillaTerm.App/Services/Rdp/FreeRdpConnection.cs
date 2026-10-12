@@ -31,7 +31,10 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private const uint TlsConnectFailed = 0x0002_0008;
     private const uint SecurityNegotiationFailed = 0x0002_000C;
 
-    /// <summary>Nouvelles connexions lancées d'elles-mêmes (autre serveur derrière la même adresse), au plus.</summary>
+    /// <summary>
+    /// Nouvelles connexions lancées d'elles-mêmes (autre serveur derrière la même adresse), au plus, depuis la dernière
+    /// ouverture de session.
+    /// </summary>
     private const int MaxAutomaticRetries = 2;
 
     /// <summary>Délai laissé au client pour se déconnecter proprement avant d'être arrêté.</summary>
@@ -401,6 +404,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
         if (!_released)
         {
             bool recheck = false;
+            bool renew = false;
             if (_disconnecting)
             {
                 // Déconnexion demandée : fin normale, même arrêté au bout du délai.
@@ -413,8 +417,12 @@ internal sealed class FreeRdpConnection : IRdpConnection
             else
             {
                 var (normal, end) = FreeRdpExit.Classify(value);
+                bool refused = value is TlsConnectFailed or SecurityNegotiationFailed;
                 // Certificat ou clé refusé par le client avant l'ouverture : un autre serveur a pu répondre.
-                recheck = !connected && value is TlsConnectFailed or SecurityNegotiationFailed;
+                recheck = !connected && refused;
+                // Après l'ouverture, seule une reconnexion automatique de FreeRDP (coupure réseau) peut être refusée : un
+                // autre serveur répond à cette adresse (répartition de charge), la session est perdue.
+                renew = connected && refused;
                 _session.OnEnded(this, normal, normal ? null : Describe(end, value));
             }
 
@@ -422,6 +430,10 @@ internal sealed class FreeRdpConnection : IRdpConnection
             if (recheck)
             {
                 _ = _ui.InvokeAsync(RecheckAsync);
+            }
+            else if (renew)
+            {
+                _ = _ui.InvokeAsync(RenewAsync);
             }
         }
 
@@ -456,6 +468,25 @@ internal sealed class FreeRdpConnection : IRdpConnection
             return;
         }
 
+        _session.AutomaticRetries++;
+        await _session.ReconnectAsync();
+    }
+
+    /// <summary>
+    /// Session perdue, reconnexion refusée par le client (autre serveur derrière la même adresse) : le jeton PSM a déjà
+    /// servi, nouvelle connexion avec une nouvelle demande au PVWA. Le serveur qui répondra est vérifié avant le
+    /// lancement du client, comme à chaque connexion (question s'il est inconnu) : rien n'est accepté sans vérification.
+    /// </summary>
+    private async Task RenewAsync()
+    {
+        if (_session.AutomaticRetries >= MaxAutomaticRetries)
+        {
+            DebugLog.Write("freerdp", $"{_label} : reconnexion refusée par le client ; pas de nouvel essai automatique");
+            return;
+        }
+
+        DebugLog.Write("freerdp", $"{_label} : reconnexion refusée par le client (autre serveur à la même adresse) ; "
+            + "nouvelle demande de connexion");
         _session.AutomaticRetries++;
         await _session.ReconnectAsync();
     }

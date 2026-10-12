@@ -1261,7 +1261,10 @@ bilanciamento del carico: uno per server, ciascuno confermato una volta): il cli
 vengono poste prima dell'avvio del client, mai durante la connessione; una volta data una risposta, la connessione
 parte con un nuovo token richiesto al PVWA (il token PSM vale una sola volta e scade presto). Se il client rifiuta
 comunque il server (altro server dietro lo stesso indirizzo), ZillaTerm ne rilegge l'identità e la sottopone se è
-nuova (al massimo due volte per connessione).
+nuova (al massimo due volte per connessione). Dopo un'interruzione di rete, FreeRDP tenta di riprendere la sessione; se
+risponde un altro server allo stesso indirizzo, il tentativo viene rifiutato (identità non verificata) e si ferma
+subito: la sessione è persa, e ZillaTerm fa una nuova richiesta al PVWA (nuovo token), poi verifica il server che
+risponde prima di connettersi (domanda se è sconosciuto; al massimo due volte prima di una nuova apertura di sessione).
 
 Rafforzamento: nessuna libreria caricata fuori dalla sua cartella e da System32 (i canali virtuali sono compilati
 nell'eseguibile), OpenSSL senza moduli, motori né file di configurazione caricati all'esecuzione, essendo le sue
