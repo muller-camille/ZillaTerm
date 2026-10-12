@@ -477,10 +477,10 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   executable or an office document is downloaded instead of opened, as is any file whose first bytes are binary. Every time you save, ZillaTerm offers to send it back to the
   server ("Send back" or "Not now"): sent over SFTP, the file's permissions are kept. If the file changed on the
   server since you opened it, a warning says so and asks for confirmation ("Replace with my version") before
-  overwriting it. Opening a file that is already open reads its date and size on the server again: if it changed there
-  (edited in the terminal, by someone else, before a reconnection…), the copy opened in the editor is replaced by the
-  current version; if your copy has changes not sent back, ZillaTerm first asks whether to "Reload the server version"
-  or "Keep my copy".
+  overwriting it. Opening a file that is already open downloads it again, every time: if its content changed on the
+  server (edited in the terminal, by someone else, before a reconnection…), the copy opened in the editor is replaced
+  by the current version; otherwise it is left as is. Only exception: if your copy has changes not sent back and the
+  file also changed on the server, ZillaTerm asks whether to "Reload the server version" or "Keep my copy".
 - **Follow a file (tail -f)**: right-click one or several files → "Follow (tail -f)". A window shows the end of the
   file, then each new line as soon as it is written, like `tail -f`, reading the file over SFTP every second: no
   command runs on the server. A file truncated or replaced by a rotation is read again from the start; the last

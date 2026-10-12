@@ -504,10 +504,11 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   même qu'un fichier dont les premiers octets sont binaires. À chaque enregistrement, ZillaTerm
   propose de le renvoyer sur le serveur (« Renvoyer » ou « Pas maintenant ») : envoi en SFTP, droits du fichier
   conservés. Si le fichier a changé sur le serveur depuis son ouverture, une alerte le dit et demande confirmation
-  (« Remplacer par ma version ») avant de l'écraser. Rouvrir un fichier déjà ouvert relit sa date et sa taille sur le
-  serveur : s'il y a changé (modifié dans le terminal, par quelqu'un d'autre, avant une reconnexion…), la copie ouverte
-  dans l'éditeur est remplacée par la version actuelle ; si votre copie a des modifications non renvoyées, ZillaTerm
-  demande d'abord s'il faut « Recharger la version du serveur » ou « Garder ma copie ».
+  (« Remplacer par ma version ») avant de l'écraser. Rouvrir un fichier déjà ouvert le télécharge de nouveau, à chaque
+  fois : si son contenu a changé sur le serveur (modifié dans le terminal, par quelqu'un d'autre, avant une
+  reconnexion…), la copie ouverte dans l'éditeur est remplacée par la version actuelle ; sinon elle n'est pas touchée.
+  Seule exception : si votre copie a des modifications non renvoyées et que le fichier a aussi changé sur le serveur,
+  ZillaTerm demande s'il faut « Recharger la version du serveur » ou « Garder ma copie ».
 - **Suivre un fichier (tail -f)** : clic droit sur un ou plusieurs fichiers → « Suivre (tail -f) ». Une fenêtre
   montre la fin du fichier puis chaque nouvelle ligne dès qu'elle est écrite, comme `tail -f`, en lisant le fichier
   par SFTP chaque seconde : aucune commande n'est lancée sur le serveur. Un fichier tronqué ou remplacé par une

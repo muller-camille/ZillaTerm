@@ -10539,15 +10539,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to {0} changed on the server: copying it again….
-        /// </summary>
-        public static string EditRefreshing {
-            get {
-                return ResourceManager.GetString("EditRefreshing", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to {0} changed on the server: the copy opened in the editor was replaced by the current version.
         /// </summary>
         public static string EditRefreshed {

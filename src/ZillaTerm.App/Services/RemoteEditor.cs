@@ -77,8 +77,8 @@ public sealed class RemoteEditor : IDisposable
     }
 
     /// <summary>
-    /// Fichier déjà ouvert : l'éditeur est rouvert sur la même copie, d'abord remplacée par la version du serveur si le
-    /// fichier y a changé depuis (modifié dans le terminal, par quelqu'un d'autre, avant une reconnexion...).
+    /// Fichier déjà ouvert : il est téléchargé de nouveau à chaque fois (la date du serveur, souvent à la seconde près, ne
+    /// suffit pas), et l'éditeur rouvert sur la même copie, remplacée si le contenu du serveur est différent.
     /// </summary>
     private async Task ReopenAsync(EditedFile file, RemoteEntry entry)
     {
@@ -106,7 +106,7 @@ public sealed class RemoteEditor : IDisposable
         }
     }
 
-    /// <summary>Remplace la copie par la version du serveur si elle a changé (avec accord si la copie a des modifications non renvoyées).</summary>
+    /// <summary>Nouvelle copie du serveur ; remplace la copie si son contenu diffère (avec accord si la copie a des modifications non renvoyées).</summary>
     private async Task RefreshAsync(EditedFile file, RemoteEntry entry)
     {
         // Renvoi coupé : c'est notre écriture partielle qui a changé le fichier du serveur, la copie est celle à renvoyer.
@@ -115,39 +115,13 @@ public sealed class RemoteEditor : IDisposable
             return;
         }
 
+        _status(Text.Format(Strings.EditOpening, file.Name), false);
         string? fresh = null;
         try
         {
             var browser = await _session.GetBrowserAsync();
-            // Date et taille relevées avant la copie, comme à l'ouverture.
+            // Date et taille relevées avant la copie, comme à l'ouverture : un changement pendant la copie sera signalé au renvoi.
             var (time, length) = await browser.GetStatAsync(file.RemotePath, CancellationToken.None);
-            if (time == file.RemoteWriteTime && length == file.RemoteLength)
-            {
-                return;
-            }
-
-            bool discard = false;
-            if (await file.HasUnsentChangesAsync())
-            {
-                if (_disposed || !ConfirmDialog.Confirm(_owner, new ConfirmRequest
-                    {
-                        Title = Strings.FileEdit.Replace("_", ""),
-                        Heading = Text.Format(Strings.EditReloadHeading, file.Name),
-                        Subject = $"{_session.Label}:{file.RemotePath}",
-                        Message = Strings.EditReloadMessage,
-                        Kind = ConfirmKind.Warning,
-                        Actions = [Strings.EditReloadAction],
-                        DangerAction = 0,
-                        CancelLabel = Strings.EditKeepMine,
-                    }))
-                {
-                    return;
-                }
-
-                discard = true;
-            }
-
-            _status(Text.Format(Strings.EditRefreshing, file.Name), false);
             // À côté de la copie (même dossier : remplacement d'un seul coup) ; un nom commençant par un point n'est jamais
             // celui d'une copie (LocalCopyName les retire).
             fresh = Path.Combine(Path.GetDirectoryName(file.LocalPath)!, "." + Guid.NewGuid().ToString("N")[..8]);
@@ -157,15 +131,29 @@ public sealed class RemoteEditor : IDisposable
                 throw CopyRejected(check);
             }
 
-            // Enregistré dans l'éditeur pendant la copie : ces modifications ne sont pas écrasées sans accord (leur renvoi
-            // est proposé ensuite, avec l'alerte « modifié sur le serveur »).
-            if (_disposed || !_files.Contains(file) || (!discard && await file.HasUnsentChangesAsync()))
+            if (_disposed || !_files.Contains(file))
             {
                 return;
             }
 
-            await Task.Run(() => file.Refresh(fresh, time, length));
-            _status(Text.Format(Strings.EditRefreshed, file.Name), false);
+            // Modifications non renvoyées (y compris un enregistrement fait pendant la copie) : jamais écrasées sans accord.
+            var result = await Task.Run(() => file.Refresh(fresh, time, length, keepUnsent: true));
+            if (result == EditedFile.RefreshResult.Conflict && !_disposed && ConfirmDialog.Confirm(_owner, new ConfirmRequest
+                {
+                    Title = Strings.FileEdit.Replace("_", ""),
+                    Heading = Text.Format(Strings.EditReloadHeading, file.Name),
+                    Subject = $"{_session.Label}:{file.RemotePath}",
+                    Message = Strings.EditReloadMessage,
+                    Kind = ConfirmKind.Warning,
+                    Actions = [Strings.EditReloadAction],
+                    DangerAction = 0,
+                    CancelLabel = Strings.EditKeepMine,
+                }) && !_disposed && _files.Contains(file))
+            {
+                result = await Task.Run(() => file.Refresh(fresh, time, length, keepUnsent: false));
+            }
+
+            _status(Text.Format(result == EditedFile.RefreshResult.Replaced ? Strings.EditRefreshed : Strings.EditOpened, file.Name), false);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {

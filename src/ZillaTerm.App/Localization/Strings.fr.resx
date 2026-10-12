@@ -3543,9 +3543,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="EditReplaceAnyway" xml:space="preserve">
     <value>Remplacer par ma version</value>
   </data>
-  <data name="EditRefreshing" xml:space="preserve">
-    <value>{0} a changé sur le serveur : nouvelle copie…</value>
-  </data>
   <data name="EditRefreshed" xml:space="preserve">
     <value>{0} a changé sur le serveur : la copie ouverte dans l'éditeur a été remplacée par la version actuelle</value>
   </data>

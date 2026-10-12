@@ -114,7 +114,7 @@ public sealed class EditedFileTests : IDisposable
     }
 
     /// <summary>
-    /// Fichier rouvert après un changement sur le serveur : la nouvelle copie remplace l'ancienne sans être prise pour un
+    /// Fichier rouvert, contenu changé sur le serveur : la nouvelle copie remplace l'ancienne sans être prise pour un
     /// enregistrement, et devient la référence des enregistrements suivants.
     /// </summary>
     [Fact]
@@ -123,16 +123,14 @@ public sealed class EditedFileTests : IDisposable
         var path = Write("app.conf", "port=80\n");
         using var file = new EditedFile("/etc/app/app.conf", path, new DateTime(2026, 1, 1), 8, Delay);
         var saves = Count(file);
-        file.MarkWriteInterrupted();
 
-        var fresh = Write("app.conf.new", "port=8443\n");
-        file.Refresh(fresh, new DateTime(2026, 3, 3), 10);
+        var fresh = Write(".fresh", "port=8443\n");
+        Assert.Equal(EditedFile.RefreshResult.Replaced, file.Refresh(fresh, new DateTime(2026, 3, 3), 10, keepUnsent: true));
 
         Assert.Equal("port=8443\n", File.ReadAllText(path));
         Assert.False(File.Exists(fresh));
         Assert.Equal(new DateTime(2026, 3, 3), file.RemoteWriteTime);
         Assert.Equal(10, file.RemoteLength);
-        Assert.False(file.WriteInterrupted);
         Assert.False(await file.HasUnsentChangesAsync());
         await Task.Delay(Delay * 6);
         Assert.Equal(0, saves.Count);
@@ -142,23 +140,66 @@ public sealed class EditedFileTests : IDisposable
         Assert.True(file.HasUnsentChanges);
     }
 
+    /// <summary>Même contenu (seule la date a bougé, ou pas) : la copie n'est pas touchée, l'éditeur ne propose pas de la recharger.</summary>
+    [Fact]
+    public void Refresh_WithTheSameContent_LeavesTheCopy()
+    {
+        var path = Write("a.txt", "v1");
+        using var file = new EditedFile("/a.txt", path, new DateTime(2026, 1, 1), 2, Delay);
+        var before = File.GetLastWriteTimeUtc(path).AddSeconds(-5);
+        File.SetLastWriteTimeUtc(path, before);
+        var fresh = Write(".fresh", "v1");
+
+        Assert.Equal(EditedFile.RefreshResult.Unchanged, file.Refresh(fresh, new DateTime(2026, 1, 1, 0, 0, 1), 2, keepUnsent: true));
+
+        Assert.True(File.Exists(fresh));
+        Assert.Equal(before, File.GetLastWriteTimeUtc(path));
+        Assert.Equal(new DateTime(2026, 1, 1, 0, 0, 1), file.RemoteWriteTime);
+    }
+
+    /// <summary>Modifications non renvoyées : gardées si le serveur n'a pas changé, sinon rien n'est touché sans accord.</summary>
+    [Fact]
+    public void Refresh_KeepsUnsentChanges_UntilTheUserAgrees()
+    {
+        var path = Write("b.txt", "v1");
+        using var file = new EditedFile("/b.txt", path, new DateTime(2026, 1, 1), 2, Delay);
+        File.WriteAllText(path, "mine");
+
+        // Serveur inchangé : la copie modifiée reste.
+        var same = Write(".same", "v1");
+        Assert.Equal(EditedFile.RefreshResult.KeptUnsent, file.Refresh(same, new DateTime(2026, 1, 2), 2, keepUnsent: true));
+        Assert.Equal("mine", File.ReadAllText(path));
+        Assert.True(file.HasUnsentChanges);
+
+        // Serveur changé : conflit, rien ne bouge ; avec accord, la version du serveur remplace la copie.
+        var other = Write(".other", "theirs");
+        Assert.Equal(EditedFile.RefreshResult.Conflict, file.Refresh(other, new DateTime(2026, 1, 3), 6, keepUnsent: true));
+        Assert.Equal("mine", File.ReadAllText(path));
+        Assert.Equal(new DateTime(2026, 1, 2), file.RemoteWriteTime);
+
+        Assert.Equal(EditedFile.RefreshResult.Replaced, file.Refresh(other, new DateTime(2026, 1, 3), 6, keepUnsent: false));
+        Assert.Equal("theirs", File.ReadAllText(path));
+        Assert.False(file.HasUnsentChanges);
+        Assert.Equal(new DateTime(2026, 1, 3), file.RemoteWriteTime);
+    }
+
     /// <summary>Copie verrouillée par l'éditeur : elle reste, avec la date, la taille et la référence d'avant.</summary>
     [Fact]
     public void Refresh_OnALockedCopy_KeepsEverything()
     {
-        var path = Write("b.txt", "v1");
-        using var file = new EditedFile("/b.txt", path, new DateTime(2026, 1, 1), 2, Delay);
-        var fresh = Write("b.txt.new", "v2");
+        var path = Write("c.txt", "v1");
+        using var file = new EditedFile("/c.txt", path, new DateTime(2026, 1, 1), 2, Delay);
+        var fresh = Write(".fresh", "v2");
 
         using (new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
         {
             if (!OperatingSystem.IsWindows())
             {
-                // Hors de Windows, un fichier ouvert se remplace : rien à vérifier ici.
+                // Hors de Windows, un fichier ouvert se lit et se remplace : rien à vérifier ici.
                 return;
             }
 
-            var error = Record.Exception(() => file.Refresh(fresh, new DateTime(2026, 3, 3), 2));
+            var error = Record.Exception(() => file.Refresh(fresh, new DateTime(2026, 3, 3), 2, keepUnsent: false));
             Assert.True(error is IOException or UnauthorizedAccessException, error?.ToString());
         }
 

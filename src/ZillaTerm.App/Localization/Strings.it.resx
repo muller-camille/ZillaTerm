@@ -3543,9 +3543,6 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="EditReplaceAnyway" xml:space="preserve">
     <value>Sostituisci con la mia versione</value>
   </data>
-  <data name="EditRefreshing" xml:space="preserve">
-    <value>{0} è cambiato sul server: nuova copia…</value>
-  </data>
   <data name="EditRefreshed" xml:space="preserve">
     <value>{0} è cambiato sul server: la copia aperta nell'editor è stata sostituita dalla versione attuale</value>
   </data>

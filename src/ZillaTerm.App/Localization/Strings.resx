@@ -3543,9 +3543,6 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="EditReplaceAnyway" xml:space="preserve">
     <value>Replace with my version</value>
   </data>
-  <data name="EditRefreshing" xml:space="preserve">
-    <value>{0} changed on the server: copying it again…</value>
-  </data>
   <data name="EditRefreshed" xml:space="preserve">
     <value>{0} changed on the server: the copy opened in the editor was replaced by the current version</value>
   </data>
