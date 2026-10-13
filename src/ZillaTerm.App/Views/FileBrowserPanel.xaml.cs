@@ -230,6 +230,7 @@ public partial class FileBrowserPanel : UserControl
             if (!quiet)
             {
                 ShowListSummary();
+                ShowPendingReport();
             }
 
             return true;
@@ -961,16 +962,63 @@ public partial class FileBrowserPanel : UserControl
     /// </summary>
     private bool StillShowing(IRemoteFiles browser, int generation) => generation == _generation && ReferenceEquals(_browser, browser);
 
+    /// <summary>
+    /// Connexion, session et dossier affichés quand une action commence, gardés pendant la fenêtre qui suit (choix des
+    /// fichiers, nom d'un dossier) : le panneau peut entre-temps passer à une autre session (vue parallèle, terminal
+    /// détaché) ou suivre le terminal dans un autre dossier, l'action vise toujours ce que la fenêtre annonçait.
+    /// </summary>
+    internal sealed record ShownFolder(IRemoteFiles Browser, RemoteSession Session, string Directory)
+    {
+        /// <summary>La connexion, ou celle qui l'a remplacée dans la même session (reconnexion pendant la fenêtre).</summary>
+        public IRemoteFiles Connection => !Browser.IsConnected && Session.OpenedBrowser is { } reopened ? reopened : Browser;
+    }
+
+    /// <summary>Connexion, session et dossier affichés ; null sans connexion.</summary>
+    internal ShownFolder? CurrentFolder() =>
+        _browser is { } browser && _session is { } session ? new ShownFolder(browser, session, browser.CurrentDirectory) : null;
+
+    /// <summary>
+    /// Bilans de suppression ou de modification des droits pas encore affichés, par session : une opération terminée
+    /// pendant que le panneau montrait une autre session garde son bilan, erreurs comprises, jusqu'au retour sur la sienne.
+    /// </summary>
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<RemoteSession, StatusReport> _reports = [];
+
+    private sealed record StatusReport(string Text, bool Error);
+
+    /// <summary>
+    /// Bilan d'une opération longue (suppression, droits) : affiché après relecture du dossier si le panneau montre sa
+    /// session, même après un aller-retour sur un autre onglet ; sinon à la prochaine lecture d'un dossier de la session.
+    /// </summary>
+    private void Report(RemoteSession session, string text, bool error)
+    {
+        _reports.AddOrUpdate(session, new StatusReport(text, error));
+        if (ReferenceEquals(_session, session) && _browser is { } browser)
+        {
+            _ = NavigateAsync(browser.CurrentDirectory);
+        }
+    }
+
+    /// <summary>Dossier lu : le bilan en attente de la session affichée remplace le résumé du dossier.</summary>
+    private void ShowPendingReport()
+    {
+        if (_session is { } session && _reports.TryGetValue(session, out var report))
+        {
+            _reports.Remove(session);
+            SetStatus(report.Text, report.Error);
+        }
+    }
+
     private async void OnNewFolder(object sender, RoutedEventArgs e)
     {
-        var browser = _browser;
         int generation = _generation;
-        if (browser is null)
+        if (CurrentFolder() is not (var browser, var session, var directory))
         {
             return;
         }
 
-        var dialog = new InputDialog(Strings.NewFolder, Text.Format(Strings.NewRemoteFolderPrompt, browser.CurrentDirectory),
+        // Dossier pris avant la fenêtre : le dossier est créé là où la question l'annonce.
+        var where = Text.Format(Strings.ServerPath, session.Label, RemoteEntry.Visible(directory));
+        var dialog = new InputDialog(Strings.NewFolder, Text.Format(Strings.NewRemoteFolderPrompt, where),
             validate: ValidateName) { Owner = Window.GetWindow(this) };
         if (dialog.ShowDialog() != true)
         {
@@ -979,7 +1027,7 @@ public partial class FileBrowserPanel : UserControl
 
         try
         {
-            await browser.CreateDirectoryAsync(RemotePath.Combine(browser.CurrentDirectory, dialog.Value), CancellationToken.None);
+            await browser.CreateDirectoryAsync(RemotePath.Combine(directory, dialog.Value), CancellationToken.None);
             if (StillShowing(browser, generation))
             {
                 await NavigateAsync(browser.CurrentDirectory);
@@ -1085,14 +1133,15 @@ public partial class FileBrowserPanel : UserControl
 
     private async Task ChangePermissionsAsync()
     {
-        var browser = _browser;
-        int generation = _generation;
         var selected = SelectedEntries();
-        if (browser is null || selected.Count == 0 || RefuseIfBusy(browser))
+        if (CurrentFolder() is not (var browser, var session, var directory) || selected.Count == 0 || RefuseIfBusy(browser))
         {
             return;
         }
 
+        // Serveur et dossier lus avant l'attente des droits d'un lien : la fenêtre nomme le serveur des éléments choisis,
+        // même si le panneau est passé entre-temps à une autre session.
+        var location = Text.Format(Strings.ServerPath, session.Label, RemoteEntry.Visible(directory));
         var target = selected.Count == 1 ? selected[0].DisplayName : Text.Format(Strings.ItemsCount, selected.Count);
         var modes = new List<int>();
         foreach (var entry in selected)
@@ -1125,7 +1174,6 @@ public partial class FileBrowserPanel : UserControl
             modes.Add(resolved);
         }
 
-        var location = Text.Format(Strings.ServerPath, _session?.Label ?? "", browser.CurrentDirectory);
         var owner = Window.GetWindow(this);
         var dialog = new PermissionsDialog(target, location, modes, selected.Any(s => s.IsDirectory && !s.IsSymbolicLink)) { Owner = owner };
         if (dialog.ShowDialog() != true)
@@ -1186,7 +1234,8 @@ public partial class FileBrowserPanel : UserControl
         {
             foreach (var entry in selected)
             {
-                if (StillShowing(browser, generation))
+                // Avancement affiché tant que le panneau montre ce serveur (de nouveau après un aller-retour sur un autre onglet).
+                if (ReferenceEquals(_browser, browser))
                 {
                     SetStatus(Text.Format(Strings.PermissionsApplying, entry.DisplayName));
                 }
@@ -1194,7 +1243,7 @@ public partial class FileBrowserPanel : UserControl
                 int before = changed;
                 var progress = new Progress<int>(n =>
                 {
-                    if (StillShowing(browser, generation))
+                    if (ReferenceEquals(_browser, browser))
                     {
                         SetStatus(Text.Format(Strings.PermissionsProgress, before + n));
                     }
@@ -1226,26 +1275,12 @@ public partial class FileBrowserPanel : UserControl
             UpdateStopChmodButton();
         }
 
-        if (!StillShowing(browser, generation))
-        {
-            return;
-        }
-
-        await NavigateAsync(browser.CurrentDirectory);
-        if (errors.Count > 0)
-        {
-            SetStatus(Text.Format(Strings.PermissionsFailed, string.Join(" ; ", errors.Take(5))), error: true);
-        }
-        else if (stopped)
-        {
-            SetStatus(Text.Format(Strings.PermissionsStopped, changed));
-        }
-        else
-        {
-            SetStatus(dialog.Recursive
-                ? Text.Format(Strings.PermissionsDoneCount, what, changed)
-                : Text.Format(Strings.PermissionsDone, what, target));
-        }
+        Report(session,
+            errors.Count > 0 ? Text.Format(Strings.PermissionsFailed, string.Join(" ; ", errors.Take(5)))
+            : stopped ? Text.Format(Strings.PermissionsStopped, changed)
+            : dialog.Recursive ? Text.Format(Strings.PermissionsDoneCount, what, changed)
+            : Text.Format(Strings.PermissionsDone, what, target),
+            error: errors.Count > 0);
     }
 
     private void OnStopChmod(object sender, RoutedEventArgs e)
@@ -1317,10 +1352,8 @@ public partial class FileBrowserPanel : UserControl
 
     private async Task DeleteAsync()
     {
-        var browser = _browser;
-        int generation = _generation;
         var selected = SelectedEntries();
-        if (browser is null || selected.Count == 0 || RefuseIfBusy(browser))
+        if (CurrentFolder() is not { } folder || selected.Count == 0 || RefuseIfBusy(folder.Browser))
         {
             return;
         }
@@ -1332,20 +1365,28 @@ public partial class FileBrowserPanel : UserControl
                     ? Text.Format(Strings.FileDeleteHeadingOne, Name(selected[0]))
                     : Text.Format(Strings.FileDeleteHeadingMany, selected.Count),
                 Strings.ActionDelete,
-                subject: Text.Format(Strings.ServerPath, _session?.Label ?? "", browser.CurrentDirectory),
+                subject: Text.Format(Strings.ServerPath, folder.Session.Label, folder.Directory),
                 bullets: [Strings.FileDeleteNoBin, Strings.FileDeleteRules],
                 items: selected.Count == 1 ? null : selected.Select(Name).ToList()))
         {
             return;
         }
 
+        await DeleteEntriesAsync(folder, selected);
+    }
+
+    /// <summary>Supprime les éléments confirmés ; le bilan, erreurs comprises, n'est jamais perdu (voir <see cref="Report"/>).</summary>
+    internal async Task DeleteEntriesAsync(ShownFolder folder, IReadOnlyList<RemoteEntry> selected)
+    {
+        var browser = folder.Browser;
         var errors = new List<string>();
         BeginBusy(browser);
         try
         {
             foreach (var entry in selected)
             {
-                if (StillShowing(browser, generation))
+                // Avancement affiché tant que le panneau montre ce serveur (de nouveau après un aller-retour sur un autre onglet).
+                if (ReferenceEquals(_browser, browser))
                 {
                     SetStatus(Text.Format(Strings.Deleting, entry.DisplayName));
                 }
@@ -1365,20 +1406,9 @@ public partial class FileBrowserPanel : UserControl
             EndBusy(browser);
         }
 
-        if (!StillShowing(browser, generation))
-        {
-            return;
-        }
-
-        await NavigateAsync(browser.CurrentDirectory);
-        if (errors.Count > 0)
-        {
-            SetStatus(Text.Format(Strings.DeleteIncomplete, string.Join(" ; ", errors)), error: true);
-        }
-        else
-        {
-            SetStatus(Text.Format(Strings.Deleted, selected.Count));
-        }
+        Report(folder.Session,
+            errors.Count > 0 ? Text.Format(Strings.DeleteIncomplete, string.Join(" ; ", errors)) : Text.Format(Strings.Deleted, selected.Count),
+            error: errors.Count > 0);
     }
 
     // ===================== Envoi (glisser-déposer) et téléchargement =====================
@@ -1453,15 +1483,18 @@ public partial class FileBrowserPanel : UserControl
 
     private void OnUploadDialog(object sender, RoutedEventArgs e)
     {
-        if (_browser is null)
+        // Serveur et dossier pris avant la fenêtre, et nommés dans son titre : les fichiers vont là, même si le panneau
+        // passe entre-temps à une autre session ou suit le terminal dans un autre dossier.
+        if (CurrentFolder() is not { } folder)
         {
             return;
         }
 
-        var dialog = new OpenFileDialog { Title = Text.Format(Strings.UploadTo, _browser.CurrentDirectory), Multiselect = true };
+        var where = Text.Format(Strings.ServerPath, folder.Session.Label, RemoteEntry.Visible(folder.Directory));
+        var dialog = new OpenFileDialog { Title = Text.Format(Strings.UploadTo, where), Multiselect = true };
         if (dialog.ShowDialog(Window.GetWindow(this)) == true)
         {
-            _ = EnqueueUploadAsync(dialog.FileNames);
+            _ = EnqueueUploadAsync(dialog.FileNames, from: folder);
         }
     }
 
@@ -1486,7 +1519,9 @@ public partial class FileBrowserPanel : UserControl
     /// <summary>Demande où enregistrer, puis met le téléchargement en file.</summary>
     private void RequestDownload(IReadOnlyList<RemoteEntry> files)
     {
-        if (_browser is null || files.Count == 0)
+        // Connexion prise avant la fenêtre d'enregistrement : les fichiers viennent du serveur où on les a choisis, même si
+        // le panneau passe entre-temps à une autre session (vue parallèle, terminal détaché).
+        if (CurrentFolder() is not { } from || files.Count == 0)
         {
             return;
         }
@@ -1537,7 +1572,7 @@ public partial class FileBrowserPanel : UserControl
             }
         }
 
-        EnqueueDownload(files, folder, targets);
+        EnqueueDownload(files, folder, targets, from);
     }
 
     // ===================== Vérification des transferts =====================
