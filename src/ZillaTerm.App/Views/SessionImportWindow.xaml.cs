@@ -256,10 +256,17 @@ public partial class SessionImportWindow : Window
     /// </summary>
     private void UpdateAllBox()
     {
+        if (_import is not { Applied: false })
+        {
+            // Avant la lecture, ou import fait : plus rien à cocher, la case reste telle quelle.
+            _allBox.IsEnabled = false;
+            return;
+        }
+
         var rows = VisibleRows().Where(r => r.CanInclude).ToList();
         int included = rows.Count(r => r.Include);
         _allBox.IsChecked = included == 0 ? false : included == rows.Count ? true : null;
-        _allBox.IsEnabled = _import is { Applied: false } && rows.Count > 0;
+        _allBox.IsEnabled = rows.Count > 0;
     }
 
     /// <summary>Une session cochée ou décochée : seuls les boutons et la case de l'en-tête en dépendent (pas les états ni le bilan).</summary>
