@@ -152,8 +152,10 @@
     <Style TargetType="ListBox">
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}" />
     </Style>
+    <!-- Texte : le style de Windows pour une ListView en colonnes l'écrit en bleu nuit (#042271), illisible ici. -->
     <Style TargetType="ListView">
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
     </Style>
     <Style TargetType="TreeView">
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}" />
@@ -885,6 +887,50 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Lignes des listes de fichiers (même clé que Theme.xaml) : le modèle de Windows survole et sélectionne avec des
+         dégradés clairs et un reflet blanc, sous lesquels le texte clair disparaît. -->
+    <Style x:Key="FileRow" TargetType="ListViewItem">
+        <Setter Property="Padding" Value="2,1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="2" SnapsToDevicePixels="True">
+                        <GridViewRowPresenter Margin="1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource HeaderHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{StaticResource MenuHoverBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource MenuHoverBorderBrush}" />
+            </Trigger>
+            <!-- Sélection quand la liste n'a pas le focus : même fond, sans le cadre. -->
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsSelected" Value="True" />
+                    <Condition Property="Selector.IsSelectionActive" Value="False" />
+                </MultiTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveSelectionHighlightBrushKey}}" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+            </MultiTrigger>
+            <!-- Dossier survolé pendant un dépôt de fichiers : il recevra les fichiers (FileBrowserPanel). -->
+            <Trigger Property="Tag" Value="drop">
+                <Setter Property="Background" Value="{DynamicResource AccentLightBrush}" />
             </Trigger>
         </Style.Triggers>
     </Style>

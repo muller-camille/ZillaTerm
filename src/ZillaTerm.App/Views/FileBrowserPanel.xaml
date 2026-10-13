@@ -325,19 +325,8 @@
                       DragEnter="OnDragEnter" DragOver="OnDragEnter" DragLeave="OnDragLeave" Drop="OnDrop"
                       PreviewMouseLeftButtonDown="OnListPreviewMouseDown" PreviewMouseMove="OnListPreviewMouseMove"
                       PreviewMouseLeftButtonUp="OnListPreviewMouseUp" GridViewColumnHeader.Click="OnColumnHeaderClick"
+                      MouseDoubleClick="OnItemDoubleClick" ItemContainerStyle="{DynamicResource FileRow}"
                       VirtualizingPanel.IsVirtualizing="True">
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="Padding" Value="2,1" />
-                        <EventSetter Event="MouseDoubleClick" Handler="OnItemDoubleClick" />
-                        <!-- Dossier survolé pendant un dépôt de fichiers : il recevra les fichiers. -->
-                        <Style.Triggers>
-                            <Trigger Property="Tag" Value="drop">
-                                <Setter Property="Background" Value="{DynamicResource AccentLightBrush}" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListView.ItemContainerStyle>
                 <ListView.View>
                     <GridView ColumnHeaderContextMenu="{StaticResource ColumnsMenu}">
                         <GridViewColumn x:Name="NameColumn" Header="{x:Static corel:CoreStrings.ColumnName}" Width="165">

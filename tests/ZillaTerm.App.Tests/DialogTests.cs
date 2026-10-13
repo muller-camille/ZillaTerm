@@ -2584,6 +2584,80 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Thème sombre : noms des fichiers (lignes simples, sélectionnée) et nom de l'onglet de session lisibles. Le style de
+    /// Windows écrit les premiers en bleu nuit, le second en noir, et sélectionne la ligne avec un dégradé clair.
+    /// </summary>
+    [Fact]
+    public void DarkThemeKeepsFileAndTabNamesReadable()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var merged = Application.Current.Resources.MergedDictionaries;
+            var dark = Palette.Dark(merged.ToList());
+            merged.Add(dark);
+            try
+            {
+                var panel = new FileBrowserPanel();
+                panel.Initialize(new AppSettings(), () => { }, new TransferHistory());
+                var header = new SessionTabHeader("srv01.corp.local", "IconSsh", new System.Windows.Controls.Button(), "SSH", null);
+                header.SetState(SessionTabState.Connected);
+                var tabs = new System.Windows.Controls.TabControl { Style = (Style)Application.Current.FindResource("MainTabControl") };
+                tabs.Items.Add(new System.Windows.Controls.TabItem { Header = header, Content = panel });
+                var window = new Window { Content = tabs, Width = 600, Height = 400, ShowInTaskbar = false, ShowActivated = false };
+                window.Show();
+                RemoteEntry E(string name) => new(name, "/etc/" + name, false, false, 10, new DateTime(2026, 10, 1), "-rw-r--r--");
+                panel.FileList.ItemsSource = new List<RemoteEntry> { E("hosts"), E("passwd") };
+                panel.FileList.SelectedIndex = 0;
+                window.UpdateLayout();
+
+                static System.Windows.Media.Color ColorOf(System.Windows.Media.Brush brush) => ((System.Windows.Media.SolidColorBrush)brush).Color;
+                var content = ColorOf((System.Windows.Media.Brush)dark["ContentBrush"]);
+                for (int i = 0; i < 2; i++)
+                {
+                    var row = (System.Windows.Controls.ListViewItem)panel.FileList.ItemContainerGenerator.ContainerFromIndex(i);
+                    var background = row.Background is System.Windows.Media.SolidColorBrush { Color.A: 255 } fill ? fill.Color : content;
+                    Assert.True(Contrast(ColorOf(row.Foreground), background) >= 4.5, $"ligne {i} : {ColorOf(row.Foreground)} sur {background}");
+                }
+
+                var tab = ColorOf((System.Windows.Media.Brush)dark["MainTabBrush"]);
+                Assert.True(Contrast(ColorOf(header.Title.Foreground), tab) >= 4.5, $"onglet : {ColorOf(header.Title.Foreground)} sur {tab}");
+
+                // Retour au thème clair sans redémarrer : la ligne reprend le modèle de Windows.
+                merged.Remove(dark);
+                window.UpdateLayout();
+                Assert.NotSame(dark["FileRow"], panel.FileList.ItemContainerStyle);
+                window.Close();
+            }
+            finally
+            {
+                merged.Remove(dark);
+            }
+        });
+
+        static double Contrast(System.Windows.Media.Color a, System.Windows.Media.Color b)
+        {
+            static double Luminance(System.Windows.Media.Color color)
+            {
+                static double Channel(byte value)
+                {
+                    var c = value / 255.0;
+                    return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+                }
+
+                return 0.2126 * Channel(color.R) + 0.7152 * Channel(color.G) + 0.0722 * Channel(color.B);
+            }
+
+            var (light, darker) = (Math.Max(Luminance(a), Luminance(b)), Math.Min(Luminance(a), Luminance(b)));
+            return (light + 0.05) / (darker + 0.05);
+        }
+    }
+
+    /// <summary>
     /// Thème sombre : les fenêtres s'ouvrent avec ses modèles (listes déroulantes, onglets, tableaux, cases), le choix
     /// est relu des réglages, et les icônes foncées sont éclaircies (écran de terminal cerné d'un trait clair).
     /// </summary>

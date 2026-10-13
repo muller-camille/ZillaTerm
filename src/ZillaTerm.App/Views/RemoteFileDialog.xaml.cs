@@ -205,9 +205,10 @@ public partial class RemoteFileDialog : Window
         }
     }
 
+    /// <summary>Double-clic sur une ligne (pas sur l'en-tête ni la barre de défilement).</summary>
     private void OnItemDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if ((sender as ListViewItem)?.DataContext is RemoteEntry entry)
+        if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(FileList, source) is ListViewItem { DataContext: RemoteEntry entry })
         {
             e.Handled = true;
             _ = OpenAsync(entry);

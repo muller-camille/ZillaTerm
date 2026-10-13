@@ -763,9 +763,10 @@ public partial class FileBrowserPanel : UserControl
         _ = RefreshAsync();
     }
 
+    /// <summary>Double-clic sur une ligne (pas sur l'en-tête ni la barre de défilement).</summary>
     private void OnItemDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (sender is ListViewItem { DataContext: RemoteEntry entry })
+        if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(FileList, source) is ListViewItem { DataContext: RemoteEntry entry })
         {
             e.Handled = true;
             Open(entry);

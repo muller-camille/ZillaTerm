@@ -935,8 +935,10 @@
         </Setter>
     </Style>
 
-    <!-- Onglets de la zone principale (« Accueil », sessions SSH et Bureau à distance). -->
+    <!-- Onglets de la zone principale (« Accueil », sessions SSH et Bureau à distance). Couleur du texte donnée ici : celle
+         du style de Windows est un noir écrit en dur, illisible sur le fond sombre ou contrasté de l'onglet. -->
     <Style x:Key="MainTabItem" TargetType="TabItem">
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
@@ -1034,6 +1036,18 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <!-- Lignes des listes de fichiers (onglet Fichiers, choix d'un fichier du serveur), en DynamicResource : le thème
+         sombre la remplace (ThemeDark.xaml) par une ligne sans les dégradés clairs du style de Windows. -->
+    <Style x:Key="FileRow" TargetType="ListViewItem">
+        <Setter Property="Padding" Value="2,1" />
+        <!-- Dossier survolé pendant un dépôt de fichiers : il recevra les fichiers (FileBrowserPanel). -->
+        <Style.Triggers>
+            <Trigger Property="Tag" Value="drop">
+                <Setter Property="Background" Value="{DynamicResource AccentLightBrush}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- ===== Kit des dialogues ===== -->
