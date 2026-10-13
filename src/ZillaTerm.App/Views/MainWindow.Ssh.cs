@@ -81,8 +81,11 @@ public partial class MainWindow
         _remoteSessions.Add(session);
         MainTabs.Items.Add(tab);
         MainTabs.SelectedItem = tab;
-        // Les fichiers du serveur à côté du terminal ; un panneau de gauche replié le reste.
-        SelectSideTab(FilesTab, expand: false);
+        // Les fichiers du serveur à côté du terminal ; un panneau de gauche replié le reste, l'onglet Intervention aussi.
+        if (!InterventionTab.IsSelected)
+        {
+            SelectSideTab(FilesTab, expand: false);
+        }
         // La connexion (et ses éventuelles questions : clé d'hôte, mot de passe, MFA) se poursuit dans l'onglet.
         _ = view.ConnectAsync();
     }

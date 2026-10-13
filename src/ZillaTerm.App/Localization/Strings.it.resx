@@ -4975,7 +4975,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Registrazione dalle {0} ({1}), {2:# evento|# eventi}.</value>
   </data>
   <data name="InterventionRecordingHelp" xml:space="preserve">
-    <value>Per qualsiasi intervento, in reperibilità o no. Tutto viene conservato fino all'interruzione: il testo dei terminali SSH, le connessioni, le azioni sugli account, i trasferimenti di file con il loro SHA-256, le tue note e le catture. Il registro è cifrato solo per il tuo account Windows. Le password digitate senza eco non ci sono, ma tutto ciò che mostra un terminale sì. All'inizio della registrazione si apre una finestra mobile per titolo, note, catture e cronologia.</value>
+    <value>Per qualsiasi intervento, in reperibilità o no. Tutto viene conservato fino all'interruzione: il testo dei terminali SSH, le connessioni, le azioni sugli account, i trasferimenti di file con il loro SHA-256, le tue note e le catture. Il registro è cifrato solo per il tuo account Windows. Le password digitate senza eco non ci sono, ma tutto ciò che mostra un terminale sì. All'inizio della registrazione, la scheda «Intervento» del pannello di sinistra mostra titolo, note, catture e cronologia.</value>
   </data>
   <data name="InterventionNotePlaceholder" xml:space="preserve">
     <value>Constatazione, decisione, azione…</value>
@@ -5602,9 +5602,6 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="ConnectManyLimitTip" xml:space="preserve">
     <value>Al massimo {0} sessioni alla volta: seleziona meno server.</value>
   </data>
-  <data name="InterventionNotesTitle" xml:space="preserve">
-    <value>Intervento: titolo, note e cronologia</value>
-  </data>
   <data name="InterventionTitleLabel" xml:space="preserve">
     <value>_Titolo dell'intervento</value>
   </data>
@@ -5635,11 +5632,8 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="InterventionHistoryCapped" xml:space="preserve">
     <value>Limite della cronologia raggiunto: il testo dei terminali successivo non è più mostrato qui. Resta nel rapporto.</value>
   </data>
-  <data name="InterventionTopmost" xml:space="preserve">
-    <value>Sempre in _primo piano</value>
-  </data>
   <data name="InterventionOpenNotes" xml:space="preserve">
-    <value>_Titolo, note e cronologia…</value>
+    <value>_Titolo, note e cronologia</value>
   </data>
   <data name="InterventionIndicatorTip" xml:space="preserve">
     <value>Intervento in registrazione: fai clic per titolo, note e cronologia.</value>
@@ -5649,5 +5643,11 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   </data>
   <data name="InterventionNotesStopped" xml:space="preserve">
     <value>Registrazione interrotta. Il rapporto si esporta dalla finestra Intervento.</value>
+  </data>
+  <data name="TabInterventionTip" xml:space="preserve">
+    <value>Titolo, note e cronologia dell'intervento in corso (Ctrl+4)</value>
+  </data>
+  <data name="InterventionCloseHistory" xml:space="preserve">
+    <value>Chiudi la c_ronologia</value>
   </data>
 </root>

@@ -4975,16 +4975,16 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Enregistrement depuis {0} ({1}), {2:# événement|# événements}.</value>
   </data>
   <data name="InterventionRecordingHelp" xml:space="preserve">
-    <value>Pour toute intervention, d'astreinte ou non. Tout est gardé jusqu'à l'arrêt : le texte des terminaux SSH, les connexions, les actions sur les comptes, les transferts de fichiers avec leur SHA-256, vos notes et les captures. Le journal est chiffré pour votre compte Windows seul. Les mots de passe tapés sans écho n'y sont pas, mais tout ce qu'affiche un terminal y est. Au début de l'enregistrement, une fenêtre flottante s'ouvre pour le titre, les notes, les captures et l'historique.</value>
+    <value>Pour toute intervention, d'astreinte ou non. Tout est gardé jusqu'à l'arrêt : le texte des terminaux SSH, les connexions, les actions sur les comptes, les transferts de fichiers avec leur SHA-256, vos notes et les captures. Le journal est chiffré pour votre compte Windows seul. Les mots de passe tapés sans écho n'y sont pas, mais tout ce qu'affiche un terminal y est. Au début de l'enregistrement, l'onglet « Intervention » du panneau de gauche montre le titre, les notes, les captures et l'historique.</value>
   </data>
   <data name="InterventionNotePlaceholder" xml:space="preserve">
     <value>Constat, décision, action…</value>
   </data>
   <data name="InterventionAddNote" xml:space="preserve">
-    <value>_Ajouter la note</value>
+    <value>A_jouter la note</value>
   </data>
   <data name="InterventionCaptureRdp" xml:space="preserve">
-    <value>_Capturer un Bureau à distance…</value>
+    <value>Ca_pturer un Bureau à distance…</value>
   </data>
   <data name="InterventionCaptureTip" xml:space="preserve">
     <value>Image d'une fenêtre Connexion Bureau à distance (sessions PSM), ajoutée au journal. Session dans un onglet de ZillaTerm : bouton « Capture » de son onglet.</value>
@@ -5602,9 +5602,6 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="ConnectManyLimitTip" xml:space="preserve">
     <value>{0} sessions au plus d'un coup : sélectionnez moins de serveurs.</value>
   </data>
-  <data name="InterventionNotesTitle" xml:space="preserve">
-    <value>Intervention : titre, notes et historique</value>
-  </data>
   <data name="InterventionTitleLabel" xml:space="preserve">
     <value>_Titre de l'intervention</value>
   </data>
@@ -5635,11 +5632,8 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="InterventionHistoryCapped" xml:space="preserve">
     <value>Limite de l'historique atteinte : le texte des terminaux qui suit n'est plus affiché ici. Il reste dans le rapport.</value>
   </data>
-  <data name="InterventionTopmost" xml:space="preserve">
-    <value>Toujours au _premier plan</value>
-  </data>
   <data name="InterventionOpenNotes" xml:space="preserve">
-    <value>_Titre, notes et historique…</value>
+    <value>_Titre, notes et historique</value>
   </data>
   <data name="InterventionIndicatorTip" xml:space="preserve">
     <value>Intervention enregistrée : cliquez pour le titre, les notes et l'historique.</value>
@@ -5649,5 +5643,11 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="InterventionNotesStopped" xml:space="preserve">
     <value>Enregistrement arrêté. Le rapport s'exporte depuis la fenêtre Intervention.</value>
+  </data>
+  <data name="TabInterventionTip" xml:space="preserve">
+    <value>Titre, notes et historique de l'intervention en cours (Ctrl+4)</value>
+  </data>
+  <data name="InterventionCloseHistory" xml:space="preserve">
+    <value>Fermer l'_historique</value>
   </data>
 </root>

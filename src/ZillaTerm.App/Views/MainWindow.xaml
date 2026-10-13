@@ -882,6 +882,24 @@
                     </TabItem.Header>
                     <views:FileBrowserPanel x:Name="FilesPanel" Foreground="{DynamicResource SidePanelForeground}" />
                 </TabItem>
+                <!-- Intervention enregistrée : titre, notes et historique à côté de la session (et après l'arrêt, jusqu'à
+                     « Fermer l'historique »). -->
+                <TabItem x:Name="InterventionTab" ToolTip="{x:Static loc:Strings.TabInterventionTip}" Visibility="Collapsed">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{DynamicResource IconIntervention}" Width="14" Height="14" Margin="0,0,6,0">
+                                <Image.LayoutTransform>
+                                    <RotateTransform Angle="90" />
+                                </Image.LayoutTransform>
+                            </Image>
+                            <TextBlock Text="{x:Static loc:Strings.ToolIntervention}" FontWeight="SemiBold" />
+                            <!-- Pastille rouge : enregistrement en cours. -->
+                            <Ellipse x:Name="InterventionTabDot" Width="7" Height="7" Fill="#D32F2F" Margin="6,0,0,0" VerticalAlignment="Center"
+                                     Visibility="Collapsed" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <views:InterventionPanel x:Name="InterventionView" Foreground="{DynamicResource SidePanelForeground}" />
+                </TabItem>
             </TabControl>
 
             <!-- Largeur mémorisée ; double-clic (ou Ctrl+B) : replier ou déplier le panneau. -->

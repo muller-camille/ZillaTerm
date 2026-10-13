@@ -16705,14 +16705,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Intervention: title, notes and history.
-        /// </summary>
-        public static string InterventionNotesTitle {
-            get {
-                return ResourceManager.GetString("InterventionNotesTitle", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to Intervention _title.
@@ -16804,14 +16796,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Al_ways on top.
-        /// </summary>
-        public static string InterventionTopmost {
-            get {
-                return ResourceManager.GetString("InterventionTopmost", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to _Title, notes and history….
@@ -16846,6 +16830,24 @@ namespace ZillaTerm.App.Localization {
         public static string InterventionNotesStopped {
             get {
                 return ResourceManager.GetString("InterventionNotesStopped", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Title, notes and history of the current intervention (Ctrl+4).
+        /// </summary>
+        public static string TabInterventionTip {
+            get {
+                return ResourceManager.GetString("TabInterventionTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Close the _history.
+        /// </summary>
+        public static string InterventionCloseHistory {
+            get {
+                return ResourceManager.GetString("InterventionCloseHistory", resourceCulture);
             }
         }
     }

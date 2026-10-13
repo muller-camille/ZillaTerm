@@ -35,10 +35,12 @@ away in the chosen language, keeping the address and user name you typed.
 
 ### Main window
 
-- **Side panel**: "Available", "My servers" and "Files" tabs (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`); the "Files" tab only
-  shows while an SSH or files session is open. Drag the splitter to change its width; `Ctrl+B` or a double-click on the splitter collapses it (the strip of tabs stays: a click on a
-  tab opens it again). `F6` moves from the panel to the session. The window position and size, the panel width and
-  whether it is collapsed are remembered.
+- **Side panel**: "Available", "My servers", "Files" and "Intervention" tabs (`Ctrl+1` to `Ctrl+4`); the "Files" tab
+  only shows while an SSH or files session is open, the "Intervention" tab while an intervention is recorded
+  ([section 8](#8-intervention-recording-and-on-call-duty-reminder)). Drag the splitter to change its width; `Ctrl+B` or
+  a double-click on the splitter collapses it (the strip of tabs stays: a click on a tab opens it again). `F6` moves
+  from the panel to the session. The window position and size, the panel width and whether it is collapsed are
+  remembered.
 - **Session tabs**: a dot shows the state of the session by its colour and by its shape, readable in high contrast
   too: orange ring while connecting, solid green dot once connected, half-filled orange dot when the connection is
   interrupted, grey square when the session has ended, red cross when it failed (the name is then dimmed). The
@@ -864,14 +866,14 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   - **actions**: password copied (never the password), CPM requests, accounts added, changed, deleted or imported,
     X11 windows, switch to emergency access, sign-out;
   - **file transfers**, with the SHA-256 of each file;
-  - the intervention **title** and your **notes** (floating window, below);
-  - **captures**: "Capture a remote desktop…" (floating window) takes an image of a Remote Desktop Connection window
+  - the intervention **title** and your **notes** ("Intervention" tab, below);
+  - **captures**: "Capture a remote desktop…" ("Intervention" tab) takes an image of a Remote Desktop Connection window
     (PSM sessions; a minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs
     takes the desktop shown.
-- **Floating window "Intervention: title, notes and history"**: it opens when recording starts, at the top right of the
-  main window, and stays **on top** ("Always on top" box to turn it off), even over a Remote Desktop Connection window;
-  it stays visible when ZillaTerm is minimized. Once closed, it opens again with a click on "● Intervention recorded" in
-  the status bar, or with **"Title, notes and history…"** in the Intervention window. It holds:
+- **"Intervention" tab of the side panel** (`Ctrl+4`): it appears when recording starts, with a red dot while recording
+  lasts: title, notes and history stay next to the session. Opening an SSH session does not replace it with the "Files"
+  tab. A click on "● Intervention recorded" in the status bar or on **"Title, notes and history"** in the Intervention
+  window brings it back. It holds:
   - the **intervention title** (ticket, incident, server…), kept with `Enter` or when leaving the field: it is written
     to the journal, shown in the "Recorded interventions" list, at the top of the report and in the file name suggested
     for it. One line, 200 characters at most;
@@ -884,8 +886,8 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
     while it is at the bottom. The history is kept in memory only; its terminal text is limited to 8 million characters
     (beyond that, a message says so, and the text is still in the report).
 
-  When recording stops, input is greyed out and the history stays shown until the window is closed; the report is
-  exported from the Intervention window.
+  When recording stops, input is greyed out and the history stays shown until **"Close the history"** (the tab goes
+  away) or the next recording; the report is exported from the Intervention window.
 - **"Recorded interventions"**: the list of recordings, newest first, with their title. When you stop, the intervention
   stays selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
   terminal text and captures, to attach to the intervention report. **"Delete…"** erases a finished recording.
@@ -900,7 +902,7 @@ the report. A disconnection cancelled at the confirmation is not in it.
 
 **Disk refusing the journal** (full, quota, access removed): the status bar shows "⚠ Intervention: recording
 interrupted" in red, and the window "Recording interrupted at 14:10.": nothing more is kept from that time on, the
-title, the note and the capture are greyed out in the floating window. Free some space, then "Stop recording" and
+title, the note and the capture are greyed out in the "Intervention" tab. Free some space, then "Stop recording" and
 "Record the intervention" to start again in a new recording.
 
 ## Shortcuts
@@ -911,7 +913,7 @@ title, the note and the capture are greyed out in the floating window. Free some
 | Outside the terminal | Filter the accounts (in "My servers": search a server; in "Files": filter the folder) | `Ctrl+F` |
 | Everywhere | Next / previous session tab | `Ctrl+Tab` / `Ctrl+Shift+Tab` |
 | Everywhere | Close the session tab | `Ctrl+F4` or `Ctrl+Shift+W` |
-| Everywhere | "Available", "My servers", "Files" tabs of the side panel | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` |
+| Everywhere | "Available", "My servers", "Files", "Intervention" tabs of the side panel | `Ctrl+1`, `Ctrl+2`, `Ctrl+3`, `Ctrl+4` |
 | Everywhere | Settings | `Ctrl+,` |
 | Outside the terminal | Quick connect (Home tab) | `Ctrl+K` |
 | Outside the terminal | Move from the side panel to the session and back | `F6` |
@@ -941,7 +943,7 @@ title, the note and the capture are greyed out in the floating window. Free some
 | KeePass database | Connect / edit / delete an entry | Double-click or `Enter` / `F2` / `Del` |
 
 In a terminal, `F5`, `Ctrl+F`, `Ctrl+K`, `Ctrl+B` and `F6` are sent to the server (`F6` to applications such as
-mc); `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Shift+W` and `Ctrl+1/2/3` stay with ZillaTerm. In a remote desktop session, the keys
+mc); `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Shift+W` and `Ctrl+1/2/3/4` stay with ZillaTerm. In a remote desktop session, the keys
 go to the remote session.
 
 **Keyboard and accessibility**: the toolbar can be reached with `Tab` (the focus is visible), every menu and every

@@ -28,8 +28,9 @@
                                      AutomationProperties.LiveSetting="Polite" />
             </DockPanel>
             <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.InterventionRecordingHelp}" Margin="0,4,0,8" />
-            <!-- Titre, notes, captures et historique : fenêtre flottante, ouverte au début de l'enregistrement. -->
-            <Button x:Name="NotesButton" Click="OnOpenNotes" HorizontalAlignment="Left">
+            <!-- Titre, notes, captures et historique : onglet « Intervention » du panneau de gauche, montré au début de
+                 l'enregistrement. -->
+            <Button x:Name="NotesButton" Click="OnOpenNotes" HorizontalAlignment="Left" ToolTip="{x:Static loc:Strings.TabInterventionTip}">
                 <AccessText Text="{x:Static loc:Strings.InterventionOpenNotes}" />
             </Button>
 

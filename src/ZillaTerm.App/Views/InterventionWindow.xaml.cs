@@ -18,13 +18,14 @@ namespace ZillaTerm.App.Views;
 /// <summary>
 /// Intervention : les consignes d'astreinte de l'équipe (texte ou fichier), l'enregistrement de ce qui est fait, et les
 /// interventions enregistrées avec leur rapport. Titre, notes, captures et historique de l'intervention en cours sont dans
-/// une fenêtre flottante (<see cref="InterventionNotesWindow"/>).
+/// l'onglet « Intervention » du panneau de gauche (<see cref="InterventionPanel"/>).
 /// </summary>
 public partial class InterventionWindow : Window
 {
     private readonly InterventionRecorder _recorder;
     private readonly string _who;
     private readonly string _mode;
+    private readonly Action? _showNotes;
     private readonly DispatcherTimer _timer;
     private CancellationTokenSource? _reminderRead;
 
@@ -39,12 +40,14 @@ public partial class InterventionWindow : Window
     /// <param name="teamFile">Fichier des consignes, relu à l'ouverture ; vide : pas de fichier.</param>
     /// <param name="who">Utilisateur, écrit au début de l'enregistrement.</param>
     /// <param name="mode">Session CyberArk ou accès d'urgence, écrit au début de l'enregistrement.</param>
-    public InterventionWindow(string teamText, string teamFile, InterventionRecorder recorder, string who, string mode)
+    /// <param name="showNotes">Montre l'onglet « Intervention » de la fenêtre principale (titre, notes, historique).</param>
+    public InterventionWindow(string teamText, string teamFile, InterventionRecorder recorder, string who, string mode, Action? showNotes = null)
     {
         InitializeComponent();
         _recorder = recorder;
         _who = who;
         _mode = mode;
+        _showNotes = showNotes;
         _ = ShowReminderAsync(teamText, teamFile);
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += (_, _) => UpdateState();
@@ -264,8 +267,8 @@ public partial class InterventionWindow : Window
         }
     }
 
-    /// <summary>Titre, notes, captures et historique de l'intervention en cours (fenêtre flottante).</summary>
-    private void OnOpenNotes(object sender, RoutedEventArgs e) => InterventionNotesWindow.Open(_recorder, Owner ?? this);
+    /// <summary>Titre, notes, captures et historique de l'intervention en cours (onglet du panneau de gauche).</summary>
+    private void OnOpenNotes(object sender, RoutedEventArgs e) => _showNotes?.Invoke();
 
     private void RefreshJournals()
     {

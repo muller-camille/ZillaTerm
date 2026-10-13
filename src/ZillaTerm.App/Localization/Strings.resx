@@ -4975,7 +4975,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Recording since {0} ({1}), {2:# event|# events}.</value>
   </data>
   <data name="InterventionRecordingHelp" xml:space="preserve">
-    <value>For any intervention, on call or not. Everything is kept until you stop: the text of the SSH terminals, connections, account actions, file transfers with their SHA-256, your notes and the captures. The journal is encrypted for your Windows account only. Passwords typed without echo are not in it, but whatever a terminal shows is. When recording starts, a floating window opens for the title, notes, captures and history.</value>
+    <value>For any intervention, on call or not. Everything is kept until you stop: the text of the SSH terminals, connections, account actions, file transfers with their SHA-256, your notes and the captures. The journal is encrypted for your Windows account only. Passwords typed without echo are not in it, but whatever a terminal shows is. When recording starts, the "Intervention" tab of the left panel shows the title, notes, captures and history.</value>
   </data>
   <data name="InterventionNotePlaceholder" xml:space="preserve">
     <value>What you found, decided, did…</value>
@@ -5602,11 +5602,8 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="ConnectManyLimitTip" xml:space="preserve">
     <value>{0} sessions at most at once: select fewer servers.</value>
   </data>
-  <data name="InterventionNotesTitle" xml:space="preserve">
-    <value>Intervention: title, notes and history</value>
-  </data>
   <data name="InterventionTitleLabel" xml:space="preserve">
-    <value>Intervention _title</value>
+    <value>_Intervention title</value>
   </data>
   <data name="InterventionTitlePlaceholder" xml:space="preserve">
     <value>Ticket, incident, server…</value>
@@ -5635,11 +5632,8 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="InterventionHistoryCapped" xml:space="preserve">
     <value>History limit reached: later terminal text is no longer shown here. It is still in the report.</value>
   </data>
-  <data name="InterventionTopmost" xml:space="preserve">
-    <value>Al_ways on top</value>
-  </data>
   <data name="InterventionOpenNotes" xml:space="preserve">
-    <value>_Title, notes and history…</value>
+    <value>_Title, notes and history</value>
   </data>
   <data name="InterventionIndicatorTip" xml:space="preserve">
     <value>Intervention being recorded: click for the title, notes and history.</value>
@@ -5649,5 +5643,11 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="InterventionNotesStopped" xml:space="preserve">
     <value>Recording stopped. The report is exported from the Intervention window.</value>
+  </data>
+  <data name="TabInterventionTip" xml:space="preserve">
+    <value>Title, notes and history of the current intervention (Ctrl+4)</value>
+  </data>
+  <data name="InterventionCloseHistory" xml:space="preserve">
+    <value>Close the _history</value>
   </data>
 </root>

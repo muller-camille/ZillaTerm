@@ -13,19 +13,17 @@ using ZillaTerm.Core.Interventions;
 namespace ZillaTerm.App.Views;
 
 /// <summary>
-/// Fenêtre flottante de l'intervention en cours, ouverte au début de l'enregistrement et au premier plan (case pour
-/// l'enlever) : le titre de l'intervention, une note, la capture d'un Bureau à distance, et l'historique de ce qui s'est
-/// passé (connexions, actions, transferts, notes, captures, texte des terminaux). Une commande d'un terminal et son retour
-/// forment un bloc ; un long bloc est réduit à ses premières lignes et se déplie en entier.
+/// Onglet « Intervention » du panneau de gauche, affiché au début de l'enregistrement : le titre de l'intervention, une
+/// note, la capture d'un Bureau à distance, et l'historique de ce qui s'est passé (connexions, actions, transferts, notes,
+/// captures, texte des terminaux), à côté de la session. Une commande d'un terminal et son retour forment un bloc ; un
+/// long bloc est réduit à ses premières lignes et se déplie en entier. À l'arrêt, l'historique reste jusqu'à « Fermer
+/// l'historique » ou au prochain enregistrement.
 /// </summary>
-/// <remarks>Une seule pour l'application (<see cref="Open"/>) : elle suit l'enregistrement, d'une fenêtre principale à l'autre.</remarks>
-public partial class InterventionNotesWindow : Window
+public partial class InterventionPanel : UserControl
 {
-    private static InterventionNotesWindow? _current;
-
-    private readonly InterventionRecorder _recorder;
     private readonly DispatcherTimer _timer;
     private readonly ObservableCollection<InterventionHistoryItem> _items = [];
+    private InterventionRecorder? _recorder;
     private InterventionBlockBuilder _blocks = new();
     private InterventionHistory? _history;
     private int _read;
@@ -34,10 +32,9 @@ public partial class InterventionNotesWindow : Window
     private bool _shownRecording;
     private bool _shownInterrupted;
 
-    internal InterventionNotesWindow(InterventionRecorder recorder)
+    public InterventionPanel()
     {
         InitializeComponent();
-        _recorder = recorder;
         HistoryList.ItemsSource = _items;
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _timer.Tick += (_, _) =>
@@ -45,83 +42,63 @@ public partial class InterventionNotesWindow : Window
             ReadHistory();
             UpdateState();
         };
+        UpdateState();
+    }
+
+    /// <summary>« Fermer l'historique » d'un enregistrement arrêté : l'onglet n'a plus rien à montrer.</summary>
+    public event EventHandler? CloseRequested;
+
+    /// <summary>Quelque chose à montrer : l'enregistrement en cours, ou l'historique d'un enregistrement arrêté.</summary>
+    public bool HasHistory => _history is not null;
+
+    /// <summary>Suit les enregistrements de <paramref name="recorder"/> (celui en cours depuis son début).</summary>
+    public void Attach(InterventionRecorder recorder)
+    {
+        Detach();
+        _recorder = recorder;
         recorder.Changed += OnRecorderChanged;
-        Closed += (_, _) =>
-        {
-            _timer.Stop();
-            recorder.Changed -= OnRecorderChanged;
-            if (ReferenceEquals(_current, this))
-            {
-                _current = null;
-            }
-        };
         Follow(recorder.History);
         TitleBox.Text = recorder.Title;
+        ShowMessage("");
         UpdateState();
         _timer.Start();
-        // Titre à donner d'abord ; une fois donné, la note.
-        Loaded += (_, _) => (TitleBox.Text.Length == 0 && TitleBox.IsEnabled ? TitleBox : NoteBox.IsEnabled ? NoteBox : (Control)HistoryList).Focus();
     }
 
-    /// <summary>Fenêtre ouverte, s'il y en a une.</summary>
-    internal static InterventionNotesWindow? Current => _current;
-
-    /// <summary>Ouvre la fenêtre (une seule pour l'application), près de <paramref name="near"/>, ou la ramène devant.</summary>
-    public static InterventionNotesWindow Open(InterventionRecorder recorder, Window? near)
+    /// <summary>Ne suit plus les enregistrements (fenêtre principale fermée).</summary>
+    public void Detach()
     {
-        if (_current is { } open)
+        _timer.Stop();
+        if (_recorder is not null)
         {
-            if (open.WindowState == WindowState.Minimized)
-            {
-                open.WindowState = WindowState.Normal;
-            }
-
-            open.Activate();
-            return open;
+            _recorder.Changed -= OnRecorderChanged;
+            _recorder = null;
         }
-
-        var window = new InterventionNotesWindow(recorder);
-        window.PlaceNear(near);
-        _current = window;
-        window.Show();
-        return window;
     }
 
-    /// <summary>
-    /// En haut à droite de la fenêtre principale, dans l'écran : elle ne cache ni les onglets ni la liste des comptes, et
-    /// reste visible quand la fenêtre principale est réduite (elle ne lui appartient pas).
-    /// </summary>
-    private void PlaceNear(Window? near)
-    {
-        if (near is not null && PresentationSource.FromVisual(near)?.CompositionTarget is { } target)
-        {
-            var corner = target.TransformFromDevice.Transform(near.PointToScreen(new Point(near.ActualWidth, 0)));
-            Left = Math.Max(SystemParameters.VirtualScreenLeft, Math.Min(corner.X - Width - 24,
-                SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - Width));
-            Top = Math.Max(SystemParameters.VirtualScreenTop, Math.Min(corner.Y + 80,
-                SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight - Height));
-            return;
-        }
-
-        WindowStartupLocation = WindowStartupLocation.CenterScreen;
-    }
+    /// <summary>Clavier dans l'onglet affiché : le titre s'il manque, sinon la note.</summary>
+    public void FocusInput() =>
+        (TitleBox.Text.Length == 0 && TitleBox.IsEnabled ? TitleBox : NoteBox.IsEnabled ? NoteBox : (Control)HistoryList).Focus();
 
     private void OnRecorderChanged()
     {
-        if (!ReferenceEquals(_recorder.History, _history))
+        if (_recorder is null)
         {
-            // Fin de l'enregistrement suivi : ses derniers événements, puis l'historique du nouveau s'il y en a un.
+            return;
+        }
+
+        if (_recorder.History is { } next && !ReferenceEquals(next, _history))
+        {
+            // Nouvel enregistrement : la fin du précédent, puis son historique à lui depuis le début.
             ReadHistory();
-            if (_recorder.History is { } next)
-            {
-                Follow(next);
-                TitleBox.Text = "";
-                ShowMessage("");
-            }
-            else
-            {
-                ShowMessage(Strings.InterventionNotesStopped);
-            }
+            Follow(next);
+            TitleBox.Text = "";
+            ShowMessage("");
+        }
+        else if (_recorder.History is null && _history is not null && _shownRecording)
+        {
+            // Arrêt : ses derniers événements ; l'historique reste affiché.
+            ReadHistory();
+            ShowMessage(Strings.InterventionNotesStopped);
         }
 
         if (_recorder.IsRecording && !TitleBox.IsKeyboardFocusWithin)
@@ -205,21 +182,24 @@ public partial class InterventionNotesWindow : Window
         return null;
     }
 
-    /// <summary>Enregistrement suivi en cours (pas arrêté, pas remplacé par un autre).</summary>
-    private bool Recording => _history is not null && ReferenceEquals(_recorder.History, _history);
+    /// <summary>Enregistreur de l'enregistrement suivi s'il est en cours (pas arrêté, pas remplacé par un autre) ; null sinon.</summary>
+    private InterventionRecorder? Active =>
+        _recorder is { History: { } history } recorder && ReferenceEquals(history, _history) ? recorder : null;
 
     private void UpdateState()
     {
-        bool recording = Recording;
+        var active = Active;
+        bool recording = active is not null;
         // Journal refusé par le disque : plus rien n'est gardé, ni titre, ni note, ni capture.
-        bool keeping = recording && _recorder.Failure is null;
+        bool keeping = active is { Failure: null };
         TitleBox.IsEnabled = keeping;
         NoteBox.IsEnabled = keeping;
         NoteButton.IsEnabled = keeping && NoteBox.Text.Trim().Length > 0;
         CaptureButton.IsEnabled = keeping;
         RecordingDot.Visibility = keeping ? Visibility.Visible : Visibility.Collapsed;
-        var status = recording ? InterventionWindow.RecordingStatus(_recorder) : Strings.InterventionNotRecording;
-        bool interrupted = recording && _recorder.FailedAt is not null;
+        CloseHistoryButton.Visibility = !recording && _history is not null ? Visibility.Visible : Visibility.Collapsed;
+        var status = active is not null ? InterventionWindow.RecordingStatus(active) : Strings.InterventionNotRecording;
+        bool interrupted = active is { FailedAt: not null };
         if (recording == _shownRecording && interrupted == _shownInterrupted)
         {
             StatusText.SetQuietly(status);
@@ -231,7 +211,7 @@ public partial class InterventionNotesWindow : Window
 
         _shownRecording = recording;
         _shownInterrupted = interrupted;
-        if (recording && _recorder.FailureMessage is { } failure)
+        if (active?.FailureMessage is { } failure)
         {
             ShowMessage(failure, error: true);
         }
@@ -257,20 +237,20 @@ public partial class InterventionNotesWindow : Window
     /// <summary>Titre gardé dans le journal s'il a changé (Entrée, ou en quittant le champ).</summary>
     private void CommitTitle()
     {
-        if (!Recording)
+        if (Active is not { } recorder)
         {
             return;
         }
 
-        if (_recorder.SetTitle(TitleBox.Text))
+        if (recorder.SetTitle(TitleBox.Text))
         {
             ShowMessage(Strings.InterventionTitleSaved);
             ReadHistory();
         }
 
-        if (TitleBox.Text != _recorder.Title)
+        if (TitleBox.Text != recorder.Title)
         {
-            TitleBox.Text = _recorder.Title;
+            TitleBox.Text = recorder.Title;
         }
     }
 
@@ -292,12 +272,12 @@ public partial class InterventionNotesWindow : Window
     private void AddNote()
     {
         var note = NoteBox.Text.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
-        if (note.Length == 0 || !Recording)
+        if (note.Length == 0 || Active is not { } recorder)
         {
             return;
         }
 
-        _recorder.Record(InterventionKind.Note, "", note);
+        recorder.Record(InterventionKind.Note, "", note);
         NoteBox.Clear();
         ShowMessage(Strings.InterventionNoteAdded);
         ReadHistory();
@@ -330,6 +310,11 @@ public partial class InterventionNotesWindow : Window
 
     private void Capture(RemoteDesktopWindow window)
     {
+        if (Active is not { } recorder)
+        {
+            return;
+        }
+
         var png = WindowCapture.CapturePng(window.Handle);
         if (png is null)
         {
@@ -337,7 +322,7 @@ public partial class InterventionNotesWindow : Window
             return;
         }
 
-        _recorder.Record(InterventionKind.Screenshot, window.Title, Text.Format(Strings.InterventionCaptureOf, window.Title), png);
+        recorder.Record(InterventionKind.Screenshot, window.Title, Text.Format(Strings.InterventionCaptureOf, window.Title), png);
         ShowMessage(Text.Format(Strings.InterventionCaptured, window.Title));
         ReadHistory();
     }
@@ -368,12 +353,25 @@ public partial class InterventionNotesWindow : Window
         }
     }
 
-    private void OnTopmostChanged(object sender, RoutedEventArgs e) => Topmost = TopmostBox.IsChecked == true;
+    /// <summary>Enregistrement arrêté : l'historique est oublié et l'onglet se retire.</summary>
+    private void OnCloseHistory(object sender, RoutedEventArgs e)
+    {
+        if (Active is not null)
+        {
+            return;
+        }
 
-    private void OnClose(object sender, RoutedEventArgs e) => Close();
+        _history = null;
+        _read = 0;
+        _blocks = new InterventionBlockBuilder();
+        _items.Clear();
+        ShowMessage("");
+        UpdateState();
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
 }
 
-/// <summary>Bloc de l'historique de l'intervention affiché dans la fenêtre flottante.</summary>
+/// <summary>Bloc de l'historique de l'intervention affiché dans l'onglet « Intervention ».</summary>
 public sealed class InterventionHistoryItem : INotifyPropertyChanged
 {
     /// <summary>Lignes montrées d'un bloc réduit.</summary>
