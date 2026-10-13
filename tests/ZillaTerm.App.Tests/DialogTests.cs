@@ -1137,6 +1137,44 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Nom de fichier piégé (inversion du sens d'écriture) : affiché avec « � » dans le titre, la liste des fichiers
+    /// suivis et la notification ; le fichier est suivi quand même. Ligne géante : coupée, avec la mention.
+    /// </summary>
+    [Fact]
+    public void TailWindowShowsSafeNamesAndCutsGiantLines()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            SynchronizationContext.SetSynchronizationContext(null);
+            const string path = "/var/log/facture\u202Efdp.log";
+            var link = new MemoryLink("root@srv01");
+            var file = link.Add(path);
+            file.Append("un\n");
+            var notes = new List<string>();
+            var window = new TailWindow(new AppSettings { TailAlerts = "ERROR" }, () => { }) { Notifier = (_, text) => notes.Add(text) };
+            var feed = window.AddFeed(link, path);
+            window.PollAsync().GetAwaiter().GetResult();
+            Assert.Equal("un\n", window.Shown);
+            Assert.Contains("/var/log/facture\uFFFDfdp.log", window.Title);
+            Assert.DoesNotContain("\u202E", window.Title);
+            Assert.Equal("root@srv01 facture\uFFFDfdp.log", feed.Label);
+            Assert.Equal("root@srv01 : /var/log/facture\uFFFDfdp.log", feed.Tip);
+
+            file.Append("ERROR " + new string('x', 100_000) + "\nfin\n");
+            window.PollAsync().GetAwaiter().GetResult();
+            Assert.Contains("facture\uFFFDfdp.log", Assert.Single(notes));
+            var cut = "ERROR " + new string('x', TailLineSplitter.MaxLineLength - 6) + TailLineSplitter.CutMark;
+            Assert.Equal("un\n" + cut + "\nfin\n", window.Shown);
+            window.Close();
+        });
+    }
+
+    /// <summary>
     /// Dossier envoyé avec un lien vers un dossier : le lien, non suivi, est signalé à part dans le bilan, le détail et
     /// l'historique, sans compter comme un fichier non vérifié.
     /// </summary>

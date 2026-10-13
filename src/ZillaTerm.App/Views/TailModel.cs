@@ -238,10 +238,19 @@ internal sealed class TailFeed : INotifyPropertyChanged
 
     public string Path { get; }
 
-    /// <summary>Préfixe des lignes dans la vue combinée, par ex. « root@srv01 app.log ».</summary>
-    public string Label => $"{Link.Server} {RemotePath.Name(Path)}";
+    /// <summary>
+    /// Chemin à afficher (titre, info-bulle) : ses caractères invisibles remplacés par « � », comme dans la liste des
+    /// fichiers (<see cref="RemoteEntry.DisplayName"/>), pour qu'un nom ne puisse pas en imiter un autre.
+    /// </summary>
+    public string DisplayPath => RemoteEntry.Visible(Path);
 
-    public string Tip => $"{Link.Server} : {Path}";
+    /// <summary>Nom du fichier à afficher (notification), comme <see cref="DisplayPath"/>.</summary>
+    public string DisplayName => RemoteEntry.Visible(RemotePath.Name(Path));
+
+    /// <summary>Préfixe des lignes dans la vue combinée, par ex. « root@srv01 app.log ».</summary>
+    public string Label => $"{Link.Server} {DisplayName}";
+
+    public string Tip => $"{Link.Server} : {DisplayPath}";
 
     public Brush Brush => TailBrushes.Source(_color);
 
