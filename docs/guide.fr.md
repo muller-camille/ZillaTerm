@@ -309,8 +309,13 @@ utilisé.
   acceptées et la nouvelle, et « Accepter cette clé et se connecter » n'est possible qu'après avoir coché « J'ai
   vérifié cette empreinte avec l'équipe CyberArk ».
 - **Terminal** : la sélection copie, la molette ou la barre de défilement à droite parcourt l'historique ; après
-  avoir remonté, « ↓ Revenir à la fin » (ou une frappe au clavier) ramène à la fin. AltGr fonctionne sur clavier
-  français. Fermez l'onglet avec la croix, un clic molette ou `Ctrl+F4` (confirmation si la session est connectée).
+  avoir remonté, « ↓ Revenir à la fin » (ou une frappe au clavier) ramène à la fin. Le défilement d'un pavé tactile
+  de précision est suivi finement (historique, `less`, `vim`), comme le zoom avec `Ctrl`. Une commande, un chemin ou
+  une URL trop longs pour la largeur, repliés sur plusieurs lignes, se copient sur une seule ligne, « Enregistrer le
+  contenu » les écrit entiers, et la recherche trouve un mot coupé par le repli. Une fenêtre qui s'ouvre pendant une
+  sélection à la souris l'arrête et la copie. `\e[3J` (`tput E3`) n'efface que l'historique, pas l'écran. AltGr
+  fonctionne sur clavier français. Fermez l'onglet avec la croix, un clic molette ou `Ctrl+F4` (confirmation si la
+  session est connectée).
 - **Fin de session** : un bandeau en haut du terminal donne la raison de la fin, avec « Reconnecter » ; les
   dernières lignes restent lisibles, sélectionnables et copiables.
 - **Clic droit dans le terminal** (ou touche Menu du clavier) : copier, coller, tout sélectionner, rechercher,
@@ -424,7 +429,9 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
 - **File d'attente des transferts** : envois et téléchargements s'exécutent un par un, dans l'ordre des demandes ;
   ce qui est demandé pendant un transfert s'ajoute à la file au lieu d'être ignoré. La destination d'un envoi est le
   dossier affiché au moment du dépôt (ou le dossier sur lequel les fichiers ont été déposés), et la confirmation
-  d'écrasement tient compte des envois encore en attente. Le panneau « Transferts », au-dessus de la barre d'état,
+  d'écrasement tient compte des envois encore en attente. La fenêtre « Envoyer » et la question « Nouveau dossier »
+  nomment le serveur et le dossier : l'envoi, le téléchargement ou le nouveau dossier vont toujours là, même si vous
+  changez de session pendant la question (vue parallèle, terminal détaché) ou si le panneau suit le terminal. Le panneau « Transferts », au-dessus de la barre d'état,
   montre chaque élément avec son serveur (en attente, avancement et fichier n/N, vérification, résultat) : ✕ retire
   un élément en attente, « Annuler » arrête celui en cours, « Tout annuler » annule tout ce qui reste. Les résultats
   restent affichés une fois les transferts finis : « ✓ terminé · SHA-256 vérifié (n/n) », « ⚠ terminé · non
@@ -469,7 +476,8 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   une session SSH est ouverte, ou un fichier de ce poste ; avec deux fichiers sélectionnés, « Comparer les 2
   fichiers ». « Parcourir… » à côté du chemin ouvre un explorateur de l'autre serveur, sur le même dossier, fichier
   présélectionné (ou sur le plus proche dossier parent qui existe) : double-clic sur un dossier pour y entrer,
-  Retour arrière pour remonter, un chemin peut aussi être tapé ; le fichier choisi remplace le chemin. L'onglet
+  Retour arrière pour remonter, taper le début d'un nom sélectionne le fichier (espaces comprises), un chemin peut
+  aussi être tapé ; le fichier choisi remplace le chemin. L'onglet
   Fichiers de ce serveur ne change pas de dossier. Le même fichier sur le même serveur est refusé ; sans autre
   serveur ouvert, un fichier de ce poste est proposé. Les fichiers sont lus **en mémoire** (50 Mo au plus chacun), sans copie sur le poste. La fenêtre
   montre les lignes côte à côte : retirées en rouge à gauche, ajoutées en vert à droite. `F7` / `Maj+F7` :
@@ -516,7 +524,9 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
 - **Suivre un fichier (tail -f)** : clic droit sur un ou plusieurs fichiers → « Suivre (tail -f) ». Une fenêtre
   montre la fin du fichier puis chaque nouvelle ligne dès qu'elle est écrite, comme `tail -f`, en lisant le fichier
   par SFTP chaque seconde : aucune commande n'est lancée sur le serveur. Un fichier tronqué ou remplacé par une
-  rotation est relu depuis le début ; les 10 000 dernières lignes sont gardées.
+  rotation est relu depuis le début ; les 10 000 dernières lignes sont gardées. Une ligne de plus de 8 192 caractères
+  est coupée, avec « … [ligne coupée après 8 192 caractères] » (aussi dans la copie et les enregistrements) ; la
+  suite de cette ligne est ignorée.
   - **Couleurs et alertes** : erreurs (ERROR, FATAL, CRITICAL…) en rouge, avertissements (WARN) en orange ; mots
     surlignés en jaune au choix (« Surligner », séparés par des virgules). « Alerte si » (par ex. `ERROR,
     OutOfMemory, Connection refused`) : chaque nouvelle ligne qui contient l'un de ces mots est marquée, le compteur
@@ -561,7 +571,8 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   les autres éléments sont traités.
 - **Opération en cours** : pendant une suppression, un renommage ou une modification des droits sur un serveur, les
   autres serveurs restent utilisables ; sur le même serveur, Supprimer, `F2` et Droits sont refusés jusqu'à sa fin,
-  et la barre d'état le dit.
+  et la barre d'état le dit. Si vous êtes passé sur une autre session entre-temps, le bilan d'une suppression ou d'un
+  changement de droits (erreurs comprises) s'affiche à votre retour sur celle-ci.
 - **Filtrer** : le champ sous le chemin ne garde que les éléments du dossier dont le nom contient le texte (`nginx`),
   ou répond à un masque avec `*` et `?` (`*.log`, `app?.conf` ; plusieurs séparés par `;` : `*.log;*.gz`), sans tenir
   compte des majuscules. `..` reste pour remonter ; la barre d'état dit combien d'éléments sont affichés. Il est vidé
@@ -733,13 +744,18 @@ logiciel… ». Les comptes du PVWA doivent être chargés.
    - D'un type adapté : Windows pour le bureau à distance, Unix ou réseau pour SSH ; un autre type seulement s'il n'y
      en a pas ; jamais un compte de base de données.
    - À défaut, compte de domaine du même utilisateur (`CORP\admin`, `admin@corp.local`), autorisé sur ce serveur : le
-     serveur devient sa machine cible. `CORP\admin` ne désigne jamais le compte local `admin` du serveur.
+     serveur devient sa machine cible. `CORP\admin` ne désigne jamais le compte local `admin` du serveur. Les comptes
+     du domaine du serveur passent avant les autres ; une session sans domaine indiqué qui ne trouve qu'un compte d'un
+     autre domaine (`admin@corp.local` pour `web01.dmz.local`) le reçoit seulement en proposition, non cochée :
+     « Compte d'un autre domaine que le serveur : vérifiez-le ».
    - Une session qui passait déjà par le PSMP (`coffre@cible@serveur@psmp`) ou par PSM (programme de démarrage
      `psm /u compte /a serveur /c composant` d'un fichier `.rdp`) est décodée : ce sont le compte et le serveur cibles
      qui comptent, et le composant PSM est gardé.
    - Plusieurs comptes possibles : le plus probable est proposé (« à vérifier »), mais la session n'est pas cochée ;
      choisir un compte dans la liste de la colonne « Compte PVWA » la coche (ou cochez-la pour garder celui proposé).
-     Le bouton « Importer (n) » indique le nombre de sessions qui seront ajoutées.
+     Le bouton « Importer (n) » indique le nombre de sessions qui seront ajoutées. La case de l'en-tête coche les
+     lignes affichées (celles du filtre « Seulement les problèmes » quand il est coché), ou les décoche si elles le
+     sont toutes ; elle est à moitié remplie quand une partie seulement est cochée.
 3. **Connexion enregistrée**, jamais directe : bureau à distance par PSM ; SSH et fichiers (SFTP, SCP) via le PSMP
    s'il y en a un pour ce serveur (fichiers seuls pour une plateforme « SFTP »), sinon par PSM (`PSM-WinSCP` pour les
    fichiers) ; Telnet par `PSM-Telnet`.
@@ -832,7 +848,8 @@ qu'elles contiennent.
   (pièces jointes, champs, réglages) sont gardées ; l'ancienne version d'une entrée va dans son historique, comme
   dans KeePass. Pendant l'enregistrement, la version précédente du fichier est gardée dans `base.kdbx.bak`, puis
   supprimée dès que le nouveau fichier est relu à l'identique : aucune ancienne copie, qui s'ouvrirait encore avec un
-  ancien mot de passe maître, ne reste à côté de la base (partagée ou non).
+  ancien mot de passe maître, ne reste à côté de la base (partagée ou non). Exception : si un autre poste a enregistré
+  la base au même moment, sa version est gardée dans le `.bak` plutôt que perdue.
 - **Verrouiller** : clic droit → « Verrouiller ». Les bases se verrouillent aussi à la déconnexion de CyberArk, à
   la fermeture et au **verrouillage de Windows**.
 
@@ -887,7 +904,13 @@ bloc au fil de l'enregistrement (un arrêt brutal ne perd que les deux dernière
 Un bloc retiré, déplacé ou modifié est signalé dans le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas,
 mais **tout ce qu'affiche un terminal y est** (contenu d'un fichier de configuration, par exemple) ; le rapport
 exporté n'est **pas chiffré** : rangez-le en lieu sûr. Le texte des terminaux est plafonné à 64 millions de
-caractères par intervention (les autres événements continuent d'être gardés au-delà).
+caractères par intervention (les autres événements continuent d'être gardés au-delà) ; un très gros affichage est
+écrit en plusieurs blocs, sans perdre la suite du rapport. Une déconnexion annulée à la confirmation n'y figure pas.
+
+**Disque qui refuse le journal** (plein, quota, accès retiré) : la barre d'état affiche « ⚠ Intervention :
+enregistrement interrompu » en rouge, et la fenêtre « Enregistrement interrompu à 14:10. » : plus rien n'est gardé
+depuis cette heure-là, la note et la capture sont grisées. Libérez de la place, puis « Arrêter l'enregistrement » et
+« Enregistrer l'intervention » pour reprendre dans un nouvel enregistrement.
 
 ## Raccourcis
 
@@ -1008,8 +1031,11 @@ quand le fichier change leur adresse, ajoute une clé de serveur ou une liste pa
 s'y authentifie à chaque démarrage ; le serveur est nommé), il faut cocher « J'ai vérifié… » avant d'appliquer. Une
 clé de serveur déjà acceptée sur le poste n'est jamais remplacée par un fichier (elle est signalée). Seules les clés
 des PSMP (ceux du poste ou du fichier) sont reprises : celle d'un autre serveur, d'accès d'urgence par exemple, est
-ignorée et se vérifie à sa première connexion.
-Un fichier invalide (adresse en http, nom de composant incorrect…) est refusé en entier. Un fichier déjà proposé
+ignorée et se vérifie à sa première connexion. Une clé reprise d'un fichier ne vaut que pour les connexions au PSMP :
+une connexion directe au même serveur (KeePass) fait toujours vérifier sa clé. Dans Paramètres, ces clés
+apparaissent sous la forme `psmp://hôte:port`.
+Un fichier écrit en « UTF-8 avec BOM » (PowerShell 5.1 : `Set-Content -Encoding UTF8`) est accepté, comme une liste
+partagée. Un fichier invalide (adresse en http, nom de composant incorrect…) est refusé en entier. Un fichier déjà proposé
 n'est reproposé que s'il a changé. Un réglage vide sur le poste qui exporte n'est pas exporté : il n'efface rien
 chez celui qui importe. Les chemins (listes partagées, fichier central) sont complets : `C:\…` ou `\\serveur\…`.
 Votre identifiant, « Mes serveurs » et vos sessions récentes ne sont jamais
@@ -1045,7 +1071,8 @@ renommé) : téléchargez-la une fois depuis la page des versions.
   L'adresse du PVWA ne peut contenir que le nom du serveur, un port et un chemin : un « nom@ » devant le serveur (qui
   ferait joindre un autre serveur que celui affiché), une espace, un « \ » ou une lettre hors ASCII sont refusés.
 - **Noms de fichiers du serveur** : les caractères invisibles (inversion du sens d'écriture, espace sans largeur,
-  caractères de contrôle) s'affichent « � » dans la liste et les confirmations, et deviennent « _ » dans le nom du
+  caractères de contrôle) s'affichent « � » dans la liste, les confirmations, le choix d'un fichier de l'autre
+  serveur, la comparaison, la file et l'historique des transferts, et le suivi (tail), et deviennent « _ » dans le nom du
   fichier téléchargé, pour qu'un nom ne puisse pas en imiter un autre (« .exe » affiché « .pdf »). Les fichiers
   spéciaux (périphérique comme `/dev/zero`, tube nommé, socket) ne sont ni ouverts ni téléchargés, et sont ignorés
   dans le téléchargement d'un dossier.
