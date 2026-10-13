@@ -448,7 +448,7 @@
     <value>L'adresse du PVWA ne peut contenir que le nom du serveur, puis un port et un chemin si besoin : pas de « nom@ » devant le serveur, pas d'espace ni de « \ », pas de lettre accentuée ou d'un autre alphabet (un nom international s'écrit sous sa forme « xn-- »).</value>
   </data>
   <data name="PvwaRedirectNotFollowed" xml:space="preserve">
-    <value>Le PVWA a répondu par une redirection (HTTP {0}) vers {1}. Elle n'est pas suivie, pour que votre mot de passe et votre session ne partent jamais vers une autre adresse : vérifiez l'adresse du PVWA dans les Paramètres (nom exact du serveur et chemin de PasswordVault).</value>
+    <value>Le PVWA a répondu par une redirection (HTTP {0}) vers {1}. Elle n'est pas suivie, pour que votre mot de passe et votre session ne partent jamais vers une autre adresse : corrigez le champ « Adresse PVWA » de la fenêtre d'identification (nom exact du serveur et chemin de PasswordVault).</value>
   </data>
   <data name="SpecialFileRefused" xml:space="preserve">
     <value>« {0} » est un fichier spécial (périphérique, tube nommé ou socket) : il ne peut être ni ouvert ni téléchargé, car sa lecture ne finirait pas ou bloquerait le serveur.</value>
@@ -566,5 +566,8 @@
   </data>
   <data name="MigrationCheckOtherDomain" xml:space="preserve">
     <value>Compte d'un autre domaine que le serveur : vérifiez-le</value>
+  </data>
+  <data name="PvwaTooManyPages" xml:space="preserve">
+    <value>Le PVWA a renvoyé une liste anormalement longue (plus de {0} pages) : chargement arrêté. Signalez-le aux administrateurs CyberArk.</value>
   </data>
 </root>

@@ -1720,5 +1720,14 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("MigrationCheckOtherDomain", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The PVWA returned an abnormally long list (more than {0} pages): loading stopped. Report it to the CyberArk administrators..
+        /// </summary>
+        public static string PvwaTooManyPages {
+            get {
+                return ResourceManager.GetString("PvwaTooManyPages", resourceCulture);
+            }
+        }
     }
 }

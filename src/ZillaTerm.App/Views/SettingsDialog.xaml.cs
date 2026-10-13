@@ -94,6 +94,8 @@ public partial class SettingsDialog : Window
         }
 
         TagGrid.ItemsSource = _tagRows;
+        _tagRows.CollectionChanged += (_, _) => UpdateAddTagButton();
+        UpdateAddTagButton();
         Loaded += (_, _) => LanguageBox.Focus();
     }
 
@@ -652,6 +654,13 @@ public partial class SettingsDialog : Window
 
     private void OnTagSelected(object sender, SelectionChangedEventArgs e) => RemoveTagButton.IsEnabled = TagGrid.SelectedItem is TagRow;
 
+    /// <summary>« Ajouter une étiquette » grisé au nombre maximal d'étiquettes, avec la raison en infobulle.</summary>
+    private void UpdateAddTagButton()
+    {
+        AddTagButton.IsEnabled = _tagRows.Count < ServerTagRules.MaxTags;
+        AddTagButton.ToolTip = AddTagButton.IsEnabled ? null : Strings.ServerTagLimitTip;
+    }
+
     /// <summary>
     /// Étiquettes du tableau, vérifiées, et les renommages (ancien nom → nouveau) que les serveurs suivront ; null après
     /// avoir montré la première erreur (nom vide, trop long, invisible ou en double).
@@ -663,7 +672,8 @@ public partial class SettingsDialog : Window
         foreach (var row in _tagRows)
         {
             var name = (row.Name ?? "").Trim();
-            if (!ServerTagRules.IsValidName(name) || ServerTagRules.Find(tags, name) is not null)
+            // Au-delà du nombre maximal, l'étiquette serait effacée sans un mot à l'enregistrement : refusée ici.
+            if (!ServerTagRules.IsValidName(name) || ServerTagRules.Find(tags, name) is not null || tags.Count == ServerTagRules.MaxTags)
             {
                 TagGrid.SelectedItem = row;
                 TagGrid.ScrollIntoView(row);

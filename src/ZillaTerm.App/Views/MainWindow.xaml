@@ -753,7 +753,8 @@
                                    Text="{x:Static loc:Strings.NoSavedHelp}" />
                         <TreeView x:Name="SavedTree" BorderThickness="0" Background="Transparent" Padding="2,0,0,0" AllowDrop="True"
                                   VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
-                                  SelectedItemChanged="OnSavedSelectionChanged" KeyDown="OnSavedKeyDown" IsKeyboardFocusWithinChanged="OnSelectorFocusChanged"
+                                  SelectedItemChanged="OnSavedSelectionChanged" KeyDown="OnSavedKeyDown" PreviewKeyDown="OnSavedPreviewKeyDown"
+                                  IsKeyboardFocusWithinChanged="OnSelectorFocusChanged"
                                   PreviewMouseLeftButtonDown="OnSavedMouseDown" PreviewMouseMove="OnSavedDragMove"
                                   DragOver="OnSavedDragOver" Drop="OnSavedDrop" ContextMenu="{StaticResource SavedBackgroundMenu}">
                             <TreeView.Resources>
@@ -853,6 +854,7 @@
                                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                                     <EventSetter Event="MouseDoubleClick" Handler="OnSavedItemDoubleClick" />
                                     <EventSetter Event="Loaded" Handler="OnSavedItemLoaded" />
+                                    <EventSetter Event="ContextMenuOpening" Handler="OnSavedItemMenuOpening" />
                                     <EventSetter Event="MouseRightButtonDown" Handler="OnTreeItemRightClick" />
                                 </Style>
                             </TreeView.ItemContainerStyle>

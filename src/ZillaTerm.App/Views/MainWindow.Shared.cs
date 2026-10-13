@@ -637,6 +637,17 @@ public partial class MainWindow
         _ => null,
     };
 
+    /// <summary>
+    /// Serveurs retirés de la liste avec un nœud : le serveur, ou tous ceux du dossier et de ses sous-dossiers, y compris
+    /// ceux que la recherche masque (comme dans « Mes serveurs ») ; l'arbre d'une recherche n'en montre qu'une partie.
+    /// </summary>
+    internal static List<ServerEntry> SharedRemovalEntries(object node) => node switch
+    {
+        SharedFolderNode folder when folder.List.Content is { } content =>
+            content.Servers.Where(s => !string.IsNullOrEmpty(s.Folder) && SessionFolders.IsWithin(s.Folder, folder.Path)).ToList(),
+        _ => SharedServers(node).Select(s => s.Entry).ToList(),
+    };
+
     /// <summary>Serveurs d'un nœud de liste partagée (dossier : sous-dossiers compris).</summary>
     private static List<SharedServerNode> SharedServers(object node) => node switch
     {
@@ -784,21 +795,25 @@ public partial class MainWindow
             return;
         }
 
-        var servers = SharedServers(node!);
-        if (servers.Count == 0)
+        var shown = SharedServers(node!);
+        var entries = SharedRemovalEntries(node!);
+        if (entries.Count == 0)
         {
             return;
         }
 
+        int hidden = Math.Max(0, entries.Count - shown.Count);
         var heading = node is SharedFolderNode folder
             ? Text.Format(Strings.SharedRemoveFolderHeading, folder.Path, list.Name)
-            : Text.Format(Strings.SharedRemoveHeading, servers[0].Title, list.Name);
+            : Text.Format(Strings.SharedRemoveHeading, shown[0].Title, list.Name);
         if (!ConfirmDialog.Confirm(this, new ConfirmRequest
             {
                 Title = Strings.SharedListsTitle,
                 Heading = heading,
-                Message = Strings.SharedRemoveMessage,
-                Items = node is SharedFolderNode ? servers.Select(s => s.Title).ToList() : [],
+                Message = hidden > 0
+                    ? Text.Format(Strings.SharedRemoveHiddenBySearch, hidden) + " " + Strings.SharedRemoveMessage
+                    : Strings.SharedRemoveMessage,
+                Items = node is SharedFolderNode ? entries.Select(s => s.ToSession(PvwaHost).Name).ToList() : [],
                 Kind = ConfirmKind.Warning,
                 Actions = [Strings.ActionRemove],
                 DangerAction = 0,
@@ -807,7 +822,7 @@ public partial class MainWindow
             return;
         }
 
-        var ids = servers.Select(s => s.Entry.Id).ToList();
+        var ids = entries.Select(s => s.Id).ToList();
         var who = SharedWho;
         if (await ChangeSharedAsync(list, l => l.Remove(ids, who)) is { } removed)
         {

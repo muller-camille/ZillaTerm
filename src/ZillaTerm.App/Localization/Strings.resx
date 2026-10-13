@@ -91,7 +91,7 @@
     <value>The PVWA did not respond in time.</value>
   </data>
   <data name="ErrorTlsRejected" xml:space="preserve">
-    <value>TLS connection refused: this computer does not trust the PVWA certificate.</value>
+    <value>TLS connection refused: this computer does not trust the PVWA certificate, or the certificate has been revoked.</value>
   </data>
   <data name="ErrorPvwaUnreachable" xml:space="preserve">
     <value>Cannot reach the PVWA: {0}</value>
@@ -5350,7 +5350,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>NEW</value>
   </data>
   <data name="InvalidServerTag" xml:space="preserve">
-    <value>Server tags: name of 1 to 16 visible characters, no duplicate.</value>
+    <value>Server tags: 20 at most, name of 1 to 16 visible characters, no duplicate.</value>
   </data>
   <data name="ColorRed" xml:space="preserve">
     <value>Red</value>
@@ -5561,5 +5561,23 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="RdpFullScreenFreeRdpTip" xml:space="preserve">
     <value>Full screen is not available in a tab with the built-in FreeRDP client: maximize the ZillaTerm window on the screen you want. For a full-screen PSM session, clear “Open PSM Windows sessions in a ZillaTerm tab” (Settings): it will open in Remote Desktop Connection.</value>
+  </data>
+  <data name="SettingsMissingRestored" xml:space="preserve">
+    <value>Your settings file (settings.json) was missing: the previous settings were restored from their backup (settings.json.bak).
+
+To start over with the default settings, close ZillaTerm and delete these two files from the folder:
+{0}</value>
+  </data>
+  <data name="SharedRemoveHiddenBySearch" xml:space="preserve">
+    <value>All its servers are removed, including {0:# server|# servers} hidden by the search.</value>
+  </data>
+  <data name="LoginBack" xml:space="preserve">
+    <value>_Back</value>
+  </data>
+  <data name="LoginBackTip" xml:space="preserve">
+    <value>Back to the sign-in fields (method, user name) without answering the question. Esc does the same.</value>
+  </data>
+  <data name="ServerTagLimitTip" xml:space="preserve">
+    <value>20 tags at most: remove one to add another.</value>
   </data>
 </root>

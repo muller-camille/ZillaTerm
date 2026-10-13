@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services;
 using ZillaTerm.Core;
@@ -202,8 +203,7 @@ public partial class LoginWindow : Window
             if (answeringChallenge)
             {
                 // Le challenge a échoué : on repart d'une authentification complète.
-                ChallengePanel.Visibility = Visibility.Collapsed;
-                CredentialsPanel.Visibility = Visibility.Visible;
+                ShowCredentials();
             }
 
             PasswordBox.Clear();
@@ -223,14 +223,67 @@ public partial class LoginWindow : Window
         }
     }
 
-    private void ShowChallenge(string prompt)
+    internal void ShowChallenge(string prompt)
     {
         StatusText.Visibility = Visibility.Collapsed;
         CredentialsPanel.Visibility = Visibility.Collapsed;
         ChallengePanel.Visibility = Visibility.Visible;
         ChallengeText.Text = prompt;
         PasswordBox.Clear();
+        BackButton.Visibility = Visibility.Visible;
         Dispatcher.BeginInvoke(() => ChallengeBox.Focus());
+    }
+
+    private void ShowCredentials()
+    {
+        ChallengePanel.Visibility = Visibility.Collapsed;
+        CredentialsPanel.Visibility = Visibility.Visible;
+        BackButton.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Pendant la question RADIUS, Échap fait « Retour » au lieu de « Quitter », qui fermerait ZillaTerm. « Retour » n'est
+    /// pas le bouton d'annulation de la fenêtre (IsCancel) : WPF fermerait alors la fenêtre à chaque clic.
+    /// </summary>
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+        if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None && EscapeGoesBack())
+        {
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>Échap pendant la question RADIUS : retour aux identifiants (ignoré pendant l'envoi de la réponse).</summary>
+    /// <returns>Vrai si la touche est prise ici (question affichée).</returns>
+    internal bool EscapeGoesBack()
+    {
+        if (ChallengePanel.Visibility != Visibility.Visible)
+        {
+            return false;
+        }
+
+        if (BackButton.IsEnabled)
+        {
+            OnBackClick(BackButton, new RoutedEventArgs());
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Question RADIUS laissée sans réponse : retour aux identifiants (méthode ou identifiant à corriger), sans réponse
+    /// fausse qui compterait comme un échec. La tentative en cours est abandonnée ; « S'identifier » en recommence une.
+    /// </summary>
+    private void OnBackClick(object sender, RoutedEventArgs e)
+    {
+        _pending?.Dispose();
+        _pending = null;
+        ChallengeBox.Clear();
+        StatusText.Visibility = Visibility.Collapsed;
+        ShowCredentials();
+        SetBusy(false);
+        FocusFirstField();
     }
 
     private void ShowError(string message)
@@ -244,6 +297,7 @@ public partial class LoginWindow : Window
     {
         Busy.Visibility = busy ? Visibility.Visible : Visibility.Hidden;
         LoginButton.IsEnabled = !busy;
+        BackButton.IsEnabled = !busy;
         LanguageBox.IsEnabled = !busy && ChallengePanel.Visibility != Visibility.Visible;
         CredentialsPanel.IsEnabled = !busy;
         ChallengePanel.IsEnabled = !busy;

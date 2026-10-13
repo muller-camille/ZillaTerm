@@ -237,6 +237,24 @@ public sealed partial class DialogTests
 
             var actions = new SafeMemberActions((_, _) => Task.CompletedTask, (_, _) => Task.CompletedTask, (_, _) => Task.CompletedTask);
             new SafeMembersDialog("Prod", _ => Task.FromResult(new List<SafeMember>()), actions).Close();
+
+            // Deux chargements qui se croisent : boutons grisés pendant le chargement, et le plus récent l'emporte même
+            // si l'ancien répond après lui.
+            UseDispatcherContext();
+            var loads = new Queue<TaskCompletionSource<List<SafeMember>>>([new(), new()]);
+            var pending = loads.ToArray();
+            var members = new SafeMembersDialog("Prod", _ => loads.Dequeue().Task, actions);
+            var first = members.LoadAsync();
+            Assert.False(members.ManagePanel.IsEnabled);
+            var second = members.LoadAsync();
+            pending[1].SetResult([new SafeMember { MemberName = "jdoe" }]);
+            Pump(second);
+            Assert.True(members.ManagePanel.IsEnabled);
+            pending[0].SetResult([new SafeMember { MemberName = "ancien" }]);
+            Pump(first);
+            Assert.Equal(["jdoe"], Assert.IsAssignableFrom<IEnumerable<SafeMembersDialog.SafeMemberRow>>(members.MembersGrid.ItemsSource).Select(r => r.Name));
+            Assert.True(members.ManagePanel.IsEnabled);
+            members.Close();
         });
     }
 
@@ -1486,6 +1504,23 @@ public sealed partial class DialogTests
             Assert.Equal(Strings.InvalidServerTag, dialog.ErrorText.Text);
             dialog.TagRows[2].Name = " ";
             Assert.Null(dialog.ReadTags());
+
+            // 20 étiquettes au plus : « Ajouter » grisé à 20, et une 21ᵉ refusée au lieu d'être effacée sans un mot.
+            dialog.TagRows[2].Name = "SANDBOX";
+            Assert.True(dialog.AddTagButton.IsEnabled);
+            for (int i = dialog.TagRows.Count; i < ServerTagRules.MaxTags; i++)
+            {
+                dialog.TagRows.Add(new SettingsDialog.TagRow(null, $"T{i}", "#00838F"));
+            }
+
+            Assert.NotNull(dialog.ReadTags());
+            Assert.False(dialog.AddTagButton.IsEnabled);
+            Assert.Equal(Strings.ServerTagLimitTip, dialog.AddTagButton.ToolTip);
+            dialog.TagRows.Add(new SettingsDialog.TagRow(null, "DR", "#00838F"));
+            Assert.Null(dialog.ReadTags());
+            Assert.Equal(Strings.InvalidServerTag, dialog.ErrorText.Text);
+            dialog.TagRows.RemoveAt(dialog.TagRows.Count - 1);
+            Assert.True(dialog.AddTagButton.IsEnabled);
             dialog.Close();
         });
     }
@@ -1689,6 +1724,78 @@ public sealed partial class DialogTests
             restricted.MachineBox.Text = "";
             Assert.False(restricted.Accept());
             restricted.Close();
+        });
+    }
+
+    /// <summary>
+    /// Question RADIUS : « Retour » (Échap) réaffiche les identifiants sans rien envoyer au PVWA, et « Quitter » redevient
+    /// la touche Échap.
+    /// </summary>
+    [Fact]
+    public void RadiusQuestionCanGoBackToTheCredentials()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var login = new LoginWindow(new AppSettings { PvwaUrl = "pvwa.corp.local", UserName = "jdoe" });
+            Assert.Equal(Visibility.Collapsed, login.BackButton.Visibility);
+            Assert.True(login.QuitButton.IsCancel);
+            // Hors de la question, Échap reste à « Quitter ».
+            Assert.False(login.EscapeGoesBack());
+
+            login.ShowChallenge("Code OTP ?");
+            Assert.Equal(Visibility.Collapsed, login.CredentialsPanel.Visibility);
+            Assert.Equal(Visibility.Visible, login.BackButton.Visibility);
+            // « Retour » n'est pas un bouton d'annulation : un clic fermerait la fenêtre de connexion, donc ZillaTerm.
+            Assert.False(login.BackButton.IsCancel);
+
+            Assert.True(login.EscapeGoesBack());
+            Assert.Equal(Visibility.Visible, login.CredentialsPanel.Visibility);
+            Assert.Equal(Visibility.Collapsed, login.ChallengePanel.Visibility);
+            Assert.Equal(Visibility.Collapsed, login.BackButton.Visibility);
+            Assert.True(login.LanguageBox.IsEnabled);
+            Assert.Null(login.Client);
+
+            login.ShowChallenge("Code OTP ?");
+            login.BackButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.Equal(Visibility.Visible, login.CredentialsPanel.Visibility);
+            login.Close();
+        });
+    }
+
+    /// <summary>
+    /// « Connexion avancée » après un refus du composant : « Retenir » n'est pas cochée d'office, et un nom de composant
+    /// que les Paramètres refuseraient (espace…) est refusé ici aussi, l'erreur sur le champ.
+    /// </summary>
+    [Fact]
+    public void AdvancedConnectionRefusesAnInvalidComponent()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var account = new PvwaAccount { Id = "5_3", UserName = "admin", Address = "srv01.corp.local", PlatformId = "WinServerLocal" };
+            var dialog = new ConnectDialog(account, new ConnectRequest(ConnectMode.Psm, "PSM-RDP"), new AppSettings(), "jdoe",
+                "EPVWA093E", componentError: true);
+            Assert.False(dialog.RememberBox.IsChecked);
+
+            dialog.ComponentBox.Text = "PSM RDP";
+            dialog.RememberBox.IsChecked = true;
+            Assert.False(dialog.Accept());
+            Assert.Equal(Strings.InvalidComponentName, dialog.ErrorText.Text);
+            Assert.Null(dialog.Result);
+
+            dialog.ComponentBox.Text = "WIN-PSM";
+            Assert.True(dialog.Accept());
+            Assert.Equal(("WIN-PSM", true), (dialog.Result?.Component, dialog.Result?.RememberComponent));
+            dialog.Close();
         });
     }
 
@@ -2186,6 +2293,20 @@ public sealed partial class DialogTests
                 Assert.True(dialog.RestoreButton.IsEnabled);
                 Assert.Empty(restored);
                 dialog.Close();
+
+                // Restauration en cours (partage lent) : choisir une autre version ne réactive pas « Restaurer ».
+                var pending = new TaskCompletionSource<int?>();
+                var slow = new SharedHistoryDialog(new SharedServerList(list.Path), _ => pending.Task);
+                Pump(slow.LoadAsync());
+                slow.VersionsGrid.SelectedIndex = 1;
+                var restoring = slow.RestoreAsync(slow.Versions[1]);
+                Assert.False(slow.RestoreButton.IsEnabled);
+                slow.VersionsGrid.SelectedIndex = 0;
+                Assert.False(slow.RestoreButton.IsEnabled);
+                pending.SetResult(null);
+                Pump(restoring);
+                Assert.True(slow.RestoreButton.IsEnabled);
+                slow.Close();
             });
         }
         finally
@@ -2249,6 +2370,37 @@ public sealed partial class DialogTests
                 Assert.Equal("root@app01", Assert.IsType<SavedSessionNode>(nodes[1]).Title);
                 window.StopWatchingSharedLists();
             });
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// « Retirer le dossier » d'une liste partagée pendant une recherche qui n'en montre qu'un serveur : tous les serveurs
+    /// du dossier (sous-dossiers compris) sont retirés, pas seulement celui affiché ; un serveur seul reste seul.
+    /// </summary>
+    [Fact]
+    public void RemovingASharedFolderTakesTheServersHiddenBySearch()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var directory = Directory.CreateTempSubdirectory("cat-shared-").FullName;
+        try
+        {
+            var list = SharedServerList.Create(Path.Combine(directory, "Équipe.json"), "Équipe", "pvwa.test", "alice");
+            list.Add([Server("1", "web01", "Recette"), Server("2", "db01", "Recette"), Server("3", "app01", "Recette/Interne"),
+                Server("4", "web02", "Prod")], "alice");
+            var web01 = list.Content!.Servers.Single(s => s.Name == "web01");
+            var shown = new SharedServerNode(list, web01, web01.ToSession("pvwa.test", keepId: true), null);
+            var folder = new SharedFolderNode(list, "Recette", [shown], isExpanded: true);
+
+            Assert.Equal(["app01", "db01", "web01"], MainWindow.SharedRemovalEntries(folder).Select(s => s.Name).Order());
+            Assert.Equal(["web01"], MainWindow.SharedRemovalEntries(shown).Select(s => s.Name));
         }
         finally
         {

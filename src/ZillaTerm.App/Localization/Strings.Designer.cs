@@ -16597,5 +16597,53 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("RdpFullScreenFreeRdpTip", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Your settings file (settings.json) was missing: the previous settings were restored from their backup (settings.json.bak).
+        ///
+        ///To start over with the default settings, close ZillaTerm and delete these two files from the folder:
+        ///{0}.
+        /// </summary>
+        public static string SettingsMissingRestored {
+            get {
+                return ResourceManager.GetString("SettingsMissingRestored", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to All its servers are removed, including {0:# server|# servers} hidden by the search..
+        /// </summary>
+        public static string SharedRemoveHiddenBySearch {
+            get {
+                return ResourceManager.GetString("SharedRemoveHiddenBySearch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Back.
+        /// </summary>
+        public static string LoginBack {
+            get {
+                return ResourceManager.GetString("LoginBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Back to the sign-in fields (method, user name) without answering the question. Esc does the same..
+        /// </summary>
+        public static string LoginBackTip {
+            get {
+                return ResourceManager.GetString("LoginBackTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 20 tags at most: remove one to add another..
+        /// </summary>
+        public static string ServerTagLimitTip {
+            get {
+                return ResourceManager.GetString("ServerTagLimitTip", resourceCulture);
+            }
+        }
     }
 }

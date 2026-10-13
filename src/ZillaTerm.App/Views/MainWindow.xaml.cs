@@ -994,17 +994,20 @@ public partial class MainWindow : Window
                     }
 
                     request = dialog.Result;
+                }
+
+                try
+                {
+                    bool opened = await LaunchAsync(account, request, saved);
+                    // Composant retenu pour la plateforme une fois accepté par le PVWA : un nom refusé n'est jamais mémorisé.
                     if (request.RememberComponent)
                     {
                         _settings.RememberComponent(account.PlatformId, request.Component);
                         SaveSettings();
                     }
-                }
 
-                try
-                {
                     // Rien d'ouvert (aucun PSMP pour ce serveur) : rien à garder dans « Mes serveurs ».
-                    if (await LaunchAsync(account, request, saved) && keepFolder is not null && request.RemoteMachine is { } machine
+                    if (opened && keepFolder is not null && request.RemoteMachine is { } machine
                         && SessionLibrary.FindSession(_settings, account, PvwaHost, machine) is null)
                     {
                         ShowAddedToCurrent(SessionLibrary.AddConnection(_settings, account, PvwaHost, keepFolder, request.Mode,
@@ -1594,9 +1597,19 @@ public partial class MainWindow : Window
 
     private void CopyCurrent(Func<PvwaAccount, string> selector)
     {
-        if (_current is { } account)
+        if (_current is not { } account)
+        {
+            return;
+        }
+
+        try
         {
             Clipboard.SetText(selector(account));
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Presse-papiers tenu par une autre application (Bureau à distance, gestionnaire de presse-papiers).
+            SetStatus(Strings.ClipboardBusy, isError: true);
         }
     }
 
@@ -1866,6 +1879,84 @@ public partial class MainWindow : Window
     }
 
     private void OnExit(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>
+    /// Fin de la session Windows (déconnexion, arrêt, redémarrage) : WPF ferme alors les fenêtres sans tenir compte de
+    /// <c>Cancel</c>, et ni les questions de <see cref="OnClosing"/> ni les suites de ses <c>await</c> n'auraient lieu.
+    /// Le nettoyage essentiel est fait ici, tout de suite et sans question : réglages enregistrés, presse-papiers du mot
+    /// de passe vidé, sessions SSH fermées (copies des fichiers modifiés effacées), coffres verrouillés, fichiers .rdp
+    /// effacés, sessions Bureau à distance libérées et sorties de la fenêtre, session PVWA fermée en meilleur effort (2 s
+    /// au plus). La fermeture qui suit n'a plus rien à faire.
+    /// </summary>
+    internal void EndWithWindowsSession()
+    {
+        if (_closeConfirmed)
+        {
+            return;
+        }
+
+        bool closing = _loggedOff;
+        _loggedOff = true;
+        _closeConfirmed = true;
+        DebugLog.Write("app", "Fin de la session Windows : fermeture immédiate, sans question.");
+        if (!closing)
+        {
+            RememberLayout();
+            SaveSettings();
+            try
+            {
+                _lifetime.Cancel();
+            }
+            catch (AggregateException ex)
+            {
+                // Une opération annulée a levé une erreur : le nettoyage continue quand même.
+                DebugLog.Write("app", "Annulation des opérations en cours", ex);
+            }
+        }
+
+        _passwordClipboard?.Dispose();
+        _mfaKey = null;
+        SshAnswerCache.ForgetAll();
+        CloseAllSshSessions();
+        _keePass.LockAll(localStore: true);
+        _launcher.Cleanup();
+        foreach (var view in _rdpViews.ToList())
+        {
+            view.Session.Dispose();
+            RdpLayer.Children.Remove(view);
+        }
+
+        _rdpViews.Clear();
+        if (_client is { } client)
+        {
+            bool revoke = _mfaKeyIssued;
+            try
+            {
+                // Hors du fil de l'interface (aucune suite n'y revient) et borné : Windows n'attend pas.
+                Task.Run(async () =>
+                {
+                    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    if (revoke)
+                    {
+                        try
+                        {
+                            await client.RevokeMfaCachingSshKeyAsync(timeout.Token);
+                        }
+                        catch (Exception ex) when (ex is not OutOfMemoryException)
+                        {
+                            // Clé non retirée : elle expirera d'elle-même.
+                        }
+                    }
+
+                    await client.LogoffAsync(timeout.Token);
+                }).Wait(TimeSpan.FromSeconds(2.5));
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                // Au pire, la session expirera d'elle-même côté PVWA (et la clé MFA caching aussi).
+            }
+        }
+    }
 
     protected override async void OnClosing(CancelEventArgs e)
     {
