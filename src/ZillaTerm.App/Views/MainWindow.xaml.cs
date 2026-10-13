@@ -978,17 +978,20 @@ public partial class MainWindow : Window
                     }
 
                     request = dialog.Result;
+                }
+
+                try
+                {
+                    bool opened = await LaunchAsync(account, request, saved);
+                    // Composant retenu pour la plateforme une fois accepté par le PVWA : un nom refusé n'est jamais mémorisé.
                     if (request.RememberComponent)
                     {
                         _settings.RememberComponent(account.PlatformId, request.Component);
                         SaveSettings();
                     }
-                }
 
-                try
-                {
                     // Rien d'ouvert (aucun PSMP pour ce serveur) : rien à garder dans « Mes serveurs ».
-                    if (await LaunchAsync(account, request, saved) && keepFolder is not null && request.RemoteMachine is { } machine
+                    if (opened && keepFolder is not null && request.RemoteMachine is { } machine
                         && SessionLibrary.FindSession(_settings, account, PvwaHost, machine) is null)
                     {
                         ShowAddedToCurrent(SessionLibrary.AddConnection(_settings, account, PvwaHost, keepFolder, request.Mode,

@@ -5350,7 +5350,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>NOUVELLE</value>
   </data>
   <data name="InvalidServerTag" xml:space="preserve">
-    <value>Étiquettes des serveurs : nom de 1 à 16 caractères visibles, sans doublon.</value>
+    <value>Étiquettes des serveurs : 20 au plus, nom de 1 à 16 caractères visibles, sans doublon.</value>
   </data>
   <data name="ColorRed" xml:space="preserve">
     <value>Rouge</value>
@@ -5549,5 +5549,14 @@ Pour repartir des réglages par défaut, fermez ZillaTerm et supprimez ces deux 
   </data>
   <data name="SharedRemoveHiddenBySearch" xml:space="preserve">
     <value>Tous ses serveurs sont retirés, y compris {0:# serveur masqué|# serveurs masqués} par la recherche.</value>
+  </data>
+  <data name="LoginBack" xml:space="preserve">
+    <value>_Retour</value>
+  </data>
+  <data name="LoginBackTip" xml:space="preserve">
+    <value>Revenir aux champs d'identification (méthode, utilisateur) sans répondre à la question. Échap fait de même.</value>
+  </data>
+  <data name="ServerTagLimitTip" xml:space="preserve">
+    <value>20 étiquettes au plus : retirez-en une pour en ajouter une autre.</value>
   </data>
 </root>

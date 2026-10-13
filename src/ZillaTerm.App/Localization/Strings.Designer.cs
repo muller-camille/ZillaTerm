@@ -16555,5 +16555,32 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("SharedRemoveHiddenBySearch", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Back.
+        /// </summary>
+        public static string LoginBack {
+            get {
+                return ResourceManager.GetString("LoginBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Back to the sign-in fields (method, user name) without answering the question. Esc does the same..
+        /// </summary>
+        public static string LoginBackTip {
+            get {
+                return ResourceManager.GetString("LoginBackTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 20 tags at most: remove one to add another..
+        /// </summary>
+        public static string ServerTagLimitTip {
+            get {
+                return ResourceManager.GetString("ServerTagLimitTip", resourceCulture);
+            }
+        }
     }
 }

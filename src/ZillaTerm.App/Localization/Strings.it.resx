@@ -5350,7 +5350,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>NUOVA</value>
   </data>
   <data name="InvalidServerTag" xml:space="preserve">
-    <value>Etichette dei server: nome da 1 a 16 caratteri visibili, senza duplicati.</value>
+    <value>Etichette dei server: al massimo 20, nome da 1 a 16 caratteri visibili, senza duplicati.</value>
   </data>
   <data name="ColorRed" xml:space="preserve">
     <value>Rosso</value>
@@ -5549,5 +5549,14 @@ Per ripartire dalle impostazioni predefinite, chiudi ZillaTerm ed elimina questi
   </data>
   <data name="SharedRemoveHiddenBySearch" xml:space="preserve">
     <value>Vengono rimossi tutti i suoi server, {0:compreso # server nascosto|compresi # server nascosti} dalla ricerca.</value>
+  </data>
+  <data name="LoginBack" xml:space="preserve">
+    <value>In_dietro</value>
+  </data>
+  <data name="LoginBackTip" xml:space="preserve">
+    <value>Torna ai campi di accesso (metodo, utente) senza rispondere alla domanda. Esc fa lo stesso.</value>
+  </data>
+  <data name="ServerTagLimitTip" xml:space="preserve">
+    <value>Al massimo 20 etichette: rimuovine una per aggiungerne un'altra.</value>
   </data>
 </root>

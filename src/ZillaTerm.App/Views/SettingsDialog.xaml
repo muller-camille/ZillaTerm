@@ -163,7 +163,7 @@
                             </DataGrid.Columns>
                         </DataGrid>
                         <StackPanel Orientation="Horizontal" Margin="0,6,0,8">
-                            <Button Click="OnAddTag">
+                            <Button x:Name="AddTagButton" Click="OnAddTag" ToolTipService.ShowOnDisabled="True">
                                 <AccessText Text="{x:Static loc:Strings.ServerTagAdd}" />
                             </Button>
                             <Button x:Name="RemoveTagButton" Click="OnRemoveTag" IsEnabled="False" Margin="8,0,0,0">

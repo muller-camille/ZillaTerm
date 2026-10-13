@@ -40,8 +40,9 @@ public partial class ConnectDialog : Window
         TicketSystemBox.Text = initial.TicketingSystem ?? "";
         TicketIdBox.Text = initial.TicketId ?? "";
         RememberBox.Content = Text.Format(Strings.RememberComponent, account.PlatformId);
-        // Composant refusé : celui saisi à la place sera retenu pour la plateforme (décochable).
-        RememberBox.IsChecked = initial.RememberComponent || componentError;
+        // Jamais cochée d'office, même après un refus du composant : un nom mémorisé vaut pour tous les comptes de la
+        // plateforme, il reste un choix de l'utilisateur (et n'est retenu qu'une fois accepté par le PVWA).
+        RememberBox.IsChecked = initial.RememberComponent;
         X11Box.IsChecked = initial.X11Forwarding;
         System.Windows.Controls.ToolTipService.SetShowOnDisabled(X11Box, true);
 
@@ -166,9 +167,10 @@ public partial class ConnectDialog : Window
     {
         bool psm = PsmRadio.IsChecked == true;
         string component = ComponentBox.Text.Trim();
-        if (psm && component.Length == 0)
+        if (psm && (component.Length == 0 || !AppSettings.IsValidComponentName(component)))
         {
-            ErrorText.Text = Strings.ComponentRequired;
+            // Même règle que dans les Paramètres : un nom retenu ici ne doit pas y bloquer l'enregistrement.
+            ErrorText.Text = component.Length == 0 ? Strings.ComponentRequired : Strings.InvalidComponentName;
             ErrorPanel.Visibility = Visibility.Visible;
             ComponentBox.Focus();
             return false;

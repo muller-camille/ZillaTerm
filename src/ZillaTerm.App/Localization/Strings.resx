@@ -5350,7 +5350,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>NEW</value>
   </data>
   <data name="InvalidServerTag" xml:space="preserve">
-    <value>Server tags: name of 1 to 16 visible characters, no duplicate.</value>
+    <value>Server tags: 20 at most, name of 1 to 16 visible characters, no duplicate.</value>
   </data>
   <data name="ColorRed" xml:space="preserve">
     <value>Red</value>
@@ -5549,5 +5549,14 @@ To start over with the default settings, close ZillaTerm and delete these two fi
   </data>
   <data name="SharedRemoveHiddenBySearch" xml:space="preserve">
     <value>All its servers are removed, including {0:# server|# servers} hidden by the search.</value>
+  </data>
+  <data name="LoginBack" xml:space="preserve">
+    <value>_Back</value>
+  </data>
+  <data name="LoginBackTip" xml:space="preserve">
+    <value>Back to the sign-in fields (method, user name) without answering the question. Esc does the same.</value>
+  </data>
+  <data name="ServerTagLimitTip" xml:space="preserve">
+    <value>20 tags at most: remove one to add another.</value>
   </data>
 </root>
