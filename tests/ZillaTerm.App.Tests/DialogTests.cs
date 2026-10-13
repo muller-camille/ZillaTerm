@@ -2526,6 +2526,61 @@ public sealed class DialogTests
         });
     }
 
+    /// <summary>
+    /// Pavé tactile de précision : les petits pas de la molette s'additionnent (le reste repart de zéro au changement de
+    /// sens). Capture de la souris perdue pendant une sélection : la sélection est terminée.
+    /// </summary>
+    [Fact]
+    public void TerminalAddsSmallWheelStepsAndEndsASelectionWhenTheMouseIsTaken()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var (session, view) = NewSshView("root@srv01");
+            var window = new Window { Width = 800, Height = 500, ShowInTaskbar = false, ShowActivated = false, Content = view };
+            window.Show();
+            PumpUntil(() => view.Terminal.IsLoaded);
+            try
+            {
+                var terminal = view.Terminal;
+                session.Emulator.Feed(string.Concat(Enumerable.Range(1, 100).Select(i => $"line {i}\r\n")));
+                void Wheel(int delta) => terminal.RaiseEvent(
+                    new System.Windows.Input.MouseWheelEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount, delta)
+                    {
+                        RoutedEvent = UIElement.MouseWheelEvent,
+                    });
+
+                for (int i = 0; i < 6; i++)
+                {
+                    Wheel(20);
+                }
+
+                Assert.Equal(3, terminal.ScrollState.Offset);
+                Wheel(30);
+                Wheel(-20);
+                Assert.Equal(3, terminal.ScrollState.Offset);
+                Wheel(-20);
+                Assert.Equal(2, terminal.ScrollState.Offset);
+
+                terminal.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount,
+                    System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonDownEvent });
+                Assert.True(terminal.IsSelecting);
+                Assert.True(terminal.IsMouseCaptured);
+                System.Windows.Input.Mouse.Capture(null);
+                Assert.False(terminal.IsSelecting);
+            }
+            finally
+            {
+                window.Close();
+                session.Dispose();
+            }
+        });
+    }
+
     private sealed class NoInteraction : ZillaTerm.Core.Ssh.ISshInteraction
     {
         public bool CheckHostKey(string host, int port, string algorithm, string sha256Fingerprint) => false;
