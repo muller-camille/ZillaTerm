@@ -345,7 +345,13 @@ public partial class MainWindow
         }
 
         MainTabs.SelectedItem ??= HomeTab;
-        var view = _rdpViews.First(v => v.Session == session);
+        if (_rdpViews.FirstOrDefault(v => v.Session == session) is not { } view)
+        {
+            // Déjà retirée avec toutes les autres (déconnexion, fermeture) : la session est fermée.
+            session.Dispose();
+            return;
+        }
+
         view.Visibility = Visibility.Hidden;
         // Le contrôle reste dans la fenêtre jusqu'à la fin de la déconnexion ; il la quitte avant d'être libéré.
         await session.CloseAsync();
@@ -367,6 +373,11 @@ public partial class MainWindow
         foreach (var view in views)
         {
             view.Session.Dispose();
+            // Onglet retiré avec sa session : une demande au PVWA qui se termine ensuite ne le retrouve plus.
+            if (MainTabs.Items.OfType<TabItem>().FirstOrDefault(t => t.Tag == view.Session) is { } tab)
+            {
+                MainTabs.Items.Remove(tab);
+            }
         }
 
         var all = Task.WhenAll(views.Select(v => v.Session.Closed));

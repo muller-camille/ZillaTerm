@@ -57,6 +57,9 @@ public partial class MainWindow : Window
     // Comptes du PVWA chargés au moins une fois : avant, un compte absent n'est pas encore un compte disparu.
     private bool _accountsLoaded;
     private bool _connecting;
+
+    // Session en cours d'ouverture (« compte@serveur ») : nommée quand une autre connexion doit attendre.
+    private string _connectingLabel = "";
     private bool _loggedOff;
 
     // Nettoyage de fermeture terminé : la fenêtre peut se fermer pour de bon.
@@ -928,8 +931,15 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task ConnectAsync(PvwaAccount account, ConnectRequest request, bool showDialog = false, SavedSession? saved = null)
     {
-        if (_connecting || _loggedOff)
+        if (_loggedOff)
         {
+            return;
+        }
+
+        if (_connecting)
+        {
+            // Une connexion à la fois (demande au PVWA, lancement de la session PSM) : l'utilisateur sait pourquoi rien ne part.
+            SetStatus(Text.Format(Strings.ConnectBusyWait, _connectingLabel));
             return;
         }
 
@@ -965,6 +975,12 @@ public partial class MainWindow : Window
         {
             while (true)
             {
+                if (_loggedOff)
+                {
+                    // Déconnexion ou fermeture pendant la demande : aucune fenêtre de connexion.
+                    return;
+                }
+
                 if (showDialog)
                 {
                     var dialog = new ConnectDialog(account, request, _settings, _vaultUser, error, componentError, needsMachine)
@@ -1015,6 +1031,13 @@ public partial class MainWindow : Window
                                                or TaskCanceledException or IOException or UnauthorizedAccessException
                                                or Win32Exception or InvalidOperationException)
                 {
+                    if (_loggedOff)
+                    {
+                        // Demande interrompue par la déconnexion ou la fermeture (client PVWA libéré) : rien à signaler.
+                        DebugLog.Write("psm", $"Connexion interrompue par la fermeture : {ex.Message}");
+                        return;
+                    }
+
                     // Composant absent de la plateforme du compte (il peut porter un autre nom, par ex. WIN-PSM) :
                     // le dialogue le dit et invite à saisir le bon.
                     componentError = ex is PvwaException { IsUnknownComponent: true };
@@ -1038,6 +1061,7 @@ public partial class MainWindow : Window
     {
         var target = string.IsNullOrWhiteSpace(request.RemoteMachine) ? account.Address : request.RemoteMachine.Trim();
         var label = $"{account.UserName}@{target}";
+        _connectingLabel = label;
         if (request.Mode == ConnectMode.Psm)
         {
             SetStatus(Text.Format(Strings.PsmOpening, label, request.Component));
@@ -1142,10 +1166,25 @@ public partial class MainWindow : Window
             byte[] file;
             try
             {
-                file = await Client.PsmConnectAsync(account.Id, options, ct);
+                try
+                {
+                    file = await Client.PsmConnectAsync(account.Id, options, ct);
+                }
+                catch (PvwaException e) when (e.IsUnauthorized && !initial && !ct.IsCancellationRequested)
+                {
+                    // Session CyberArk expirée (veille, reconnexion) : identification proposée, puis une nouvelle demande.
+                    // À la première connexion, ConnectAsync s'en charge (onglet retiré, connexion relancée).
+                    if (!Reconnect(userAction: true))
+                    {
+                        throw;
+                    }
+
+                    file = await Client.PsmConnectAsync(account.Id, options, ct);
+                }
             }
-            catch (Exception e) when (initial)
+            catch (Exception e) when (initial && !ct.IsCancellationRequested)
             {
+                // Demande annulée (onglet fermé, autre tentative lancée par « Reconnecter ») : rien à rapporter.
                 firstError = e;
                 throw;
             }
@@ -1192,9 +1231,9 @@ public partial class MainWindow : Window
         }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), psm: "");
         await ConnectRdpTabAsync(session);
 
-        if (!HasRdpTab(session))
+        if (!HasRdpTab(session) || session.IsDisposed || _loggedOff)
         {
-            // Onglet fermé pendant la demande ou la connexion : rien d'autre à faire.
+            // Onglet fermé pendant la demande ou la connexion, déconnexion ou fermeture : rien d'autre à faire.
             return;
         }
 
