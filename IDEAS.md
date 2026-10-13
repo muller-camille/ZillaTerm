@@ -87,12 +87,6 @@ definitions`, composant de connexion absent de la plateforme).
 
 - Chaque test ouvre une session PSMP (enregistrée, avec peut-être une validation MFA) : seulement à la demande.
 
-### Retenir un refus SCP pour l'onglet
-
-Quand le PSMP refuse SCP dès la commande `scp` (composant PSMP-SCP absent de la plateforme), l'onglet le retient :
-les fichiers suivants partent directement par l'autre protocole, sans rouvrir à chaque fichier une session PSMP qui
-sera refusée (une par fichier pour un dossier de 1 500 fichiers). Le bilan expliquerait l'erreur `118E` en clair.
-
 ## Suivi de fichier (tail -f)
 
 ### Suivre le fichier le plus récent d'un dossier
@@ -314,7 +308,7 @@ pixels) :
 
 Gardé pour mémoire, pour ne pas le reproposer sans raison nouvelle.
 
-- **Sessions PSM dans un onglet** (contrôle Bureau à distance intégré, puis fenêtres d'application distante
+- **Sessions PSM dans un onglet avec le contrôle Bureau à distance de Windows** (puis fenêtres d'application distante
   rattachées à l'onglet) : retirées en 0.6.2. Le PSM refusait le mode bureau, et les fenêtres d'application distante
-  rattachées réagissaient mal (souris inactive après un passage en plein écran). Les sessions PSM s'ouvrent dans la
-  Connexion Bureau à distance de Windows. À reprendre seulement avec un PSM qui accepte le mode bureau.
+  rattachées réagissaient mal (souris inactive après un passage en plein écran). Les sessions PSM dans un onglet sont
+  revenues en 0.28, en option, avec un client FreeRDP intégré ; la Connexion Bureau à distance de Windows reste le repli.

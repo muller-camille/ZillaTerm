@@ -259,7 +259,7 @@
     <value>The server closed the SCP connection during the upload: {0}.</value>
   </data>
   <data name="ScpRefusedCommand" xml:space="preserve">
-    <value>the server closed the SCP channel as soon as the scp command was sent: {0}</value>
+    <value>the server closed the SCP channel as soon as the scp command was sent (through a PSMP: the account's platform probably lacks the PSMP-SCP connection component, error 118E): {0}</value>
   </data>
   <data name="ScpRefusedHeader" xml:space="preserve">
     <value>the server closed the SCP channel when the file ({0}) was announced: {1}</value>
@@ -581,5 +581,11 @@
   </data>
   <data name="DownloadExceedsAnnounced" xml:space="preserve">
     <value>The server sent more than {0} for a file announced at {1}: download stopped.</value>
+  </data>
+  <data name="ScpRefusedForTab" xml:space="preserve">
+    <value>refused earlier in this tab, files sent over SFTP without a new SCP session</value>
+  </data>
+  <data name="ScpRefusedForTabBecause" xml:space="preserve">
+    <value>refused earlier in this tab ({0})</value>
   </data>
 </root>

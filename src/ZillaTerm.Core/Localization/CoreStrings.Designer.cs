@@ -1765,5 +1765,23 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("DownloadExceedsAnnounced", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to refused earlier in this tab ({0}).
+        /// </summary>
+        public static string ScpRefusedForTab {
+            get {
+                return ResourceManager.GetString("ScpRefusedForTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to refused earlier in this tab ({0}).
+        /// </summary>
+        public static string ScpRefusedForTabBecause {
+            get {
+                return ResourceManager.GetString("ScpRefusedForTabBecause", resourceCulture);
+            }
+        }
     }
 }
