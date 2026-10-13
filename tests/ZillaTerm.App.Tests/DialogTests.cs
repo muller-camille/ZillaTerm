@@ -654,6 +654,17 @@ public sealed class DialogTests
             Assert.Equal("profile", Type("p"));
             Assert.Equal("passwd", Type("P"));
             Assert.Equal("passwd", Type("x"));
+
+            // Espace d'un nom : la liste la prendrait (touche traitée avant TextInput), et « f » chercherait « rapportf ».
+            Thread.Sleep(TypeAhead.Pause + TimeSpan.FromMilliseconds(200));
+            panel.FileList.ItemsSource = new List<RemoteEntry> { E("rapportfinal-old.txt"), E("rapport final.txt") };
+            window.UpdateLayout();
+            Assert.Equal("rapportfinal-old.txt", Type("rapport"));
+            var space = new System.Windows.Input.KeyEventArgs(System.Windows.Input.Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0,
+                System.Windows.Input.Key.Space) { RoutedEvent = System.Windows.Input.Keyboard.PreviewKeyDownEvent };
+            panel.FileList.RaiseEvent(space);
+            Assert.True(space.Handled);
+            Assert.Equal("rapport final.txt", Type("f"));
             window.Close();
         });
     }

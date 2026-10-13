@@ -99,6 +99,43 @@ public class PsmConnectTests
         Assert.Equal("""{"ConnectionComponent":"WIN-PSM"}""", pvwa.Requests[2].Body);
     }
 
+    /// <summary>
+    /// Refus qui ne nomme pas le paramètre (texte d'un autre PVWA, autre langue) ou erreur interne : nouvelle demande sans
+    /// les disques aussi.
+    /// </summary>
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest, "PASWS013E", "La requête n'est pas valide.")]
+    [InlineData(HttpStatusCode.InternalServerError, "PASWS999E", "An unexpected error occurred.")]
+    public async Task PsmConnect_RetriesWithoutLocalDrivesOnAnyRefusalOfTheRequest(HttpStatusCode status, string code, string message)
+    {
+        int calls = 0;
+        var pvwa = Pvwa(_ => ++calls == 1
+            ? FakePvwa.Json($$"""{"ErrorCode":"{{code}}","ErrorMessage":"{{message}}"}""", status)
+            : RdpResponse(Encoding.UTF8.GetBytes(Rdp)));
+        using var client = await pvwa.CreateLoggedOnClientAsync();
+
+        var file = await client.PsmConnectAsync("1_1", new PsmConnectOptions { ConnectionComponent = "WIN-PSM", MapLocalDrives = true });
+
+        Assert.Equal(Rdp, Encoding.UTF8.GetString(file));
+        Assert.Equal("""{"ConnectionComponent":"WIN-PSM"}""", pvwa.Requests[2].Body);
+    }
+
+    /// <summary>Accès refusé ou composant inconnu : la même demande sans les disques échouerait pareil.</summary>
+    [Theory]
+    [InlineData(HttpStatusCode.Forbidden, "PASWS041E", "You are not authorized to perform this action.")]
+    [InlineData(HttpStatusCode.BadRequest, "EPVWA093E", "Connection component WIN-PSM was not found.")]
+    [InlineData(HttpStatusCode.BadRequest, "PASWS205E", "A ticket is required to access this account.")]
+    public async Task PsmConnect_DoesNotRetryRefusalsWithAnotherCause(HttpStatusCode status, string code, string message)
+    {
+        var pvwa = Pvwa(_ => FakePvwa.Json($$"""{"ErrorCode":"{{code}}","ErrorMessage":"{{message}}"}""", status));
+        using var client = await pvwa.CreateLoggedOnClientAsync();
+
+        await Assert.ThrowsAsync<PvwaException>(
+            () => client.PsmConnectAsync("1_1", new PsmConnectOptions { ConnectionComponent = "WIN-PSM", MapLocalDrives = true }));
+
+        Assert.Equal(2, pvwa.Requests.Count);
+    }
+
     /// <summary>Autre refus (motif exigé) : pas de nouvelle demande, l'erreur est rendue telle quelle.</summary>
     [Fact]
     public async Task PsmConnect_DoesNotRetryOtherRefusals()

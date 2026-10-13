@@ -319,9 +319,10 @@
         </Border>
 
         <Grid>
-            <!-- Lettres tapées : OnListTextInput. La recherche de WPF (sur le texte de l'objet, jamais le nom) prendrait la frappe. -->
+            <!-- Lettres tapées : OnListTextInput (l'espace d'un nom : OnListPreviewKeyDown). La recherche de WPF (sur le texte de
+                 l'objet, jamais le nom) prendrait la frappe. -->
             <ListView x:Name="FileList" BorderThickness="0" Background="{DynamicResource ContentBrush}" SelectionMode="Extended" AllowDrop="True"
-                      ContextMenu="{StaticResource FileMenu}" KeyDown="OnListKeyDown" TextInput="OnListTextInput" IsTextSearchEnabled="False"
+                      ContextMenu="{StaticResource FileMenu}" KeyDown="OnListKeyDown" PreviewKeyDown="OnListPreviewKeyDown" TextInput="OnListTextInput" IsTextSearchEnabled="False"
                       DragEnter="OnDragEnter" DragOver="OnDragEnter" DragLeave="OnDragLeave" Drop="OnDrop"
                       PreviewMouseLeftButtonDown="OnListPreviewMouseDown" PreviewMouseMove="OnListPreviewMouseMove"
                       PreviewMouseLeftButtonUp="OnListPreviewMouseUp" GridViewColumnHeader.Click="OnColumnHeaderClick"

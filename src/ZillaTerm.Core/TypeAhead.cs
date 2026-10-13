@@ -13,6 +13,12 @@ public sealed class TypeAhead
     private string _typed = "";
     private DateTime _last;
 
+    /// <summary>
+    /// Vrai si un nom est en cours de saisie à <paramref name="now"/> : une espace le prolonge (la liste la prend sinon pour
+    /// elle, pour sélectionner l'élément qui a le clavier).
+    /// </summary>
+    public bool IsTyping(DateTime now) => _typed.Length > 0 && now - _last <= Pause;
+
     /// <summary>Position de l'élément à sélectionner après la frappe de <paramref name="text"/> ; -1 si aucun nom ne convient.</summary>
     /// <param name="names">Noms affichés, dans l'ordre de la liste.</param>
     /// <param name="current">Position de l'élément sélectionné (-1 : aucun).</param>
