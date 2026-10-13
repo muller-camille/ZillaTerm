@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 using ZillaTerm.Core;
 
 namespace ZillaTerm.App.Services;
@@ -24,6 +25,12 @@ internal static class UpdateService
             DefaultProxyCredentials = CredentialCache.DefaultCredentials,
             AutomaticDecompression = DecompressionMethods.All,
             ConnectTimeout = TimeSpan.FromSeconds(15),
+            // Certificat révoqué refusé ; serveur de révocation injoignable : connexion acceptée (voir TlsRevocation).
+            SslOptions = new SslClientAuthenticationOptions
+            {
+                RemoteCertificateValidationCallback = (sender, certificate, chain, errors) =>
+                    TlsRevocation.Validate((sender as SslStream)?.TargetHostName, certificate, chain, errors),
+            },
         };
         var http = new HttpClient(handler) { Timeout = TimeSpan.FromMinutes(10) };
         http.DefaultRequestHeaders.UserAgent.ParseAdd($"ZillaTerm/{UpdateChecker.CurrentVersion}");

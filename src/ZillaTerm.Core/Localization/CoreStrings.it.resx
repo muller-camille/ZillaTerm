@@ -448,7 +448,7 @@
     <value>L'indirizzo del PVWA può contenere solo il nome del server, poi una porta e un percorso se necessario: niente «nome@» davanti al server, niente spazi né «\», niente lettere accentate o di un altro alfabeto (un nome internazionale si scrive nella forma «xn--»).</value>
   </data>
   <data name="PvwaRedirectNotFollowed" xml:space="preserve">
-    <value>Il PVWA ha risposto con un reindirizzamento (HTTP {0}) verso {1}. Non viene seguito, perché la password e la sessione non vengano mai inviate a un altro indirizzo: verifica l'indirizzo del PVWA nelle Impostazioni (nome esatto del server e percorso di PasswordVault).</value>
+    <value>Il PVWA ha risposto con un reindirizzamento (HTTP {0}) verso {1}. Non viene seguito, perché la password e la sessione non vengano mai inviate a un altro indirizzo: correggi il campo «Indirizzo PVWA» della finestra di accesso (nome esatto del server e percorso di PasswordVault).</value>
   </data>
   <data name="SpecialFileRefused" xml:space="preserve">
     <value>«{0}» è un file speciale (dispositivo, named pipe o socket): non può essere né aperto né scaricato, perché la lettura non finirebbe mai o bloccherebbe il server.</value>
@@ -560,5 +560,8 @@
   </data>
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>Il server Desktop remoto non usa alcuna cifratura: nulla ne prova l'identità né protegge la connessione, che viene rifiutata.</value>
+  </data>
+  <data name="PvwaTooManyPages" xml:space="preserve">
+    <value>Il PVWA ha restituito un elenco anormalmente lungo (più di {0} pagine): caricamento interrotto. Segnalalo agli amministratori di CyberArk.</value>
   </data>
 </root>

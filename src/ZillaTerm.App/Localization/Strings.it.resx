@@ -91,7 +91,7 @@
     <value>Il PVWA non ha risposto in tempo.</value>
   </data>
   <data name="ErrorTlsRejected" xml:space="preserve">
-    <value>Connessione TLS rifiutata: il certificato del PVWA non è considerato attendibile da questo computer.</value>
+    <value>Connessione TLS rifiutata: il certificato del PVWA non è considerato attendibile da questo computer, oppure è stato revocato.</value>
   </data>
   <data name="ErrorPvwaUnreachable" xml:space="preserve">
     <value>Impossibile raggiungere il PVWA: {0}</value>

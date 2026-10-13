@@ -51,6 +51,9 @@ public sealed class PvwaClient : IDisposable
             // Une redirection n'est jamais suivie : en 307/308, le mot de passe de la connexion serait renvoyé à
             // l'adresse indiquée, et le jeton de session pourrait l'être aussi. Elle est signalée (CreateErrorAsync).
             AllowAutoRedirect = false,
+            // Certificat révoqué refusé ; serveur de révocation injoignable : connexion acceptée (voir TlsRevocation).
+            ServerCertificateCustomValidationCallback = (request, certificate, chain, errors) =>
+                TlsRevocation.Validate(request.RequestUri?.Host, certificate, chain, errors),
         };
 
     /// <summary>
@@ -158,23 +161,9 @@ public sealed class PvwaClient : IDisposable
     /// page par page.
     /// </summary>
     /// <param name="progress">Reçoit (comptes chargés, total annoncé par le PVWA) après chaque page.</param>
-    public async Task<List<PvwaAccount>> GetAccountsAsync(IProgress<(int Loaded, int Total)>? progress = null, CancellationToken ct = default)
-    {
-        var accounts = new List<PvwaAccount>();
-        while (true)
-        {
-            var page = await GetAsync<Page<PvwaAccount>>($"API/Accounts?offset={accounts.Count}&limit={PageSize}", ct).ConfigureAwait(false);
-            var items = page.Value ?? [];
-            accounts.AddRange(items);
-            progress?.Report((accounts.Count, Math.Max(page.Count, accounts.Count)));
-
-            bool more = page.Count > 0 ? accounts.Count < page.Count : page.NextLink is not null;
-            if (items.Count == 0 || !more)
-            {
-                return accounts;
-            }
-        }
-    }
+    /// <exception cref="PvwaException">Refus du PVWA, ou liste anormalement longue (voir <see cref="MaxPages"/>).</exception>
+    public Task<List<PvwaAccount>> GetAccountsAsync(IProgress<(int Loaded, int Total)>? progress = null, CancellationToken ct = default) =>
+        GetAllPagesAsync<PvwaAccount>("API/Accounts", a => a.Id, progress, ct);
 
     /// <summary>
     /// Membres d'un safe (utilisateurs et groupes) avec leurs droits, page par page. Le PVWA ne les donne qu'à un
@@ -184,20 +173,51 @@ public sealed class PvwaClient : IDisposable
     public async Task<List<SafeMember>> GetSafeMembersAsync(string safeName, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(safeName);
+        return await GetAllPagesAsync<SafeMember>($"API/Safes/{Uri.EscapeDataString(safeName)}/Members", m => m.MemberName, null, ct)
+            .ConfigureAwait(false);
+    }
 
-        var members = new List<SafeMember>();
-        var safe = Uri.EscapeDataString(safeName);
-        while (true)
+    /// <summary>
+    /// Pages lues au plus pour une liste (1 000 pages de 1 000 éléments) : au-delà, le PVWA (compromis, ou en panne) ne
+    /// s'arrêterait jamais d'en annoncer, et la mémoire finirait par manquer.
+    /// </summary>
+    internal const int MaxPages = 1000;
+
+    /// <summary>
+    /// Toutes les pages d'une liste du PVWA (<paramref name="path"/> sans paramètres). La liste s'arrête au total annoncé
+    /// (<c>count</c>), ou, sans total, quand il n'y a plus de page suivante (<c>nextLink</c>) ; et aussi sur une page vide
+    /// ou qui n'apporte aucun élément nouveau (<paramref name="key"/> : identifiant ; même page renvoyée en boucle).
+    /// </summary>
+    /// <exception cref="PvwaException">Plus de <see cref="MaxPages"/> pages, ou d'éléments que ces pages n'en contiennent.</exception>
+    private async Task<List<T>> GetAllPagesAsync<T>(string path, Func<T, string?> key, IProgress<(int Loaded, int Total)>? progress,
+        CancellationToken ct)
+    {
+        var all = new List<T>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (int pages = 0; ; pages++)
         {
-            var page = await GetAsync<Page<SafeMember>>($"API/Safes/{safe}/Members?offset={members.Count}&limit={PageSize}", ct)
-                .ConfigureAwait(false);
-            var items = page.Value ?? [];
-            members.AddRange(items);
+            if (pages == MaxPages || all.Count > MaxPages * PageSize)
+            {
+                DebugLog.Write("pvwa", $"{path} : plus de {MaxPages} pages ({all.Count} éléments), lecture arrêtée.");
+                throw new PvwaException(HttpStatusCode.OK, null, string.Format(CultureInfo.CurrentCulture, CoreStrings.PvwaTooManyPages, MaxPages));
+            }
 
-            bool more = page.Count > 0 ? members.Count < page.Count : page.NextLink is not null;
+            var page = await GetAsync<Page<T>>($"{path}?offset={all.Count}&limit={PageSize}", ct).ConfigureAwait(false);
+            var items = page.Value ?? [];
+            // Count (et non Any) : chaque identifiant de la page est noté.
+            if (items.Count > 0 && items.Count(i => seen.Add((i is null ? null : key(i)) ?? "")) == 0)
+            {
+                DebugLog.Write("pvwa", $"{path} : page à l'offset {all.Count} sans élément nouveau, lecture arrêtée.");
+                return all;
+            }
+
+            all.AddRange(items);
+            progress?.Report((all.Count, Math.Max(page.Count, all.Count)));
+
+            bool more = page.Count > 0 ? all.Count < page.Count : page.NextLink is not null;
             if (items.Count == 0 || !more)
             {
-                return members;
+                return all;
             }
         }
     }

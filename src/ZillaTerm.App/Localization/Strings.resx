@@ -91,7 +91,7 @@
     <value>The PVWA did not respond in time.</value>
   </data>
   <data name="ErrorTlsRejected" xml:space="preserve">
-    <value>TLS connection refused: this computer does not trust the PVWA certificate.</value>
+    <value>TLS connection refused: this computer does not trust the PVWA certificate, or the certificate has been revoked.</value>
   </data>
   <data name="ErrorPvwaUnreachable" xml:space="preserve">
     <value>Cannot reach the PVWA: {0}</value>
