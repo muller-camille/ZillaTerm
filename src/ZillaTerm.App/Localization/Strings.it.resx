@@ -4990,10 +4990,10 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Ca_ttura un desktop remoto…</value>
   </data>
   <data name="InterventionCaptureTip" xml:space="preserve">
-    <value>Immagine di una finestra Connessione Desktop remoto (sessioni PSM), aggiunta al registro</value>
+    <value>Immagine di una finestra Connessione Desktop remoto (sessioni PSM), aggiunta al registro. Sessione in una scheda di ZillaTerm: pulsante «Cattura» della sua scheda.</value>
   </data>
   <data name="InterventionNoRdpWindow" xml:space="preserve">
-    <value>Nessuna finestra Connessione Desktop remoto è aperta (una finestra ridotta a icona non può essere catturata).</value>
+    <value>Nessuna finestra Connessione Desktop remoto è aperta (una finestra ridotta a icona non può essere catturata). Una sessione aperta in una scheda di ZillaTerm si cattura con il pulsante «Cattura» della sua scheda.</value>
   </data>
   <data name="InterventionCaptureFailed" xml:space="preserve">
     <value>Non è stato possibile catturare la finestra.</value>

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services.Rdp;
@@ -57,6 +58,11 @@ public partial class RdpSessionView : UserControl
         CaptureButton.Visibility = _interventionRecording && session.ShowsDesktop ? Visibility.Visible : Visibility.Collapsed;
         Overlay.Visibility = session.ShowsDesktop ? Visibility.Collapsed : Visibility.Visible;
         FullScreenButton.IsEnabled = session.IsConnected && session.CanFullScreen;
+        // Client FreeRDP : pas de plein écran ; le bouton grisé dit pourquoi, et quoi faire à la place.
+        var fullScreenTip = session.UsesFreeRdp ? Strings.RdpFullScreenFreeRdpTip : Strings.RdpFullScreenTip;
+        FullScreenButton.ToolTip = fullScreenTip;
+        AutomationProperties.SetHelpText(FullScreenButton, fullScreenTip);
+        ToolTipService.SetShowOnDisabled(FullScreenButton, session.UsesFreeRdp);
         DisconnectButton.IsEnabled = session.HasControl;
         var server = session.Server.Length > 0 ? session.Server : session.Label;
         switch (session.State)

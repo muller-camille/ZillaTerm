@@ -4990,10 +4990,10 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Ca_pture a remote desktop…</value>
   </data>
   <data name="InterventionCaptureTip" xml:space="preserve">
-    <value>Image of a Remote Desktop Connection window (PSM sessions), added to the journal</value>
+    <value>Image of a Remote Desktop Connection window (PSM sessions), added to the journal. A session in a ZillaTerm tab: “Capture” button of its tab.</value>
   </data>
   <data name="InterventionNoRdpWindow" xml:space="preserve">
-    <value>No Remote Desktop Connection window is open (a minimized window cannot be captured).</value>
+    <value>No Remote Desktop Connection window is open (a minimized window cannot be captured). A session opened in a ZillaTerm tab is captured with the “Capture” button of its tab.</value>
   </data>
   <data name="InterventionCaptureFailed" xml:space="preserve">
     <value>The window could not be captured.</value>

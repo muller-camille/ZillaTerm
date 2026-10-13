@@ -4990,10 +4990,10 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>_Capturer un Bureau à distance…</value>
   </data>
   <data name="InterventionCaptureTip" xml:space="preserve">
-    <value>Image d'une fenêtre Connexion Bureau à distance (sessions PSM), ajoutée au journal</value>
+    <value>Image d'une fenêtre Connexion Bureau à distance (sessions PSM), ajoutée au journal. Session dans un onglet de ZillaTerm : bouton « Capture » de son onglet.</value>
   </data>
   <data name="InterventionNoRdpWindow" xml:space="preserve">
-    <value>Aucune fenêtre Connexion Bureau à distance n'est ouverte (une fenêtre réduite ne peut pas être capturée).</value>
+    <value>Aucune fenêtre Connexion Bureau à distance n'est ouverte (une fenêtre réduite ne peut pas être capturée). Une session ouverte dans un onglet de ZillaTerm se capture avec le bouton « Capture » de son onglet.</value>
   </data>
   <data name="InterventionCaptureFailed" xml:space="preserve">
     <value>La fenêtre n'a pas pu être capturée.</value>

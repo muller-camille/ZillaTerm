@@ -176,6 +176,9 @@ internal sealed class RdpSession : IDisposable
     /// <summary>Plein écran possible pour la connexion en cours (contrôle de Windows seulement).</summary>
     public bool CanFullScreen => _connection?.CanFullScreen == true;
 
+    /// <summary>Vrai si la dernière connexion passe par le client FreeRDP de ZillaTerm (pas de plein écran).</summary>
+    public bool UsesFreeRdp { get; private set; }
+
     /// <summary>Ouverture de la session (fin de l'ouverture de session Windows), ou null.</summary>
     public DateTime? ConnectedAt { get; private set; }
 
@@ -283,6 +286,7 @@ internal sealed class RdpSession : IDisposable
         }
 
         _connection = connection;
+        UsesFreeRdp = request.FreeRdp;
         _attached.Add(connection);
         _ = connection.Detached.ContinueWith(_ => _dispatcher.BeginInvoke(() => _attached.Remove(connection)), TaskScheduler.Default);
         // L'emplacement s'affiche avant la création du contrôle : celui-ci prend sa taille dans l'onglet. Le client

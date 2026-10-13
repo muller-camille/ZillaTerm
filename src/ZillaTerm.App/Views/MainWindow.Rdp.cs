@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services.Rdp;
@@ -43,6 +44,15 @@ public partial class MainWindow
         view.ShowTag(tag);
         var tab = new TabItem { Tag = session };
         tab.Header = TabHeader(tab, label, "IconWindows", duplicate, tag);
+        // Onglet choisi au clavier : Entrée donne le clavier à la session (voir ShowRdpView).
+        tab.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None && tab.IsKeyboardFocused && session.IsConnected)
+            {
+                session.Focus();
+                e.Handled = true;
+            }
+        };
         session.StateChanged += () =>
         {
             switch (session.State)
@@ -433,14 +443,24 @@ public partial class MainWindow
         return true;
     }
 
-    /// <summary>Affiche la session Bureau à distance de l'onglet choisi et masque les autres.</summary>
+    /// <summary>
+    /// Affiche la session Bureau à distance de l'onglet choisi et masque les autres. Choisi à la souris, l'onglet donne
+    /// le clavier à la session ; au clavier (Ctrl+Tab, Ctrl+F4…), le focus reste sur l'onglet : le client FreeRDP prend
+    /// toutes les touches dès qu'il a le clavier, et Ctrl+Tab n'irait plus à l'onglet suivant. Entrée (ou F6, ou un clic
+    /// dans la session) lui donne ensuite le clavier.
+    /// </summary>
     private void ShowRdpView(TabItem? tab)
     {
+        bool byKeyboard = InputManager.Current.MostRecentInputDevice is KeyboardDevice;
         foreach (var view in _rdpViews)
         {
             bool selected = ReferenceEquals(tab?.Tag, view.Session);
             view.Visibility = selected ? Visibility.Visible : Visibility.Hidden;
-            if (selected)
+            if (selected && byKeyboard)
+            {
+                Dispatcher.BeginInvoke(DispatcherPriority.Input, () => tab!.Focus());
+            }
+            else if (selected)
             {
                 Dispatcher.BeginInvoke(DispatcherPriority.Input, view.Session.Focus);
             }
