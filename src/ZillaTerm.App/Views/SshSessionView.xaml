@@ -21,8 +21,8 @@
                 <DockPanel>
                     <Button x:Name="BannerReconnectButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.Reconnect}" Click="OnReconnect"
                             VerticalAlignment="Center" Margin="12,0,0,0" />
-                    <TextBlock x:Name="EndText" Foreground="{DynamicResource StatusForeground}" TextWrapping="Wrap" VerticalAlignment="Center"
-                               AutomationProperties.LiveSetting="Assertive" />
+                    <views:AnnouncedText x:Name="EndText" Foreground="{DynamicResource StatusForeground}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                         AutomationProperties.LiveSetting="Assertive" />
                 </DockPanel>
             </Border>
             <term:TerminalView Grid.Row="1" x:Name="Terminal" />
@@ -47,8 +47,8 @@
                             AutomationProperties.Name="{x:Static loc:Strings.TerminalSearchOlderTip}" />
                     <Button Content="↓" Width="26" MinWidth="0" Padding="0" Margin="4,0,0,0" Click="OnSearchNewer" ToolTip="{x:Static loc:Strings.TerminalSearchNewerTip}"
                             AutomationProperties.Name="{x:Static loc:Strings.TerminalSearchNewerTip}" />
-                    <TextBlock x:Name="SearchCount" Margin="8,0,0,0" MinWidth="64" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}"
-                               AutomationProperties.LiveSetting="Polite" />
+                    <views:AnnouncedText x:Name="SearchCount" Margin="8,0,0,0" MinWidth="64" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}"
+                                         AutomationProperties.LiveSetting="Polite" />
                     <Button Content="✕" Width="24" MinWidth="0" Padding="0" Margin="4,0,0,0" Click="OnSearchClose" ToolTip="{x:Static loc:Strings.TerminalSearchCloseTip}"
                             AutomationProperties.Name="{x:Static loc:Strings.TerminalSearchCloseTip}" />
                 </StackPanel>

@@ -87,6 +87,8 @@ public partial class ConfirmDialog : Window
         SetText(MessageText, request.Message);
         SetText(BannerText, request.Banner);
         Banner.Visibility = BannerText.Visibility;
+        // Alerte (clé changée…) écrite avant l'ouverture : annoncée une fois la fenêtre affichée.
+        Loaded += (_, _) => BannerText.Announce();
         if (request.Bullets.Count > 0)
         {
             BulletList.ItemsSource = request.Bullets;

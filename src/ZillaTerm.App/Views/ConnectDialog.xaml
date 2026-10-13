@@ -88,6 +88,8 @@
             <CheckBox x:Name="X11Box" Margin="0,0,0,10" ToolTip="{x:Static loc:Strings.X11ForwardingTip}">
                 <AccessText Text="{x:Static loc:Strings.X11Forwarding}" TextWrapping="Wrap" />
             </CheckBox>
+            <TextBlock x:Name="X11Effect" Style="{StaticResource CheckedOptionEffect}" Tag="{Binding ElementName=X11Box}" Margin="20,-8,0,10"
+                       Text="{x:Static loc:Strings.X11ForwardingEffect}" />
 
             <TextBlock x:Name="SshHint" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,4" />
         </StackPanel>

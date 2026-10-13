@@ -282,22 +282,38 @@ public partial class SshSessionView : UserControl
         switch (Session.State)
         {
             case RemoteSessionState.Connected when Session.IsNotResponding:
+            {
                 // Saisie restée sans réponse : terminal grisé et bandeau, jusqu'à ce que le serveur réponde ou que la
-                // connexion soit déclarée perdue ; « Reconnecter » n'attend pas.
+                // connexion soit déclarée perdue ; « Reconnecter » n'attend pas. Annoncé quand le serveur cesse de
+                // répondre, pas à chaque seconde qui s'ajoute.
                 _wasConnected = true;
                 Overlay.Visibility = Visibility.Collapsed;
-                EndBanner.Visibility = Visibility.Visible;
-                EndText.Text = Text.Format(Strings.SshNotResponding, (int)Session.NotRespondingFor.TotalSeconds);
+                var text = Text.Format(Strings.SshNotResponding, (int)Session.NotRespondingFor.TotalSeconds);
+                if (EndBanner.Visibility == Visibility.Visible)
+                {
+                    EndText.SetQuietly(text);
+                }
+                else
+                {
+                    EndBanner.Visibility = Visibility.Visible;
+                    EndText.Text = text;
+                }
+
                 Terminal.Opacity = 0.45;
                 break;
+            }
+
             case RemoteSessionState.Connected:
                 _wasConnected = true;
                 Overlay.Visibility = EndBanner.Visibility = Visibility.Collapsed;
+                // Bandeau caché : son prochain texte sera annoncé, même identique (« Session terminée » après une reconnexion).
+                EndText.Text = "";
                 Terminal.Opacity = 1;
                 break;
             case RemoteSessionState.Connecting:
                 Terminal.Opacity = 1;
                 EndBanner.Visibility = Visibility.Collapsed;
+                EndText.Text = "";
                 Overlay.Visibility = Visibility.Visible;
                 OverlayText.Text = _connectingText;
                 OverlayDetail.Text = Target;

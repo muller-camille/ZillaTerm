@@ -100,7 +100,9 @@ public sealed partial class UxTextTests
 
     /// <summary>
     /// Champs de saisie et boutons sans texte (« ✕ », « ↑ », image seule) : un nom pour les lecteurs d'écran (nom explicite,
-    /// étiquette liée, ou style qui le prend de l'infobulle).
+    /// étiquette liée, ou style qui le prend de l'infobulle). WPF ne nomme un bouton ou une case que d'un contenu texte ou
+    /// TextBlock : un libellé AccessText (seul ou avec une image) est nommé par <see cref="Views.AccessibleName"/>, tout autre
+    /// contenu (image, panneau sans AccessText) demande un nom explicite.
     /// </summary>
     [Fact]
     public void FieldsAndSymbolButtons_HaveAnAccessibleName()
@@ -119,12 +121,36 @@ public sealed partial class UxTextTests
                 bool field = element.Name.LocalName is "TextBox" or "ComboBox" or "PasswordBox";
                 var content = (string?)element.Attribute("Content");
                 var style = (string?)element.Attribute("Style") ?? "";
-                bool symbol = element.Name.LocalName == "Button"
+                var children = element.Elements().Where(c => !c.Name.LocalName.Contains('.', StringComparison.Ordinal)).ToList();
+                bool symbol = element.Name.LocalName is "Button" or "ToggleButton" or "CheckBox" or "RadioButton" or "RepeatButton"
                               && (content is not null ? Symbol().IsMatch(content)
-                                  : element.Descendants(Wpf + "Image").Any() && !element.Descendants().Any(d => d.Name.LocalName is "TextBlock" or "AccessText"));
+                                  : children.Count > 0 && children is not [{ Name.LocalName: "TextBlock" }]
+                                    && !element.Descendants(Wpf + "AccessText").Any());
                 if ((field || (symbol && !style.Contains("SmallToolButton", StringComparison.Ordinal))) && !named)
                 {
                     problems.Add($"{Path.GetFileName(path)} : {element.Name.LocalName} {name ?? content}");
+                }
+            }
+        }
+
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    /// <summary>
+    /// Zones « annoncées » (LiveSetting) : WPF ne lève pas de lui-même l'événement qui les fait lire. Chacune est une
+    /// ErrorLine ou un AnnouncedText, qui le lèvent quand le texte change ou apparaît.
+    /// </summary>
+    [Fact]
+    public void LiveRegions_RaiseTheirAnnouncement()
+    {
+        var problems = new List<string>();
+        foreach (var path in Directory.GetFiles(Path.Combine(AccessKeysTests.RepositoryRoot(), "src", "ZillaTerm.App", "Views"), "*.xaml"))
+        {
+            foreach (var element in XDocument.Load(path).Root!.Descendants().Where(e => e.Attribute("AutomationProperties.LiveSetting") is not null))
+            {
+                if (element.Name.LocalName is not ("ErrorLine" or "AnnouncedText"))
+                {
+                    problems.Add($"{Path.GetFileName(path)} : {element.Name.LocalName} {(string?)element.Attribute(Xaml + "Name")}");
                 }
             }
         }

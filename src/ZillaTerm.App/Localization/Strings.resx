@@ -1172,7 +1172,7 @@ Send them in a single {3} archive? One file to transfer and check instead of {0}
     <value>Choose up to 8 open SSH sessions to show side by side. Their terminals move to the parallel view and go back to their tabs when they leave it; the sessions are not closed. Remote desktop sessions cannot be placed there.</value>
   </data>
   <data name="ParallelDialogBroadcast" xml:space="preserve">
-    <value>In the view, "Simultaneous typing" sends what you type in one session to the other ticked sessions. It is off when the view opens.</value>
+    <value>In the view, “Simultaneous typing” sends what you type in one session to the other ticked sessions. It is off when the view opens.</value>
   </data>
   <data name="ParallelSelected" xml:space="preserve">
     <value>{0} / {1} selected</value>
@@ -1440,7 +1440,7 @@ Send them in a single {3} archive? One file to transfer and check instead of {0}
     <value>Choose an existing file of this computer.</value>
   </data>
   <data name="CompareLocalLabel" xml:space="preserve">
-    <value>this computer : {0}</value>
+    <value>this computer: {0}</value>
   </data>
   <data name="CompareReading" xml:space="preserve">
     <value>Reading {0}…</value>
@@ -3260,10 +3260,10 @@ Current revision: {1} · {2:# server|# servers}</value>
     <value>SFTP connection unavailable: set the PSMP address in the settings.</value>
   </data>
   <data name="SharedOtherPvwaConnect" xml:space="preserve">
-    <value>"{0}" comes from a shared list created for the PVWA {1}: its accounts are not those of {2}. Sign in to {1} to use it.</value>
+    <value>“{0}” comes from a shared list created for the PVWA {1}: its accounts are not those of {2}. Sign in to {1} to use it.</value>
   </data>
   <data name="SharedOtherPvwaChange" xml:space="preserve">
-    <value>The shared list "{0}" was created for the PVWA {1}: servers of {2} cannot be added to it, nor its servers copied into My servers.</value>
+    <value>The shared list “{0}” was created for the PVWA {1}: servers of {2} cannot be added to it, nor its servers copied into My servers.</value>
   </data>
   <data name="SettingsSetAsideRestored" xml:space="preserve">
     <value>Your settings file could not be read (interrupted write, full disk…). It was kept, untouched, as:
@@ -4063,10 +4063,10 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Forget the selected _keys</value>
   </data>
   <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Updates are checked at start-up (Settings &gt; General).</value>
+    <value>Updates are checked at start-up (Settings › General).</value>
   </data>
   <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>Automatic update check is off (Settings &gt; General).</value>
+    <value>Automatic update check is off (Settings › General).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Used only for a PSM connection (not for SSH or SFTP through the PSMP).</value>
@@ -4282,7 +4282,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Two PSMPs for the servers of {0}: only the first would be used.</value>
   </data>
   <data name="PsmpNoRoute" xml:space="preserve">
-    <value>No PSMP for {0}: its domain matches no configured PSMP. Add its PSMP or a default PSMP in Settings &gt; CyberArk.</value>
+    <value>No PSMP for {0}: its domain matches no configured PSMP. Add its PSMP or a default PSMP in Settings › CyberArk.</value>
   </data>
   <data name="ServerPromptTitle" xml:space="preserve">
     <value>Choose the server</value>
@@ -4900,7 +4900,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Dark</value>
   </data>
   <data name="AppThemeHelp" xml:space="preserve">
-    <value>Applied right away. Windows high contrast always takes precedence. Terminal colors are set on the Terminal page.</value>
+    <value>Applied when you save, without restarting. Windows high contrast always takes precedence. Terminal colours are set on the Terminal page.</value>
   </data>
   <data name="ToolLeaveEmergency" xml:space="preserve">
     <value>Leave emergency access</value>
@@ -4927,10 +4927,10 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Local _X server:</value>
   </data>
   <data name="X11DisplayHelp" xml:space="preserve">
-    <value>An X server installed on this computer (VcXsrv, X410, Xming…) that accepts local TCP connections: ":0" is port 6000. X11 forwarding is turned on server by server (Properties or Advanced options).</value>
+    <value>An X server installed on this computer (VcXsrv, X410, Xming…) that accepts local TCP connections: “:0” is port 6000. X11 forwarding is turned on server by server (Properties or Advanced options).</value>
   </data>
   <data name="X11DisplayInvalid" xml:space="preserve">
-    <value>Local X server: ":0", "localhost:0" or "127.0.0.1:0.0" (this computer only: the X protocol is not encrypted).</value>
+    <value>Local X server: “:0”, “localhost:0” or “127.0.0.1:0.0” (this computer only: the X protocol is not encrypted).</value>
   </data>
   <data name="X11Active" xml:space="preserve">
     <value>X11 forwarding active, to this computer's X server {0}.</value>
@@ -5224,7 +5224,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>D_uty reminder:</value>
   </data>
   <data name="DutyTextHelp" xml:space="preserve">
-    <value>Shown at the top of the "Intervention" window: good practices, emergency numbers… Plain text. Shared with the team by the environment file (Settings button › Export the environment).</value>
+    <value>Shown at the top of the “Intervention” window: good practices, emergency numbers… Plain text. Shared with the team by the environment file (Settings button › Export the environment).</value>
   </data>
   <data name="InvalidDutyText" xml:space="preserve">
     <value>On-call duty reminder: 8000 characters at most, without invisible characters.</value>
@@ -5278,13 +5278,13 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Server tags</value>
   </data>
   <data name="EnvInvalidServerTag" xml:space="preserve">
-    <value>Invalid server tag (name of 1 to 16 visible characters, color #RRGGBB, 20 tags at most, no duplicate): {0}</value>
+    <value>Invalid server tag (name of 1 to 16 visible characters, colour #RRGGBB, 20 tags at most, no duplicate): {0}</value>
   </data>
   <data name="TagPromptTitle" xml:space="preserve">
     <value>Server tag</value>
   </data>
   <data name="TagPromptHelp" xml:space="preserve">
-    <value>Its color marks the tab and the outline of the session: you see at a glance where you work.</value>
+    <value>Its colour marks the tab and the outline of the session: you see at a glance where you work.</value>
   </data>
   <data name="TagPromptGuessed" xml:space="preserve">
     <value>Suggested from its name, address, safe or folder: check it.</value>
@@ -5296,7 +5296,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Ta_g:</value>
   </data>
   <data name="TagTip" xml:space="preserve">
-    <value>Environment of the server (PROD, QA, DEV…): its color marks the tab and the outline of the session. The tags are set in Settings › General.</value>
+    <value>Environment of the server (PROD, QA, DEV…): its colour marks the tab and the outline of the session. The tags are set in Settings › General.</value>
   </data>
   <data name="TagUnknown" xml:space="preserve">
     <value>(not in the Settings)</value>
@@ -5332,13 +5332,13 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Server tags</value>
   </data>
   <data name="ServerTagsHelp" xml:space="preserve">
-    <value>Environments given to the servers of My servers (asked when a server is added). Their color marks the session tabs and the outline of each session. Removing a tag takes it off the servers. Shared with the team by the environment file.</value>
+    <value>Environments given to the servers of My servers (asked when a server is added). Their colour marks the session tabs and the outline of each session. Removing a tag takes it off the servers. Shared with the team by the environment file.</value>
   </data>
   <data name="ServerTagColName" xml:space="preserve">
     <value>Name</value>
   </data>
   <data name="ServerTagColColor" xml:space="preserve">
-    <value>Color</value>
+    <value>Colour</value>
   </data>
   <data name="ServerTagAdd" xml:space="preserve">
     <value>Add a ta_g</value>
@@ -5386,7 +5386,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Brown</value>
   </data>
   <data name="ColorGray" xml:space="preserve">
-    <value>Gray</value>
+    <value>Grey</value>
   </data>
   <data name="ColorOther" xml:space="preserve">
     <value>Other ({0})</value>
@@ -5579,5 +5579,11 @@ To start over with the default settings, close ZillaTerm and delete these two fi
   </data>
   <data name="ServerTagLimitTip" xml:space="preserve">
     <value>20 tags at most: remove one to add another.</value>
+  </data>
+  <data name="X11ForwardingEffect" xml:space="preserve">
+    <value>⚠ Effect: a compromised server could see the other X windows of this computer and send keystrokes to them.</value>
+  </data>
+  <data name="CompareRemoteLabel" xml:space="preserve">
+    <value>{0}: {1}</value>
   </data>
 </root>

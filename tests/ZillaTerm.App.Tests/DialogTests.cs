@@ -1827,7 +1827,8 @@ public sealed partial class DialogTests
 
     /// <summary>
     /// Transfert X11 : proposé pour une session SSH seulement (grisé pour le PSM et les fichiers seuls, avec la raison),
-    /// repris de la requête et rendu dans le résultat ; de même dans les propriétés d'un serveur de « Mes serveurs ».
+    /// repris de la requête et rendu dans le résultat ; de même dans les propriétés d'un serveur de « Mes serveurs ». Case
+    /// cochée et active : sa conséquence (« ⚠ Effet : … ») est écrite dessous, visible sans survol.
     /// </summary>
     [Fact]
     public void X11ForwardingIsForSshSessionsOnly()
@@ -1845,12 +1846,18 @@ public sealed partial class DialogTests
             Assert.True(dialog.X11Box.IsEnabled);
             Assert.True(dialog.X11Box.IsChecked);
             Assert.Equal(Strings.X11ForwardingTip, dialog.X11Box.ToolTip);
+            Assert.Equal(Visibility.Visible, dialog.X11Effect.Visibility);
+            Assert.Equal(Strings.X11ForwardingEffect, dialog.X11Effect.Text);
             Assert.True(dialog.Accept());
             Assert.True(dialog.Result?.X11Forwarding);
+            dialog.X11Box.IsChecked = false;
+            Assert.Equal(Visibility.Collapsed, dialog.X11Effect.Visibility);
+            dialog.X11Box.IsChecked = true;
 
             dialog.SftpRadio.IsChecked = true;
             Assert.False(dialog.X11Box.IsEnabled);
             Assert.Equal(Strings.X11SshOnly, dialog.X11Box.ToolTip);
+            Assert.Equal(Visibility.Collapsed, dialog.X11Effect.Visibility);
             Assert.True(dialog.Accept());
             Assert.False(dialog.Result?.X11Forwarding);
             dialog.Close();
@@ -1859,8 +1866,10 @@ public sealed partial class DialogTests
             var properties = new SessionPropertiesDialog(saved, account, [], sshAvailable: true, [], x11: true);
             Assert.True(properties.X11Box.IsEnabled);
             Assert.True(properties.X11Box.IsChecked);
+            Assert.Equal(Visibility.Visible, properties.X11Effect.Visibility);
             properties.PsmRadio.IsChecked = true;
             Assert.False(properties.X11Box.IsEnabled);
+            Assert.Equal(Visibility.Collapsed, properties.X11Effect.Visibility);
             Assert.Equal(Strings.X11SshOnly, properties.X11Box.ToolTip);
             properties.Close();
         });
@@ -2972,6 +2981,161 @@ public sealed partial class DialogTests
             var (light, darker) = (Math.Max(Luminance(a), Luminance(b)), Math.Min(Luminance(a), Luminance(b)));
             return (light + 0.05) / (darker + 0.05);
         }
+    }
+
+    /// <summary>
+    /// Ligne sélectionnée d'un arbre : les textes secondaires (nombre, mode, ⚠, ✓) prennent la couleur du texte de la ligne,
+    /// faite pour le fond de la sélection ; hors sélection, ils gardent la leur.
+    /// </summary>
+    [Fact]
+    public void SelectedTreeRowKeepsSecondaryTextsReadable()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            System.Windows.Controls.TextBlock Note(string style) => new() { Text = "x", Style = (Style)Application.Current.FindResource(style) };
+            var (note, warning, mark, other) = (Note("TreeNote"), Note("TreeWarning"), Note("TreeAccent"), Note("TreeNote"));
+            var row = new System.Windows.Controls.TreeViewItem { Header = new System.Windows.Controls.StackPanel { Children = { note, warning, mark } } };
+            var tree = new System.Windows.Controls.TreeView();
+            tree.Items.Add(row);
+            tree.Items.Add(new System.Windows.Controls.TreeViewItem { Header = other });
+            var window = new Window { Content = tree, Width = 300, Height = 200, ShowInTaskbar = false, ShowActivated = false };
+            window.Show();
+            try
+            {
+                row.IsSelected = true;
+                window.UpdateLayout();
+
+                static System.Windows.Media.Color ColorOf(System.Windows.Media.Brush brush) => ((System.Windows.Media.SolidColorBrush)brush).Color;
+                var muted = ColorOf((System.Windows.Media.Brush)Application.Current.FindResource("MutedBrush"));
+                Assert.NotEqual(muted, ColorOf(row.Foreground));
+                Assert.All(new[] { note, warning, mark }, text => Assert.Equal(ColorOf(row.Foreground), ColorOf(text.Foreground)));
+                Assert.Equal(muted, ColorOf(other.Foreground));
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Contraste élevé : les couleurs d'état deviennent toutes celle du texte ; la forme de la pastille distingue encore les
+    /// cinq états, dans la même largeur (l'onglet ne s'allonge pas).
+    /// </summary>
+    [Fact]
+    public void TabStatesKeepDistinctShapesInHighContrast()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var merged = Application.Current.Resources.MergedDictionaries;
+            var contrast = Palette.HighContrast();
+            merged.Add(contrast);
+            try
+            {
+                var header = new SessionTabHeader("srv01.corp.local", "IconSsh", new System.Windows.Controls.Button(), "SSH", null);
+                var marks = Enum.GetValues<SessionTabState>().Select(state =>
+                {
+                    header.SetState(state);
+                    Assert.Equal(8, header.StateMark.Width);
+                    return (header.StateMark.Data, Filled: !ReferenceEquals(header.StateMark.Fill, System.Windows.Media.Brushes.Transparent));
+                }).ToList();
+
+                Assert.Equal(5, marks.Distinct().Count());
+            }
+            finally
+            {
+                merged.Remove(contrast);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Lecteurs d'écran : une case ou un bouton dont le libellé est un AccessText (seul ou avec une image) est nommé par ce
+    /// libellé, sans la touche d'accès, et suit ses changements (« Enregistrer » / « Arrêter l'enregistrement ») ; un nom
+    /// explicite reste.
+    /// </summary>
+    [Fact]
+    public void AccessTextLabelsNameTheirButtons()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            AccessibleName.Follow();
+            var box = new System.Windows.Controls.CheckBox { Content = new System.Windows.Controls.AccessText { Text = "_Garder la session" } };
+            var label = new System.Windows.Controls.AccessText { Text = "_Enregistrer l'intervention" };
+            var record = new System.Windows.Controls.Button
+            {
+                Content = new System.Windows.Controls.StackPanel
+                {
+                    Orientation = System.Windows.Controls.Orientation.Horizontal,
+                    Children = { new System.Windows.Shapes.Ellipse { Width = 10, Height = 10 }, label },
+                },
+            };
+            var named = new System.Windows.Controls.Button { Content = new System.Windows.Controls.AccessText { Text = "_Ajouter" } };
+            System.Windows.Automation.AutomationProperties.SetName(named, "Ajouter une étiquette");
+            var window = new Window
+            {
+                Content = new System.Windows.Controls.StackPanel { Children = { box, record, named } },
+                Width = 300, Height = 200, ShowInTaskbar = false, ShowActivated = false,
+            };
+            window.Show();
+            try
+            {
+                // Nom donné au chargement des contrôles.
+                PumpUntil(() => box.IsLoaded && record.IsLoaded && named.IsLoaded);
+                static string NameOf(UIElement element) => System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(element).GetName();
+                Assert.Equal("Garder la session", NameOf(box));
+                Assert.Equal("Enregistrer l'intervention", NameOf(record));
+                label.Text = "_Arrêter l'enregistrement";
+                Assert.Equal("Arrêter l'enregistrement", NameOf(record));
+                Assert.Equal("Ajouter une étiquette", NameOf(named));
+                Assert.Equal("PROMPT_COMMAND", AccessibleName.WithoutAccessKey("_PROMPT__COMMAND"));
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Question du PSMP après un refus : l'avertissement (essai n sur 3, Verr. Maj) est lu avec le champ, qui prend le focus ;
+    /// au premier essai, rien de plus que la question.
+    /// </summary>
+    [Fact]
+    public void RefusedAnswerIsReadWithTheField()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            const string refused = "Refusé par le serveur. Essai 2 sur 3 : vérifiez-le (Verr. Maj ?).";
+            var again = new PromptDialog("", "Password:", echo: false, refused: refused);
+            Assert.Equal(refused, System.Windows.Automation.AutomationProperties.GetHelpText(again.SecretBox));
+            Assert.Equal("Password:", System.Windows.Automation.AutomationProperties.GetName(again.SecretBox));
+            again.Close();
+
+            var first = new PromptDialog("", "Password:", echo: false);
+            Assert.Equal("", System.Windows.Automation.AutomationProperties.GetHelpText(first.SecretBox));
+            first.Close();
+        });
     }
 
     /// <summary>

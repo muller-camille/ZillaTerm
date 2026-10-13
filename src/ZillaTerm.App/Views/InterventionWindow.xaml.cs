@@ -27,6 +27,10 @@ public partial class InterventionWindow : Window
     private readonly DispatcherTimer _timer;
     private CancellationTokenSource? _reminderRead;
 
+    // État d'enregistrement déjà dit par la ligne d'état (annoncée seulement quand il change).
+    private bool _shownRecording;
+    private bool _shownInterrupted;
+
     /// <summary>Attente au plus du fichier des consignes (partage réseau qui ne répond pas).</summary>
     private static readonly TimeSpan ReminderTimeout = TimeSpan.FromSeconds(5);
 
@@ -195,11 +199,25 @@ public partial class InterventionWindow : Window
         NoteBox.IsEnabled = keeping;
         NoteButton.IsEnabled = keeping && NoteBox.Text.Trim().Length > 0;
         CaptureButton.IsEnabled = keeping;
-        StatusText.Text = !recording || _recorder.StartedAt is not { } start ? Strings.InterventionNotRecording
+        var status = !recording || _recorder.StartedAt is not { } start ? Strings.InterventionNotRecording
             : _recorder.FailedAt is { } failedAt
                 ? Text.Format(Strings.InterventionInterruptedAt, failedAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture))
                 : Text.Format(Strings.InterventionRecordingSince, start.ToLocalTime().ToString("t", CultureInfo.CurrentCulture),
                     Duration(DateTime.UtcNow - start), _recorder.Count);
+        // Annoncé au début et à la fin de l'enregistrement, et quand il s'interrompt, pas à chaque seconde (durée, nombre
+        // d'événements).
+        bool interrupted = _recorder.FailedAt is not null;
+        if (recording == _shownRecording && interrupted == _shownInterrupted)
+        {
+            StatusText.SetQuietly(status);
+        }
+        else
+        {
+            StatusText.Text = status;
+        }
+
+        _shownRecording = recording;
+        _shownInterrupted = interrupted;
         if (_recorder.FailureMessage is { } failure)
         {
             ShowMessage(failure, error: true);
