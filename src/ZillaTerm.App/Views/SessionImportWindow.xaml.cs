@@ -198,9 +198,6 @@ public partial class SessionImportWindow : Window
         RowsGrid.ItemsSource = _rows;
         ApplyFilter();
         FolderBox.IsEnabled = true;
-        // Sessions « à vérifier » non cochées d'office : la case de l'en-tête ne se dit cochée que si toutes le sont (un
-        // clic coche alors tout).
-        _allBox.IsChecked = _rows.Where(r => r.CanInclude).All(r => r.Include);
         StatusText.Text = sessions.Count == 0 ? "" : Text.Format(Strings.SessionImportReadFrom, sessions.Count, source);
         Refresh();
     }
@@ -225,14 +222,19 @@ public partial class SessionImportWindow : Window
         }
     }
 
+    /// <summary>
+    /// Case de l'en-tête : coche les lignes affichées, ou les décoche si elles le sont toutes. « Seulement les problèmes »
+    /// cache des sessions prêtes : elles gardent leur choix.
+    /// </summary>
     private void OnIncludeAll(object sender, RoutedEventArgs e)
     {
-        bool include = _allBox.IsChecked == true;
+        var rows = VisibleRows().Where(r => r.CanInclude).ToList();
+        bool include = !rows.All(r => r.Include);
         // Boutons mis à jour une fois à la fin, pas pour chacune des milliers de lignes.
         _includingAll = true;
         try
         {
-            foreach (var row in _rows.Where(r => r.CanInclude))
+            foreach (var row in rows)
             {
                 row.Include = include;
             }
@@ -245,7 +247,29 @@ public partial class SessionImportWindow : Window
         UpdateButtons();
     }
 
-    /// <summary>Une session cochée ou décochée : seuls les boutons en dépendent (pas les états ni le bilan).</summary>
+    /// <summary>Lignes affichées (filtre « Seulement les problèmes » compris).</summary>
+    private IEnumerable<SessionImportRow> VisibleRows() => CollectionViewSource.GetDefaultView(_rows).Cast<SessionImportRow>();
+
+    /// <summary>
+    /// Case de l'en-tête d'après les lignes affichées qui peuvent être cochées : cochée si toutes le sont, vide si aucune,
+    /// entre les deux sinon (les sessions « à vérifier » ne sont pas cochées d'office ; un clic coche alors tout).
+    /// </summary>
+    private void UpdateAllBox()
+    {
+        if (_import is not { Applied: false })
+        {
+            // Avant la lecture, ou import fait : plus rien à cocher, la case reste telle quelle.
+            _allBox.IsEnabled = false;
+            return;
+        }
+
+        var rows = VisibleRows().Where(r => r.CanInclude).ToList();
+        int included = rows.Count(r => r.Include);
+        _allBox.IsChecked = included == 0 ? false : included == rows.Count ? true : null;
+        _allBox.IsEnabled = rows.Count > 0;
+    }
+
+    /// <summary>Une session cochée ou décochée : seuls les boutons et la case de l'en-tête en dépendent (pas les états ni le bilan).</summary>
     private void OnRowIncludeChanged()
     {
         if (!_includingAll)
@@ -271,6 +295,7 @@ public partial class SessionImportWindow : Window
         view.Filter = ProblemsBox.IsChecked == true
             ? row => ((SessionImportRow)row).State is not (ImportState.Ready or ImportState.Imported)
             : null;
+        UpdateAllBox();
     }
 
     /// <summary>Ajoute à « Mes serveurs » les sessions cochées et prêtes, puis affiche le résultat de chacune.</summary>
@@ -398,7 +423,7 @@ public partial class SessionImportWindow : Window
         ExportButton.IsEnabled = !_reading && _import is { Items.Count: > 0 };
         MissingAccountsButton.IsEnabled = !_reading && _import is { MissingAccounts: > 0 };
         ProblemsBox.IsEnabled = _import is { Items.Count: > 0 };
-        _allBox.IsEnabled = pending && _rows.Any(r => r.CanInclude);
+        UpdateAllBox();
     }
 
     /// <summary>Étiquette proposée dans la colonne « Étiquette » (<see cref="Value"/> vide : aucune).</summary>

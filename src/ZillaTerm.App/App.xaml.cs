@@ -48,6 +48,8 @@ public partial class App : Application
                 window.Icon = icon;
             }
         }));
+        // Boutons et cases à libellé AccessText : un nom pour les lecteurs d'écran.
+        AccessibleName.Follow();
         _systemCulture = CultureInfo.CurrentUICulture;
         // Premier démarrage sous le nom ZillaTerm : réglages repris du dossier de CyberArkTerm.
         string? imported = null;
@@ -90,6 +92,12 @@ public partial class App : Application
             MessageBox.Show(Text.Format(_settings.RestoredFromBackup ? Strings.SettingsSetAsideRestored : Strings.SettingsSetAsideReset, aside),
                 "ZillaTerm", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+        else if (_settings.RestoredFromBackup)
+        {
+            // settings.json absent (supprimé pour repartir de zéro, remplacement interrompu) : sauvegarde reprise, et dit.
+            MessageBox.Show(Text.Format(Strings.SettingsMissingRestored, Path.GetDirectoryName(AppSettings.DefaultPath)),
+                "ZillaTerm", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
 
         // Environnement de l'équipe : fichier à côté de l'exécutable et fichier central, proposés s'ils ont changé.
         EnvironmentImport.OfferAtStartup(_settings);
@@ -101,6 +109,35 @@ public partial class App : Application
         DebugLog.Write("app", "Fermeture de l'application.");
         Release();
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Déconnexion, arrêt ou redémarrage de Windows : WPF ferme ensuite les fenêtres sans attendre la fermeture ordonnée
+    /// (questions, suites asynchrones), et Windows peut arrêter le processus dès cette réponse donnée. Le nettoyage
+    /// essentiel est donc fait ici, de façon synchrone (<see cref="Views.MainWindow.EndWithWindowsSession"/>), puis
+    /// celui de <see cref="OnExit"/>. Une session Bureau à distance dont la fenêtre n'est pas encore libérée : arrêt
+    /// immédiat, comme à la fermeture (sa fenêtre, d'un autre thread, bloquerait la destruction de la fenêtre principale).
+    /// </summary>
+    protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
+    {
+        base.OnSessionEnding(e);
+        if (e.Cancel)
+        {
+            return;
+        }
+
+        DebugLog.Write("app", $"Fin de la session Windows ({e.ReasonSessionEnding}).");
+        foreach (var main in Windows.OfType<Views.MainWindow>().ToList())
+        {
+            main.EndWithWindowsSession();
+        }
+
+        if (RdpSession.ControlWindowsLeft)
+        {
+            ExitNow();
+        }
+
+        Release();
     }
 
     /// <summary>

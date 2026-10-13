@@ -24,7 +24,8 @@
 
 Saisissez l'adresse du PVWA (`pvwa.mondomaine.local` suffit : `https://` et `/PasswordVault` sont ajoutés),
 choisissez la méthode d'authentification, puis votre identifiant et votre mot de passe. Si le serveur RADIUS pose
-une question (code OTP), la fenêtre l'affiche et attend votre réponse. Pendant la saisie d'un mot de passe, l'avertissement
+une question (code OTP), la fenêtre l'affiche et attend votre réponse ; « Retour » (ou `Échap`) revient aux champs
+d'identification sans y répondre. Pendant la saisie d'un mot de passe, l'avertissement
 « Verr. Maj est activé. » s'affiche si la touche est active (de même pour les bases KeePass et le coffre local).
 
 L'adresse, la méthode et l'identifiant sont mémorisés ; **le mot de passe ne l'est jamais**.
@@ -38,9 +39,10 @@ aussitôt dans la langue choisie, sans perdre l'adresse ni l'identifiant saisis.
   l'onglet « Fichiers » n'apparaît que lorsqu'une session SSH ou de fichiers est ouverte. Glissez le séparateur pour changer sa largeur ; `Ctrl+B` ou un double-clic sur le séparateur le replie (la bande
   des onglets reste : un clic sur un onglet le rouvre). `F6` passe du panneau à la session. La position et la
   taille de la fenêtre, la largeur du panneau et son état replié sont mémorisés.
-- **Onglets de session** : une pastille donne l'état de la session par sa couleur et par sa forme : anneau orange
-  pendant la connexion, pastille verte une fois connectée, anneau gris quand la session est terminée, pastille
-  rouge en cas d'échec (le nom est alors atténué). L'infobulle donne le nom complet, l'état et le mode : « Via le
+- **Onglets de session** : une pastille donne l'état de la session par sa couleur et par sa forme, lisible aussi en
+  contraste élevé : anneau orange pendant la connexion, pastille verte pleine une fois connectée, pastille orange à
+  moitié pleine quand la connexion est interrompue, carré gris quand la session est terminée, croix rouge en cas
+  d'échec (le nom est alors atténué). L'infobulle donne le nom complet, l'état et le mode : « Via le
   PSMP … : session gérée par CyberArk » ou « Accès direct d'urgence (KeePass) : hors CyberArk, noté dans
   urgence.log ». Un nom trop long est tronqué ; un nom déjà ouvert est numéroté (« srv01 (2) »). Quand les onglets
   ne tiennent plus, la bande défile (molette, l'onglet choisi reste visible) et « ⌄ » les liste tous avec leur
@@ -170,7 +172,9 @@ fenêtre à part.
   serveur cible peut garder sa taille d'origine : désactivez alors l'option, la session garde une taille fixe et son
   image est mise à l'échelle de l'onglet.
 - **Clavier** : quand l'onglet a le clavier (clic dans la session), toutes les touches vont à la session, raccourcis
-  de Windows compris (Alt+Tab, touche Windows). Cliquez ailleurs dans ZillaTerm pour les retrouver.
+  de Windows compris (Alt+Tab, touche Windows). Cliquez ailleurs dans ZillaTerm pour les retrouver. Un onglet choisi
+  au clavier (`Ctrl+Tab`, `Ctrl+F4`…) ne prend pas le clavier : `Ctrl+Tab` traverse ainsi les onglets Bureau à
+  distance ; `Entrée` sur l'onglet, `F6` ou un clic dans la session le lui donnent.
 - **Certificat du PSM** : lu par ZillaTerm pendant la barre de progression, avant tout envoi au PSM (ni jeton, ni
   utilisateur), et vérifié avec les autorités approuvées par Windows (nom du PSM, dates, révocation quand elle est
   joignable). Approuvé : rien à confirmer. Sinon (certificat auto-signé, émis pour un autre nom), ZillaTerm affiche son
@@ -186,8 +190,11 @@ fenêtre à part.
   CyberArk, cochée par défaut) les demande au PVWA, comme la case « Map local drives » de sa fenêtre de connexion
   (paramètre `AllowMappingLocalDrives`). Si le composant de connexion le permet, le PVWA les écrit dans le fichier RDP
   et ils apparaissent dans la session (Explorateur › Ce PC), dans l'onglet comme dans la Connexion Bureau à distance.
+  Option décochée, aucun disque n'est partagé dans l'onglet, même si le PVWA le demande (choix gardé dans le PVWA,
+  réglage du composant) ; la Connexion Bureau à distance suit le fichier signé du PVWA, qui ne peut pas être modifié.
 - **Reconnecter**, « Dupliquer l'onglet » : nouvelle demande au PVWA (le jeton d'une session PSM ne sert qu'une
-  fois) ; motif et ticket restent ceux de la première connexion.
+  fois) ; motif et ticket restent ceux de la première connexion. Si la session CyberArk a expiré entre-temps, la
+  fenêtre d'identification est proposée, puis la demande repart.
 - L'onglet porte l'étiquette du serveur (PROD, QA…) et son cadre de couleur ; « Capture » ajoute une image au
   journal d'une intervention en cours.
 - Une connexion par une passerelle Bureau à distance s'ouvre toujours dans la Connexion Bureau à distance ; la session
@@ -258,6 +265,8 @@ sur votre poste, comme avec `ssh -X` :
    Serveur X local** (`:0` par défaut ; ce poste seulement, le protocole X n'étant pas chiffré).
 2. Cochez **« Transfert X11 (applications graphiques) »** pour le serveur : clic droit → « Propriétés… » dans « Mes
    serveurs », ou dans « Options avancées… » pour une seule connexion. Sessions SSH seulement ; décoché par défaut.
+   Cochée, la case rappelle son effet juste en dessous (« ⚠ Effet : un serveur compromis pourrait voir les autres
+   fenêtres X de ce poste et y envoyer des frappes. »).
 3. Ouvrez la session : une ligne grise dit si le transfert est actif, s'il a été refusé (par le serveur, dont
    `sshd_config` doit avoir `X11Forwarding yes`, ou par le PSMP) ou si aucun serveur X n'écoute sur le poste.
 
@@ -309,8 +318,13 @@ utilisé.
   acceptées et la nouvelle, et « Accepter cette clé et se connecter » n'est possible qu'après avoir coché « J'ai
   vérifié cette empreinte avec l'équipe CyberArk ».
 - **Terminal** : la sélection copie, la molette ou la barre de défilement à droite parcourt l'historique ; après
-  avoir remonté, « ↓ Revenir à la fin » (ou une frappe au clavier) ramène à la fin. AltGr fonctionne sur clavier
-  français. Fermez l'onglet avec la croix, un clic molette ou `Ctrl+F4` (confirmation si la session est connectée).
+  avoir remonté, « ↓ Revenir à la fin » (ou une frappe au clavier) ramène à la fin. Le défilement d'un pavé tactile
+  de précision est suivi finement (historique, `less`, `vim`), comme le zoom avec `Ctrl`. Une commande, un chemin ou
+  une URL trop longs pour la largeur, repliés sur plusieurs lignes, se copient sur une seule ligne, « Enregistrer le
+  contenu » les écrit entiers, et la recherche trouve un mot coupé par le repli. Une fenêtre qui s'ouvre pendant une
+  sélection à la souris l'arrête et la copie. `\e[3J` (`tput E3`) n'efface que l'historique, pas l'écran. AltGr
+  fonctionne sur clavier français. Fermez l'onglet avec la croix, un clic molette ou `Ctrl+F4` (confirmation si la
+  session est connectée).
 - **Fin de session** : un bandeau en haut du terminal donne la raison de la fin, avec « Reconnecter » ; les
   dernières lignes restent lisibles, sélectionnables et copiables.
 - **Clic droit dans le terminal** (ou touche Menu du clavier) : copier, coller, tout sélectionner, rechercher,
@@ -334,8 +348,9 @@ utilisé.
   une nouvelle fenêtre ». Le terminal passe dans une fenêtre séparée, la session continue. L'onglet garde sa place
   (« Afficher la fenêtre », « Ramener dans l'onglet ») et l'onglet Fichiers travaille sur cette session quand il est
   sélectionné. Fermer la fenêtre séparée ramène le terminal dans son onglet, sans fermer la session. Les onglets
-  Bureau à distance ne se détachent pas (utilisez « Plein écran ») ; une session PSM ouverte dans la Connexion
-  Bureau à distance de Windows est déjà une fenêtre à part.
+  Bureau à distance ne se détachent pas : agrandissez la fenêtre de ZillaTerm sur l'écran voulu (« Plein écran »
+  n'existe qu'avec le contrôle Bureau à distance de Windows) ; une session PSM ouverte dans la Connexion Bureau à
+  distance de Windows est déjà une fenêtre à part.
 - **Vue parallèle** (jusqu'à 8 sessions à l'écran) : bouton « Parallèle » de la barre d'outils (grisé tant
   qu'aucune session SSH n'est ouverte), ou clic droit sur un
   onglet SSH → « Ajouter à la vue parallèle ». Cochez les sessions SSH ouvertes à afficher ensemble (8 au plus) :
@@ -397,7 +412,8 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   tant que la sélection ne convient pas ; leur infobulle dit quoi choisir (« Choisissez un seul fichier (pas un
   dossier). »…).
 - **Déposer des fichiers** : glissez-les depuis l'Explorateur sur la liste (ou bouton « Envoyer »). Envoi en **SFTP**
-  par défaut (SCP au choix dans les Paramètres), dossiers compris. Déposés sur la ligne d'un dossier, ils vont dans
+  par défaut (SCP au choix dans les Paramètres), dossiers compris ; un lecteur entier (`E:\`) ou la racine d'un
+  partage est refusé, avec un message. Déposés sur la ligne d'un dossier, ils vont dans
   ce dossier : la ligne est mise en surbrillance et la barre d'état indique la destination (« Déposer dans
   serveur:/chemin »). Si des éléments existent déjà sur le serveur (fichiers cachés compris, même non affichés), une
   confirmation nomme le serveur et les éléments, et propose « Remplacer », « Ignorer les existants » ou « Annuler »
@@ -424,7 +440,9 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
 - **File d'attente des transferts** : envois et téléchargements s'exécutent un par un, dans l'ordre des demandes ;
   ce qui est demandé pendant un transfert s'ajoute à la file au lieu d'être ignoré. La destination d'un envoi est le
   dossier affiché au moment du dépôt (ou le dossier sur lequel les fichiers ont été déposés), et la confirmation
-  d'écrasement tient compte des envois encore en attente. Le panneau « Transferts », au-dessus de la barre d'état,
+  d'écrasement tient compte des envois encore en attente. La fenêtre « Envoyer » et la question « Nouveau dossier »
+  nomment le serveur et le dossier : l'envoi, le téléchargement ou le nouveau dossier vont toujours là, même si vous
+  changez de session pendant la question (vue parallèle, terminal détaché) ou si le panneau suit le terminal. Le panneau « Transferts », au-dessus de la barre d'état,
   montre chaque élément avec son serveur (en attente, avancement et fichier n/N, vérification, résultat) : ✕ retire
   un élément en attente, « Annuler » arrête celui en cours, « Tout annuler » annule tout ce qui reste. Les résultats
   restent affichés une fois les transferts finis : « ✓ terminé · SHA-256 vérifié (n/n) », « ⚠ terminé · non
@@ -432,7 +450,10 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   fichier, et « Effacer les terminés » retire de la liste les transferts terminés, en échec ou annulés
   (l'historique des transferts les garde). Un
   transfert arrêté supprime le fichier en cours, incomplet (sur le serveur pour un envoi, sur le poste pour un
-  téléchargement) ; les fichiers déjà transférés restent. Attention : si l'envoi remplaçait un fichier existant et
+  téléchargement) ; les fichiers déjà transférés restent. Un envoi arrêté à travers un lien symbolique du serveur
+  garde le lien et le fichier vers lequel il pointe, et le bilan le dit. Un téléchargement s'arrête aussi quand le
+  serveur envoie bien plus que la taille annoncée (le double, ou 64 Mo de plus) : la copie incomplète est supprimée.
+  Attention : si l'envoi remplaçait un fichier existant et
   avait commencé à l'écrire, son ancien contenu est perdu ; arrêté avant tout contenu, le fichier du serveur reste
   tel quel. En SCP, l'arrêt ne concerne que ce transfert : les éléments suivants continuent sur la
   même connexion ; un transfert qui n'avance plus (serveur qui ne lit plus) s'arrête 2 s après « Annuler » et les
@@ -448,12 +469,16 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   le poste (dans la file, annulable), envoyée et vérifiée (SHA-256), puis supprimée du poste ; chaque élément déposé
   est à la racine de l'archive (droits 0644 et 0755). Rien n'est exécuté sur le serveur : un encadré orange apparaît
   en bas de l'onglet Fichiers avec la commande d'extraction, par exemple `cd '/opt/app' && /usr/bin/gzip -dc
-  './deploy.tar.gz' | tar xf - && rm -f './deploy.tar.gz'` (l'archive est supprimée du serveur une fois extraite).
+  './deploy.tar.gz' | tar xof - && rm -f './deploy.tar.gz'` (l'archive est supprimée du serveur une fois extraite).
+  Les fichiers extraits appartiennent à qui extrait (`o`), et seuls les dossiers vides ont une entrée dans l'archive :
+  un dossier qui existe déjà garde ses droits et son propriétaire. L'archive n'est pas proposée quand le dépôt
+  remplace des éléments du serveur : l'envoi un par un les réécrit sur place (droits, propriétaire et ACL gardés), et
+  la question de remplacement le dit.
   « Copier la commande », ou « Écrire dans le terminal » qui la tape à l'invite de la session sans l'exécuter :
   vérifiez-la, puis appuyez sur Entrée. L'encadré reste affiché (pour la session concernée) jusqu'à ce que vous le
   fermiez. « Envoyer les fichiers un par un » garde l'envoi habituel ; « Ne plus proposer » décoche l'option.
   - **Tous les Unix** (Red Hat 5 à 9, HP-UX 11.11 et 11.31, Solaris, AIX…) : l'archive est au format tar POSIX
-    standard (ustar), lu par tous les tar, et la commande utilise `gzip` et `tar xf` séparément, sans option propre
+    standard (ustar), lu par tous les tar, et la commande utilise `gzip` et `tar xof` séparément, sans option propre
     à GNU tar. Elle se tape dans n'importe quel shell (sh, ksh, bash, zsh, csh, tcsh).
   - **gzip** est cherché sur le serveur (par SFTP) là où chaque système l'installe : `/bin`, `/usr/bin`,
     `/usr/contrib/bin` (HP-UX), `/usr/local/bin`, `/opt/freeware/bin` (AIX), `/usr/sfw/bin` et `/opt/csw/bin`
@@ -469,7 +494,8 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   une session SSH est ouverte, ou un fichier de ce poste ; avec deux fichiers sélectionnés, « Comparer les 2
   fichiers ». « Parcourir… » à côté du chemin ouvre un explorateur de l'autre serveur, sur le même dossier, fichier
   présélectionné (ou sur le plus proche dossier parent qui existe) : double-clic sur un dossier pour y entrer,
-  Retour arrière pour remonter, un chemin peut aussi être tapé ; le fichier choisi remplace le chemin. L'onglet
+  Retour arrière pour remonter, taper le début d'un nom sélectionne le fichier (espaces comprises), un chemin peut
+  aussi être tapé ; le fichier choisi remplace le chemin. L'onglet
   Fichiers de ce serveur ne change pas de dossier. Le même fichier sur le même serveur est refusé ; sans autre
   serveur ouvert, un fichier de ce poste est proposé. Les fichiers sont lus **en mémoire** (50 Mo au plus chacun), sans copie sur le poste. La fenêtre
   montre les lignes côte à côte : retirées en rouge à gauche, ajoutées en vert à droite. `F7` / `Maj+F7` :
@@ -512,11 +538,15 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   fois : si son contenu a changé sur le serveur (modifié dans le terminal, par quelqu'un d'autre, avant une
   reconnexion…), la copie ouverte dans l'éditeur est remplacée par la version actuelle ; sinon elle n'est pas touchée.
   Seule exception : si votre copie a des modifications non renvoyées et que le fichier a aussi changé sur le serveur,
-  ZillaTerm demande s'il faut « Recharger la version du serveur » ou « Garder ma copie ».
+  ZillaTerm demande s'il faut « Recharger la version du serveur » ou « Garder ma copie ». Pendant qu'un fichier
+  modifié est renvoyé, fermer l'onglet, quitter ou se déconnecter attend la fin du renvoi (la barre d'état le dit),
+  pour ne pas laisser un fichier à moitié écrit sur le serveur.
 - **Suivre un fichier (tail -f)** : clic droit sur un ou plusieurs fichiers → « Suivre (tail -f) ». Une fenêtre
   montre la fin du fichier puis chaque nouvelle ligne dès qu'elle est écrite, comme `tail -f`, en lisant le fichier
   par SFTP chaque seconde : aucune commande n'est lancée sur le serveur. Un fichier tronqué ou remplacé par une
-  rotation est relu depuis le début ; les 10 000 dernières lignes sont gardées.
+  rotation est relu depuis le début ; les 10 000 dernières lignes sont gardées. Une ligne de plus de 8 192 caractères
+  est coupée, avec « … [ligne coupée après 8 192 caractères] » (aussi dans la copie et les enregistrements) ; la
+  suite de cette ligne est ignorée.
   - **Couleurs et alertes** : erreurs (ERROR, FATAL, CRITICAL…) en rouge, avertissements (WARN) en orange ; mots
     surlignés en jaune au choix (« Surligner », séparés par des virgules). « Alerte si » (par ex. `ERROR,
     OutOfMemory, Connection refused`) : chaque nouvelle ligne qui contient l'un de ces mots est marquée, le compteur
@@ -561,7 +591,8 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   les autres éléments sont traités.
 - **Opération en cours** : pendant une suppression, un renommage ou une modification des droits sur un serveur, les
   autres serveurs restent utilisables ; sur le même serveur, Supprimer, `F2` et Droits sont refusés jusqu'à sa fin,
-  et la barre d'état le dit.
+  et la barre d'état le dit. Si vous êtes passé sur une autre session entre-temps, le bilan d'une suppression ou d'un
+  changement de droits (erreurs comprises) s'affiche à votre retour sur celle-ci.
 - **Filtrer** : le champ sous le chemin ne garde que les éléments du dossier dont le nom contient le texte (`nginx`),
   ou répond à un masque avec `*` et `?` (`*.log`, `app?.conf` ; plusieurs séparés par `;` : `*.log;*.gz`), sans tenir
   compte des majuscules. `..` reste pour remonter ; la barre d'état dit combien d'éléments sont affichés. Il est vidé
@@ -603,7 +634,9 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   dossiers des résultats sont dépliés. `Entrée` ou `↓` sélectionne le premier résultat, `Échap` ou le ✕ au bout du
   champ efface. Avec des milliers de serveurs, la liste est filtrée dès que vous arrêtez de taper.
 - **Plusieurs serveurs à la fois** : `Ctrl+clic` ajoute ou retire un serveur (ou tous ceux d'un dossier), `Maj+clic`
-  choisit une suite de serveurs ; `Échap` ou un clic simple annule. Clic droit sur l'un d'eux → « Ouvrir les N
+  choisit une suite de serveurs ; `Échap` ou un clic simple annule. Au clavier : `Ctrl+Espace` ajoute ou retire le
+  serveur sélectionné, `Maj+↑` / `Maj+↓` étend la suite ; les flèches seules gardent les serveurs choisis, et la
+  touche Menu (ou `Maj+F10`) ouvre le menu de la sélection. Clic droit sur l'un d'eux → « Ouvrir les N
   serveurs en vue parallèle » ou « Se connecter aux N serveurs » (un onglet chacun). Clic droit sur un dossier →
   « Ouvrir en vue parallèle » ou « Se connecter aux N serveurs ».
 - **Étiquette** (PROD, QA, DEV…) : clic droit → « Étiquette ▸ », voir [ci-dessous](#étiquettes-prod-qa-dev).
@@ -654,7 +687,7 @@ session pour voir la nouvelle couleur.
   d'un coup les serveurs qui n'en ont pas encore (ceux sans proposition restent sans étiquette). Aussi dans
   « Propriétés… ».
 - **Liste des étiquettes** : Paramètres › Général › « Étiquettes des serveurs » (nom de 16 caractères au plus,
-  couleur). Renommer une étiquette renomme celle des serveurs ; la supprimer la retire des serveurs.
+  couleur ; 20 étiquettes au plus). Renommer une étiquette renomme celle des serveurs ; la supprimer la retire des serveurs.
 - L'étiquette suit le serveur dans l'export de « Mes serveurs » et dans les listes partagées ; une étiquette absente de
   vos Paramètres s'affiche en gris. La liste des étiquettes (noms et couleurs) se diffuse à l'équipe par le
   [fichier d'environnement](#environnement-partagé).
@@ -683,7 +716,9 @@ passent de l'un à l'autre) :
   - **Ajouter** : clic droit sur un serveur ou un dossier de « Mes serveurs » → « Partager dans une liste » (le
     dossier est gardé), ou glissez un serveur, un dossier ou un compte de « Disponibles » sur la liste ou l'un de ses
     dossiers (confirmation). Le motif par défaut reste personnel : il n'est jamais partagé.
-  - **Retirer** : clic droit → « Retirer de la liste partagée… » (ou `Suppr`), après confirmation.
+  - **Retirer** : clic droit → « Retirer de la liste partagée… » (ou `Suppr`), après confirmation. Pendant une
+    recherche, « Retirer le dossier » retire tous ses serveurs, y compris ceux que la recherche masque : la
+    confirmation dit combien.
   - **Utiliser** : double-clic pour se connecter ; clic droit pour les options avancées, le mot de passe, les membres
     du safe ou « Copier dans Mes serveurs ». Chacun se connecte avec ses propres droits CyberArk : un compte que vous
     ne voyez pas dans le coffre CyberArk porte la mention « ⚠ introuvable dans CyberArk ». L'info-bulle montre le compte tel que CyberArk le décrit, la machine
@@ -733,13 +768,18 @@ logiciel… ». Les comptes du PVWA doivent être chargés.
    - D'un type adapté : Windows pour le bureau à distance, Unix ou réseau pour SSH ; un autre type seulement s'il n'y
      en a pas ; jamais un compte de base de données.
    - À défaut, compte de domaine du même utilisateur (`CORP\admin`, `admin@corp.local`), autorisé sur ce serveur : le
-     serveur devient sa machine cible. `CORP\admin` ne désigne jamais le compte local `admin` du serveur.
+     serveur devient sa machine cible. `CORP\admin` ne désigne jamais le compte local `admin` du serveur. Les comptes
+     du domaine du serveur passent avant les autres ; une session sans domaine indiqué qui ne trouve qu'un compte d'un
+     autre domaine (`admin@corp.local` pour `web01.dmz.local`) le reçoit seulement en proposition, non cochée :
+     « Compte d'un autre domaine que le serveur : vérifiez-le ».
    - Une session qui passait déjà par le PSMP (`coffre@cible@serveur@psmp`) ou par PSM (programme de démarrage
      `psm /u compte /a serveur /c composant` d'un fichier `.rdp`) est décodée : ce sont le compte et le serveur cibles
      qui comptent, et le composant PSM est gardé.
    - Plusieurs comptes possibles : le plus probable est proposé (« à vérifier »), mais la session n'est pas cochée ;
      choisir un compte dans la liste de la colonne « Compte PVWA » la coche (ou cochez-la pour garder celui proposé).
-     Le bouton « Importer (n) » indique le nombre de sessions qui seront ajoutées.
+     Le bouton « Importer (n) » indique le nombre de sessions qui seront ajoutées. La case de l'en-tête coche les
+     lignes affichées (celles du filtre « Seulement les problèmes » quand il est coché), ou les décoche si elles le
+     sont toutes ; elle est à moitié remplie quand une partie seulement est cochée.
 3. **Connexion enregistrée**, jamais directe : bureau à distance par PSM ; SSH et fichiers (SFTP, SCP) via le PSMP
    s'il y en a un pour ce serveur (fichiers seuls pour une plateforme « SFTP »), sinon par PSM (`PSM-WinSCP` pour les
    fichiers) ; Telnet par `PSM-Telnet`.
@@ -794,15 +834,20 @@ qu'elles contiennent.
   écrit sur disque.
   - **SSH** : onglet terminal + Fichiers. À la première connexion, l'empreinte de la clé du serveur est à comparer
     avec celle que donne son administrateur, dans la même fenêtre que pour le PSMP (voir
-    [section 4](#4-ouvrir-une-session-ssh-via-le-psmp)).
-  - **Bureau à distance** : l'onglet suit sa taille (résolution du bureau distant), propose « Plein écran »
-    (`Ctrl+Alt+Pause` pour revenir), « Déconnecter » et « Reconnecter ». Avant chaque connexion, ZillaTerm lit le
+    [section 4](#4-ouvrir-une-session-ssh-via-le-psmp)). Le mot de passe de l'entrée n'est envoyé qu'une fois par
+    connexion : un mot de passe périmé dans la base ne compte pas plusieurs échecs sur le serveur (risque de
+    verrouillage du compte), et « Annuler » coupe la connexion sans rien envoyer.
+  - **Bureau à distance** : onglet avec le client FreeRDP embarqué par ZillaTerm (à défaut, le contrôle Bureau à
+    distance de Windows, qui propose aussi « Plein écran », `Ctrl+Alt+Pause` pour revenir), avec « Déconnecter » et
+    « Reconnecter ». Avant chaque connexion, ZillaTerm lit le
     certificat du serveur. S'il n'est pas approuvé par Windows (auto-signé…), son sujet, son émetteur, ses dates et
     son empreinte SHA-256 sont montrés à la première connexion, puis il est mémorisé pour ce serveur ; s'il change
     ensuite, l'empreinte mémorisée et la nouvelle sont affichées, et il faut cocher « J'ai confirmé ce changement
-    avec l'administrateur du serveur ». Le mot de passe n'est lu et confié au contrôle Bureau à distance qu'après
-    cette vérification ; un serveur qui n'accepte pas le chiffrement TLS est refusé. Aucune image de la session n'est
-    gardée sur le disque du poste.
+    avec l'administrateur du serveur ». Le mot de passe n'est lu qu'après cette vérification ; FreeRDP le reçoit par
+    son entrée standard (jamais sur la ligne de commande) et n'accepte que le certificat vérifié. Une entrée sans
+    mot de passe échoue à l'authentification. Un serveur qui n'accepte pas le chiffrement TLS est refusé. Aucune
+    image de la session n'est gardée sur le disque du poste, y compris dans la Connexion Bureau à distance ouverte
+    sans client dans ZillaTerm (le mot de passe y est alors à saisir).
   - **VNC** (`vnc://serveur`, port 5900 ; `vnc://serveur:1` désigne l'écran 1, port 5901) : bureau dans un onglet,
     ajusté à la fenêtre ou en taille réelle (« Ajuster »), boutons « Ctrl+Alt+Suppr » (après confirmation : selon
     la machine, il ouvre l'écran de sécurité ou redémarre certaines consoles de machines virtuelles), « Envoyer le
@@ -832,7 +877,8 @@ qu'elles contiennent.
   (pièces jointes, champs, réglages) sont gardées ; l'ancienne version d'une entrée va dans son historique, comme
   dans KeePass. Pendant l'enregistrement, la version précédente du fichier est gardée dans `base.kdbx.bak`, puis
   supprimée dès que le nouveau fichier est relu à l'identique : aucune ancienne copie, qui s'ouvrirait encore avec un
-  ancien mot de passe maître, ne reste à côté de la base (partagée ou non).
+  ancien mot de passe maître, ne reste à côté de la base (partagée ou non). Exception : si un autre poste a enregistré
+  la base au même moment, sa version est gardée dans le `.bak` plutôt que perdue.
 - **Verrouiller** : clic droit → « Verrouiller ». Les bases se verrouillent aussi à la déconnexion de CyberArk, à
   la fermeture et au **verrouillage de Windows**.
 
@@ -887,14 +933,20 @@ bloc au fil de l'enregistrement (un arrêt brutal ne perd que les deux dernière
 Un bloc retiré, déplacé ou modifié est signalé dans le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas,
 mais **tout ce qu'affiche un terminal y est** (contenu d'un fichier de configuration, par exemple) ; le rapport
 exporté n'est **pas chiffré** : rangez-le en lieu sûr. Le texte des terminaux est plafonné à 64 millions de
-caractères par intervention (les autres événements continuent d'être gardés au-delà).
+caractères par intervention (les autres événements continuent d'être gardés au-delà) ; un très gros affichage est
+écrit en plusieurs blocs, sans perdre la suite du rapport. Une déconnexion annulée à la confirmation n'y figure pas.
+
+**Disque qui refuse le journal** (plein, quota, accès retiré) : la barre d'état affiche « ⚠ Intervention :
+enregistrement interrompu » en rouge, et la fenêtre « Enregistrement interrompu à 14:10. » : plus rien n'est gardé
+depuis cette heure-là, la note et la capture sont grisées. Libérez de la place, puis « Arrêter l'enregistrement » et
+« Enregistrer l'intervention » pour reprendre dans un nouvel enregistrement.
 
 ## Raccourcis
 
 | Où | Action | Raccourci |
 | --- | --- | --- |
-| Partout (sauf l'onglet Fichiers) | Recharger les comptes depuis le PVWA | `F5` |
-| Partout | Filtrer les comptes (dans « Mes serveurs » : rechercher un serveur ; dans « Fichiers » : filtrer le dossier) | `Ctrl+F` |
+| Hors terminal et onglet Fichiers | Recharger les comptes depuis le PVWA | `F5` |
+| Hors terminal | Filtrer les comptes (dans « Mes serveurs » : rechercher un serveur ; dans « Fichiers » : filtrer le dossier) | `Ctrl+F` |
 | Partout | Onglet de session suivant / précédent | `Ctrl+Tab` / `Ctrl+Maj+Tab` |
 | Partout | Fermer l'onglet de session | `Ctrl+F4` ou `Ctrl+Maj+W` |
 | Partout | Onglets « Disponibles », « Mes serveurs », « Fichiers » du panneau de gauche | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` |
@@ -907,7 +959,7 @@ caractères par intervention (les autres événements continuent d'être gardés
 | Recherche | Effacer le filtre | `Échap` ou ✕ au bout du champ |
 | Accueil | Retirer une session récente de la liste | `Suppr` |
 | Mes serveurs | Renommer / retirer ou supprimer | `F2` / `Suppr` |
-| Mes serveurs | Choisir plusieurs serveurs (puis clic droit pour les ouvrir ensemble) | `Ctrl+clic`, `Maj+clic` ; `Échap` annule |
+| Mes serveurs | Choisir plusieurs serveurs (puis clic droit pour les ouvrir ensemble) | `Ctrl+clic`, `Maj+clic`, `Ctrl+Espace`, `Maj+↑` / `Maj+↓` ; `Échap` annule |
 | Terminal | Copier | Sélection à la souris, ou `Ctrl+Maj+C` |
 | Terminal | Coller | `Maj+Inser` ou `Ctrl+Maj+V` (clic droit avec l'option des Paramètres) |
 | Terminal | Menu : copier, coller, tout sélectionner, rechercher, enregistrer, effacer l'historique, police, actions de l'onglet | Clic droit ou touche Menu (Maj+clic droit avec l'option de collage) |
@@ -926,15 +978,20 @@ caractères par intervention (les autres événements continuent d'être gardés
 | Fichiers | Aller à l'élément dont le nom commence par ces lettres (la même lettre de nouveau : le suivant) | Taper le début du nom |
 | Base KeePass | Se connecter / modifier / supprimer une entrée | Double-clic ou `Entrée` / `F2` / `Suppr` |
 
-Dans un terminal, `Ctrl+K`, `Ctrl+B` et `F6` sont envoyés au serveur (`F6` aux applications comme mc) ; `Ctrl+Tab`,
-`Ctrl+F4`, `Ctrl+Maj+W` et `Ctrl+1/2/3` restent à ZillaTerm.
+Dans un terminal, `F5`, `Ctrl+F`, `Ctrl+K`, `Ctrl+B` et `F6` sont envoyés au serveur (`F6` aux applications comme
+mc) ; `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Maj+W` et `Ctrl+1/2/3` restent à ZillaTerm. Dans une session Bureau à distance, les
+touches vont à la session distante.
 
 **Clavier et accessibilité** : la barre d'outils s'atteint avec `Tab` (le focus est visible), chaque menu et chaque
 fenêtre a ses touches d'accès (`Alt` + lettre soulignée, sans doublon, en français, anglais et italien), et le menu
 d'un élément de « Mes serveurs » s'ouvre au même endroit par clic droit, `Maj+F10` ou la touche Menu. Les champs de
 mot de passe (identification, base KeePass, coffre local) avertissent quand Verr. Maj est activé. Les lecteurs
 d'écran annoncent le nom des éléments des listes et des arbres, des boutons à icône ou à symbole (✕, ↑, ↓), des
-champs (chemin, numéro de ticket…), les messages de la barre d'état et les erreurs de connexion. Les barres d'outils
+champs (chemin, numéro de ticket…), chaque bouton et chaque case par son libellé, les messages de la barre d'état
+et les erreurs de connexion ; un mot de passe refusé est annoncé avec le numéro de l'essai (« Essai 2 sur 3 »), lu
+aussi avec le champ, et un serveur qui ne répond plus ou une session terminée ne le sont qu'une fois. Sur la ligne
+sélectionnée des arbres et des tableaux, les textes secondaires (compteurs, « correspond : … », ⚠) restent lisibles,
+avec ou sans le focus. Les barres d'outils
 de « Mes serveurs » et de l'onglet Fichiers sont un seul arrêt de `Tab` (les flèches passent d'un bouton à l'autre).
 Dans les Paramètres, chaque case a sa touche d'accès, sans doublon dans la page affichée. En contraste élevé, l'interface prend les couleurs système de Windows et suit leurs
 changements.
@@ -1008,8 +1065,11 @@ quand le fichier change leur adresse, ajoute une clé de serveur ou une liste pa
 s'y authentifie à chaque démarrage ; le serveur est nommé), il faut cocher « J'ai vérifié… » avant d'appliquer. Une
 clé de serveur déjà acceptée sur le poste n'est jamais remplacée par un fichier (elle est signalée). Seules les clés
 des PSMP (ceux du poste ou du fichier) sont reprises : celle d'un autre serveur, d'accès d'urgence par exemple, est
-ignorée et se vérifie à sa première connexion.
-Un fichier invalide (adresse en http, nom de composant incorrect…) est refusé en entier. Un fichier déjà proposé
+ignorée et se vérifie à sa première connexion. Une clé reprise d'un fichier ne vaut que pour les connexions au PSMP :
+une connexion directe au même serveur (KeePass) fait toujours vérifier sa clé. Dans Paramètres, ces clés
+apparaissent sous la forme `psmp://hôte:port`.
+Un fichier écrit en « UTF-8 avec BOM » (PowerShell 5.1 : `Set-Content -Encoding UTF8`) est accepté, comme une liste
+partagée. Un fichier invalide (adresse en http, nom de composant incorrect…) est refusé en entier. Un fichier déjà proposé
 n'est reproposé que s'il a changé. Un réglage vide sur le poste qui exporte n'est pas exporté : il n'efface rien
 chez celui qui importe. Les chemins (listes partagées, fichier central) sont complets : `C:\…` ou `\\serveur\…`.
 Votre identifiant, « Mes serveurs » et vos sessions récentes ne sont jamais
@@ -1020,8 +1080,10 @@ Toutes les préférences sont enregistrées dans `%APPDATA%\ZillaTerm\settings.j
 méthode et identifiant de connexion, paramètres ci-dessus, serveurs de « Mes serveurs », leurs dossiers et les fichiers qui
 y ont été suivis (chemins), sessions récentes, emplacement des bases KeePass et de leurs fichiers clés, et des
 listes partagées ouvertes, position et taille de la fenêtre, largeur et état du panneau de gauche. Ce fichier
-ne contient **aucun mot de passe, jeton ni clé privée**. Pour repartir de zéro, fermez l'application et
-supprimez-le. Il est d'abord écrit dans un fichier temporaire puis mis en place, le précédent étant gardé en
+ne contient **aucun mot de passe, jeton ni clé privée**. Pour repartir de zéro, fermez l'application et supprimez
+`settings.json` et `settings.json.bak` (la sauvegarde seule serait reprise, avec un message) ; si l'ancien dossier
+`%APPDATA%\CyberArkTerm` existe encore, supprimez-le ou renommez-le aussi, sinon ses réglages sont repris au
+démarrage. Il est d'abord écrit dans un fichier temporaire puis mis en place, le précédent étant gardé en
 `settings.json.bak` : si le fichier devient illisible, il est mis de côté (jamais écrasé), la sauvegarde est reprise
 et un message le signale. ZillaTerm ne s'ouvre qu'une fois par session Windows : deux instances écraseraient
 l'une l'autre leurs réglages. L'historique des transferts de l'onglet Fichiers est à côté, dans `transfers.json`
@@ -1040,19 +1102,30 @@ renommé) : téléchargez-la une fois depuis la page des versions.
 
 ## Sécurité
 
-- **HTTPS obligatoire** vers le PVWA ; la validation des certificats n'est jamais désactivée. Une redirection du PVWA
+- **HTTPS obligatoire** vers le PVWA ; la validation des certificats n'est jamais désactivée. La révocation du
+  certificat du PVWA (et de GitHub pour les mises à jour) est vérifiée en ligne : un certificat révoqué est refusé ;
+  si la liste de révocation est injoignable (réseau fermé), la connexion passe après 5 secondes au plus, et le journal
+  de débogage le note ; le résultat est gardé une heure. Une redirection du PVWA
   n'est jamais suivie (votre mot de passe partirait vers l'adresse indiquée) : elle est signalée avec cette adresse.
   L'adresse du PVWA ne peut contenir que le nom du serveur, un port et un chemin : un « nom@ » devant le serveur (qui
   ferait joindre un autre serveur que celui affiché), une espace, un « \ » ou une lettre hors ASCII sont refusés.
 - **Noms de fichiers du serveur** : les caractères invisibles (inversion du sens d'écriture, espace sans largeur,
-  caractères de contrôle) s'affichent « � » dans la liste et les confirmations, et deviennent « _ » dans le nom du
-  fichier téléchargé, pour qu'un nom ne puisse pas en imiter un autre (« .exe » affiché « .pdf »). Les fichiers
+  caractères de contrôle) s'affichent « � » dans la liste, les confirmations, le choix d'un fichier de l'autre
+  serveur, la comparaison, la file et l'historique des transferts, et le suivi (tail), et deviennent « _ » dans le nom du
+  fichier téléchargé, pour qu'un nom ne puisse pas en imiter un autre (« .exe » affiché « .pdf »). Les fichiers venus
+  des serveurs (téléchargements, copies ouvertes dans l'éditeur, glisser vers l'Explorateur) portent la marque des
+  fichiers venus d'Internet (zone Internet ; le nom du serveur n'y est jamais noté, Windows pouvant l'envoyer à
+  Microsoft) : SmartScreen contrôle un
+  exécutable avant de le lancer, et les logiciels bureautiques ouvrent un document en mode protégé. Les fichiers
   spéciaux (périphérique comme `/dev/zero`, tube nommé, socket) ne sont ni ouverts ni téléchargés, et sont ignorés
   dans le téléchargement d'un dossier.
 - **Aucun secret sur disque** : mot de passe CyberArk, jeton de session, clé MFA et mot de passe PSMP restent en
   mémoire, le temps de la session. Mots de passe PSMP gardés et clé MFA oubliés au verrouillage de Windows ; la clé
   MFA est effacée après chaque connexion et retirée du PVWA à la déconnexion (`Logoff`), faite à la fermeture.
 - Session PVWA ouverte avec `concurrentSession` : votre session web PVWA éventuelle n'est pas fermée.
+- **Fin de la session Windows** (déconnexion, arrêt) : ZillaTerm se ferme sans question ; ses sessions sont fermées
+  (copies des fichiers modifiés effacées), les bases KeePass et le coffre local verrouillés, le presse-papiers du mot
+  de passe vidé et la session PVWA fermée (2 secondes au plus).
 - **Copie d'un mot de passe** : la réponse du PVWA est lue dans un tampon effacé ensuite et décodée sans passer par
   une chaîne ; le mot de passe est copié directement dans le presse-papiers Windows, marqué pour être exclu de
   l'historique (`Win+V`), de la synchronisation entre appareils et des outils de surveillance du presse-papiers,
@@ -1091,7 +1164,10 @@ renommé) : téléchargez-la une fois depuis la page des versions.
 - **Nouvelle version** : aucune requête vers Internet sans votre action ou l'option des Paramètres (désactivée par
   défaut) ; seules les adresses du dépôt du projet sont suivies, l'archive n'est gardée que si sa somme SHA-256 est
   celle de `SHA256SUMS.txt` de la même version (ce qui détecte un téléchargement incomplet ou abîmé, pas une version
-  publiée par un tiers qui aurait pris la main sur le dépôt), et rien n'est installé ni lancé.
+  publiée par un tiers qui aurait pris la main sur le dépôt), et rien n'est installé ni lancé. L'archive gardée porte
+  la marque des fichiers venus d'Internet (« Mark-of-the-Web ») : SmartScreen contrôle l'exécutable extrait. Depuis
+  la 0.30.0, l'archive publiée a une attestation de provenance, qui prouve qu'elle a été compilée par le dépôt du
+  projet : `gh attestation verify ZillaTerm-<version>-win-x64.zip --repo muller-camille/ZillaTerm`.
 - **Clés d'hôte PSMP épinglées** au premier usage : l'empreinte est à comparer avant d'accepter (« Annuler la
   connexion » par défaut) ; une clé changée est signalée par un bandeau et ne remplace l'ancienne qu'après une case
   de confirmation (de même pour les serveurs joints en accès d'urgence et les certificats FTPS et Bureau à
@@ -1110,12 +1186,13 @@ renommé) : téléchargez-la une fois depuis la page des versions.
     ailleurs sont gardés), vérification du résultat déchiffré, remplacement en une fois (copie `.bak` le temps du
     remplacement, supprimée une fois le fichier relu à l'identique) ; une entrée modifiée ailleurs entre-temps n'est
     pas écrasée ;
-  - bureau à distance direct : le mot de passe est transmis au seul contrôle Bureau à distance (ni fichier, ni
-    gestionnaire d'identification), authentification réseau (NLA) et alerte si le serveur n'est pas reconnu ;
-    certificat du serveur lu avant l'envoi du mot de passe et épinglé au premier usage (un changement est signalé et
-    bloqué tant qu'il n'est pas confirmé), serveur sans TLS refusé, cache d'images persistant désactivé. Limite : le
-    contrôle fait ensuite sa propre négociation TLS, sans qu'on puisse lui imposer l'empreinte épinglée ; pour un
-    certificat que Windows n'approuve pas, il affiche encore son propre avertissement ;
+  - bureau à distance direct : certificat du serveur lu avant la lecture du mot de passe et épinglé au premier usage
+    (un changement est signalé et bloqué tant qu'il n'est pas confirmé), serveur sans TLS refusé, cache d'images
+    persistant désactivé. Avec FreeRDP, le mot de passe passe par son entrée standard (ni ligne de commande, ni
+    fichier, ni gestionnaire d'identification) et la connexion n'accepte que le certificat épinglé. Limite, avec le
+    contrôle de Windows seulement (FreeRDP absent) : il fait sa propre négociation TLS, sans qu'on puisse lui imposer
+    l'empreinte épinglée, et pour un certificat que Windows n'approuve pas, il affiche encore son propre
+    avertissement ;
   - VNC : le protocole ne chiffre ni l'écran, ni les frappes, ni le presse-papiers (bandeau permanent) ; le mot de
     passe n'est pas envoyé tel quel (défi-réponse du protocole), et seulement après votre accord : le serveur n'est
     pas authentifié et peut en retrouver les 8 premiers caractères ; presse-papiers échangé seulement sur un clic ;
@@ -1222,7 +1299,10 @@ comparé par SHA-256. Lecture partielle
 (`REST`) pour la comparaison et le suivi en direct. Après un transfert interrompu, la connexion est rouverte et le
 fichier incomplet supprimé. Un fichier remplacé est réécrit sur place : il garde ses droits. Liens symboliques : les
 40 premiers d'un dossier sont résolus (un aller-retour chacun) ; au-delà, un lien s'affiche comme un fichier, et
-l'ouvrir entre dans le dossier si c'en est un.
+l'ouvrir entre dans le dossier si c'en est un. Les noms sont échangés en UTF-8 (`OPTS UTF8 ON`), même si le serveur ne
+l'annonce pas ; un nom que l'UTF-8 ne peut pas représenter est refusé plutôt que changé. En SFTP, les liens d'un
+dossier sont suivis par paquets de 16 demandes, 400 au plus (au-delà, comme en FTP) ; un lien vers un fichier prend
+la taille de ce fichier.
 
 ### Sessions Bureau à distance
 
@@ -1267,7 +1347,8 @@ le vérifie : chaîne jusqu'à une autorité approuvée par Windows, nom, usage,
 empreinte épinglée (`rdp://serveur:port` parmi les clés de serveurs acceptées) ou confirmée par l'utilisateur. Un PSM
 qui n'accepte que l'ancienne « sécurité RDP », sans TLS : ZillaTerm lit sa clé de la même façon (demande de connexion
 dont la réponse contient la clé ; rien d'autre n'est envoyé) et l'épingle (`rdp://serveur:port`, type `RDP-RSA` ;
-empreinte : SHA-256 de la clé en DER PKCS#1, celle que compare FreeRDP), chiffrement de 128 bits au moins ; un PSM sans
+empreinte : SHA-256 de la clé en DER PKCS#1, celle que compare FreeRDP), chiffrement de 128 bits au moins ; la
+question montre la taille de la clé et avertit en rouge sous 2 048 bits (une clé plus courte peut être cassée) ; un PSM sans
 chiffrement est refusé, tout comme la clé d'un serveur qui a déjà présenté un certificat TLS (retrait de TLS :
 interception possible). Plusieurs certificats et clés par adresse (PSM en répartition de charge : un par serveur,
 chacun confirmé une fois) : le client les reçoit tous. Les questions sont posées avant le lancement du client, jamais
@@ -1356,7 +1437,7 @@ l'écran.
 | --- | --- |
 | « Connexion TLS refusée : le certificat du PVWA n'est pas approuvé » | Le certificat (ou l'autorité qui l'a émis) n'est pas dans le magasin Windows du poste. |
 | « Le PVWA doit être joint en HTTPS » | Saisissez l'adresse sans `http://` (ou avec `https://`). |
-| « Le PVWA n'a pas de composant de connexion « PSM-RDP » pour ce compte » (`EPVWA093E Failed to get the relevant connection component`) | La plateforme du compte utilise un composant d'un autre nom (par exemple `WIN-PSM`) : celui que propose le bouton « Connect » du PVWA, ou le nom après `/c` dans une commande `psm /u … /a … /c …`. Saisissez-le dans « Composant » ; « Mémoriser ce composant pour la plateforme » est coché pour les connexions suivantes. |
+| « Le PVWA n'a pas de composant de connexion « PSM-RDP » pour ce compte » (`EPVWA093E Failed to get the relevant connection component`) | La plateforme du compte utilise un composant d'un autre nom (par exemple `WIN-PSM`) : celui que propose le bouton « Connect » du PVWA, ou le nom après `/c` dans une commande `psm /u … /a … /c …`. Saisissez-le dans « Composant » et cochez « Mémoriser ce composant pour la plateforme » : il est retenu une fois la connexion acceptée par le PVWA. |
 | « Le PVWA refuse l'identifiant ou le mot de passe » (`ITATS004E Authentication failure…`) | Vérifiez l'identifiant, le mot de passe et Verr. Maj avant de réessayer : après plusieurs échecs, CyberArk suspend le compte. |
 | « Votre compte CyberArk est suspendu ou désactivé » | Trop d'échecs d'identification, ou décision d'un administrateur : demandez à l'équipe CyberArk de le réactiver. |
 | « Votre mot de passe CyberArk a expiré » | Changez-le sur la page web du PVWA, puis identifiez-vous dans ZillaTerm avec le nouveau. |
@@ -1394,7 +1475,7 @@ l'écran.
 | Une session PSM s'ouvre dans la Connexion Bureau à distance malgré l'option « dans un onglet » | Connexion par une passerelle Bureau à distance, ou client FreeRDP impossible à lancer sur le poste (stratégie du poste) : la barre d'état le dit. |
 | Alt+Tab ou la touche Windows ne répondent plus | L'onglet d'une session PSM a le clavier : toutes les touches vont à la session. Cliquez ailleurs dans ZillaTerm (un autre onglet, la liste). |
 | Session PSM dans un onglet : Ctrl+V d'un fichier ou d'un texte copié sur le poste ne fait rien | Le PVWA n'autorise peut-être pas le presse-papiers, ou le PSM n'autorise que le texte. Paramètres → Journal de débogage, reproduisez (copie, clic dans la session, collage), puis « Afficher le fichier du journal » : les lignes `freerdp` donnent les redirections demandées par le PVWA (`presse-papiers oui/non`), chaque changement du presse-papiers du poste (programme, formats : fichiers, texte ; jamais le contenu) et les échanges du presse-papiers avec le PSM (`cliprdr` : `CB_STREAM_FILECLIP_ENABLED` absent des drapeaux du serveur signifie pas de copie de fichiers). |
-| Session PSM : « Vérifier la clé de ce PSM » | Le PSM n'accepte que l'ancienne « sécurité RDP », sans TLS : seule l'empreinte de sa clé l'identifie. Acceptez-la au premier usage (elle est retenue) et demandez à l'administrateur CyberArk d'activer TLS sur le PSM. |
+| Session PSM : « Vérifier la clé de ce PSM » | Le PSM n'accepte que l'ancienne « sécurité RDP », sans TLS : seule l'empreinte de sa clé l'identifie. Acceptez-la au premier usage (elle est retenue) et demandez à l'administrateur CyberArk d'activer TLS sur le PSM. « Clé faible » en rouge : la clé fait moins de 2 048 bits ; cette demande est alors urgente. |
 | Session PSM : « Nouvelle clé pour ce PSM » | L'adresse du PSM regroupe sans doute plusieurs serveurs (répartition de charge), chacun avec sa clé : confirmez-la si l'administrateur CyberArk le confirme. Les clés déjà acceptées le restent. |
 | Session SSH ou PSMP : « La connexion a été coupée par le serveur ou le réseau » ou « Session fermée par le serveur » après une veille, un verrouillage ou une pause | La connexion est perdue : le poste s'est mis en veille, le réseau ou le VPN a changé, un pare-feu l'a oubliée, ou le PSMP a fermé la session (inactivité). ZillaTerm le détecte en une minute au plus (demande de maintien toutes les 15 s, à laquelle le serveur doit répondre) : « Reconnecter » ouvre une nouvelle session ; l'onglet Fichiers propose de rouvrir la sienne. |
 | Session SSH ou PSMP : « Le serveur ne répond pas depuis N s », terminal grisé | Ce que vous avez tapé est resté sans réponse, comme la demande que ZillaTerm envoie alors au serveur (au bout de 2 s). Tout revient dès que le serveur répond ; sinon la connexion est déclarée perdue au bout d'une minute environ. « Reconnecter » ouvre tout de suite une nouvelle session. |

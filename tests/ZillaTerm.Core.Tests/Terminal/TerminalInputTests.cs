@@ -134,4 +134,20 @@ public sealed class TerminalThemeAndSearchTests
         Assert.StartsWith("error one" + Environment.NewLine + "ok", all);
         Assert.EndsWith("last", all);
     }
+
+    /// <summary>
+    /// Mot coupé par le repli d'une ligne longue : trouvé, l'occurrence continuant sur la ligne suivante ; enregistré
+    /// d'un seul tenant. Deux lignes séparées par un vrai saut de ligne ne se joignent pas.
+    /// </summary>
+    [Fact]
+    public void FindsAndSavesTextCutByTheWrapOfALongLine()
+    {
+        var emulator = new TerminalEmulator(10, 5);
+        emulator.Feed("path /var/log/app.log\r\nab\r\ncd");
+
+        Assert.Equal([new TerminalMatch(1, 4, 7)], TerminalSearch.Find(emulator, "APP.LOG"));
+        Assert.Equal([new TerminalMatch(0, 5, 8)], TerminalSearch.Find(emulator, "/var/log"));
+        Assert.Empty(TerminalSearch.Find(emulator, "bc"));
+        Assert.Equal(string.Join(Environment.NewLine, "path /var/log/app.log", "ab", "cd"), TerminalSearch.AllText(emulator));
+    }
 }

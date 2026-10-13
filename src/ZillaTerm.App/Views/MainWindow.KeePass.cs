@@ -597,22 +597,24 @@ public partial class MainWindow
                 ShowSshTab(session, $"{target.UserName}@{target.Address}", Strings.ConnectingDirect, "IconKeePass",
                     Text.Format(Strings.KeePassSshOpened, node.Title, target.Address), () => ConnectKeePassAsync(node, target.Protocol));
             }
-            else if (RdpClientHost.IsAvailable)
+            else if (FreeRdpClient.IsAvailable || RdpClientHost.IsAvailable)
             {
                 var settings = RdpConnectionSettings.Direct(target.Host, target.Port, target.UserName);
                 await OpenRdpTabAsync(label, async ct =>
                 {
-                    // Certificat du serveur vérifié (épinglé au premier usage) avant que le mot de passe soit lu et confié
-                    // au contrôle ; à chaque connexion, reconnexions comprises.
+                    // Certificat du serveur vérifié (épinglé au premier usage) avant que le mot de passe soit lu ; à chaque
+                    // connexion, reconnexions comprises.
                     await CheckRdpCertificateAsync(target.Address, settings, ct);
-                    return new RdpConnectionRequest(settings, Password());
+                    return DirectRdpRequest(target.Address, settings, Password(), FreeRdpClient.IsAvailable);
                 }, duplicate: () => ConnectKeePassAsync(node, target.Protocol));
             }
             else
             {
-                // Sans contrôle Bureau à distance, mstsc demandera le mot de passe : il n'est écrit nulle part.
+                // Sans client Bureau à distance dans ZillaTerm, mstsc demandera le mot de passe : il n'est écrit nulle part.
+                // Pas de cache d'images sur le disque (l'écran d'une session d'administration n'y reste pas), comme dans l'onglet.
                 var address = target.Host.Contains(':') ? $"[{target.Host}]:{target.Port}" : $"{target.Host}:{target.Port}";
-                var file = $"full address:s:{address}\r\nusername:s:{target.UserName}\r\nprompt for credentials:i:1\r\n";
+                var file = $"full address:s:{address}\r\nusername:s:{target.UserName}\r\nprompt for credentials:i:1\r\n"
+                           + "bitmapcachepersistenable:i:0\r\n";
                 _launcher.LaunchRdp([.. Encoding.Unicode.GetPreamble(), .. Encoding.Unicode.GetBytes(file)], label);
                 SetStatus(Text.Format(Strings.KeePassRdpNoControl, node.Title));
                 InterventionRecord(Core.Interventions.InterventionKind.Connection, label, Text.Format(Strings.InterventionRdpExternal, address));

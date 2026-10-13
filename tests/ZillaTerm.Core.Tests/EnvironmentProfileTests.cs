@@ -126,9 +126,43 @@ public sealed class EnvironmentProfileTests : IDisposable
 
         profile.ApplyTo(user);
         Assert.Equal("ssh-ed25519 SHA256:AAAA", user.KnownHosts["psmp.corp.com:2222"]);
-        Assert.Equal("ssh-rsa SHA256:CCCC", user.KnownHosts["psmp.lyon.corp.com:22"]);
+        Assert.Equal("ssh-rsa SHA256:CCCC", user.KnownHosts["psmp://psmp.lyon.corp.com:22"]);
+        Assert.False(user.KnownHosts.ContainsKey("psmp.lyon.corp.com:22"));
         Assert.False(user.KnownHosts.ContainsKey("srv01.corp.local:22"));
         Assert.Equal(4, user.SharedLists.Count);
+    }
+
+    /// <summary>
+    /// Serveur d'accès d'urgence déclaré PSMP dans le fichier, avec « sa » clé : elle ne vaut que pour les connexions au
+    /// PSMP ; jointe directement (KeePass), la clé du serveur se vérifie toujours. Une clé acceptée à la connexion passe
+    /// avant celle du fichier, et l'export reprend celle du fichier.
+    /// </summary>
+    [Fact]
+    public void KeysFromAFileAreForPsmpConnectionsOnly()
+    {
+        var user = new AppSettings { PsmpAddress = "psmp.corp.com" };
+        var profile = new EnvironmentProfile
+        {
+            PsmpServers = [new PsmpServer { Address = "srv-urgence.corp.local", Port = 22, Domain = "lab.corp.local" }],
+            HostKeys = new() { ["srv-urgence.corp.local:22"] = "ssh-ed25519 SHA256:EVIL" },
+        };
+        Assert.Contains(profile.Diff(user), c => c is { Setting: EnvironmentSetting.HostKey, Detail: "srv-urgence.corp.local:22", Ignored: false });
+        profile.ApplyTo(user);
+        Assert.Empty(profile.Diff(user));
+
+        var store = user.KnownHosts;
+        var direct = KnownHosts.HostFor(store, "srv-urgence.corp.local", 22, psmp: false);
+        Assert.Equal(HostKeyStatus.Unknown, KnownHosts.Check(store, direct, 22, "ssh-ed25519", "EVIL"));
+        var psmp = KnownHosts.HostFor(store, "srv-urgence.corp.local", 22, psmp: true);
+        Assert.Equal(HostKeyStatus.Trusted, KnownHosts.Check(store, psmp, 22, "ssh-ed25519", "EVIL"));
+        Assert.Equal(HostKeyStatus.Changed, KnownHosts.Check(store, psmp, 22, "ssh-ed25519", "AUTRE"));
+        Assert.Equal("ssh-ed25519 SHA256:EVIL", EnvironmentProfile.FromSettings(user, null).HostKeys!["srv-urgence.corp.local:22"]);
+
+        // Clé acceptée à la connexion au PSMP : elle seule compte ensuite.
+        KnownHosts.Remember(store, "srv-urgence.corp.local", 22, "ssh-ed25519", "VRAIE");
+        Assert.Equal("srv-urgence.corp.local", KnownHosts.HostFor(store, "srv-urgence.corp.local", 22, psmp: true));
+        Assert.Equal(HostKeyStatus.Changed, KnownHosts.Check(store, "srv-urgence.corp.local", 22, "ssh-ed25519", "EVIL"));
+        Assert.Equal("ssh-ed25519 SHA256:VRAIE", EnvironmentProfile.FromSettings(user, null).HostKeys!["srv-urgence.corp.local:22"]);
     }
 
     /// <summary>
@@ -202,6 +236,23 @@ public sealed class EnvironmentProfileTests : IDisposable
         var path = Path.Combine(_dir, "bad.env.json");
         File.WriteAllText(path, json);
         Assert.Equal(problem, Assert.Throws<EnvironmentFileException>(() => EnvironmentProfile.Load(path)).Problem);
+    }
+
+    /// <summary>
+    /// Fichier modifié à la main et écrit avec un BOM UTF-8 (PowerShell 5.1, « UTF-8 avec BOM ») : lu comme sans BOM ;
+    /// l'empreinte reste celle du fichier tel quel.
+    /// </summary>
+    [Fact]
+    public void FileWithAByteOrderMarkIsRead()
+    {
+        var path = Path.Combine(_dir, "bom.env.json");
+        File.WriteAllText(path, """{ "PvwaUrl": "pvwa.corp.com", "PsmpAddress": "psmp.corp.com" }""", new System.Text.UTF8Encoding(true));
+        var bytes = File.ReadAllBytes(path);
+        Assert.Equal(0xEF, bytes[0]);
+
+        var loaded = EnvironmentProfile.Load(path);
+        Assert.Equal(("pvwa.corp.com", "psmp.corp.com"), (loaded.Profile.PvwaUrl, loaded.Profile.PsmpAddress));
+        Assert.Equal(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant(), loaded.Sha256);
     }
 
     /// <summary>Champs inconnus (un mot de passe ajouté à la main…) : ignorés, jamais repris dans les réglages.</summary>

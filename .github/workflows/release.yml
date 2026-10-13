@@ -5,7 +5,8 @@ name: release
 # job à l'autre) sans rien publier, depuis n'importe quelle branche.
 # Deux jobs : la compilation, qui exécute le code des paquets NuGet et de SSH.NET patché, n'a qu'un jeton en lecture ;
 # seule la publication, qui ne compile rien, peut écrire dans le dépôt. Les actions sont épinglées par commit.
-# Relancé pour une version déjà publiée, il met à jour les notes sans remplacer les fichiers.
+# Relancé pour une version déjà publiée, il met à jour les notes sans remplacer les fichiers, s'ils viennent de ce
+# workflow (attestation de provenance) ; sinon il échoue.
 on:
   workflow_dispatch:
     inputs:
@@ -100,6 +101,9 @@ jobs:
     permissions:
       contents: write
       actions: read
+      # Attestation de provenance de l'archive (Sigstore, jeton OIDC du workflow).
+      id-token: write
+      attestations: write
     env:
       VERSION: ${{ needs.build.outputs.version }}
       TAG: v${{ needs.build.outputs.version }}
@@ -117,6 +121,13 @@ jobs:
           sha256sum -c SHA256SUMS.txt
           test -f "ZillaTerm-$VERSION-win-x64.zip"
 
+      # Attestation de provenance : prouve que l'archive a été compilée par ce workflow, sur ce dépôt et ce commit.
+      # Vérification : gh attestation verify ZillaTerm-X.Y.Z-win-x64.zip --repo muller-camille/ZillaTerm
+      - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        if: ${{ !inputs.dry_run }}
+        with:
+          subject-path: ZillaTerm-${{ env.VERSION }}-win-x64.zip
+
       - name: Release GitHub
         if: ${{ !inputs.dry_run }}
         shell: pwsh
@@ -124,14 +135,32 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $notes = "docs/releases/$env:TAG.md"
-          $files = @("ZillaTerm-$env:VERSION-win-x64.zip", "SHA256SUMS.txt")
+          $zip = "ZillaTerm-$env:VERSION-win-x64.zip"
+          $files = @($zip, "SHA256SUMS.txt")
           $existing = @(gh release list --limit 200 --json tagName | ConvertFrom-Json | ForEach-Object tagName)
           if ($existing -contains $env:TAG) {
-            # Release déjà existante (créée depuis l'interface GitHub, ou relance pour corriger les notes) :
-            # on joint seulement les fichiers absents, sans remplacer ceux déjà publiés, puis on met les notes à jour.
+            # Release déjà existante (relance pour corriger les notes, ou release créée à la main) : ses fichiers ne sont
+            # gardés que s'ils viennent de ce workflow. Une archive déposée à la main (sans attestation de ce workflow) ou
+            # un fichier inattendu fait échouer la publication au lieu d'être conservé.
             $published = @(gh release view $env:TAG --json assets | ConvertFrom-Json | ForEach-Object { $_.assets.name })
-            $missing = @($files | Where-Object { $published -notcontains $_ })
-            if ($missing.Count -gt 0) { gh release upload $env:TAG @missing }
+            $unexpected = @($published | Where-Object { $files -notcontains $_ })
+            if ($unexpected.Count -gt 0) { throw "La release $env:TAG contient des fichiers inattendus : $($unexpected -join ', '). Supprimez-la puis relancez." }
+            if ($published.Count -eq 0) {
+              gh release upload $env:TAG @files
+            } elseif ($published.Count -ne $files.Count) {
+              throw "La release $env:TAG est incomplète ($($published -join ', ')). Supprimez-la puis relancez."
+            } else {
+              New-Item -ItemType Directory -Force published | Out-Null
+              gh release download $env:TAG --dir published
+              gh attestation verify "published/$zip" --repo $env:GITHUB_REPOSITORY --signer-workflow "$env:GITHUB_REPOSITORY/.github/workflows/release.yml"
+              if ($LASTEXITCODE -ne 0) { throw "L'archive publiée pour $env:TAG ne vient pas de ce workflow (pas d'attestation de provenance). Supprimez la release puis relancez." }
+              Push-Location published
+              sha256sum -c SHA256SUMS.txt
+              $sums = $LASTEXITCODE
+              Pop-Location
+              if ($sums -ne 0) { throw "SHA256SUMS.txt publié pour $env:TAG ne correspond pas à l'archive publiée." }
+            }
+
             if (Test-Path $notes) { gh release edit $env:TAG --notes-file $notes }
           } else {
             # Le tag est créé sur le commit compilé s'il n'existe pas encore.

@@ -9,7 +9,10 @@ public enum ImportState
     /// <summary>Un compte du PVWA correspond.</summary>
     Ready,
 
-    /// <summary>Plusieurs comptes correspondent : le plus probable est choisi, à vérifier.</summary>
+    /// <summary>
+    /// Plusieurs comptes correspondent (le plus probable est choisi), ou un seul, d'un autre domaine que le serveur : à
+    /// vérifier.
+    /// </summary>
     Check,
 
     /// <summary>Aucun compte du PVWA : non importé (la session demanderait un mot de passe, hors CyberArk).</summary>
@@ -35,9 +38,9 @@ public sealed class ImportItem
         Session = session;
         Candidates = candidates;
         Chosen = candidates.FirstOrDefault();
-        // Plusieurs comptes possibles : le premier n'est qu'une proposition, la session n'est cochée qu'une fois le
-        // compte choisi (ou cochée à la main).
-        Include = candidates.Count <= 1;
+        // Plusieurs comptes possibles, ou un compte d'un autre domaine que le serveur : ce n'est qu'une proposition, la
+        // session n'est cochée qu'une fois le compte choisi (ou cochée à la main).
+        Include = candidates.Count <= 1 && Chosen?.OtherDomain != true;
     }
 
     public ImportedSession Session { get; }
@@ -84,7 +87,8 @@ public sealed class ImportItem
     public string StateText => State switch
     {
         ImportState.Ready => CoreStrings.MigrationReady,
-        ImportState.Check => string.Format(CultureInfo.CurrentCulture, CoreStrings.MigrationCheck, Candidates.Count),
+        ImportState.Check => Candidates.Count == 1 ? CoreStrings.MigrationCheckOtherDomain
+            : string.Format(CultureInfo.CurrentCulture, CoreStrings.MigrationCheck, Candidates.Count),
         ImportState.NoAccount => string.Format(CultureInfo.CurrentCulture, CoreStrings.MigrationNoAccount,
             Session.User is null ? Session.Host : $"{Session.DisplayUser}@{Session.Host}"),
         ImportState.Unsupported => string.Format(CultureInfo.CurrentCulture, CoreStrings.MigrationUnsupported, Session.ProtocolName),
@@ -400,7 +404,7 @@ public sealed class SessionImport
             return;
         }
 
-        item.State = item.Candidates.Count > 1 ? ImportState.Check : ImportState.Ready;
+        item.State = item.Candidates.Count > 1 || chosen.OtherDomain ? ImportState.Check : ImportState.Ready;
     }
 
     /// <summary>

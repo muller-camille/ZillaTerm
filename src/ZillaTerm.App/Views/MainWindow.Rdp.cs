@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services.Rdp;
@@ -43,6 +44,15 @@ public partial class MainWindow
         view.ShowTag(tag);
         var tab = new TabItem { Tag = session };
         tab.Header = TabHeader(tab, label, "IconWindows", duplicate, tag);
+        // Onglet choisi au clavier : Entrée donne le clavier à la session (voir ShowRdpView).
+        tab.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None && tab.IsKeyboardFocused && session.IsConnected)
+            {
+                session.Focus();
+                e.Handled = true;
+            }
+        };
         session.StateChanged += () =>
         {
             switch (session.State)
@@ -116,9 +126,10 @@ public partial class MainWindow
     /// Réglages de l'onglet pour ce fichier du PVWA, ou null pour le confier à mstsc : fichier illisible, passerelle
     /// Bureau à distance, application distante sans le client FreeRDP (<paramref name="reason"/> le dit à
     /// l'utilisateur quand il le faut). <paramref name="dynamicResolution"/> : résolution qui suit la taille de l'onglet
-    /// (option expérimentale) au lieu d'une image mise à l'échelle.
+    /// (option expérimentale) au lieu d'une image mise à l'échelle. <paramref name="drives"/> : option « partager les
+    /// disques » ; décochée, aucun disque partagé, même si le fichier le demande.
     /// </summary>
-    private static RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, bool freeRdp, bool dynamicResolution,
+    private static RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, bool freeRdp, bool dynamicResolution, bool drives,
         out string? reason)
     {
         reason = null;
@@ -146,7 +157,7 @@ public partial class MainWindow
             return null;
         }
 
-        return settings.ForPsmTab(dynamicResolution);
+        return settings.ForPsmTab(dynamicResolution, drives);
     }
 
     /// <summary>
@@ -256,6 +267,14 @@ public partial class MainWindow
         }
 
         int known = KnownHosts.CountKeys(_settings.KnownHosts, host, port, KeyType);
+        // Taille de la clé montrée ; moins de 2048 bits, signalée (elle peut être cassée), sans refus.
+        (string, string)[] codes =
+        [
+            (Strings.RdpKeyFingerprint, Spaced(key.Sha256)),
+            (Strings.RdpKeySize, Text.Format(Strings.RdpKeyBits, key.Bits)),
+        ];
+        string[] weak = key.IsWeak ? [Text.Format(Strings.RdpKeyWeak, key.Bits, RdpServerKey.RecommendedBits)] : [];
+        var kind = key.IsWeak ? ConfirmKind.Danger : ConfirmKind.Warning;
         var request = known == 0
             ? new ConfirmRequest
             {
@@ -263,8 +282,9 @@ public partial class MainWindow
                 Heading = Strings.RdpKeyVerifyHeading,
                 Subject = address,
                 Message = Strings.RdpKeyMessage,
-                Codes = [(Strings.RdpKeyFingerprint, Spaced(key.Sha256))],
-                Kind = ConfirmKind.Warning,
+                Bullets = weak,
+                Codes = codes,
+                Kind = kind,
                 Actions = [Strings.HostKeyTrust],
                 CancelLabel = Strings.HostKeyCancel,
             }
@@ -274,8 +294,9 @@ public partial class MainWindow
                 Heading = Strings.RdpKeyAnotherHeading,
                 Subject = address,
                 Message = Text.Format(Strings.RdpKeyAnotherMessage, known),
-                Codes = [(Strings.RdpKeyFingerprint, Spaced(key.Sha256))],
-                Kind = ConfirmKind.Warning,
+                Bullets = weak,
+                Codes = codes,
+                Kind = kind,
                 Actions = [Strings.RdpKeyTrustAnother],
                 CancelLabel = Strings.HostKeyCancel,
                 Acknowledge = Strings.RdpKeyAckLoadBalanced,
@@ -324,7 +345,13 @@ public partial class MainWindow
         }
 
         MainTabs.SelectedItem ??= HomeTab;
-        var view = _rdpViews.First(v => v.Session == session);
+        if (_rdpViews.FirstOrDefault(v => v.Session == session) is not { } view)
+        {
+            // Déjà retirée avec toutes les autres (déconnexion, fermeture) : la session est fermée.
+            session.Dispose();
+            return;
+        }
+
         view.Visibility = Visibility.Hidden;
         // Le contrôle reste dans la fenêtre jusqu'à la fin de la déconnexion ; il la quitte avant d'être libéré.
         await session.CloseAsync();
@@ -346,6 +373,11 @@ public partial class MainWindow
         foreach (var view in views)
         {
             view.Session.Dispose();
+            // Onglet retiré avec sa session : une demande au PVWA qui se termine ensuite ne le retrouve plus.
+            if (MainTabs.Items.OfType<TabItem>().FirstOrDefault(t => t.Tag == view.Session) is { } tab)
+            {
+                MainTabs.Items.Remove(tab);
+            }
         }
 
         var all = Task.WhenAll(views.Select(v => v.Session.Closed));
@@ -361,9 +393,8 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Connexion directe : le certificat TLS du serveur est lu avant tout envoi (le contrôle Bureau à distance ne permet
-    /// pas d'épingler un certificat), puis vérifié par <see cref="TrustRdpCertificate"/>. Refusé : la connexion
-    /// s'arrête là, sans que le mot de passe soit lu.
+    /// Connexion directe : le certificat TLS du serveur est lu avant tout envoi, puis vérifié par
+    /// <see cref="TrustRdpCertificate"/>. Refusé : la connexion s'arrête là, sans que le mot de passe soit lu.
     /// </summary>
     private async Task CheckRdpCertificateAsync(string address, RdpConnectionSettings settings, CancellationToken ct)
     {
@@ -375,6 +406,26 @@ public partial class MainWindow
             throw new OperationCanceledException(Strings.RdpCertificateDeclined);
         }
     }
+
+    /// <summary>
+    /// Demande d'une connexion directe (accès d'urgence KeePass). Avec le client FreeRDP de ZillaTerm, le certificat
+    /// épinglé est imposé à la connexion même qui porte le mot de passe (« /cert:deny,fingerprint:… ») : un autre serveur
+    /// est refusé sans rien recevoir, et le mot de passe passe par l'entrée standard du client, jamais par sa ligne de
+    /// commande. Sans lui, le contrôle Bureau à distance de Windows : il ouvre sa propre connexion, que rien ne lie au
+    /// certificat épinglé (Windows avertit seulement si le certificat n'est pas approuvé).
+    /// </summary>
+    private RdpConnectionRequest DirectRdpRequest(string address, RdpConnectionSettings settings, string? password, bool freeRdp) =>
+        new(settings, password)
+        {
+            FreeRdp = freeRdp,
+            // Certificat déjà vérifié avant la lecture du mot de passe : relu par le client, il doit être le même (ou
+            // approuvé après une nouvelle question). Ni ancienne sécurité RDP, ni clé : un serveur sans TLS est refusé.
+            VerifyCertificate = freeRdp
+                ? (certificate, server, port) =>
+                    Task.FromResult(TrustRdpCertificate(address, server, port, certificate) ? RdpTrust.Trusted : RdpTrust.Refused)
+                : null,
+            KnownFingerprints = freeRdp ? KnownFreeRdpFingerprints : null,
+        };
 
     /// <summary>
     /// Certificat épinglé par serveur (clé « rdp://hôte:port », comme les certificats FTPS). Approuvé par Windows : noté
@@ -403,14 +454,24 @@ public partial class MainWindow
         return true;
     }
 
-    /// <summary>Affiche la session Bureau à distance de l'onglet choisi et masque les autres.</summary>
+    /// <summary>
+    /// Affiche la session Bureau à distance de l'onglet choisi et masque les autres. Choisi à la souris, l'onglet donne
+    /// le clavier à la session ; au clavier (Ctrl+Tab, Ctrl+F4…), le focus reste sur l'onglet : le client FreeRDP prend
+    /// toutes les touches dès qu'il a le clavier, et Ctrl+Tab n'irait plus à l'onglet suivant. Entrée (ou F6, ou un clic
+    /// dans la session) lui donne ensuite le clavier.
+    /// </summary>
     private void ShowRdpView(TabItem? tab)
     {
+        bool byKeyboard = InputManager.Current.MostRecentInputDevice is KeyboardDevice;
         foreach (var view in _rdpViews)
         {
             bool selected = ReferenceEquals(tab?.Tag, view.Session);
             view.Visibility = selected ? Visibility.Visible : Visibility.Hidden;
-            if (selected)
+            if (selected && byKeyboard)
+            {
+                Dispatcher.BeginInvoke(DispatcherPriority.Input, () => tab!.Focus());
+            }
+            else if (selected)
             {
                 Dispatcher.BeginInvoke(DispatcherPriority.Input, view.Session.Focus);
             }

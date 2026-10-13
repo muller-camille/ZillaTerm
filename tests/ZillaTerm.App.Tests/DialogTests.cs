@@ -17,7 +17,7 @@ namespace ZillaTerm.App.Tests;
 /// gestionnaire appelé avant que ses champs existent) les ferait planter chez l'utilisateur.
 /// </summary>
 [Collection(WpfCollection.Name)]
-public sealed class DialogTests
+public sealed partial class DialogTests
 {
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
 
@@ -237,6 +237,24 @@ public sealed class DialogTests
 
             var actions = new SafeMemberActions((_, _) => Task.CompletedTask, (_, _) => Task.CompletedTask, (_, _) => Task.CompletedTask);
             new SafeMembersDialog("Prod", _ => Task.FromResult(new List<SafeMember>()), actions).Close();
+
+            // Deux chargements qui se croisent : boutons grisés pendant le chargement, et le plus récent l'emporte même
+            // si l'ancien répond après lui.
+            UseDispatcherContext();
+            var loads = new Queue<TaskCompletionSource<List<SafeMember>>>([new(), new()]);
+            var pending = loads.ToArray();
+            var members = new SafeMembersDialog("Prod", _ => loads.Dequeue().Task, actions);
+            var first = members.LoadAsync();
+            Assert.False(members.ManagePanel.IsEnabled);
+            var second = members.LoadAsync();
+            pending[1].SetResult([new SafeMember { MemberName = "jdoe" }]);
+            Pump(second);
+            Assert.True(members.ManagePanel.IsEnabled);
+            pending[0].SetResult([new SafeMember { MemberName = "ancien" }]);
+            Pump(first);
+            Assert.Equal(["jdoe"], Assert.IsAssignableFrom<IEnumerable<SafeMembersDialog.SafeMemberRow>>(members.MembersGrid.ItemsSource).Select(r => r.Name));
+            Assert.True(members.ManagePanel.IsEnabled);
+            members.Close();
         });
     }
 
@@ -376,7 +394,8 @@ public sealed class DialogTests
                 // Session à vérifier : pas cochée d'office ; le bouton compte les sessions qui seront ajoutées.
                 Assert.False(window.Rows[1].Include);
                 Assert.EndsWith("(1)", (string)window.ImportButton.Content);
-                Assert.False(((System.Windows.Controls.CheckBox)window.IncludeColumn.Header).IsChecked);
+                // Une session cochée sur deux : case de l'en-tête entre les deux.
+                Assert.Null(((System.Windows.Controls.CheckBox)window.IncludeColumn.Header).IsChecked);
 
                 // Même compte que la première session, dans le même dossier : ajouté une seule fois.
                 window.Rows[1].Chosen = window.Rows[1].Candidates.Single(c => c.Account.Id == "1");
@@ -411,6 +430,64 @@ public sealed class DialogTests
             File.Delete(path);
             File.Delete(missing);
         }
+    }
+
+    /// <summary>
+    /// Case de l'en-tête de la reprise des sessions : avec « Seulement les problèmes », elle ne coche que les lignes affichées
+    /// (une session prête décochée, cachée, le reste) ; son état suit les lignes affichées, cochées une à une ou non.
+    /// </summary>
+    [Fact]
+    public void SessionImportHeaderBoxActsOnTheShownRowsOnly()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var click = new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent);
+            PvwaAccount[] accounts =
+            [
+                new() { Id = "1", UserName = "root", Address = "web01.corp.local", PlatformId = "UnixSSH" },
+                new() { Id = "2", UserName = "deploy", Address = "web01.corp.local", PlatformId = "UnixSSH" },
+                new() { Id = "3", UserName = "root", Address = "web02.corp.local", PlatformId = "UnixSSH" },
+            ];
+            var window = new SessionImportWindow(new AppSettings(), "pvwa.corp.local", accounts, KnownDomains.From([], []), _ => { });
+            window.Load(
+            [
+                ImportedSession.Terminal("", "web", ImportProtocol.Ssh, "web01.corp.local", null, "root"),
+                ImportedSession.Terminal("", "any", ImportProtocol.Ssh, "web01.corp.local", null, null),
+                ImportedSession.Terminal("", "web2", ImportProtocol.Ssh, "web02.corp.local", null, "root"),
+            ], "test");
+            var all = (System.Windows.Controls.CheckBox)window.IncludeColumn.Header;
+            Assert.Equal([ImportState.Ready, ImportState.Check, ImportState.Ready], window.Rows.Select(r => r.State));
+            Assert.Null(all.IsChecked);
+
+            // Session prête décochée, puis seulement les problèmes : la case suit la seule ligne affichée (non cochée).
+            window.Rows[0].Include = false;
+            window.ProblemsBox.IsChecked = true;
+            window.ProblemsBox.RaiseEvent(click);
+            Assert.False(all.IsChecked);
+
+            all.RaiseEvent(click);
+            Assert.True(window.Rows[1].Include);
+            Assert.False(window.Rows[0].Include);
+            Assert.True(window.Rows[2].Include);
+            Assert.True(all.IsChecked);
+            Assert.EndsWith("(2)", (string)window.ImportButton.Content);
+
+            // Toutes les lignes de nouveau : une décochée sur trois ; la cocher à la main coche la case de l'en-tête.
+            window.ProblemsBox.IsChecked = false;
+            window.ProblemsBox.RaiseEvent(click);
+            Assert.Null(all.IsChecked);
+            window.Rows[0].Include = true;
+            Assert.True(all.IsChecked);
+            all.RaiseEvent(click);
+            Assert.All(window.Rows, r => Assert.False(r.Include));
+            Assert.False(all.IsChecked);
+            window.Close();
+        });
     }
 
     /// <summary>
@@ -1148,6 +1225,45 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Nom de fichier piégé (inversion du sens d'écriture) : affiché avec « � » dans le titre, la liste des fichiers
+    /// suivis et la notification ; le fichier est suivi quand même. Ligne géante : coupée, avec la mention.
+    /// </summary>
+    [Fact]
+    public void TailWindowShowsSafeNamesAndCutsGiantLines()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            SynchronizationContext.SetSynchronizationContext(null);
+            const string path = "/var/log/facture\u202Efdp.log";
+            var link = new MemoryLink("root@srv01");
+            var file = link.Add(path);
+            file.Append("un\n");
+            var notes = new List<string>();
+            var window = new TailWindow(new AppSettings { TailAlerts = "ERROR" }, () => { }) { Notifier = (_, text) => notes.Add(text) };
+            var feed = window.AddFeed(link, path);
+            window.PollAsync().GetAwaiter().GetResult();
+            Assert.Equal("un\n", window.Shown);
+            Assert.Contains("/var/log/facture\uFFFDfdp.log", window.Title);
+            // Comparaison ordinale : celle de la culture ignore les caractères invisibles (trouvés partout, en position 0).
+            Assert.DoesNotContain("\u202E", window.Title, StringComparison.Ordinal);
+            Assert.Equal("root@srv01 facture\uFFFDfdp.log", feed.Label);
+            Assert.Equal("root@srv01 : /var/log/facture\uFFFDfdp.log", feed.Tip);
+
+            file.Append("ERROR " + new string('x', 100_000) + "\nfin\n");
+            window.PollAsync().GetAwaiter().GetResult();
+            Assert.Contains("facture\uFFFDfdp.log", Assert.Single(notes));
+            var cut = "ERROR " + new string('x', TailLineSplitter.MaxLineLength - 6) + TailLineSplitter.CutMark;
+            Assert.Equal("un\n" + cut + "\nfin\n", window.Shown);
+            window.Close();
+        });
+    }
+
+    /// <summary>
     /// Dossier envoyé avec un lien vers un dossier : le lien, non suivi, est signalé à part dans le bilan, le détail et
     /// l'historique, sans compter comme un fichier non vérifié.
     /// </summary>
@@ -1389,6 +1505,26 @@ public sealed class DialogTests
             Assert.Equal(Strings.InvalidServerTag, dialog.ErrorText.Text);
             dialog.TagRows[2].Name = " ";
             Assert.Null(dialog.ReadTags());
+
+            // 20 étiquettes au plus : « Ajouter » grisé à 20, et une 21ᵉ refusée au lieu d'être effacée sans un mot.
+            dialog.TagRows[2].Name = "SANDBOX";
+            Assert.True(dialog.AddTagButton.IsEnabled);
+            for (int i = dialog.TagRows.Count; i < ServerTagRules.MaxTags; i++)
+            {
+                dialog.TagRows.Add(new SettingsDialog.TagRow(null, $"T{i}", "#00838F"));
+            }
+
+            Assert.NotNull(dialog.ReadTags());
+            Assert.False(dialog.AddTagButton.IsEnabled);
+            Assert.Equal(Strings.ServerTagLimitTip, dialog.AddTagButton.ToolTip);
+            dialog.TagRows.Add(new SettingsDialog.TagRow(null, "DR", "#00838F"));
+            Assert.Null(dialog.ReadTags());
+            Assert.Equal(Strings.InvalidServerTag, dialog.ErrorText.Text);
+            // Retour à 20 : toujours grisé ; à 19, de nouveau possible.
+            dialog.TagRows.RemoveAt(dialog.TagRows.Count - 1);
+            Assert.False(dialog.AddTagButton.IsEnabled);
+            dialog.TagRows.RemoveAt(dialog.TagRows.Count - 1);
+            Assert.True(dialog.AddTagButton.IsEnabled);
             dialog.Close();
         });
     }
@@ -1596,6 +1732,78 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Question RADIUS : « Retour » (Échap) réaffiche les identifiants sans rien envoyer au PVWA, et « Quitter » redevient
+    /// la touche Échap.
+    /// </summary>
+    [Fact]
+    public void RadiusQuestionCanGoBackToTheCredentials()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var login = new LoginWindow(new AppSettings { PvwaUrl = "pvwa.corp.local", UserName = "jdoe" });
+            Assert.Equal(Visibility.Collapsed, login.BackButton.Visibility);
+            Assert.True(login.QuitButton.IsCancel);
+            // Hors de la question, Échap reste à « Quitter ».
+            Assert.False(login.EscapeGoesBack());
+
+            login.ShowChallenge("Code OTP ?");
+            Assert.Equal(Visibility.Collapsed, login.CredentialsPanel.Visibility);
+            Assert.Equal(Visibility.Visible, login.BackButton.Visibility);
+            // « Retour » n'est pas un bouton d'annulation : un clic fermerait la fenêtre de connexion, donc ZillaTerm.
+            Assert.False(login.BackButton.IsCancel);
+
+            Assert.True(login.EscapeGoesBack());
+            Assert.Equal(Visibility.Visible, login.CredentialsPanel.Visibility);
+            Assert.Equal(Visibility.Collapsed, login.ChallengePanel.Visibility);
+            Assert.Equal(Visibility.Collapsed, login.BackButton.Visibility);
+            Assert.True(login.LanguageBox.IsEnabled);
+            Assert.Null(login.Client);
+
+            login.ShowChallenge("Code OTP ?");
+            login.BackButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.Equal(Visibility.Visible, login.CredentialsPanel.Visibility);
+            login.Close();
+        });
+    }
+
+    /// <summary>
+    /// « Connexion avancée » après un refus du composant : « Retenir » n'est pas cochée d'office, et un nom de composant
+    /// que les Paramètres refuseraient (espace…) est refusé ici aussi, l'erreur sur le champ.
+    /// </summary>
+    [Fact]
+    public void AdvancedConnectionRefusesAnInvalidComponent()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var account = new PvwaAccount { Id = "5_3", UserName = "admin", Address = "srv01.corp.local", PlatformId = "WinServerLocal" };
+            var dialog = new ConnectDialog(account, new ConnectRequest(ConnectMode.Psm, "PSM-RDP"), new AppSettings(), "jdoe",
+                "EPVWA093E", componentError: true);
+            Assert.False(dialog.RememberBox.IsChecked);
+
+            dialog.ComponentBox.Text = "PSM RDP";
+            dialog.RememberBox.IsChecked = true;
+            Assert.False(dialog.Accept());
+            Assert.Equal(Strings.InvalidComponentName, dialog.ErrorText.Text);
+            Assert.Null(dialog.Result);
+
+            dialog.ComponentBox.Text = "WIN-PSM";
+            Assert.True(dialog.Accept());
+            Assert.Equal(("WIN-PSM", true), (dialog.Result?.Component, dialog.Result?.RememberComponent));
+            dialog.Close();
+        });
+    }
+
+    /// <summary>
     /// « Options avancées » : les deux champs du ticket ont chacun un nom pour les lecteurs d'écran, et la colonne des
     /// étiquettes suit la longueur des textes (italien) au lieu d'une largeur fixe.
     /// </summary>
@@ -1623,7 +1831,8 @@ public sealed class DialogTests
 
     /// <summary>
     /// Transfert X11 : proposé pour une session SSH seulement (grisé pour le PSM et les fichiers seuls, avec la raison),
-    /// repris de la requête et rendu dans le résultat ; de même dans les propriétés d'un serveur de « Mes serveurs ».
+    /// repris de la requête et rendu dans le résultat ; de même dans les propriétés d'un serveur de « Mes serveurs ». Case
+    /// cochée et active : sa conséquence (« ⚠ Effet : … ») est écrite dessous, visible sans survol.
     /// </summary>
     [Fact]
     public void X11ForwardingIsForSshSessionsOnly()
@@ -1641,12 +1850,18 @@ public sealed class DialogTests
             Assert.True(dialog.X11Box.IsEnabled);
             Assert.True(dialog.X11Box.IsChecked);
             Assert.Equal(Strings.X11ForwardingTip, dialog.X11Box.ToolTip);
+            Assert.Equal(Visibility.Visible, dialog.X11Effect.Visibility);
+            Assert.Equal(Strings.X11ForwardingEffect, dialog.X11Effect.Text);
             Assert.True(dialog.Accept());
             Assert.True(dialog.Result?.X11Forwarding);
+            dialog.X11Box.IsChecked = false;
+            Assert.Equal(Visibility.Collapsed, dialog.X11Effect.Visibility);
+            dialog.X11Box.IsChecked = true;
 
             dialog.SftpRadio.IsChecked = true;
             Assert.False(dialog.X11Box.IsEnabled);
             Assert.Equal(Strings.X11SshOnly, dialog.X11Box.ToolTip);
+            Assert.Equal(Visibility.Collapsed, dialog.X11Effect.Visibility);
             Assert.True(dialog.Accept());
             Assert.False(dialog.Result?.X11Forwarding);
             dialog.Close();
@@ -1655,8 +1870,10 @@ public sealed class DialogTests
             var properties = new SessionPropertiesDialog(saved, account, [], sshAvailable: true, [], x11: true);
             Assert.True(properties.X11Box.IsEnabled);
             Assert.True(properties.X11Box.IsChecked);
+            Assert.Equal(Visibility.Visible, properties.X11Effect.Visibility);
             properties.PsmRadio.IsChecked = true;
             Assert.False(properties.X11Box.IsEnabled);
+            Assert.Equal(Visibility.Collapsed, properties.X11Effect.Visibility);
             Assert.Equal(Strings.X11SshOnly, properties.X11Box.ToolTip);
             properties.Close();
         });
@@ -2089,6 +2306,20 @@ public sealed class DialogTests
                 Assert.True(dialog.RestoreButton.IsEnabled);
                 Assert.Empty(restored);
                 dialog.Close();
+
+                // Restauration en cours (partage lent) : choisir une autre version ne réactive pas « Restaurer ».
+                var pending = new TaskCompletionSource<int?>();
+                var slow = new SharedHistoryDialog(new SharedServerList(list.Path), _ => pending.Task);
+                Pump(slow.LoadAsync());
+                slow.VersionsGrid.SelectedIndex = 1;
+                var restoring = slow.RestoreAsync(slow.Versions[1]);
+                Assert.False(slow.RestoreButton.IsEnabled);
+                slow.VersionsGrid.SelectedIndex = 0;
+                Assert.False(slow.RestoreButton.IsEnabled);
+                pending.SetResult(null);
+                Pump(restoring);
+                Assert.True(slow.RestoreButton.IsEnabled);
+                slow.Close();
             });
         }
         finally
@@ -2159,6 +2390,37 @@ public sealed class DialogTests
         }
     }
 
+    /// <summary>
+    /// « Retirer le dossier » d'une liste partagée pendant une recherche qui n'en montre qu'un serveur : tous les serveurs
+    /// du dossier (sous-dossiers compris) sont retirés, pas seulement celui affiché ; un serveur seul reste seul.
+    /// </summary>
+    [Fact]
+    public void RemovingASharedFolderTakesTheServersHiddenBySearch()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var directory = Directory.CreateTempSubdirectory("cat-shared-").FullName;
+        try
+        {
+            var list = SharedServerList.Create(Path.Combine(directory, "Équipe.json"), "Équipe", "pvwa.test", "alice");
+            list.Add([Server("1", "web01", "Recette"), Server("2", "db01", "Recette"), Server("3", "app01", "Recette/Interne"),
+                Server("4", "web02", "Prod")], "alice");
+            var web01 = list.Content!.Servers.Single(s => s.Name == "web01");
+            var shown = new SharedServerNode(list, web01, web01.ToSession("pvwa.test", keepId: true), null);
+            var folder = new SharedFolderNode(list, "Recette", [shown], isExpanded: true);
+
+            Assert.Equal(["app01", "db01", "web01"], MainWindow.SharedRemovalEntries(folder).Select(s => s.Name).Order());
+            Assert.Equal(["web01"], MainWindow.SharedRemovalEntries(shown).Select(s => s.Name));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static ServerEntry Server(string account, string name, string folder = "") =>
         new() { AccountId = account, Name = name, Folder = folder, Address = name, UserName = "root", PlatformId = "UnixSSH" };
 
@@ -2216,9 +2478,80 @@ public sealed class DialogTests
         });
     }
 
+    /// <summary>
+    /// Onglet fermé pendant le renvoi d'un fichier modifié : la connexion n'est fermée qu'une fois l'écriture finie (coupée,
+    /// elle laisserait le fichier du serveur tronqué), et ce renvoi est signalé à part des fichiers non renvoyés.
+    /// </summary>
+    [Fact]
+    public void ClosingASessionWaitsForTheEditedFileBeingWritten()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var folder = Path.Combine(Path.GetTempPath(), "zt-edit-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var opened = new DateTime(2026, 10, 6, 9, 0, 0);
+                var written = new TaskCompletionSource<(DateTime, long)>();
+                bool writing = false;
+                var files = new FakeFiles("/etc/nginx", [])
+                {
+                    Stat = (opened, 3),
+                    Write = (_, _) =>
+                    {
+                        writing = true;
+                        return written.Task;
+                    },
+                };
+                var session = new ZillaTerm.App.Services.FilesSession("srv01.corp.local", "SFTP", _ => Task.FromResult<IRemoteFiles>(files),
+                    System.Windows.Threading.Dispatcher.CurrentDispatcher);
+                Pump(session.ConnectAsync());
+                var editor = new ZillaTerm.App.Services.RemoteEditor(session, new Window(), new AppSettings(), (_, _) => { }, _ => { });
+                session.Editor = editor;
+                var local = Path.Combine(folder, "nginx.conf");
+                File.WriteAllText(local, "old");
+                using var file = new EditedFile("/etc/nginx/nginx.conf", local, opened, 3);
+                File.WriteAllText(local, "new content");
+
+                var upload = editor.UploadAsync(file);
+                PumpUntil(() => writing);
+                Assert.Equal(["srv01.corp.local:/etc/nginx/nginx.conf"], ZillaTerm.App.Services.RemoteEditor.WritingFiles([editor]));
+                Assert.False(editor.WritesDone.IsCompleted);
+
+                session.Dispose();
+                var later = Task.Delay(300);
+                PumpUntil(() => later.IsCompleted);
+                Assert.False(files.Disposed);
+
+                written.SetResult((opened.AddMinutes(1), 11));
+                Pump(upload);
+                Assert.True(upload.Result);
+                Assert.True(editor.WritesDone.IsCompleted);
+                Assert.Empty(ZillaTerm.App.Services.RemoteEditor.WritingFiles([editor]));
+                PumpUntil(() => files.Disposed);
+            });
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     /// <summary>Fichiers d'un serveur en mémoire : une liste fixe, le reste non utilisé.</summary>
     private sealed class FakeFiles(string home, List<RemoteEntry> entries) : IRemoteFiles
     {
+        /// <summary>Date et taille rendues par <see cref="GetStatAsync"/>.</summary>
+        public (DateTime LastWriteTime, long Length) Stat { get; init; }
+
+        /// <summary>Écriture d'un fichier (renvoi de l'éditeur) ; null : non utilisée.</summary>
+        public Func<string, byte[], Task<(DateTime, long)>>? Write { get; init; }
+
         public bool Disposed { get; private set; }
         public string HomeDirectory { get; } = home;
         public string CurrentDirectory { get; private set; } = home;
@@ -2243,9 +2576,9 @@ public sealed class DialogTests
         public Task<long> GetSizeAsync(string path, CancellationToken ct) => throw new NotSupportedException();
         public Task<byte[]> ReadAsync(string path, long offset, int count, CancellationToken ct) => throw new NotSupportedException();
         public Task<byte[]> ReadAllBytesAsync(string path, long maxBytes, CancellationToken ct) => throw new NotSupportedException();
-        public Task<(DateTime LastWriteTime, long Length)> GetStatAsync(string path, CancellationToken ct) => throw new NotSupportedException();
+        public Task<(DateTime LastWriteTime, long Length)> GetStatAsync(string path, CancellationToken ct) => Task.FromResult(Stat);
         public Task<(DateTime LastWriteTime, long Length)> WriteFileAsync(string remotePath, byte[] content, CancellationToken ct) =>
-            throw new NotSupportedException();
+            Write?.Invoke(remotePath, content) ?? throw new NotSupportedException();
         public Task<int?> GetModeAsync(string path, CancellationToken ct) => Task.FromResult<int?>(null);
         public Task<PermissionsResult> SetPermissionsAsync(string path, PermissionChange change, bool recursive,
             bool executeOnlyIfAlready, IProgress<int>? progress, CancellationToken ct) => throw new NotSupportedException();
@@ -2537,6 +2870,61 @@ public sealed class DialogTests
         });
     }
 
+    /// <summary>
+    /// Pavé tactile de précision : les petits pas de la molette s'additionnent (le reste repart de zéro au changement de
+    /// sens). Capture de la souris perdue pendant une sélection : la sélection est terminée.
+    /// </summary>
+    [Fact]
+    public void TerminalAddsSmallWheelStepsAndEndsASelectionWhenTheMouseIsTaken()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var (session, view) = NewSshView("root@srv01");
+            var window = new Window { Width = 800, Height = 500, ShowInTaskbar = false, ShowActivated = false, Content = view };
+            window.Show();
+            PumpUntil(() => view.Terminal.IsLoaded);
+            try
+            {
+                var terminal = view.Terminal;
+                session.Emulator.Feed(string.Concat(Enumerable.Range(1, 100).Select(i => $"line {i}\r\n")));
+                void Wheel(int delta) => terminal.RaiseEvent(
+                    new System.Windows.Input.MouseWheelEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount, delta)
+                    {
+                        RoutedEvent = UIElement.MouseWheelEvent,
+                    });
+
+                for (int i = 0; i < 6; i++)
+                {
+                    Wheel(20);
+                }
+
+                Assert.Equal(3, terminal.ScrollState.Offset);
+                Wheel(30);
+                Wheel(-20);
+                Assert.Equal(3, terminal.ScrollState.Offset);
+                Wheel(-20);
+                Assert.Equal(2, terminal.ScrollState.Offset);
+
+                terminal.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount,
+                    System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonDownEvent });
+                Assert.True(terminal.IsSelecting);
+                Assert.True(terminal.IsMouseCaptured);
+                System.Windows.Input.Mouse.Capture(null);
+                Assert.False(terminal.IsSelecting);
+            }
+            finally
+            {
+                window.Close();
+                session.Dispose();
+            }
+        });
+    }
+
     private sealed class NoInteraction : ZillaTerm.Core.Ssh.ISshInteraction
     {
         public bool CheckHostKey(string host, int port, string algorithm, string sha256Fingerprint) => false;
@@ -2671,6 +3059,161 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Ligne sélectionnée d'un arbre : les textes secondaires (nombre, mode, ⚠, ✓) prennent la couleur du texte de la ligne,
+    /// faite pour le fond de la sélection ; hors sélection, ils gardent la leur.
+    /// </summary>
+    [Fact]
+    public void SelectedTreeRowKeepsSecondaryTextsReadable()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            System.Windows.Controls.TextBlock Note(string style) => new() { Text = "x", Style = (Style)Application.Current.FindResource(style) };
+            var (note, warning, mark, other) = (Note("TreeNote"), Note("TreeWarning"), Note("TreeAccent"), Note("TreeNote"));
+            var row = new System.Windows.Controls.TreeViewItem { Header = new System.Windows.Controls.StackPanel { Children = { note, warning, mark } } };
+            var tree = new System.Windows.Controls.TreeView();
+            tree.Items.Add(row);
+            tree.Items.Add(new System.Windows.Controls.TreeViewItem { Header = other });
+            var window = new Window { Content = tree, Width = 300, Height = 200, ShowInTaskbar = false, ShowActivated = false };
+            window.Show();
+            try
+            {
+                row.IsSelected = true;
+                window.UpdateLayout();
+
+                static System.Windows.Media.Color ColorOf(System.Windows.Media.Brush brush) => ((System.Windows.Media.SolidColorBrush)brush).Color;
+                var muted = ColorOf((System.Windows.Media.Brush)Application.Current.FindResource("MutedBrush"));
+                Assert.NotEqual(muted, ColorOf(row.Foreground));
+                Assert.All(new[] { note, warning, mark }, text => Assert.Equal(ColorOf(row.Foreground), ColorOf(text.Foreground)));
+                Assert.Equal(muted, ColorOf(other.Foreground));
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Contraste élevé : les couleurs d'état deviennent toutes celle du texte ; la forme de la pastille distingue encore les
+    /// cinq états, dans la même largeur (l'onglet ne s'allonge pas).
+    /// </summary>
+    [Fact]
+    public void TabStatesKeepDistinctShapesInHighContrast()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var merged = Application.Current.Resources.MergedDictionaries;
+            var contrast = Palette.HighContrast();
+            merged.Add(contrast);
+            try
+            {
+                var header = new SessionTabHeader("srv01.corp.local", "IconSsh", new System.Windows.Controls.Button(), "SSH", null);
+                var marks = Enum.GetValues<SessionTabState>().Select(state =>
+                {
+                    header.SetState(state);
+                    Assert.Equal(8, header.StateMark.Width);
+                    return (header.StateMark.Data, Filled: !ReferenceEquals(header.StateMark.Fill, System.Windows.Media.Brushes.Transparent));
+                }).ToList();
+
+                Assert.Equal(5, marks.Distinct().Count());
+            }
+            finally
+            {
+                merged.Remove(contrast);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Lecteurs d'écran : une case ou un bouton dont le libellé est un AccessText (seul ou avec une image) est nommé par ce
+    /// libellé, sans la touche d'accès, et suit ses changements (« Enregistrer » / « Arrêter l'enregistrement ») ; un nom
+    /// explicite reste.
+    /// </summary>
+    [Fact]
+    public void AccessTextLabelsNameTheirButtons()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            AccessibleName.Follow();
+            var box = new System.Windows.Controls.CheckBox { Content = new System.Windows.Controls.AccessText { Text = "_Garder la session" } };
+            var label = new System.Windows.Controls.AccessText { Text = "_Enregistrer l'intervention" };
+            var record = new System.Windows.Controls.Button
+            {
+                Content = new System.Windows.Controls.StackPanel
+                {
+                    Orientation = System.Windows.Controls.Orientation.Horizontal,
+                    Children = { new System.Windows.Shapes.Ellipse { Width = 10, Height = 10 }, label },
+                },
+            };
+            var named = new System.Windows.Controls.Button { Content = new System.Windows.Controls.AccessText { Text = "_Ajouter" } };
+            System.Windows.Automation.AutomationProperties.SetName(named, "Ajouter une étiquette");
+            var window = new Window
+            {
+                Content = new System.Windows.Controls.StackPanel { Children = { box, record, named } },
+                Width = 300, Height = 200, ShowInTaskbar = false, ShowActivated = false,
+            };
+            window.Show();
+            try
+            {
+                // Nom donné au chargement des contrôles.
+                PumpUntil(() => box.IsLoaded && record.IsLoaded && named.IsLoaded);
+                static string NameOf(UIElement element) => System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(element).GetName();
+                Assert.Equal("Garder la session", NameOf(box));
+                Assert.Equal("Enregistrer l'intervention", NameOf(record));
+                label.Text = "_Arrêter l'enregistrement";
+                Assert.Equal("Arrêter l'enregistrement", NameOf(record));
+                Assert.Equal("Ajouter une étiquette", NameOf(named));
+                Assert.Equal("PROMPT_COMMAND", AccessibleName.WithoutAccessKey("_PROMPT__COMMAND"));
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Question du PSMP après un refus : l'avertissement (essai n sur 3, Verr. Maj) est lu avec le champ, qui prend le focus ;
+    /// au premier essai, rien de plus que la question.
+    /// </summary>
+    [Fact]
+    public void RefusedAnswerIsReadWithTheField()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            const string refused = "Refusé par le serveur. Essai 2 sur 3 : vérifiez-le (Verr. Maj ?).";
+            var again = new PromptDialog("", "Password:", echo: false, refused: refused);
+            Assert.Equal(refused, System.Windows.Automation.AutomationProperties.GetHelpText(again.SecretBox));
+            Assert.Equal("Password:", System.Windows.Automation.AutomationProperties.GetName(again.SecretBox));
+            again.Close();
+
+            var first = new PromptDialog("", "Password:", echo: false);
+            Assert.Equal("", System.Windows.Automation.AutomationProperties.GetHelpText(first.SecretBox));
+            first.Close();
+        });
+    }
+
+    /// <summary>
     /// Thème sombre : les fenêtres s'ouvrent avec ses modèles (listes déroulantes, onglets, tableaux, cases), le choix
     /// est relu des réglages, et les icônes foncées sont éclaircies (écran de terminal cerné d'un trait clair).
     /// </summary>
@@ -2793,6 +3336,66 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Disque qui refuse le journal pendant l'enregistrement : l'interface est prévenue aussitôt, la fenêtre dit depuis
+    /// quand plus rien n'est gardé (couleur d'erreur du thème), et note et capture ne sont plus proposées.
+    /// </summary>
+    [Fact]
+    public void InterventionWindowSaysWhenTheDiskRefusesTheJournal()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var click = new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent);
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new FailingProtector(failFrom: 2));
+                int changed = 0;
+                recorder.Changed += () => changed++;
+                var window = new InterventionWindow("", "", recorder, "jdoe", "session CyberArk (pvwa.corp.local)");
+                window.RecordButton.RaiseEvent(click);
+                Assert.Equal(1, changed);
+                Assert.Null(recorder.FailureMessage);
+
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Note, "", "perdue");
+                recorder.Flush();
+                PumpUntil(() => changed == 2);
+                Assert.Equal(2, changed);
+                Assert.True(recorder.IsRecording);
+                Assert.NotNull(recorder.Failure);
+                int count = recorder.Count;
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Note, "", "ignorée");
+                Assert.Equal(count, recorder.Count);
+
+                var since = recorder.FailedAt!.Value.ToLocalTime().ToString("t", System.Globalization.CultureInfo.CurrentCulture);
+                Assert.Equal(Text.Format(Strings.InterventionInterruptedAt, since), window.StatusText.Text);
+                Assert.Equal(recorder.FailureMessage, window.MessageText.Text);
+                Assert.Contains(since, window.MessageText.Text, StringComparison.Ordinal);
+                Assert.Same(window.FindResource("ErrorBrush"), window.MessageText.Foreground);
+                Assert.False(window.NoteBox.IsEnabled);
+                Assert.False(window.CaptureButton.IsEnabled);
+
+                window.RecordButton.RaiseEvent(click);
+                Assert.False(recorder.IsRecording);
+                Assert.Null(recorder.FailureMessage);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Consignes d'astreinte tirées d'un fichier (tenu à jour par les responsables) : son texte remplace celui des
     /// réglages, inverseurs de sens de lecture retirés ; fichier absent : le texte des réglages reste, avec la raison.
     /// </summary>
@@ -2832,6 +3435,18 @@ public sealed class DialogTests
         {
             Directory.Delete(dir, recursive: true);
         }
+    }
+
+    /// <summary>Protecteur qui refuse à partir du bloc <c>failFrom</c> (comme un disque plein au moment d'écrire).</summary>
+    private sealed class FailingProtector(int failFrom) : ZillaTerm.Core.KeePass.ISecretProtector
+    {
+        private int _calls;
+
+        public byte[] Protect(byte[] data) => ++_calls >= failFrom
+            ? throw new System.Security.Cryptography.CryptographicException("refusé")
+            : data.Select(b => (byte)(b ^ 0x5A)).ToArray();
+
+        public byte[] Unprotect(byte[] data) => data.Select(b => (byte)(b ^ 0x5A)).ToArray();
     }
 
     private sealed class XorProtector : ZillaTerm.Core.KeePass.ISecretProtector

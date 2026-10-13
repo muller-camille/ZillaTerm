@@ -16534,5 +16534,174 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("FreeRdpCheckFailed", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ⚠ Intervention: recording interrupted.
+        /// </summary>
+        public static string InterventionInterruptedIndicator {
+            get {
+                return ResourceManager.GetString("InterventionInterruptedIndicator", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Recording interrupted at {0}..
+        /// </summary>
+        public static string InterventionInterruptedAt {
+            get {
+                return ResourceManager.GetString("InterventionInterruptedAt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connecting to {0}: wait until the session has started, then try again..
+        /// </summary>
+        public static string ConnectBusyWait {
+            get {
+                return ResourceManager.GetString("ConnectBusyWait", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Key size.
+        /// </summary>
+        public static string RdpKeySize {
+            get {
+                return ResourceManager.GetString("RdpKeySize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} bits.
+        /// </summary>
+        public static string RdpKeyBits {
+            get {
+                return ResourceManager.GetString("RdpKeyBits", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Weak key: {0} bits, fewer than the recommended {1}. Such a key can be broken, and whoever breaks it can pose as this PSM without any warning. Ask the CyberArk administrator to enable TLS on the PSM..
+        /// </summary>
+        public static string RdpKeyWeak {
+            get {
+                return ResourceManager.GetString("RdpKeyWeak", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Full screen is not available in a tab with the built-in FreeRDP client: maximize the ZillaTerm window on the screen you want. For a full-screen PSM session, clear “Open PSM Windows sessions in a ZillaTerm tab” (Settings): it will open in Remote Desktop Connection..
+        /// </summary>
+        public static string RdpFullScreenFreeRdpTip {
+            get {
+                return ResourceManager.GetString("RdpFullScreenFreeRdpTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Your settings file (settings.json) was missing: the previous settings were restored from their backup (settings.json.bak).
+        ///
+        ///To start over with the default settings, close ZillaTerm and delete these two files from the folder:
+        ///{0}.
+        /// </summary>
+        public static string SettingsMissingRestored {
+            get {
+                return ResourceManager.GetString("SettingsMissingRestored", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to All its servers are removed, including {0:# server|# servers} hidden by the search..
+        /// </summary>
+        public static string SharedRemoveHiddenBySearch {
+            get {
+                return ResourceManager.GetString("SharedRemoveHiddenBySearch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Back.
+        /// </summary>
+        public static string LoginBack {
+            get {
+                return ResourceManager.GetString("LoginBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Back to the sign-in fields (method, user name) without answering the question. Esc does the same..
+        /// </summary>
+        public static string LoginBackTip {
+            get {
+                return ResourceManager.GetString("LoginBackTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 20 tags at most: remove one to add another..
+        /// </summary>
+        public static string ServerTagLimitTip {
+            get {
+                return ResourceManager.GetString("ServerTagLimitTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ⚠ Effect: a compromised server could see the other X windows of this computer and send keystrokes to them..
+        /// </summary>
+        public static string X11ForwardingEffect {
+            get {
+                return ResourceManager.GetString("X11ForwardingEffect", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1}.
+        /// </summary>
+        public static string CompareRemoteLabel {
+            get {
+                return ResourceManager.GetString("CompareRemoteLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No .tar.gz archive for this drop: extracting it would recreate the replaced items with other permissions and another owner. The files are sent one by one..
+        /// </summary>
+        public static string ArchiveNotForReplace {
+            get {
+                return ResourceManager.GetString("ArchiveNotForReplace", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sending {0} was interrupted: the file on the server may be incomplete.
+        ///
+        ///{1}
+        ///
+        ///The tab is closed: keep your changes by saving them elsewhere from the editor, then send the file again from a new tab..
+        /// </summary>
+        public static string EditWriteInterruptedClosed {
+            get {
+                return ResourceManager.GetString("EditWriteInterruptedClosed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Edited files being sent back: {0} (closing waits until they are written).
+        /// </summary>
+        public static string CloseAllEditWriting {
+            get {
+                return ResourceManager.GetString("CloseAllEditWriting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Waiting for the edited file to be written on the server before closing….
+        /// </summary>
+        public static string EditWaitingForWrite {
+            get {
+                return ResourceManager.GetString("EditWaitingForWrite", resourceCulture);
+            }
+        }
     }
 }

@@ -580,7 +580,9 @@ public partial class MainWindow
         int files = _remoteSessions.OfType<FilesSession>().Count(s => s.State == RemoteSessionState.Connected);
         int rdp = _rdpViews.Count(v => v.Session.HasControl);
         int vnc = MainTabs.Items.OfType<TabItem>().Select(t => t.Tag).OfType<VncSession>().Count(v => v.IsConnected);
-        bool always = unsent.Count > 0 || transfers > 0 || rdp > 0;
+        // Renvois de fichiers modifiés en cours : la fermeture attend leur fin (dit à part, ils ne sont pas perdus).
+        int writing = RemoteEditor.WritingFiles(_remoteSessions.Select(s => s.Editor).OfType<RemoteEditor>()).Count;
+        bool always = unsent.Count > 0 || transfers > 0 || rdp > 0 || writing > 0;
         if (!always && !(_settings.ConfirmCloseSession && ssh + vnc > 0))
         {
             return true;
@@ -601,6 +603,7 @@ public partial class MainWindow
         Add(vnc, Strings.CloseAllVnc);
         Add(transfers, Strings.CloseAllTransfers);
         Add(unsent.Count, Strings.CloseAllEdited);
+        Add(writing, Strings.CloseAllEditWriting);
         return ConfirmDialog.Confirm(this, new ConfirmRequest
         {
             Title = "ZillaTerm",

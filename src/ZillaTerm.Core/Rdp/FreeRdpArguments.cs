@@ -46,7 +46,10 @@ public static class FreeRdpArguments
     /// Taille de l'onglet en pixels : résolution du bureau distant, mise à l'échelle ensuite
     /// (<see cref="RdpConnectionSettings.SmartSizing"/>) ou adaptée à chaque redimensionnement de l'onglet.
     /// </param>
-    /// <param name="password">Mot de passe d'une connexion directe (tests) ; null pour une session PSM (aucun n'est demandé).</param>
+    /// <param name="password">
+    /// Mot de passe d'une connexion directe (accès d'urgence KeePass), écrit dans le fichier de connexion (entrée
+    /// standard), jamais sur la ligne de commande ; null pour une session PSM (aucun n'est demandé).
+    /// </param>
     /// <param name="verbose">Journal détaillé de FreeRDP (journal de débogage de ZillaTerm activé).</param>
     /// <param name="fingerprints">
     /// Empreintes SHA-256 (hexadécimal) des certificats et clés acceptés pour ce serveur : FreeRDP refuse les autres.

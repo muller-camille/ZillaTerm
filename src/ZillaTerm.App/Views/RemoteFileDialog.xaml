@@ -35,7 +35,10 @@
         <TextBlock x:Name="StatusText" DockPanel.Dock="Bottom" TextWrapping="Wrap" Margin="0,6,0,0"
                    Foreground="{DynamicResource MutedBrush}" />
 
+        <!-- Lettres tapées : OnListTextInput, comme dans l'onglet Fichiers (l'espace d'un nom : OnListKeyDown). La recherche
+             de WPF (sur le texte de l'objet, jamais le nom) prendrait la frappe. -->
         <ListView x:Name="FileList" SelectionMode="Single" PreviewKeyDown="OnListKeyDown" SelectionChanged="OnSelectionChanged"
+                  TextInput="OnListTextInput" IsTextSearchEnabled="False"
                   MouseDoubleClick="OnItemDoubleClick" ItemContainerStyle="{DynamicResource FileRow}">
             <ListView.View>
                 <GridView>
@@ -44,7 +47,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="{Binding Converter={StaticResource FileIcon}}" Width="16" Height="16" Margin="0,0,5,0" />
-                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>

@@ -59,6 +59,12 @@ public sealed class EditedFile : IDisposable
 
     public string Name => Ssh.RemotePath.Name(RemotePath);
 
+    /// <summary>Nom à afficher : caractères invisibles remplacés par « � » (voir <see cref="RemoteEntry.DisplayName"/>).</summary>
+    public string DisplayName => RemoteEntry.Visible(Name);
+
+    /// <summary>Chemin à afficher, comme <see cref="DisplayName"/>.</summary>
+    public string DisplayPath => RemoteEntry.Visible(RemotePath);
+
     /// <summary>Date de modification sur le serveur lors de l'ouverture ou du dernier renvoi.</summary>
     public DateTime RemoteWriteTime { get; private set; }
 

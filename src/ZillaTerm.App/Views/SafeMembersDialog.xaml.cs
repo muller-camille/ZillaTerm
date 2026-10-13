@@ -80,8 +80,19 @@ public partial class SafeMembersDialog : Window
         Setters = { new Setter(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Center) },
     };
 
-    private async Task LoadAsync()
+    // Chargement ou retrait en cours : Ajouter, Modifier et Retirer sont grisés (deux opérations se croiseraient, sur un
+    // tableau peut-être périmé). Seul le dernier chargement lancé est affiché.
+    private int _loads;
+    private bool _loading;
+    private bool _removing;
+
+    private void UpdateManageButtons() => ManagePanel.IsEnabled = !_loading && !_removing;
+
+    internal async Task LoadAsync()
     {
+        int load = ++_loads;
+        _loading = true;
+        UpdateManageButtons();
         ErrorMessage.Visibility = RetryButton.Visibility = Visibility.Collapsed;
         StatePanel.Visibility = LoadingBar.Visibility = Visibility.Visible;
         StatusText.Text = Strings.SafeMembersLoading;
@@ -89,12 +100,22 @@ public partial class SafeMembersDialog : Window
         try
         {
             var members = await _load(_closing.Token);
+            if (load != _loads)
+            {
+                // Un chargement plus récent a été lancé entre-temps : c'est lui qui s'affiche.
+                return;
+            }
+
             _rows = members
                 .OrderBy(m => m.IsGroup ? 0 : 1)
                 .ThenBy(m => m.MemberName, StringComparer.OrdinalIgnoreCase)
                 .Select(m => new SafeMemberRow(m))
                 .ToList();
             ShowRows();
+        }
+        catch (Exception ex) when (load != _loads && ex is not OutOfMemoryException)
+        {
+            // Erreur d'un chargement remplacé par un plus récent : sans objet.
         }
         catch (OperationCanceledException) when (_closing.IsCancellationRequested)
         {
@@ -116,6 +137,14 @@ public partial class SafeMembersDialog : Window
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             ShowError(Text.Format(Strings.SafeMembersFailed, ErrorText.Describe(ex)));
+        }
+        finally
+        {
+            if (load == _loads)
+            {
+                _loading = false;
+                UpdateManageButtons();
+            }
         }
     }
 
@@ -212,6 +241,8 @@ public partial class SafeMembersDialog : Window
             return;
         }
 
+        _removing = true;
+        UpdateManageButtons();
         try
         {
             await _actions.Remove(row.Name, _closing.Token);
@@ -234,6 +265,11 @@ public partial class SafeMembersDialog : Window
         {
             MessageBox.Show(this, Text.Format(Strings.SafeMemberRemoveFailed, ErrorText.Describe(ex)), Strings.SafeMembersTitle,
                 MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            _removing = false;
+            UpdateManageButtons();
         }
     }
 

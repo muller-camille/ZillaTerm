@@ -43,6 +43,28 @@ public sealed class TransferCheckTests
         Assert.Throws<NotSupportedException>(() => sink.ReadByte());
     }
 
+    /// <summary>
+    /// Téléchargement plafonné d'après la taille annoncée (le double, ou 64 Mio de plus) : un serveur qui envoie sans fin
+    /// est arrêté avant d'écrire au-delà, sans IOException (que FluentFTP prendrait pour une coupure à reprendre).
+    /// </summary>
+    [Fact]
+    public void HashingStreamStopsAServerThatSendsMoreThanAnnounced()
+    {
+        Assert.Equal(64L * 1024 * 1024 + 2048, TransferCheck.DownloadLimit(2048));
+        Assert.Equal(64L * 1024 * 1024, TransferCheck.DownloadLimit(-1));
+        Assert.Equal(6L * 1024 * 1024 * 1024, TransferCheck.DownloadLimit(3L * 1024 * 1024 * 1024));
+        Assert.Equal(long.MaxValue, TransferCheck.DownloadLimit(long.MaxValue - 1));
+
+        var target = new MemoryStream();
+        using var write = new HashingStream(target, limit: 10_000, announced: 2048);
+        write.Write(Data, 0, 10_000);
+        var error = Assert.Throws<InvalidDataException>(() => write.Write(Data, 10_000, 1));
+        Assert.IsNotAssignableFrom<IOException>(error);
+        Assert.Contains(RemotePath.FormatSize(2048), error.Message, StringComparison.Ordinal);
+        Assert.Equal(10_000, target.Length);
+        Assert.Equal(10_000, write.Count);
+    }
+
     [Fact]
     public async Task HashesALocalFile()
     {

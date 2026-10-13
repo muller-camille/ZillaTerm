@@ -113,7 +113,8 @@ public sealed class LocalTreeTests : IDisposable
             }
         }
 
-        Assert.Equal(["deploy/", "deploy/.env", "deploy/app.conf", "deploy/conf/", "deploy/conf/site.conf", "deploy/current.conf"],
+        // Pas d'entrée pour les dossiers qui ont du contenu : tar les crée sans toucher à ceux qui existent.
+        Assert.Equal(["deploy/.env", "deploy/app.conf", "deploy/conf/site.conf", "deploy/current.conf"],
             names.Order(StringComparer.Ordinal));
     }
 

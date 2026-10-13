@@ -80,6 +80,49 @@ public sealed class AppSettingsTests : IDisposable
     }
 
     /// <summary>
+    /// settings.json supprimé (ou remplacement interrompu), sauvegarde restée en place, ancien dossier CyberArkTerm encore
+    /// là : les anciens réglages ne reviennent pas, la sauvegarde est reprise et n'est pas écrasée par eux.
+    /// </summary>
+    [Fact]
+    public void ImportLegacyFolder_NeverReplacesTheBackupOfZillaTerm()
+    {
+        var legacy = Path.Combine(_dir, "CyberArkTerm");
+        var target = Path.Combine(_dir, "ZillaTerm");
+        var path = Path.Combine(target, "settings.json");
+        new AppSettings { PvwaUrl = "ancien.corp.local" }.Save(Path.Combine(legacy, "settings.json"));
+        new AppSettings { PvwaUrl = "pvwa-new.corp.local" }.Save(path);
+        new AppSettings { PvwaUrl = "pvwa-newer.corp.local" }.Save(path);
+        File.Delete(path);
+
+        Assert.False(AppSettings.ImportLegacyFolder(legacy, target));
+        var loaded = AppSettings.Load(path);
+
+        Assert.Equal("pvwa-new.corp.local", loaded.PvwaUrl);
+        Assert.True(loaded.RestoredFromBackup);
+        Assert.Null(loaded.SetAsideFile);
+        Assert.Equal("pvwa-new.corp.local", AppSettings.Load(DurableFile.BackupPath(path)).PvwaUrl);
+    }
+
+    /// <summary>
+    /// Ancien dossier avec sa sauvegarde : elle est copiée après les réglages, si bien qu'une copie interrompue avant
+    /// eux est reprise (aucune sauvegarde n'est encore là pour la bloquer).
+    /// </summary>
+    [Fact]
+    public void ImportLegacyFolder_CopiesTheBackupAfterTheSettings()
+    {
+        var legacy = Path.Combine(_dir, "CyberArkTerm");
+        var target = Path.Combine(_dir, "ZillaTerm");
+        new AppSettings { PvwaUrl = "avant.corp.local" }.Save(Path.Combine(legacy, "settings.json"));
+        new AppSettings { PvwaUrl = "ancien.corp.local" }.Save(Path.Combine(legacy, "settings.json"));
+
+        Assert.True(AppSettings.ImportLegacyFolder(legacy, target));
+
+        var path = Path.Combine(target, "settings.json");
+        Assert.Equal("ancien.corp.local", AppSettings.Load(path).PvwaUrl);
+        Assert.Equal("avant.corp.local", AppSettings.Load(DurableFile.BackupPath(path)).PvwaUrl);
+    }
+
+    /// <summary>
     /// Sessions PSM dans l'onglet : la résolution suit l'onglet par défaut, aussi avec un fichier de réglages qui ne
     /// mentionne pas l'option ; l'option désactivée le reste.
     /// </summary>
@@ -194,6 +237,26 @@ public sealed class AppSettingsTests : IDisposable
     }
 
     /// <summary>
+    /// Compte de domaine utilisé sur deux serveurs : deux connexions récentes, et les deux serveurs restent proposés par
+    /// « Sur quel serveur ? » ; le même serveur une seconde fois remplace la première connexion (machine sans tenir compte
+    /// des majuscules ni des espaces).
+    /// </summary>
+    [Fact]
+    public void RecentSessionsOfADomainAccountKeepEachServer()
+    {
+        var settings = new AppSettings();
+        var account = new PvwaAccount { Id = "5_2", UserName = "jdoe-adm", Address = "corp.local", PlatformId = "WinDomain" };
+        settings.AddRecent(new RecentSession { AccountId = "5_2", PvwaHost = "pvwa", Mode = "PSM-RDP", RemoteMachine = "srv01.corp.local" });
+        settings.AddRecent(new RecentSession { AccountId = "5_2", PvwaHost = "pvwa", Mode = "PSM-RDP", RemoteMachine = "srv02.corp.local" });
+
+        Assert.Equal(["srv02.corp.local", "srv01.corp.local"], settings.Recent.Select(r => r.RemoteMachine));
+        Assert.Equal(["srv02.corp.local", "srv01.corp.local"], SessionLibrary.KnownMachines(settings, account, "pvwa").Take(2));
+
+        settings.AddRecent(new RecentSession { AccountId = "5_2", PvwaHost = "pvwa", Mode = "PSM-RDP", RemoteMachine = " SRV01.corp.local" });
+        Assert.Equal([" SRV01.corp.local", "srv02.corp.local"], settings.Recent.Select(r => r.RemoteMachine));
+    }
+
+    /// <summary>
     /// Composants proposés : celui mémorisé pour la plateforme d'abord, puis ceux déjà utilisés (même absents de la liste
     /// usuelle, comme WIN-PSM), puis les usuels, sans doublon ni connexion SSH.
     /// </summary>
@@ -208,12 +271,15 @@ public sealed class AppSettingsTests : IDisposable
         settings.AddRecent(new RecentSession { AccountId = "1", Mode = "SSH" });
         settings.AddRecent(new RecentSession { AccountId = "2", Mode = "win-psm" });
         settings.AddRecent(new RecentSession { AccountId = "3", Mode = "PSM-WebApp" });
+        // Fichiers seuls (PSMP) : « SFTP » n'est pas un composant PSM.
+        settings.AddRecent(new RecentSession { AccountId = "4", Mode = RecentSession.SftpMode });
 
         var components = settings.KnownComponents("windomain");
 
         Assert.Equal(["WIN-PSM", "PSM-SSH", "PSM-RDP-Custom", "PSM-WebApp"], components.Take(4));
         Assert.Contains("PSM-RDP", components);
         Assert.DoesNotContain("SSH", components);
+        Assert.DoesNotContain("SFTP", components, StringComparer.OrdinalIgnoreCase);
         Assert.DoesNotContain("Ignored", components);
         Assert.Equal(components.Count, components.Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.Equal(AccountClassifier.CommonComponents, new AppSettings().KnownComponents("WinDomain"));

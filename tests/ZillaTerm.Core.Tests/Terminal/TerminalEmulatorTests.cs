@@ -352,6 +352,107 @@ public class TerminalEmulatorTests
         Assert.Equal("llo\nwor", t.GetText(1, 2, 0, 2));
     }
 
+    /// <summary>
+    /// Ligne longue repliée par le terminal : copiée d'un seul tenant, espaces au bord compris (collée ailleurs, elle ne
+    /// devient pas deux commandes tronquées), même une fois passée dans l'historique.
+    /// </summary>
+    [Fact]
+    public void CopyJoinsALineWrappedByTheTerminal()
+    {
+        const string command = "$ rm -rf /var/app/cache/old-releases/2024-01-15/tmp";
+        var t = new TerminalEmulator(40, 10);
+        t.Feed(command);
+
+        Assert.True(t.IsWrapped(0));
+        Assert.False(t.IsWrapped(1));
+        Assert.Equal(command, t.GetText(0, 0, 1, 39));
+        Assert.Equal(command[37..], t.GetText(0, 37, 1, 39));
+        Assert.Equal("$ rm", t.GetText(0, 0, 0, 3));   // sélection dans la première ligne seulement
+
+        // Espaces au bord droit : ils font partie du texte ; un retour à la ligne demandé reste un saut de ligne.
+        t.Feed("\r\n" + new string('x', 38) + "  b\r\n" + new string('y', 40) + "\r\nz");
+        Assert.Equal(new string('x', 38) + "  b\n" + new string('y', 40) + "\nz", t.GetText(2, 0, 5, 39));
+
+        t.Feed(string.Concat(Enumerable.Range(1, 9).Select(i => $"\r\n{i}")));
+        Assert.Equal(5, t.ScrollbackCount);
+        Assert.True(t.IsWrapped(-5));
+        Assert.Equal(command, t.GetText(-5, 0, -4, 39));
+    }
+
+    /// <summary>
+    /// Le repli est un attribut de la ligne : il reste quand le shell réécrit, insère ou supprime des caractères dans la
+    /// commande, et disparaît quand la ligne est effacée jusqu'au bord droit.
+    /// </summary>
+    [Fact]
+    public void WrapMarkSurvivesEditsAndIsClearedByErasing()
+    {
+        var t = new TerminalEmulator(10, 3);
+        t.Feed("0123456789abc");
+        Assert.True(t.IsWrapped(0));
+
+        t.Feed("\x1b[1;10HX");                     // dernière case réécrite
+        Assert.True(t.IsWrapped(0));
+        Assert.Equal("012345678Xabc", t.GetText(0, 0, 1, 9));
+
+        t.Feed("\x1b[1;3H\x1b[2P");                // suppression : la marque ne glisse pas au milieu
+        Assert.True(t.IsWrapped(0));
+        Assert.Equal(CellFlags.None, t.GetLine(0)[7].Flags);
+        Assert.Equal("0145678X  abc", t.GetText(0, 0, 1, 9));
+        t.Feed("\x1b[1;3H\x1b[2@");                // insertion
+        Assert.True(t.IsWrapped(0));
+
+        t.Feed("\x1b[1;5H\x1b[K");                 // effacement jusqu'au bord droit
+        Assert.False(t.IsWrapped(0));
+        Assert.Equal("01\nabc", t.GetText(0, 0, 1, 9));
+
+        t.Feed("\x1b[H0123456789abc");
+        Assert.True(t.IsWrapped(0));
+        t.Feed("\x1b[2J");
+        Assert.False(t.IsWrapped(0));
+    }
+
+    /// <summary>
+    /// Largeur changée (sans remise en forme des lignes) : les lignes de l'écran ne se poursuivent plus, celles de
+    /// l'historique gardent leur repli ; un changement du nombre de lignes seul ne change rien.
+    /// </summary>
+    [Fact]
+    public void ResizeKeepsTheWrapOnlyWhereTheTextIsUnchanged()
+    {
+        var t = new TerminalEmulator(10, 3);
+        t.Feed("0123456789abcde");
+        t.Resize(10, 5);
+        Assert.True(t.IsWrapped(0));
+
+        t.Resize(20, 5);
+        Assert.False(t.IsWrapped(0));
+        Assert.Equal("0123456789\nabcde", t.GetText(0, 0, 1, 19));
+        Assert.All(t.GetLine(0), cell => Assert.Equal(CellFlags.None, cell.Flags));
+
+        var narrower = new TerminalEmulator(10, 3);
+        narrower.Feed("0123456789abcde");
+        narrower.Resize(6, 3);
+        Assert.False(narrower.IsWrapped(0));
+        Assert.Equal("012345\nabcde", narrower.GetText(0, 0, 1, 5));
+
+        var history = new TerminalEmulator(10, 3);
+        history.Feed("0123456789abcde\r\n1\r\n2\r\n3");
+        history.Resize(20, 3);
+        Assert.True(history.IsWrapped(-2));
+        Assert.Equal("0123456789abcde", history.GetText(-2, 0, -1, 19));
+    }
+
+    /// <summary>« \e[3J » (Erase Saved Lines) vide l'historique seul : l'écran affiché reste.</summary>
+    [Fact]
+    public void EraseSavedLinesKeepsTheScreen()
+    {
+        var t = new TerminalEmulator(10, 3);
+        t.Feed("1\r\n2\r\n3\r\nabc\x1b[3J");
+
+        Assert.Equal(0, t.ScrollbackCount);
+        Assert.Equal(["2", "3", "abc"], Screen(t));
+        Assert.Equal((2, 3), (t.CursorRow, t.CursorColumn));
+    }
+
     [Fact]
     public void ControlCharactersInsideCsiAreExecuted()
     {

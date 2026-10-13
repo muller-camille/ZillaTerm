@@ -40,6 +40,11 @@ public sealed class TerminalView : FrameworkElement
     private double _cellHeight;
     private bool _selecting;
 
+    // Molette : reste des pas plus petits qu'une ligne (pavé tactile de précision, molette libre), pour l'historique et
+    // pour la taille de police (Ctrl), gardé jusqu'aux événements suivants dans le même sens.
+    private int _wheelDelta;
+    private int _zoomDelta;
+
     // Sélection dessinée pendant un rendu, début avant fin ; null sans sélection visible.
     private ((int Row, int Column) From, (int Row, int Column) To)? _shownSelection;
 
@@ -246,7 +251,7 @@ public sealed class TerminalView : FrameworkElement
                 continue;
             }
 
-            DrawMatches(dc, row + MatchesShift, Padding + screenRow * _cellHeight);
+            DrawMatches(dc, emulator, row, Padding + screenRow * _cellHeight);
             DrawLine(dc, emulator, row, Padding + screenRow * _cellHeight);
         }
 
@@ -355,19 +360,45 @@ public sealed class TerminalView : FrameworkElement
         }
     }
 
-    /// <summary>Fond des occurrences de la recherche (jaune ; orange pour la courante) ; <paramref name="row"/> au moment du calcul.</summary>
-    private void DrawMatches(DrawingContext dc, int row, double y)
+    /// <summary>
+    /// Fond des occurrences de la recherche (jaune ; orange pour la courante) sur la ligne <paramref name="row"/>. Une
+    /// occurrence coupée par le repli d'une ligne longue continue au début des lignes suivantes.
+    /// </summary>
+    private void DrawMatches(DrawingContext dc, TerminalEmulator emulator, int row, double y)
     {
+        int shift = MatchesShift;
         for (int i = 0; i < _matches.Count; i++)
         {
             var match = _matches[i];
-            if (match.Row == row)
+
+            // Ligne actuelle du début de l'occurrence ; chaque ligne traversée en prend au moins une case.
+            int start = match.Row - shift;
+            if (start > row || row - start >= match.Length)
+            {
+                continue;
+            }
+
+            int column = match.Column;
+            int length = match.Length;
+            for (int r = start; r < row && length > 0; r++)
+            {
+                length -= Math.Max(LineWidth(emulator, r) - column, 1);
+                column = 0;
+            }
+
+            // Bornée au bord droit (occurrences calculées avant un rétrécissement du terminal).
+            int cells = Math.Min(length, LineWidth(emulator, row) - column);
+            if (cells > 0)
             {
                 dc.DrawRectangle(Brush(i == _currentMatch ? 0xFF9632u : 0xFFE066u), null,
-                    new Rect(Padding + match.Column * _cellWidth, y, match.Length * _cellWidth, _cellHeight));
+                    new Rect(Padding + column * _cellWidth, y, cells * _cellWidth, _cellHeight));
             }
         }
     }
+
+    /// <summary>Largeur de la ligne <paramref name="row"/> (celle de l'écran si elle n'est plus dans l'historique).</summary>
+    private static int LineWidth(TerminalEmulator emulator, int row) =>
+        row >= -emulator.ScrollbackCount && row < emulator.Rows ? emulator.GetLine(row).Length : emulator.Columns;
 
     private (uint Fg, uint Bg, bool Bold, bool Underline) Colors(Cell cell, bool selected)
     {
@@ -619,13 +650,19 @@ public sealed class TerminalView : FrameworkElement
 
         if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
         {
-            // Ctrl+molette : taille de police de ce terminal.
-            SetFontSize(_fontSize + Math.Sign(e.Delta));
+            // Ctrl+molette : taille de police de ce terminal, un point par cran.
+            int steps = WheelSteps(ref _zoomDelta, e.Delta, Mouse.MouseWheelDeltaForOneLine);
+            if (steps != 0)
+            {
+                SetFontSize(_fontSize + steps);
+            }
+
             e.Handled = true;
             return;
         }
 
-        int lines = e.Delta / 40;
+        // Trois lignes par cran (120).
+        int lines = WheelSteps(ref _wheelDelta, e.Delta, 40);
         if (_emulator.IsAlternateScreen)
         {
             // vim, less... : la molette déplace dans le document comme les flèches.
@@ -635,12 +672,29 @@ public sealed class TerminalView : FrameworkElement
                 Input?.Invoke(TerminalInput.Scrolled(key));
             }
         }
-        else
+        else if (lines != 0)
         {
             ScrollBy(lines);
         }
 
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// Pas entiers de <paramref name="step"/> dans le cumul des événements de molette : le reste attend les suivants (un
+    /// pavé tactile envoie des pas de 10 à 30), et repart de zéro quand le sens change.
+    /// </summary>
+    private static int WheelSteps(ref int accumulated, int delta, int step)
+    {
+        if (Math.Sign(delta) != Math.Sign(accumulated))
+        {
+            accumulated = 0;
+        }
+
+        accumulated += delta;
+        int steps = accumulated / step;
+        accumulated %= step;
+        return steps;
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
@@ -682,6 +736,22 @@ public sealed class TerminalView : FrameworkElement
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
+        EndSelection();
+    }
+
+    /// <summary>
+    /// Capture de la souris perdue pendant une sélection (fenêtre ouverte par-dessus, menu) : le bouton sera relâché
+    /// ailleurs, la sélection se termine ici. Sinon les mouvements de la souris l'étendraient encore, sans la copier.
+    /// </summary>
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        EndSelection();
+    }
+
+    /// <summary>Fin d'une sélection à la souris : copiée, ou retirée si elle est vide.</summary>
+    private void EndSelection()
+    {
         if (!_selecting)
         {
             return;
@@ -700,6 +770,9 @@ public sealed class TerminalView : FrameworkElement
 
         InvalidateVisual();
     }
+
+    /// <summary>Sélection à la souris en cours, bouton enfoncé (tests).</summary>
+    internal bool IsSelecting => _selecting;
 
     protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
     {

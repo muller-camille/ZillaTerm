@@ -13,6 +13,12 @@ public sealed record ImportCandidate(PvwaAccount Account, string? RemoteMachine)
     /// <summary>Plateforme et safe du compte, pour distinguer deux comptes au même nom.</summary>
     public string Details => string.Join(" · ", new[] { Account.PlatformId, Account.SafeName }.Where(v => !string.IsNullOrWhiteSpace(v)));
 
+    /// <summary>
+    /// Compte de domaine proposé faute de mieux, d'un autre domaine que le serveur (administrator@corp.local pour
+    /// web01.dmz.local) : une supposition, à vérifier, jamais cochée d'office.
+    /// </summary>
+    public bool OtherDomain { get; init; }
+
     public override string ToString() => Display;
 }
 
@@ -108,13 +114,19 @@ public sealed class SessionMatcher
 
         // Comptes de domaine : utilisateur indiqué, sans compte du serveur lui-même (ou domaine explicitement indiqué).
         // Sans domaine indiqué, seulement pour le Bureau à distance : « admin » sur un équipement SSH ou Telnet n'est pas
-        // le compte de domaine « admin ».
+        // le compte de domaine « admin ». Sans domaine indiqué non plus, un compte d'un autre domaine que celui du nom du
+        // serveur (« administrator » de web01.dmz.local : souvent son compte local, absent du coffre) n'est qu'une
+        // supposition : proposé après ceux du domaine du serveur, et à vérifier (sauf s'il est limité à ce serveur).
         if (user is not null && !local && (found.Count == 0 || domain is not null)
             && (domain is not null || session.Protocol == ImportProtocol.Rdp))
         {
+            var serverDomain = domain is null ? PsmpRouting.DomainOf(host) : "";
             found.AddRange(_domainAccounts
                 .Where(a => SameUser(a, user) && (domain is null || SameDomain(AccountDomain(a), domain)) && AllowedOn(a, host))
-                .Select(a => (new ImportCandidate(a, session.Host.Trim()), 10)));
+                .Select(a => serverDomain.Length > 0 && !AccountClassifier.IsRestrictedToRemoteMachines(a)
+                             && !SameDomain(AccountDomain(a), serverDomain)
+                    ? (new ImportCandidate(a, session.Host.Trim()) { OtherDomain = true }, 9)
+                    : (new ImportCandidate(a, session.Host.Trim()), 10)));
         }
 
         return found

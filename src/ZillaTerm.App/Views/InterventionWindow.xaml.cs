@@ -27,6 +27,10 @@ public partial class InterventionWindow : Window
     private readonly DispatcherTimer _timer;
     private CancellationTokenSource? _reminderRead;
 
+    // État d'enregistrement déjà dit par la ligne d'état (annoncée seulement quand il change).
+    private bool _shownRecording;
+    private bool _shownInterrupted;
+
     /// <summary>Attente au plus du fichier des consignes (partage réseau qui ne répond pas).</summary>
     private static readonly TimeSpan ReminderTimeout = TimeSpan.FromSeconds(5);
 
@@ -190,16 +194,33 @@ public partial class InterventionWindow : Window
         RecordLabel.Text = recording ? Strings.InterventionStopRecording : Strings.InterventionStartRecording;
         RecordDot.Visibility = recording ? Visibility.Collapsed : Visibility.Visible;
         StopSquare.Visibility = recording ? Visibility.Visible : Visibility.Collapsed;
-        NoteBox.IsEnabled = recording;
-        NoteButton.IsEnabled = recording && NoteBox.Text.Trim().Length > 0;
-        CaptureButton.IsEnabled = recording;
-        StatusText.Text = recording && _recorder.StartedAt is { } start
-            ? Text.Format(Strings.InterventionRecordingSince, start.ToLocalTime().ToString("t", CultureInfo.CurrentCulture),
-                Duration(DateTime.UtcNow - start), _recorder.Count)
-            : Strings.InterventionNotRecording;
-        if (_recorder.Failure is { } failure)
+        // Journal refusé par le disque : plus rien n'est gardé, ni note ni capture.
+        bool keeping = recording && _recorder.Failure is null;
+        NoteBox.IsEnabled = keeping;
+        NoteButton.IsEnabled = keeping && NoteBox.Text.Trim().Length > 0;
+        CaptureButton.IsEnabled = keeping;
+        var status = !recording || _recorder.StartedAt is not { } start ? Strings.InterventionNotRecording
+            : _recorder.FailedAt is { } failedAt
+                ? Text.Format(Strings.InterventionInterruptedAt, failedAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture))
+                : Text.Format(Strings.InterventionRecordingSince, start.ToLocalTime().ToString("t", CultureInfo.CurrentCulture),
+                    Duration(DateTime.UtcNow - start), _recorder.Count);
+        // Annoncé au début et à la fin de l'enregistrement, et quand il s'interrompt, pas à chaque seconde (durée, nombre
+        // d'événements).
+        bool interrupted = _recorder.FailedAt is not null;
+        if (recording == _shownRecording && interrupted == _shownInterrupted)
         {
-            ShowMessage(Text.Format(Strings.InterventionWriteFailed, failure.Message), error: true);
+            StatusText.SetQuietly(status);
+        }
+        else
+        {
+            StatusText.Text = status;
+        }
+
+        _shownRecording = recording;
+        _shownInterrupted = interrupted;
+        if (_recorder.FailureMessage is { } failure)
+        {
+            ShowMessage(failure, error: true);
         }
         else if (_recorder.TerminalTextCapped)
         {
@@ -210,7 +231,8 @@ public partial class InterventionWindow : Window
     private void ShowMessage(string text, bool error = false)
     {
         MessageText.Text = text;
-        MessageText.SetResourceReference(TextBlock.ForegroundProperty, error ? "DangerBrush" : "MutedBrush");
+        // Couleur de texte d'erreur (DangerBrush est le fond d'un bouton : illisible en sombre et en contraste élevé).
+        MessageText.SetResourceReference(TextBlock.ForegroundProperty, error ? "ErrorBrush" : "MutedBrush");
     }
 
     private void OnRecord(object sender, RoutedEventArgs e)
@@ -238,7 +260,7 @@ public partial class InterventionWindow : Window
     }
 
     private void OnNoteChanged(object sender, TextChangedEventArgs e) =>
-        NoteButton.IsEnabled = _recorder.IsRecording && NoteBox.Text.Trim().Length > 0;
+        NoteButton.IsEnabled = NoteBox.IsEnabled && NoteBox.Text.Trim().Length > 0;
 
     private void OnNoteKeyDown(object sender, KeyEventArgs e)
     {
@@ -412,7 +434,15 @@ public partial class InterventionWindow : Window
         }
 
         ShowMessage(Text.Format(Strings.InterventionReportSaved, dialog.FileName));
-        WindowsExplorer.ShowFile(dialog.FileName);
+        try
+        {
+            WindowsExplorer.ShowFile(dialog.FileName);
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or ArgumentException)
+        {
+            // Explorateur non lancé : le rapport est enregistré, et son chemin est affiché.
+            Core.Diagnostics.DebugLog.Write("intervention", $"Explorateur non lancé pour le rapport : {ex.Message}");
+        }
     }
 
     private void OnDelete(object sender, RoutedEventArgs e)

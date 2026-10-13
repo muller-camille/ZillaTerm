@@ -26,6 +26,28 @@ public sealed class PaletteTests
         Assert.Empty(Palette.Keys.Except(colors!));
     }
 
+    /// <summary>
+    /// Le fond d'un bouton (DangerBrush…) n'est jamais une couleur de texte : en contraste élevé il devient le fond des
+    /// boutons, souvent celui des fenêtres (texte invisible), et en sombre il est trop foncé. Une erreur s'écrit en
+    /// ErrorBrush.
+    /// </summary>
+    [Fact]
+    public void ButtonFillsAreNeverUsedForText()
+    {
+        var app = Path.Combine(AccessKeysTests.RepositoryRoot(), "src", "ZillaTerm.App");
+        var foreground = new System.Text.RegularExpressions.Regex(
+            @"Foreground(?:Property,[^;\n]*""|=""\{(?:Dynamic|Static)Resource\s+|""\s+Value=""\{(?:Dynamic|Static)Resource\s+)(?:DangerBrush|DangerHoverBrush|DangerPressedBrush)\b");
+        var problems = Directory.EnumerateFiles(app, "*", SearchOption.AllDirectories)
+            .Where(p => (p.EndsWith(".xaml", StringComparison.Ordinal) || p.EndsWith(".cs", StringComparison.Ordinal))
+                        && !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                        && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+            .Where(p => foreground.IsMatch(File.ReadAllText(p)))
+            .Select(Path.GetFileName)
+            .ToList();
+
+        Assert.True(problems.Count == 0, string.Join(", ", problems));
+    }
+
     [Fact]
     public void HighContrastUsesSystemColors()
     {
@@ -34,6 +56,9 @@ public sealed class PaletteTests
         Assert.Same(SystemColors.WindowTextBrush, dictionary["MutedBrush"]);
         Assert.Same(SystemColors.HighlightBrush, dictionary["AccentBrush"]);
         Assert.Same(SystemColors.HighlightTextBrush, dictionary[SystemColors.InactiveSelectionHighlightTextBrushKey]);
+        // « ! » de la pastille rouge : couleur du fond sur celle du texte, jamais la même.
+        Assert.Same(SystemColors.WindowBrush, dictionary["BadgeForeground"]);
+        Assert.Same(SystemColors.WindowTextBrush, dictionary["StateFailedBrush"]);
     }
 
     [Fact]
@@ -64,6 +89,7 @@ public sealed class PaletteTests
     [InlineData("DiffTextBrush", "DiffRemovedBrush", 4.5)]
     [InlineData("LineNumberBrush", "CodeBrush", 4.5)]
     [InlineData("DangerForeground", "DangerBrush", 4.5)]
+    [InlineData("BadgeForeground", "StateFailedBrush", 4.5)]
     [InlineData("StateConnectedBrush", "MainTabBrush", 3)]
     [InlineData("StateEndedBrush", "MainTabBrush", 3)]
     [InlineData("StateFailedBrush", "MainTabBrush", 3)]
@@ -76,17 +102,38 @@ public sealed class PaletteTests
         Assert.True(Contrast(dark[text], dark[background]) >= minimum, $"{text} sur {background} : {Contrast(dark[text], dark[background]):0.00}:1");
     }
 
-    /// <summary>Couleurs des pinceaux de premier niveau d'un dictionnaire (clé → « #RRGGBB »).</summary>
-    private static Dictionary<string, string> Colors(string file)
+    /// <summary>
+    /// Ligne sélectionnée d'un arbre ou d'un tableau : ses textes, secondaires compris (TreeNote, colonnes « Résultat »),
+    /// prennent la couleur du texte de la sélection, lisible sur son fond avec ou sans le focus. Thème clair avec le focus :
+    /// couleurs de sélection de Windows, que ZillaTerm ne change pas. Et « ! » de la pastille rouge en thème clair.
+    /// </summary>
+    [Theory]
+    [InlineData("Theme.xaml", "InactiveSelectionHighlightTextBrushKey", "InactiveSelectionHighlightBrushKey")]
+    [InlineData("ThemeDark.xaml", "InactiveSelectionHighlightTextBrushKey", "InactiveSelectionHighlightBrushKey")]
+    [InlineData("ThemeDark.xaml", "HighlightTextBrushKey", "HighlightBrushKey")]
+    [InlineData("Theme.xaml", "BadgeForeground", "StateFailedBrush")]
+    public void SelectionAndBadgeTextsAreReadable(string file, string text, string background)
     {
+        var colors = Colors(file, systemKeys: true);
+        Assert.True(Contrast(colors[text], colors[background]) >= 4.5,
+            $"{file} : {text} sur {background} : {Contrast(colors[text], colors[background]):0.00}:1");
+    }
+
+    /// <summary>
+    /// Couleurs des pinceaux de premier niveau d'un dictionnaire (clé → « #RRGGBB ») ; avec <paramref name="systemKeys"/>,
+    /// les couleurs système redéfinies aussi (« {x:Static SystemColors.HighlightBrushKey} » → « HighlightBrushKey »).
+    /// </summary>
+    private static Dictionary<string, string> Colors(string file, bool systemKeys = false)
+    {
+        const string system = "{x:Static SystemColors.";
         XNamespace wpf = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
         XNamespace xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
         var theme = XDocument.Load(Path.Combine(AccessKeysTests.RepositoryRoot(), "src", "ZillaTerm.App", file)).Root!;
         return theme.Elements()
             .Where(e => e.Name == wpf + "SolidColorBrush" || e.Name == wpf + "LinearGradientBrush")
             .Select(e => (Key: (string?)e.Attribute(xaml + "Key"), Color: (string?)e.Attribute("Color") ?? ""))
-            .Where(e => e.Key is not null && !e.Key.StartsWith('{'))
-            .ToDictionary(e => e.Key!, e => e.Color);
+            .Where(e => e.Key is not null && (!e.Key.StartsWith('{') || (systemKeys && e.Key.StartsWith(system, StringComparison.Ordinal))))
+            .ToDictionary(e => e.Key!.StartsWith('{') ? e.Key[system.Length..^1] : e.Key!, e => e.Color);
     }
 
     private static double Contrast(string a, string b)

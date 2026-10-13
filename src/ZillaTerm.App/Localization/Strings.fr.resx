@@ -91,7 +91,7 @@
     <value>Le PVWA n'a pas répondu à temps.</value>
   </data>
   <data name="ErrorTlsRejected" xml:space="preserve">
-    <value>Connexion TLS refusée : le certificat du PVWA n'est pas approuvé par ce poste.</value>
+    <value>Connexion TLS refusée : le certificat du PVWA n'est pas approuvé par ce poste, ou il a été révoqué.</value>
   </data>
   <data name="ErrorPvwaUnreachable" xml:space="preserve">
     <value>Impossible de joindre le PVWA : {0}</value>
@@ -166,7 +166,7 @@
     <value>Ajouter</value>
   </data>
   <data name="ToolAddToMyServersTip" xml:space="preserve">
-    <value>Ajouter le compte sélectionné à Mes serveurs</value>
+    <value>Ajouter le compte sélectionné à « Mes serveurs »</value>
   </data>
   <data name="ToolRefresh" xml:space="preserve">
     <value>Actualiser</value>
@@ -220,7 +220,7 @@
     <value>Rechercher un serveur…</value>
   </data>
   <data name="SavedSearchTip" xml:space="preserve">
-    <value>Filtrer Mes serveurs par nom, serveur, utilisateur, dossier, composant… et les entrées des bases KeePass déverrouillées (Ctrl+F)</value>
+    <value>Filtrer « Mes serveurs » par nom, serveur, utilisateur, dossier, composant… et les entrées des bases KeePass déverrouillées (Ctrl+F)</value>
   </data>
   <data name="SavedSearchNoMatch" xml:space="preserve">
     <value>Aucun serveur ne correspond à « {0} ».</value>
@@ -378,10 +378,10 @@
     <value>{0} : compte introuvable dans CyberArk (supprimé ou droits retirés).</value>
   </data>
   <data name="AddedToMyServersFolder" xml:space="preserve">
-    <value>{0} ajouté à Mes serveurs (dossier {1})</value>
+    <value>{0} ajouté à « Mes serveurs » (dossier {1})</value>
   </data>
   <data name="AddedToMyServers" xml:space="preserve">
-    <value>{0} ajouté à Mes serveurs</value>
+    <value>{0} ajouté à « Mes serveurs »</value>
   </data>
   <data name="NewFolderIn" xml:space="preserve">
     <value>Nouveau dossier dans {0}</value>
@@ -2274,7 +2274,7 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour réessay
     <value>{0} · KeePass</value>
   </data>
   <data name="KeePassRdpNoControl" xml:space="preserve">
-    <value>{0} : contrôle Bureau à distance indisponible, Connexion Bureau à distance ouverte sans le mot de passe (prenez-le dans la base KeePass).</value>
+    <value>{0} : aucun client Bureau à distance dans ZillaTerm, Connexion Bureau à distance ouverte sans le mot de passe (prenez-le dans la base KeePass).</value>
   </data>
   <data name="ConnectingDirect" xml:space="preserve">
     <value>Connexion directe (accès d'urgence, hors CyberArk)…</value>
@@ -2866,10 +2866,10 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour renvoyer
     <value>_Exporter les comptes affichés (CSV)…</value>
   </data>
   <data name="ImportServersTip" xml:space="preserve">
-    <value>Importer les serveurs d'un fichier exporté de Mes serveurs (sur ce poste ou par un collègue), ou d'une liste partagée</value>
+    <value>Importer les serveurs d'un fichier exporté de « Mes serveurs » (sur ce poste ou par un collègue), ou d'une liste partagée</value>
   </data>
   <data name="ExportServersTip" xml:space="preserve">
-    <value>Exporter Mes serveurs dans un fichier (dossiers, modes, composants, machines cibles ; aucun mot de passe)</value>
+    <value>Exporter « Mes serveurs » dans un fichier (dossiers, modes, composants, machines cibles ; aucun mot de passe)</value>
   </data>
   <data name="SharedListsTip" xml:space="preserve">
     <value>Listes partagées : listes de serveurs sur un partage réseau que chacun peut compléter, avec l'historique des modifications</value>
@@ -2884,7 +2884,7 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour renvoyer
     <value>mes-serveurs</value>
   </data>
   <data name="NoServersToExport" xml:space="preserve">
-    <value>Mes serveurs est vide : rien à exporter.</value>
+    <value>« Mes serveurs » est vide : rien à exporter.</value>
   </data>
   <data name="ServersExported" xml:space="preserve">
     <value>{0:# serveur exporté|# serveurs exportés} dans {1}</value>
@@ -2896,13 +2896,13 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour renvoyer
     <value>Import impossible : {0}</value>
   </data>
   <data name="ImportServersNothing" xml:space="preserve">
-    <value>Rien à importer : ce fichier n'a que des serveurs déjà dans Mes serveurs ({0:# serveur|# serveurs}).</value>
+    <value>Rien à importer : ce fichier n'a que des serveurs déjà dans « Mes serveurs » ({0:# serveur|# serveurs}).</value>
   </data>
   <data name="ImportServersConfirm" xml:space="preserve">
-    <value>Importer {0:# serveur|# serveurs} dans Mes serveurs depuis « {1} » ?</value>
+    <value>Importer {0:# serveur|# serveurs} dans « Mes serveurs » depuis « {1} » ?</value>
   </data>
   <data name="ImportServersDuplicates" xml:space="preserve">
-    <value>{0:# serveur déjà dans Mes serveurs sera ignoré.|# serveurs déjà dans Mes serveurs seront ignorés.}</value>
+    <value>{0:# serveur déjà dans « Mes serveurs » sera ignoré.|# serveurs déjà dans « Mes serveurs » seront ignorés.}</value>
   </data>
   <data name="ImportServersFolders" xml:space="preserve">
     <value>Nouveaux dossiers : {0}</value>
@@ -3031,10 +3031,10 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour renvoyer
     <value>{0:# serveur retiré|# serveurs retirés} de la liste partagée « {1} »</value>
   </data>
   <data name="CopiedToMyServers" xml:space="preserve">
-    <value>{0:# serveur copié|# serveurs copiés} dans Mes serveurs ({1:# déjà présent|# déjà présents})</value>
+    <value>{0:# serveur copié|# serveurs copiés} dans « Mes serveurs » ({1:# déjà présent|# déjà présents})</value>
   </data>
   <data name="CopiedToMyServersNone" xml:space="preserve">
-    <value>Déjà dans Mes serveurs ({0:# serveur|# serveurs}).</value>
+    <value>Déjà dans « Mes serveurs » ({0:# serveur|# serveurs}).</value>
   </data>
   <data name="MenuSharedHistory" xml:space="preserve">
     <value>_Historique des modifications…</value>
@@ -3263,7 +3263,7 @@ Révision actuelle : {1} · {2:# serveur|# serveurs}</value>
     <value>« {0} » vient d'une liste partagée créée pour le PVWA {1} : ses comptes ne sont pas ceux de {2}. Connectez-vous à {1} pour l'utiliser.</value>
   </data>
   <data name="SharedOtherPvwaChange" xml:space="preserve">
-    <value>La liste partagée « {0} » a été créée pour le PVWA {1} : on ne peut ni y ajouter des serveurs de {2}, ni copier ses serveurs dans Mes serveurs.</value>
+    <value>La liste partagée « {0} » a été créée pour le PVWA {1} : on ne peut ni y ajouter des serveurs de {2}, ni copier ses serveurs dans « Mes serveurs ».</value>
   </data>
   <data name="SettingsSetAsideRestored" xml:space="preserve">
     <value>Votre fichier de réglages était illisible (écriture interrompue, disque plein…). Il a été gardé tel quel sous :
@@ -3769,7 +3769,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Liste partagée « {0} »</value>
   </data>
   <data name="SharedCopyTargetsMessage" xml:space="preserve">
-    <value>Ces machines cibles viennent de la liste partagée, que peut modifier quiconque a le droit d'écrire sur le partage, et non de CyberArk. Une fois copiées dans Mes serveurs, elles ne seront plus signalées.</value>
+    <value>Ces machines cibles viennent de la liste partagée, que peut modifier quiconque a le droit d'écrire sur le partage, et non de CyberArk. Une fois copiées dans « Mes serveurs », elles ne seront plus signalées.</value>
   </data>
   <data name="SharedCopyAnyway" xml:space="preserve">
     <value>Copier quand même</value>
@@ -3787,7 +3787,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Se connecter quand même</value>
   </data>
   <data name="RemoveSavedHeading" xml:space="preserve">
-    <value>Retirer « {0} » de Mes serveurs ?</value>
+    <value>Retirer « {0} » de « Mes serveurs » ?</value>
   </data>
   <data name="RemoveSavedMessage" xml:space="preserve">
     <value>Le compte reste disponible dans l'onglet « Disponibles ».</value>
@@ -3796,7 +3796,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Supprimer le dossier « {0} » ?</value>
   </data>
   <data name="DeleteFolderMessage" xml:space="preserve">
-    <value>Il contient des serveurs ({0}) : ils sont retirés de Mes serveurs. Les comptes restent disponibles dans l'onglet « Disponibles ».</value>
+    <value>Il contient des serveurs ({0}) : ils sont retirés de « Mes serveurs ». Les comptes restent disponibles dans l'onglet « Disponibles ».</value>
   </data>
   <data name="DeleteFolderAction" xml:space="preserve">
     <value>Supprimer le dossier</value>
@@ -4063,10 +4063,10 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Oublier les _clés choisies</value>
   </data>
   <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Les mises à jour sont recherchées au démarrage (Paramètres &gt; Général).</value>
+    <value>Les mises à jour sont recherchées au démarrage (Paramètres › Général).</value>
   </data>
   <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>La recherche automatique des mises à jour est désactivée (Paramètres &gt; Général).</value>
+    <value>La recherche automatique des mises à jour est désactivée (Paramètres › Général).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Ne sert que pour une connexion par le PSM (pas en SSH ni en SFTP via le PSMP).</value>
@@ -4282,7 +4282,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Deux PSMP pour les serveurs de {0} : seul le premier servirait.</value>
   </data>
   <data name="PsmpNoRoute" xml:space="preserve">
-    <value>Aucun PSMP pour {0} : son domaine ne correspond à aucun PSMP configuré. Ajoutez son PSMP ou un PSMP par défaut dans Paramètres &gt; CyberArk.</value>
+    <value>Aucun PSMP pour {0} : son domaine ne correspond à aucun PSMP configuré. Ajoutez son PSMP ou un PSMP par défaut dans Paramètres › CyberArk.</value>
   </data>
   <data name="ServerPromptTitle" xml:space="preserve">
     <value>Choisir le serveur</value>
@@ -4546,7 +4546,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Importer les sessions d'un autre logiciel</value>
   </data>
   <data name="SessionImportIntro" xml:space="preserve">
-    <value>Reprenez dans Mes serveurs, avec les mêmes dossiers, les sessions de PuTTY, KiTTY, WinSCP, mRemoteNG, RDCMan, SecureCRT, OpenSSH, de fichiers .rdp ou de fichiers .mxtsessions. Chaque serveur est associé à son compte du PVWA et s'ouvre toujours via PSM ou le PSMP : plus de connexion directe.</value>
+    <value>Reprenez dans « Mes serveurs », avec les mêmes dossiers, les sessions de PuTTY, KiTTY, WinSCP, mRemoteNG, RDCMan, SecureCRT, OpenSSH, de fichiers .rdp ou de fichiers .mxtsessions. Chaque serveur est associé à son compte du PVWA et s'ouvre toujours via PSM ou le PSMP : plus de connexion directe.</value>
   </data>
   <data name="SessionImportSecurity" xml:space="preserve">
     <value>Les mots de passe ne sont jamais lus : ceux gardés par l'autre logiciel restent où ils sont, la connexion utilise le compte rangé dans CyberArk. Un serveur sans compte dans le PVWA n'est pas importé : demandez l'ajout de son compte dans CyberArk.</value>
@@ -4561,7 +4561,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>_Dossier dans Mes serveurs :</value>
   </data>
   <data name="SessionImportFolderTip" xml:space="preserve">
-    <value>Les dossiers de l'autre logiciel sont recréés sous ce dossier. Vide : à la racine de Mes serveurs.</value>
+    <value>Les dossiers de l'autre logiciel sont recréés sous ce dossier. Vide : à la racine de « Mes serveurs ».</value>
   </data>
   <data name="SessionImportDefaultFolder" xml:space="preserve">
     <value>Importés</value>
@@ -4582,7 +4582,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Lecture de {0} impossible : {1}</value>
   </data>
   <data name="SessionImportSummary" xml:space="preserve">
-    <value>{0:# prêt|# prêts} · {1} à vérifier (non cochés : choisissez le compte) · {2} sans compte dans le PVWA · {3} non pris en charge · {4} déjà dans Mes serveurs</value>
+    <value>{0:# prêt|# prêts} · {1} à vérifier (non cochés : choisissez le compte) · {2} sans compte dans le PVWA · {3} non pris en charge · {4} déjà dans « Mes serveurs »</value>
   </data>
   <data name="SessionImportResult" xml:space="preserve">
     <value>{0:# importé|# importés} · {1:# non importé|# non importés}</value>
@@ -4630,7 +4630,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Importer les sessions d'un autre _logiciel…</value>
   </data>
   <data name="SessionImportDone" xml:space="preserve">
-    <value>{0:# serveur importé|# serveurs importés} dans Mes serveurs</value>
+    <value>{0:# serveur importé|# serveurs importés} dans « Mes serveurs »</value>
   </data>
   <data name="SourcePuttyRegistry" xml:space="preserve">
     <value>PuTTY (registre Windows)</value>
@@ -4861,13 +4861,13 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Importer</value>
   </data>
   <data name="MyServersImportTip" xml:space="preserve">
-    <value>Ajouter des serveurs à Mes serveurs : fichier ZillaTerm, sessions d'un autre logiciel, liste partagée ou base KeePass</value>
+    <value>Ajouter des serveurs à « Mes serveurs » : fichier ZillaTerm, sessions d'un autre logiciel, liste partagée ou base KeePass</value>
   </data>
   <data name="MyServersShare" xml:space="preserve">
     <value>Partager</value>
   </data>
   <data name="MyServersShareTip" xml:space="preserve">
-    <value>Exporter Mes serveurs dans un fichier, ou créer une liste partagée sur un partage réseau</value>
+    <value>Exporter « Mes serveurs » dans un fichier, ou créer une liste partagée sur un partage réseau</value>
   </data>
   <data name="MenuImportServerFile" xml:space="preserve">
     <value>Fichier _ZillaTerm (export de Mes serveurs)…</value>
@@ -4900,7 +4900,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Sombre</value>
   </data>
   <data name="AppThemeHelp" xml:space="preserve">
-    <value>Appliqué tout de suite. Le contraste élevé de Windows l'emporte toujours. Les couleurs des terminaux se règlent dans la page Terminal.</value>
+    <value>Appliqué à l'enregistrement, sans redémarrer. Le contraste élevé de Windows l'emporte toujours. Les couleurs des terminaux se règlent dans la page Terminal.</value>
   </data>
   <data name="ToolLeaveEmergency" xml:space="preserve">
     <value>Quitter l'accès d'urgence</value>
@@ -4990,10 +4990,10 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>_Capturer un Bureau à distance…</value>
   </data>
   <data name="InterventionCaptureTip" xml:space="preserve">
-    <value>Image d'une fenêtre Connexion Bureau à distance (sessions PSM), ajoutée au journal</value>
+    <value>Image d'une fenêtre Connexion Bureau à distance (sessions PSM), ajoutée au journal. Session dans un onglet de ZillaTerm : bouton « Capture » de son onglet.</value>
   </data>
   <data name="InterventionNoRdpWindow" xml:space="preserve">
-    <value>Aucune fenêtre Connexion Bureau à distance n'est ouverte (une fenêtre réduite ne peut pas être capturée).</value>
+    <value>Aucune fenêtre Connexion Bureau à distance n'est ouverte (une fenêtre réduite ne peut pas être capturée). Une session ouverte dans un onglet de ZillaTerm se capture avec le bouton « Capture » de son onglet.</value>
   </data>
   <data name="InterventionCaptureFailed" xml:space="preserve">
     <value>La fenêtre n'a pas pu être capturée.</value>
@@ -5044,7 +5044,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>L'enregistrement n'a pas pu commencer : {0}</value>
   </data>
   <data name="InterventionWriteFailed" xml:space="preserve">
-    <value>Le disque refuse le journal : la suite de l'intervention n'est pas gardée ({0}).</value>
+    <value>Le disque refuse le journal ({0}) : plus rien n'est gardé depuis {1}. Libérez de la place, puis « Arrêter l'enregistrement » et « Enregistrer l'intervention » pour reprendre.</value>
   </data>
   <data name="InterventionTerminalCapped" xml:space="preserve">
     <value>Limite du texte des terminaux atteinte : les terminaux ne sont plus gardés (les autres événements le sont).</value>
@@ -5350,7 +5350,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>NOUVELLE</value>
   </data>
   <data name="InvalidServerTag" xml:space="preserve">
-    <value>Étiquettes des serveurs : nom de 1 à 16 caractères visibles, sans doublon.</value>
+    <value>Étiquettes des serveurs : 20 au plus, nom de 1 à 16 caractères visibles, sans doublon.</value>
   </data>
   <data name="ColorRed" xml:space="preserve">
     <value>Rouge</value>
@@ -5425,7 +5425,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Partager les _disques de ce poste avec les sessions PSM Windows</value>
   </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>ZillaTerm demande au PVWA de mapper les disques de ce poste, comme la case « Map local drives » de sa fenêtre de connexion. Si le composant de connexion le permet, ils apparaissent dans la session (Explorateur › Ce PC) pour copier des fichiers ; les programmes de la session peuvent alors les lire et y écrire. Dans l'onglet comme dans la Connexion Bureau à distance ; s'applique aux nouvelles sessions.</value>
+    <value>ZillaTerm demande au PVWA de mapper les disques de ce poste, comme la case « Map local drives » de sa fenêtre de connexion. Si le composant de connexion le permet, ils apparaissent dans la session (Explorateur › Ce PC) pour copier des fichiers ; les programmes de la session peuvent alors les lire et y écrire (dans l'onglet comme dans la Connexion Bureau à distance). Décochée, aucun disque n'est partagé dans l'onglet, même si le PVWA le demande ; la Connexion Bureau à distance suit le fichier signé du PVWA. S'applique aux nouvelles sessions.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>
@@ -5540,5 +5540,66 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>Identité de {0} impossible à vérifier : {1}</value>
+  </data>
+  <data name="InterventionInterruptedIndicator" xml:space="preserve">
+    <value>⚠ Intervention : enregistrement interrompu</value>
+  </data>
+  <data name="InterventionInterruptedAt" xml:space="preserve">
+    <value>Enregistrement interrompu à {0}.</value>
+  </data>
+  <data name="ConnectBusyWait" xml:space="preserve">
+    <value>Connexion à {0} en cours : attendez que la session soit lancée, puis réessayez.</value>
+  </data>
+  <data name="RdpKeySize" xml:space="preserve">
+    <value>Taille de la clé</value>
+  </data>
+  <data name="RdpKeyBits" xml:space="preserve">
+    <value>{0} bits</value>
+  </data>
+  <data name="RdpKeyWeak" xml:space="preserve">
+    <value>Clé faible : {0} bits, moins que les {1} recommandés. Une telle clé peut être cassée, et qui la casse peut se faire passer pour ce PSM sans aucune alerte. Demandez à l'administrateur CyberArk d'activer TLS sur le PSM.</value>
+  </data>
+  <data name="RdpFullScreenFreeRdpTip" xml:space="preserve">
+    <value>Plein écran indisponible dans un onglet avec le client FreeRDP intégré : agrandissez la fenêtre de ZillaTerm sur l'écran voulu. Pour une session PSM en plein écran, décochez « Ouvrir les sessions PSM Windows dans un onglet de ZillaTerm » (Paramètres) : elle s'ouvrira dans Connexion Bureau à distance.</value>
+  </data>
+  <data name="SettingsMissingRestored" xml:space="preserve">
+    <value>Votre fichier de réglages (settings.json) était absent : les réglages précédents ont été repris de leur sauvegarde (settings.json.bak).
+
+Pour repartir des réglages par défaut, fermez ZillaTerm et supprimez ces deux fichiers du dossier :
+{0}</value>
+  </data>
+  <data name="SharedRemoveHiddenBySearch" xml:space="preserve">
+    <value>Tous ses serveurs sont retirés, y compris {0:# serveur masqué|# serveurs masqués} par la recherche.</value>
+  </data>
+  <data name="LoginBack" xml:space="preserve">
+    <value>_Retour</value>
+  </data>
+  <data name="LoginBackTip" xml:space="preserve">
+    <value>Revenir aux champs d'identification (méthode, utilisateur) sans répondre à la question. Échap fait de même.</value>
+  </data>
+  <data name="ServerTagLimitTip" xml:space="preserve">
+    <value>20 étiquettes au plus : retirez-en une pour en ajouter une autre.</value>
+  </data>
+  <data name="X11ForwardingEffect" xml:space="preserve">
+    <value>⚠ Effet : un serveur compromis pourrait voir les autres fenêtres X de ce poste et y envoyer des frappes.</value>
+  </data>
+  <data name="CompareRemoteLabel" xml:space="preserve">
+    <value>{0} : {1}</value>
+  </data>
+  <data name="ArchiveNotForReplace" xml:space="preserve">
+    <value>Pas d'archive .tar.gz pour ce dépôt : son extraction recréerait les éléments remplacés avec d'autres droits et un autre propriétaire. Les fichiers partent un par un.</value>
+  </data>
+  <data name="EditWriteInterruptedClosed" xml:space="preserve">
+    <value>L'envoi de {0} a été interrompu : le fichier sur le serveur est peut-être incomplet.
+
+{1}
+
+L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depuis l'éditeur, puis renvoyez le fichier depuis un nouvel onglet.</value>
+  </data>
+  <data name="CloseAllEditWriting" xml:space="preserve">
+    <value>Fichiers modifiés en cours de renvoi : {0} (la fermeture attend la fin de leur écriture)</value>
+  </data>
+  <data name="EditWaitingForWrite" xml:space="preserve">
+    <value>Attente de la fin du renvoi du fichier modifié avant la fermeture…</value>
   </data>
 </root>

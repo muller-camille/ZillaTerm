@@ -85,22 +85,55 @@ public partial class FileBrowserPanel
     /// Met en file l'envoi de fichiers ou de dossiers locaux vers le dossier affiché, ou vers <paramref name="target"/>
     /// (dossier de la liste sur lequel on les a déposés).
     /// </summary>
-    private async Task EnqueueUploadAsync(IReadOnlyList<string> paths, string? target = null)
+    /// <param name="from">Serveur et dossier pris avant la fenêtre de choix des fichiers ; par défaut ceux affichés.</param>
+    internal async Task EnqueueUploadAsync(IReadOnlyList<string> paths, string? target = null, ShownFolder? from = null)
     {
-        var browser = _browser;
-        var session = _session;
-        if (browser is null || session is null || paths.Count == 0)
+        if ((from ?? CurrentFolder()) is not { } folder || paths.Count == 0)
         {
             return;
         }
 
-        var directory = target ?? browser.CurrentDirectory;
-        var names = paths.Select(p => Path.GetFileName(p.TrimEnd('\\', '/'))).ToList();
+        var browser = folder.Connection;
+        var session = folder.Session;
+        var directory = target ?? folder.Directory;
+        List<string> names;
+        try
+        {
+            // Racine d'un lecteur (« E:\ ») : sans nom, son contenu irait dans le dossier lui-même, sans question.
+            names = paths.Select(LocalTree.UploadName).ToList();
+        }
+        catch (ArgumentException ex)
+        {
+            SetStatus(ex.Message, error: true);
+            return;
+        }
+
+        // Écrasement : noms déjà dans le dossier sur le serveur, fichiers cachés compris (la liste affichée peut les masquer,
+        // ou montrer un autre dossier si l'on a navigué entre-temps), ou attendus d'un envoi en attente vers ce dossier.
+        IEnumerable<string> present;
+        try
+        {
+            SetStatus(Text.Format(Strings.Reading, directory));
+            present = (await browser.BrowseAsync(directory, showHidden: true, CancellationToken.None)).Select(e => e.Name).ToList();
+            SetStatus("");
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            SetStatus(Text.Format(Strings.CannotOpen, directory, ErrorText.Describe(ex)), error: true);
+            return;
+        }
+
+        var existing = present
+            .Concat(_queue.Items
+                .Where(i => i.Upload && i.State is TransferState.Pending or TransferState.Running && ReferenceEquals(i.Owner, session) && i.Destination == directory)
+                .SelectMany(i => i.Names))
+            .ToHashSet(StringComparer.Ordinal);
 
         // Beaucoup de fichiers d'un coup : proposer une seule archive .tar.gz (option des Paramètres).
         string? archiveName = null;
         int archiveFiles = 0;
         string? gzip = null;
+        bool archiveWouldReplace = false;
         // L'archive se décompresse par une commande tapée dans le terminal : pas de proposition sans terminal.
         var terminal = session as SshSession;
         if (_settings.OfferArchive && terminal is not null)
@@ -116,6 +149,12 @@ public partial class FileBrowserPanel
             {
                 // Nom trop long ou fichier trop gros pour le format tar standard : envoi un par un.
                 SetStatus(Text.Format(Strings.ArchiveNotPossible, tooLong));
+            }
+            else if (files >= threshold && names.Any(existing.Contains))
+            {
+                // Le dépôt remplace des éléments du serveur : envoi un par un, qui les réécrit sur place (droits,
+                // propriétaire, ACL gardés), alors que tar recréerait les fichiers remplacés en 644, au nom de qui extrait.
+                archiveWouldReplace = true;
             }
             else if (files >= threshold)
             {
@@ -144,26 +183,6 @@ public partial class FileBrowserPanel
             }
         }
 
-        // Écrasement : noms déjà dans le dossier sur le serveur, fichiers cachés compris (la liste affichée peut les masquer,
-        // ou montrer un autre dossier si l'on a navigué entre-temps), ou attendus d'un envoi en attente vers ce dossier.
-        IEnumerable<string> present;
-        try
-        {
-            SetStatus(Text.Format(Strings.Reading, directory));
-            present = (await browser.BrowseAsync(directory, showHidden: true, CancellationToken.None)).Select(e => e.Name).ToList();
-            SetStatus("");
-        }
-        catch (Exception ex) when (ex is not OutOfMemoryException)
-        {
-            SetStatus(Text.Format(Strings.CannotOpen, directory, ErrorText.Describe(ex)), error: true);
-            return;
-        }
-
-        var existing = present
-            .Concat(_queue.Items
-                .Where(i => i.Upload && i.State is TransferState.Pending or TransferState.Running && ReferenceEquals(i.Owner, session) && i.Destination == directory)
-                .SelectMany(i => i.Names))
-            .ToHashSet(StringComparer.Ordinal);
         var conflicts = names.Where(existing.Contains).Distinct(StringComparer.Ordinal).ToList();
         if (conflicts.Count > 0)
         {
@@ -176,7 +195,7 @@ public partial class FileBrowserPanel
                     ? Text.Format(Strings.UploadConflictHeadingOne, conflicts[0])
                     : Text.Format(Strings.UploadConflictHeadingMany, conflicts.Count),
                 Subject = Text.Format(Strings.ServerPath, session.Label, directory),
-                Message = Strings.UploadConflictMessage,
+                Message = archiveWouldReplace ? Strings.UploadConflictMessage + "\n\n" + Strings.ArchiveNotForReplace : Strings.UploadConflictMessage,
                 Items = conflicts.Count == 1 ? [] : conflicts,
                 Kind = ConfirmKind.Warning,
                 Actions = archiveName is null ? [Strings.ActionReplace, Strings.UploadSkipExisting] : [Strings.ActionReplace],
@@ -222,7 +241,7 @@ public partial class FileBrowserPanel
         {
             Owner = session,
             Server = session.Label,
-            Protocol = Protocol,
+            Protocol = ProtocolOf(browser),
             Names = names,
         });
     }
@@ -269,21 +288,23 @@ public partial class FileBrowserPanel
         {
             Owner = session,
             Server = session.Label,
-            Protocol = Protocol,
+            Protocol = ProtocolOf(browser),
             Names = names,
         });
     }
 
     /// <summary>Met en file le téléchargement de fichiers vers <paramref name="targets"/> (un chemin local par fichier).</summary>
-    private void EnqueueDownload(IReadOnlyList<RemoteEntry> files, string folder, IReadOnlyList<string> targets)
+    /// <param name="from">Serveur des fichiers, pris avant la fenêtre d'enregistrement.</param>
+    internal void EnqueueDownload(IReadOnlyList<RemoteEntry> files, string folder, IReadOnlyList<string> targets, ShownFolder from)
     {
-        var browser = _browser;
-        if (browser is null || files.Count == 0)
+        var browser = from.Connection;
+        if (files.Count == 0)
         {
             return;
         }
 
-        var label = files.Count == 1 ? files[0].Name : Text.Format(Strings.QueueFiles, files.Count);
+        // Nom affiché (caractères invisibles remplacés) : la file et l'historique ne montrent jamais le nom brut.
+        var label = files.Count == 1 ? files[0].DisplayName : Text.Format(Strings.QueueFiles, files.Count);
         Enqueue(new TransferItem(false, label, folder, async (item, ct) =>
         {
             var progress = new Progress<TransferProgress>(item.Report);
@@ -295,8 +316,8 @@ public partial class FileBrowserPanel
             }
         })
         {
-            Owner = _session,
-            Server = _session?.Label,
+            Owner = from.Session,
+            Server = from.Session.Label,
         });
     }
 

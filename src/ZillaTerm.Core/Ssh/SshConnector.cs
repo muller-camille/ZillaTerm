@@ -50,6 +50,12 @@ public sealed class SshConnector
     /// </summary>
     public const int MaxAttempts = 3;
 
+    /// <summary>
+    /// Fin d'un essai dont le mot de passe connu a déjà été refusé : lue comme un refus du serveur qui permet encore les
+    /// questions (keyboard-interactive), pour que l'essai suivant demande le mot de passe.
+    /// </summary>
+    private const string KnownPasswordRefused = "Permission denied (keyboard-interactive).";
+
     /// <param name="key">
     /// Clé SSH « MFA caching » fournie par le PVWA, demandée au début de chaque connexion (la demande peut prendre du
     /// temps : l'onglet est déjà ouvert et montre la progression) ; null si elle n'est pas disponible.
@@ -165,16 +171,21 @@ public sealed class SshConnector
                 : string.Format(CultureInfo.CurrentCulture, CoreStrings.AuthenticationRefusedRetry, refusals + 1, MaxAttempts);
             var known = attempt == 0 ? _password?.Invoke() : null;
             // Un mot de passe ou un code a été envoyé : un refus compte alors pour le verrouillage du compte.
-            bool answered = known is not null;
+            bool answered = false;
             var methods = new List<AuthenticationMethod>();
             if (key is not null && attempt == 0)
             {
                 methods.Add(new PrivateKeyAuthenticationMethod(Login, key));
             }
 
+            // Mot de passe connu : essayé par « password » si le serveur l'accepte (SSH.NET note alors, au refus, les
+            // méthodes encore permises), sinon donné à la question du serveur ; jamais les deux, ni deux fois.
+            PasswordAuthenticationMethod? knownMethod = null;
+            bool knownSent = false;
             if (known is not null)
             {
-                methods.Add(new PasswordAuthenticationMethod(Login, known));
+                knownMethod = new PasswordAuthenticationMethod(Login, known);
+                methods.Add(knownMethod);
             }
 
             if (usePassword)
@@ -194,20 +205,36 @@ public sealed class SshConnector
                     {
                         // La question seulement, jamais la réponse.
                         DebugLog.Write("ssh", $"{Host} : question du serveur « {prompt.Request.Trim()} » (saisie affichée {prompt.IsEchoed})");
-                        var answer = known is not null && !prompt.IsEchoed && IsPasswordPrompt(prompt.Request)
-                            ? known
-                            : Answer(e.Instruction, prompt.Request, prompt.IsEchoed, refused);
-                        refused = null;
-                        if (answer is null)
+                        string? answer;
+                        if (known is not null && !prompt.IsEchoed && IsPasswordPrompt(prompt.Request))
                         {
-                            cancelled = true;
-                            answer = "";
+                            if (knownSent || knownMethod?.AllowedAuthentications is not null)
+                            {
+                                // Déjà refusé (par « password », ou à une question précédente) : pas renvoyé, chaque refus
+                                // comptant pour le verrouillage du compte. L'essai s'arrête sans rien répondre, et le
+                                // suivant demande le mot de passe.
+                                answered = true;
+                                throw new SshAuthenticationException(KnownPasswordRefused);
+                            }
+
+                            knownSent = true;
+                            answer = known;
                         }
                         else
                         {
-                            answered = true;
+                            answer = Answer(e.Instruction, prompt.Request, prompt.IsEchoed, refused);
                         }
 
+                        refused = null;
+                        if (answer is null)
+                        {
+                            // Annulé : la connexion est coupée sans répondre. Une réponse vide serait un échec de plus
+                            // pour le serveur (et pour le verrouillage du compte).
+                            cancelled = true;
+                            throw new OperationCanceledException(CoreStrings.AuthenticationCancelled);
+                        }
+
+                        answered = true;
                         prompt.Response = answer;
                     }
                 };
@@ -251,6 +278,8 @@ public sealed class SshConnector
             {
                 DebugLog.Write("ssh", $"{Host}:{Port} : authentification refusée : {ex.Message}");
                 client.Dispose();
+                // Mot de passe connu essayé par « password » (et refusé) : compté lui aussi.
+                answered |= knownMethod?.AllowedAuthentications is not null;
                 if (answered)
                 {
                     // Réponse refusée : oubliée ici et pour le groupe, qui ne doit pas la réessayer sur ses autres sessions.

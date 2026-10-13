@@ -144,7 +144,7 @@ public partial class MainWindow
         {
             FilesBadgeText.Text = "!";
             FilesBadge.SetResourceReference(Border.BackgroundProperty, "StateFailedBrush");
-            FilesBadgeText.SetResourceReference(TextBlock.ForegroundProperty, "DangerForeground");
+            FilesBadgeText.SetResourceReference(TextBlock.ForegroundProperty, "BadgeForeground");
             tip = Text.Format(Strings.FilesBadgeProblem, problems);
         }
 
@@ -265,6 +265,9 @@ public partial class MainWindow
                 break;
             case TabItem { Content: ParallelView parallel }:
                 parallel.FocusActive();
+                break;
+            case TabItem { Tag: Services.Rdp.RdpSession { IsConnected: true } rdp }:
+                rdp.Focus();
                 break;
             case TabItem tab when tab == HomeTab && !IsOffline:
                 QuickBox.Focus();

@@ -47,7 +47,8 @@ public partial class FileBrowserPanel
         _ = CompareAsync(RemoteSide(session, browser, file.FullPath), right);
     }
 
-    private static string Label(RemoteSession session, string path) => $"{session.Label} : {path}";
+    // « serveur : chemin », ponctuation de la langue de l'interface.
+    private static string Label(RemoteSession session, string path) => Text.Format(Strings.CompareRemoteLabel, session.Label, path);
 
     /// <summary>Fichier d'un serveur ; « ~ » et les chemins relatifs partent du dossier personnel du compte.</summary>
     private static (string Label, Func<Task<byte[]>> Read) RemoteSide(RemoteSession session, IRemoteFiles? browser, string path) =>
@@ -73,9 +74,9 @@ public partial class FileBrowserPanel
     {
         try
         {
-            SetStatus(Text.Format(Strings.CompareReading, left.Label));
+            SetStatus(Text.Format(Strings.CompareReading, RemoteEntry.Visible(left.Label)));
             var leftBytes = await left.Read();
-            SetStatus(Text.Format(Strings.CompareReading, right.Label));
+            SetStatus(Text.Format(Strings.CompareReading, RemoteEntry.Visible(right.Label)));
             var rightBytes = await right.Read();
             SetStatus("");
             var window = new CompareWindow(left.Label, leftBytes, right.Label, rightBytes, _settings);

@@ -448,7 +448,7 @@
     <value>The PVWA address may only contain the server name, then a port and a path if needed: no “name@” before the server, no space or “\”, no accented letters or letters from another alphabet (an international name is written in its “xn--” form).</value>
   </data>
   <data name="PvwaRedirectNotFollowed" xml:space="preserve">
-    <value>The PVWA answered with a redirection (HTTP {0}) to {1}. It is not followed, so that your password and session are never sent to another address: check the PVWA address in the Settings (exact server name and path to PasswordVault).</value>
+    <value>The PVWA answered with a redirection (HTTP {0}) to {1}. It is not followed, so that your password and session are never sent to another address: correct the “PVWA address” field of the sign-in window (exact server name and path to PasswordVault).</value>
   </data>
   <data name="SpecialFileRefused" xml:space="preserve">
     <value>“{0}” is a special file (device, named pipe or socket): it can be neither opened nor downloaded, because reading it would never end or would block the server.</value>
@@ -560,5 +560,26 @@
   </data>
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>The Remote Desktop server uses no encryption: nothing proves its identity nor protects the connection, it is refused.</value>
+  </data>
+  <data name="TailLineCut" xml:space="preserve">
+    <value> … [line cut after {0:N0} characters]</value>
+  </data>
+  <data name="MigrationCheckOtherDomain" xml:space="preserve">
+    <value>Account from another domain than the server: check it</value>
+  </data>
+  <data name="PvwaTooManyPages" xml:space="preserve">
+    <value>The PVWA returned an abnormally long list (more than {0} pages): loading stopped. Report it to the CyberArk administrators.</value>
+  </data>
+  <data name="UploadWholeDrive" xml:space="preserve">
+    <value>“{0}” is a whole drive or share: drop the folders or files it contains instead.</value>
+  </data>
+  <data name="TransferIncompleteLinkKept" xml:space="preserve">
+    <value>symbolic link: its target {0} remains incomplete (neither the link nor its target was deleted)</value>
+  </data>
+  <data name="FtpNameNotEncodable" xml:space="preserve">
+    <value>“{0}” contains an invalid character (incomplete Unicode character): it cannot be sent to the FTP server. Rename it first.</value>
+  </data>
+  <data name="DownloadExceedsAnnounced" xml:space="preserve">
+    <value>The server sent more than {0} for a file announced at {1}: download stopped.</value>
   </data>
 </root>

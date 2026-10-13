@@ -62,7 +62,7 @@ public sealed record InterventionFile(string Path, DateTime Start, long Length);
 /// sa longueur (4 octets) et son contenu protégé par <see cref="ISecretProtector"/> (DPAPI, utilisateur Windows seul).
 /// Un bloc contient des événements JSON, l'identifiant du journal et son numéro d'ordre : un bloc d'un autre journal,
 /// déplacé ou retiré est signalé à la lecture. Les événements arrivent de plusieurs fils : ils sont gardés en mémoire et
-/// écrits ensemble au plus tard toutes les <see cref="FlushInterval"/>.
+/// écrits ensemble au plus tard toutes les <see cref="FlushInterval"/>, en blocs bornés (<see cref="MaxWrittenChunk"/>).
 /// </para>
 /// <para>
 /// Le texte des terminaux est plafonné (<see cref="MaxTerminalText"/>) : au-delà, une ligne le signale et le reste n'est
@@ -78,6 +78,12 @@ public sealed class InterventionJournal : IDisposable
 
     /// <summary>Plus grand bloc lu (une capture d'écran en 4K tient largement).</summary>
     private const int MaxChunk = 64 * 1024 * 1024;
+
+    /// <summary>
+    /// Taille au plus d'un bloc écrit, estimée large (<see cref="EstimatedSize"/>) : bien en deçà de <see cref="MaxChunk"/>,
+    /// même quand une commande affiche des centaines de milliers de lignes entre deux écritures.
+    /// </summary>
+    internal const int MaxWrittenChunk = 16 * 1024 * 1024;
 
     private static readonly byte[] Magic = "ZTINTV1\n"u8.ToArray();
 
@@ -112,8 +118,28 @@ public sealed class InterventionJournal : IDisposable
     /// <summary>Nombre d'événements écrits ou en attente.</summary>
     public int Count { get; private set; }
 
-    /// <summary>Le disque a refusé une écriture : les événements suivants sont perdus (voir <see cref="Failure"/>).</summary>
+    /// <summary>
+    /// Le disque a refusé une écriture : les événements suivants sont perdus, ils ne sont plus ni gardés en mémoire ni
+    /// comptés.
+    /// </summary>
     public Exception? Failure { get; private set; }
+
+    /// <summary>Heure (UTC) du premier événement perdu, depuis laquelle plus rien n'est gardé (voir <see cref="Failure"/>).</summary>
+    public DateTime? FailedAt
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _failedAt;
+            }
+        }
+    }
+
+    private DateTime? _failedAt;
+
+    /// <summary>Le disque vient de refuser une écriture (<see cref="Failure"/>) ; levé une fois, depuis le fil qui écrivait.</summary>
+    public event Action? Failed;
 
     /// <summary>Dossier des interventions de l'utilisateur.</summary>
     public static string DefaultDirectory =>
@@ -142,7 +168,7 @@ public sealed class InterventionJournal : IDisposable
     {
         lock (_lock)
         {
-            if (_file is null)
+            if (_file is null || Failure is not null)
             {
                 return;
             }
@@ -179,9 +205,10 @@ public sealed class InterventionJournal : IDisposable
         }
     }
 
-    /// <summary>Écrit ce qui attend (un bloc chiffré), jusque sur le disque.</summary>
+    /// <summary>Écrit ce qui attend (en blocs chiffrés bornés), jusque sur le disque.</summary>
     public void Flush()
     {
+        Action? failed = null;
         lock (_lock)
         {
             if (_file is null || _pending.Count == 0 || Failure is not null)
@@ -189,26 +216,55 @@ public sealed class InterventionJournal : IDisposable
                 return;
             }
 
-            var chunk = new Chunk(_id, _sequence, [.. _pending]);
+            var pending = _pending.ToList();
             _pending.Clear();
             try
             {
-                byte[] plain = JsonSerializer.SerializeToUtf8Bytes(chunk, JsonOptions);
-                byte[] protectedBytes = _protector.Protect(plain);
-                Array.Clear(plain);
-                Span<byte> length = stackalloc byte[4];
-                BinaryPrimitives.WriteInt32LittleEndian(length, protectedBytes.Length);
-                _file.Write(length);
-                _file.Write(protectedBytes);
+                // Plusieurs blocs si besoin : un bloc trop gros ne se relirait pas, ni ce qui le suit.
+                for (int start = 0; start < pending.Count;)
+                {
+                    int end = start + 1;
+                    long size = EstimatedSize(pending[start]);
+                    while (end < pending.Count && size + EstimatedSize(pending[end]) <= MaxWrittenChunk)
+                    {
+                        size += EstimatedSize(pending[end++]);
+                    }
+
+                    WriteChunk(new Chunk(_id, _sequence, pending.GetRange(start, end - start)));
+                    start = end;
+                }
+
                 _file.Flush(flushToDisk: true);
-                _sequence++;
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.Cryptography.CryptographicException)
             {
                 Failure = e;
+                _failedAt = pending.Min(entry => entry.Time);
+                failed = Failed;
             }
         }
+
+        // Hors du verrou : l'interface relit l'état du journal.
+        failed?.Invoke();
     }
+
+    private void WriteChunk(Chunk chunk)
+    {
+        byte[] plain = JsonSerializer.SerializeToUtf8Bytes(chunk, JsonOptions);
+        byte[] protectedBytes = _protector.Protect(plain);
+        Array.Clear(plain);
+        Span<byte> length = stackalloc byte[4];
+        BinaryPrimitives.WriteInt32LittleEndian(length, protectedBytes.Length);
+        _file!.Write(length);
+        _file.Write(protectedBytes);
+        _sequence++;
+    }
+
+    /// <summary>
+    /// Taille au plus d'un événement en JSON : chaque caractère peut s'écrire « \uXXXX » (6 octets), l'image en base64.
+    /// </summary>
+    internal static long EstimatedSize(InterventionEntry entry) =>
+        128 + (6L * ((entry.Source?.Length ?? 0) + (entry.Text?.Length ?? 0))) + (((entry.Image?.LongLength ?? 0) + 2) / 3 * 4);
 
     /// <summary>Termine l'intervention : dernier événement, écriture, fermeture du fichier.</summary>
     public void Stop(InterventionEntry last)
@@ -277,10 +333,19 @@ public sealed class InterventionJournal : IDisposable
             }
 
             int size = read == 4 ? BinaryPrimitives.ReadInt32LittleEndian(length) : -1;
-            if (size <= 0 || size > MaxChunk || size > file.Length - file.Position)
+            if (size <= 0 || size > file.Length - file.Position)
             {
                 damaged = true;
                 break;
+            }
+
+            if (size > MaxChunk)
+            {
+                // Bloc trop gros pour être relu (écrit par une version qui ne bornait pas les blocs) : sauté, la suite
+                // (notes, transferts, fin de l'enregistrement) se relit.
+                file.Seek(size, SeekOrigin.Current);
+                damaged = true;
+                continue;
             }
 
             var data = new byte[size];

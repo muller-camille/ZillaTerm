@@ -27,7 +27,7 @@
             <PasswordBox Grid.Row="2" Grid.Column="1" x:Name="ConfirmBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
         </Grid>
         <ProgressBar x:Name="Progress" Height="6" IsIndeterminate="True" Margin="0,4,0,4" Visibility="Collapsed" />
-        <TextBlock x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}" Margin="0,0,0,6" Visibility="Collapsed" />
+        <views:AnnouncedText x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}" Margin="0,0,0,6" Visibility="Collapsed" />
         <views:ErrorLine x:Name="ErrorText" Margin="0,0,0,8" Visibility="Collapsed" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button x:Name="OkButton" IsDefault="True" Click="OnOk" />

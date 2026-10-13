@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Windows.Threading;
+using ZillaTerm.Core;
 using ZillaTerm.Core.Diagnostics;
 using ZillaTerm.Core.Ssh;
 using ComDataObject = System.Runtime.InteropServices.ComTypes.IDataObject;
@@ -33,6 +34,14 @@ internal sealed class VirtualFileDataObject : StandardOleMarshalObject, ComDataO
     internal static readonly short DescriptorFormat = Format("FileGroupDescriptorW");
     internal static readonly short ContentsFormat = Format("FileContents");
     internal static readonly short PreferredDropEffectFormat = Format("Preferred DropEffect");
+
+    /// <summary>
+    /// CFSTR_ZONEIDENTIFIER (Windows 8 et suivants) : zone d'où viennent les fichiers virtuels, que l'Explorateur reporte
+    /// en Mark-of-the-Web (flux Zone.Identifier) sur les fichiers qu'il crée à partir de FileContents. Ici la zone
+    /// Internet : ils viennent d'un serveur. (« UntrustedDragDrop », lui, ne marque rien : il fait évaluer une action
+    /// d'URL par la cible, qui peut refuser le dépôt ou poser une question selon la stratégie de sécurité.)
+    /// </summary>
+    internal static readonly short ZoneIdentifierFormat = Format("ZoneIdentifier");
 
     private readonly byte[] _descriptor;
     private readonly IReadOnlyList<VirtualFile> _files;
@@ -89,6 +98,10 @@ internal sealed class VirtualFileDataObject : StandardOleMarshalObject, ComDataO
         {
             medium = HGlobal(BitConverter.GetBytes(DropEffectCopy));
         }
+        else if (format.cfFormat == ZoneIdentifierFormat && (format.tymed & TYMED.TYMED_HGLOBAL) != 0)
+        {
+            medium = HGlobal(BitConverter.GetBytes(MarkOfTheWeb.InternetZone));
+        }
         else if (format.cfFormat == ContentsFormat && (format.tymed & TYMED.TYMED_ISTREAM) != 0)
         {
             if (format.lindex < 0 || format.lindex >= _files.Count || _files[format.lindex].IsDirectory)
@@ -111,7 +124,7 @@ internal sealed class VirtualFileDataObject : StandardOleMarshalObject, ComDataO
 
     public int QueryGetData(ref FORMATETC format)
     {
-        if (format.cfFormat == DescriptorFormat || format.cfFormat == PreferredDropEffectFormat)
+        if (format.cfFormat == DescriptorFormat || format.cfFormat == PreferredDropEffectFormat || format.cfFormat == ZoneIdentifierFormat)
         {
             return (format.tymed & TYMED.TYMED_HGLOBAL) != 0 ? S_OK : DV_E_TYMED;
         }
@@ -152,6 +165,7 @@ internal sealed class VirtualFileDataObject : StandardOleMarshalObject, ComDataO
             new() { cfFormat = DescriptorFormat, dwAspect = DVASPECT.DVASPECT_CONTENT, lindex = -1, tymed = TYMED.TYMED_HGLOBAL },
             new() { cfFormat = ContentsFormat, dwAspect = DVASPECT.DVASPECT_CONTENT, lindex = -1, tymed = TYMED.TYMED_ISTREAM },
             new() { cfFormat = PreferredDropEffectFormat, dwAspect = DVASPECT.DVASPECT_CONTENT, lindex = -1, tymed = TYMED.TYMED_HGLOBAL },
+            new() { cfFormat = ZoneIdentifierFormat, dwAspect = DVASPECT.DVASPECT_CONTENT, lindex = -1, tymed = TYMED.TYMED_HGLOBAL },
         ];
         Marshal.ThrowExceptionForHR(SHCreateStdEnumFmtEtc((uint)formats.Length, formats, out var enumerator));
         return enumerator;

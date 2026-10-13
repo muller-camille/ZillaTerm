@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
+using ZillaTerm.Core.Localization;
 
 namespace ZillaTerm.Core.Ssh;
 
@@ -328,11 +330,25 @@ public sealed class TailFilterRun<T>
     }
 }
 
-/// <summary>Découpe le texte reçu en lignes complètes ; la ligne en cours d'écriture attend sa fin.</summary>
+/// <summary>
+/// Découpe le texte reçu en lignes complètes ; la ligne en cours d'écriture attend sa fin. Une ligne plus longue que
+/// <see cref="MaxLineLength"/> est coupée, suivie de la mention <see cref="CutMark"/>, et son reste ignoré jusqu'à sa fin :
+/// un fichier qui grossit sans fin de ligne (barre de progression en « \r », fichier piégé) ou des lignes géantes ne
+/// remplissent pas la mémoire.
+/// </summary>
 public sealed class TailLineSplitter
 {
+    /// <summary>Caractères gardés d'une ligne (ligne en cours comprise) ; au-delà, elle est coupée.</summary>
+    public const int MaxLineLength = 8 * 1024;
+
+    // La ligne en cours a été coupée : son reste est ignoré jusqu'à la fin de ligne.
+    private bool _cut;
+
     /// <summary>Début d'une ligne pas encore terminée.</summary>
     public string Partial { get; private set; } = "";
+
+    /// <summary>Mention ajoutée à la fin d'une ligne coupée (visible dans la copie et l'enregistrement).</summary>
+    public static string CutMark => string.Format(CultureInfo.CurrentCulture, CoreStrings.TailLineCut, MaxLineLength);
 
     public IReadOnlyList<string> Push(string text)
     {
@@ -341,14 +357,51 @@ public sealed class TailLineSplitter
             return [];
         }
 
-        var parts = (Partial + text).Split('\n');
-        Partial = parts[^1];
-        return parts[..^1];
+        var lines = new List<string>();
+        int start = 0;
+        while (true)
+        {
+            int newline = text.IndexOf('\n', start);
+            var piece = text.AsSpan(start, (newline < 0 ? text.Length : newline) - start);
+            if (_cut)
+            {
+                // Reste d'une ligne déjà coupée.
+            }
+            else if (Partial.Length + piece.Length > MaxLineLength)
+            {
+                var kept = string.Concat(Partial, piece[..(MaxLineLength - Partial.Length)]);
+                // Pas de moitié de caractère (emoji…) à la coupure.
+                lines.Add((char.IsHighSurrogate(kept[^1]) ? kept[..^1] : kept) + CutMark);
+                Partial = "";
+                _cut = true;
+            }
+            else if (newline >= 0)
+            {
+                lines.Add(string.Concat(Partial, piece));
+                Partial = "";
+            }
+            else
+            {
+                Partial = string.Concat(Partial, piece);
+            }
+
+            if (newline < 0)
+            {
+                return lines;
+            }
+
+            _cut = false;
+            start = newline + 1;
+        }
     }
 
-    /// <summary>Rend la ligne en cours comme si elle était terminée (fichier relu, ligne restée sans fin).</summary>
+    /// <summary>
+    /// Rend la ligne en cours comme si elle était terminée (fichier relu, ligne restée sans fin) ; le reste d'une ligne
+    /// coupée n'est plus ignoré.
+    /// </summary>
     public string? Flush()
     {
+        _cut = false;
         if (Partial.Length == 0)
         {
             return null;

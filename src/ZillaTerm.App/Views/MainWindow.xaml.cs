@@ -57,6 +57,9 @@ public partial class MainWindow : Window
     // Comptes du PVWA chargés au moins une fois : avant, un compte absent n'est pas encore un compte disparu.
     private bool _accountsLoaded;
     private bool _connecting;
+
+    // Session en cours d'ouverture (« compte@serveur ») : nommée quand une autre connexion doit attendre.
+    private string _connectingLabel = "";
     private bool _loggedOff;
 
     // Nettoyage de fermeture terminé : la fenêtre peut se fermer pour de bon.
@@ -928,8 +931,15 @@ public partial class MainWindow : Window
     /// </summary>
     private async Task ConnectAsync(PvwaAccount account, ConnectRequest request, bool showDialog = false, SavedSession? saved = null)
     {
-        if (_connecting || _loggedOff)
+        if (_loggedOff)
         {
+            return;
+        }
+
+        if (_connecting)
+        {
+            // Une connexion à la fois (demande au PVWA, lancement de la session PSM) : l'utilisateur sait pourquoi rien ne part.
+            SetStatus(Text.Format(Strings.ConnectBusyWait, _connectingLabel));
             return;
         }
 
@@ -965,6 +975,12 @@ public partial class MainWindow : Window
         {
             while (true)
             {
+                if (_loggedOff)
+                {
+                    // Déconnexion ou fermeture pendant la demande : aucune fenêtre de connexion.
+                    return;
+                }
+
                 if (showDialog)
                 {
                     var dialog = new ConnectDialog(account, request, _settings, _vaultUser, error, componentError, needsMachine)
@@ -978,17 +994,20 @@ public partial class MainWindow : Window
                     }
 
                     request = dialog.Result;
+                }
+
+                try
+                {
+                    bool opened = await LaunchAsync(account, request, saved);
+                    // Composant retenu pour la plateforme une fois accepté par le PVWA : un nom refusé n'est jamais mémorisé.
                     if (request.RememberComponent)
                     {
                         _settings.RememberComponent(account.PlatformId, request.Component);
                         SaveSettings();
                     }
-                }
 
-                try
-                {
                     // Rien d'ouvert (aucun PSMP pour ce serveur) : rien à garder dans « Mes serveurs ».
-                    if (await LaunchAsync(account, request, saved) && keepFolder is not null && request.RemoteMachine is { } machine
+                    if (opened && keepFolder is not null && request.RemoteMachine is { } machine
                         && SessionLibrary.FindSession(_settings, account, PvwaHost, machine) is null)
                     {
                         ShowAddedToCurrent(SessionLibrary.AddConnection(_settings, account, PvwaHost, keepFolder, request.Mode,
@@ -1015,6 +1034,13 @@ public partial class MainWindow : Window
                                                or TaskCanceledException or IOException or UnauthorizedAccessException
                                                or Win32Exception or InvalidOperationException)
                 {
+                    if (_loggedOff)
+                    {
+                        // Demande interrompue par la déconnexion ou la fermeture (client PVWA libéré) : rien à signaler.
+                        DebugLog.Write("psm", $"Connexion interrompue par la fermeture : {ex.Message}");
+                        return;
+                    }
+
                     // Composant absent de la plateforme du compte (il peut porter un autre nom, par ex. WIN-PSM) :
                     // le dialogue le dit et invite à saisir le bon.
                     componentError = ex is PvwaException { IsUnknownComponent: true };
@@ -1038,6 +1064,7 @@ public partial class MainWindow : Window
     {
         var target = string.IsNullOrWhiteSpace(request.RemoteMachine) ? account.Address : request.RemoteMachine.Trim();
         var label = $"{account.UserName}@{target}";
+        _connectingLabel = label;
         if (request.Mode == ConnectMode.Psm)
         {
             SetStatus(Text.Format(Strings.PsmOpening, label, request.Component));
@@ -1130,8 +1157,10 @@ public partial class MainWindow : Window
         string? mstscReason = null;
         bool toMstsc = false;
         int attempts = 0;
-        // Même mode d'affichage pour toutes les connexions de l'onglet (reconnexions comprises).
+        // Même mode d'affichage pour toutes les connexions de l'onglet (reconnexions comprises), et mêmes disques partagés :
+        // option décochée, aucun, même si le fichier du PVWA les demande.
         bool dynamicResolution = _settings.PsmDynamicResolution;
+        bool drives = options.MapLocalDrives;
         session = AddRdpTab(label, async ct =>
         {
             bool initial = attempts++ == 0;
@@ -1140,10 +1169,25 @@ public partial class MainWindow : Window
             byte[] file;
             try
             {
-                file = await Client.PsmConnectAsync(account.Id, options, ct);
+                try
+                {
+                    file = await Client.PsmConnectAsync(account.Id, options, ct);
+                }
+                catch (PvwaException e) when (e.IsUnauthorized && !initial && !ct.IsCancellationRequested)
+                {
+                    // Session CyberArk expirée (veille, reconnexion) : identification proposée, puis une nouvelle demande.
+                    // À la première connexion, ConnectAsync s'en charge (onglet retiré, connexion relancée).
+                    if (!Reconnect(userAction: true))
+                    {
+                        throw;
+                    }
+
+                    file = await Client.PsmConnectAsync(account.Id, options, ct);
+                }
             }
-            catch (Exception e) when (initial)
+            catch (Exception e) when (initial && !ct.IsCancellationRequested)
             {
+                // Demande annulée (onglet fermé, autre tentative lancée par « Reconnecter ») : rien à rapporter.
                 firstError = e;
                 throw;
             }
@@ -1153,7 +1197,7 @@ public partial class MainWindow : Window
             if (initial)
             {
                 first = file;
-                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, out mstscReason) is not { } tab)
+                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, drives, out mstscReason) is not { } tab)
                 {
                     toMstsc = true;
                     throw new RdpHandedOffException("session PSM confiée à mstsc");
@@ -1174,7 +1218,7 @@ public partial class MainWindow : Window
                     throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
                 }
 
-                settings = settings.ForPsmTab(dynamicResolution);
+                settings = settings.ForPsmTab(dynamicResolution, drives);
             }
 
             ShowPsmAddress(session, settings.Server);
@@ -1190,9 +1234,9 @@ public partial class MainWindow : Window
         }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), psm: "");
         await ConnectRdpTabAsync(session);
 
-        if (!HasRdpTab(session))
+        if (!HasRdpTab(session) || session.IsDisposed || _loggedOff)
         {
-            // Onglet fermé pendant la demande ou la connexion : rien d'autre à faire.
+            // Onglet fermé pendant la demande ou la connexion, déconnexion ou fermeture : rien d'autre à faire.
             return;
         }
 
@@ -1273,13 +1317,14 @@ public partial class MainWindow : Window
             _statusClear.Start();
         }
 
-        StatusText.Text = message;
         StatusText.SetResourceReference(TextBlock.ForegroundProperty, isError ? "StatusErrorForeground" : "StatusOkForeground");
-        // Annoncé par les lecteurs d'écran (zone « polie » de la barre d'état).
-        if (message.Length > 0 && System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(StatusText) is { } peer)
+        // Annoncé par les lecteurs d'écran (AnnouncedText, zone « polie » de la barre d'état), même redit à l'identique.
+        if (StatusText.Text == message)
         {
-            peer.RaiseAutomationEvent(System.Windows.Automation.Peers.AutomationEvents.LiveRegionChanged);
+            StatusText.Announce();
         }
+
+        StatusText.Text = message;
     }
 
     private static readonly TimeSpan StatusLifetime = TimeSpan.FromSeconds(10);
@@ -1553,9 +1598,19 @@ public partial class MainWindow : Window
 
     private void CopyCurrent(Func<PvwaAccount, string> selector)
     {
-        if (_current is { } account)
+        if (_current is not { } account)
+        {
+            return;
+        }
+
+        try
         {
             Clipboard.SetText(selector(account));
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Presse-papiers tenu par une autre application (Bureau à distance, gestionnaire de presse-papiers).
+            SetStatus(Strings.ClipboardBusy, isError: true);
         }
     }
 
@@ -1821,11 +1876,88 @@ public partial class MainWindow : Window
     private void OnLogout(object sender, RoutedEventArgs e)
     {
         LogoutRequested = true;
-        InterventionRecord(Core.Interventions.InterventionKind.Action, "", Strings.InterventionLoggedOut);
         Close();
     }
 
     private void OnExit(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>
+    /// Fin de la session Windows (déconnexion, arrêt, redémarrage) : WPF ferme alors les fenêtres sans tenir compte de
+    /// <c>Cancel</c>, et ni les questions de <see cref="OnClosing"/> ni les suites de ses <c>await</c> n'auraient lieu.
+    /// Le nettoyage essentiel est fait ici, tout de suite et sans question : réglages enregistrés, presse-papiers du mot
+    /// de passe vidé, sessions SSH fermées (copies des fichiers modifiés effacées), coffres verrouillés, fichiers .rdp
+    /// effacés, sessions Bureau à distance libérées et sorties de la fenêtre, session PVWA fermée en meilleur effort (2 s
+    /// au plus). La fermeture qui suit n'a plus rien à faire.
+    /// </summary>
+    internal void EndWithWindowsSession()
+    {
+        if (_closeConfirmed)
+        {
+            return;
+        }
+
+        bool closing = _loggedOff;
+        _loggedOff = true;
+        _closeConfirmed = true;
+        DebugLog.Write("app", "Fin de la session Windows : fermeture immédiate, sans question.");
+        if (!closing)
+        {
+            RememberLayout();
+            SaveSettings();
+            try
+            {
+                _lifetime.Cancel();
+            }
+            catch (AggregateException ex)
+            {
+                // Une opération annulée a levé une erreur : le nettoyage continue quand même.
+                DebugLog.Write("app", "Annulation des opérations en cours", ex);
+            }
+        }
+
+        _passwordClipboard?.Dispose();
+        _mfaKey = null;
+        SshAnswerCache.ForgetAll();
+        CloseAllSshSessions();
+        _keePass.LockAll(localStore: true);
+        _launcher.Cleanup();
+        foreach (var view in _rdpViews.ToList())
+        {
+            view.Session.Dispose();
+            RdpLayer.Children.Remove(view);
+        }
+
+        _rdpViews.Clear();
+        if (_client is { } client)
+        {
+            bool revoke = _mfaKeyIssued;
+            try
+            {
+                // Hors du fil de l'interface (aucune suite n'y revient) et borné : Windows n'attend pas.
+                Task.Run(async () =>
+                {
+                    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                    if (revoke)
+                    {
+                        try
+                        {
+                            await client.RevokeMfaCachingSshKeyAsync(timeout.Token);
+                        }
+                        catch (Exception ex) when (ex is not OutOfMemoryException)
+                        {
+                            // Clé non retirée : elle expirera d'elle-même.
+                        }
+                    }
+
+                    await client.LogoffAsync(timeout.Token);
+                }).Wait(TimeSpan.FromSeconds(2.5));
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                // Au pire, la session expirera d'elle-même côté PVWA (et la clé MFA caching aussi).
+            }
+        }
+    }
 
     protected override async void OnClosing(CancelEventArgs e)
     {
@@ -1858,6 +1990,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (LogoutRequested)
+        {
+            // Noté une fois la déconnexion confirmée : annulée, elle n'a pas eu lieu.
+            InterventionRecord(Core.Interventions.InterventionKind.Action, "", Strings.InterventionLoggedOut);
+        }
+
         RememberLayout();
         SaveSettings();
         // Fermeture de la session PVWA avant de quitter (au plus 5 s d'attente).
@@ -1868,6 +2006,14 @@ public partial class MainWindow : Window
         IsEnabled = false;
         // Transferts annulés d'abord : le fichier interrompu est supprimé tant que la connexion est ouverte.
         await FilesPanel.CancelTransfersAsync(null);
+        // Renvoi d'un fichier modifié en cours : attendu, une coupure en pleine écriture laisserait le fichier tronqué.
+        var editors = _remoteSessions.Select(s => s.Editor).OfType<RemoteEditor>().ToList();
+        if (editors.Any(r => !r.WritesDone.IsCompleted))
+        {
+            SetStatus(Strings.EditWaitingForWrite);
+            await Task.WhenAll(editors.Select(r => r.WritesDone));
+        }
+
         _lifetime.Cancel();
         _searchDebounce.Stop();
         _savedSearchDebounce.Stop();

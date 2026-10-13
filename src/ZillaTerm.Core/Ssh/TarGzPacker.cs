@@ -16,7 +16,7 @@ namespace ZillaTerm.Core.Ssh;
 /// </remarks>
 public static class TarGzPacker
 {
-    /// <summary>Droits des fichiers extraits (comme un envoi SCP), et des dossiers.</summary>
+    /// <summary>Droits des fichiers extraits (comme un envoi SCP), et des dossiers vides.</summary>
     private const UnixFileMode FileMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead;
 
     private const UnixFileMode DirectoryMode = FileMode | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
@@ -62,7 +62,7 @@ public static class TarGzPacker
         foreach (var path in paths)
         {
             var trimmed = path.TrimEnd('\\', '/');
-            var root = Path.GetFileName(trimmed);
+            var root = LocalTree.UploadName(path);
             try
             {
                 if (!Directory.Exists(trimmed))
@@ -155,13 +155,15 @@ public static class TarGzPacker
     /// « .tar » sans compression.
     /// </summary>
     public static string ArchiveName(IReadOnlyList<string> paths, DateTime now, bool compressed = true) =>
-        (paths.Count == 1 ? Path.GetFileName(paths[0].TrimEnd('\\', '/')) : $"upload-{now:yyyyMMdd-HHmmss}") + (compressed ? ".tar.gz" : ".tar");
+        (paths.Count == 1 ? LocalTree.UploadName(paths[0]) : $"upload-{now:yyyyMMdd-HHmmss}") + (compressed ? ".tar.gz" : ".tar");
 
     /// <summary>
     /// Commande à lancer sur le serveur pour extraire l'archive dans son dossier, puis la supprimer si l'extraction a
-    /// réussi : <c>cd '/dossier' &amp;&amp; /usr/bin/gzip -dc './a.tar.gz' | tar xf - &amp;&amp; rm -f './a.tar.gz'</c>, ou
-    /// <c>tar xf './a.tar'</c> sans gzip. Forme lue par tous les tar (lettres-clés sans tiret, archive lue sur l'entrée
-    /// standard) et par tous les shells, csh compris. Null si un nom contient un caractère de contrôle.
+    /// réussi : <c>cd '/dossier' &amp;&amp; /usr/bin/gzip -dc './a.tar.gz' | tar xof - &amp;&amp; rm -f './a.tar.gz'</c>, ou
+    /// <c>tar xof './a.tar'</c> sans gzip. Forme lue par tous les tar (lettres-clés sans tiret, archive lue sur l'entrée
+    /// standard) et par tous les shells, csh compris. « o » : le propriétaire noté dans l'archive (0) n'est jamais
+    /// appliqué, même par root (GNU tar, AIX, HP-UX, Solaris) ; les fichiers extraits appartiennent à qui les extrait.
+    /// Null si un nom contient un caractère de contrôle.
     /// </summary>
     /// <param name="gzip">Emplacement de gzip trouvé sur le serveur (<see cref="GzipCandidates"/>), ou null : archive .tar.</param>
     public static string? ExtractCommand(string remoteDirectory, string archiveName, string? gzip)
@@ -176,8 +178,8 @@ public static class TarGzPacker
             var directory = WorkingDirectory.TypedQuote(remoteDirectory);
             var archive = WorkingDirectory.TypedQuote("./" + archiveName);
             return gzip is null
-                ? $"cd {directory} && tar xf {archive} && rm -f {archive}"
-                : $"cd {directory} && {gzip} -dc {archive} | tar xf - && rm -f {archive}";
+                ? $"cd {directory} && tar xof {archive} && rm -f {archive}"
+                : $"cd {directory} && {gzip} -dc {archive} | tar xof - && rm -f {archive}";
         }
         catch (ArgumentException)
         {
@@ -186,10 +188,12 @@ public static class TarGzPacker
     }
 
     /// <summary>
-    /// Crée l'archive : format ustar (POSIX, lu par tous les tar ; noms en UTF-8), chemins « dossier/sous-dossier/fichier »,
-    /// droits 0644 pour les fichiers et 0755 pour les dossiers, propriétaire 0 (l'utilisateur qui extrait en devient
-    /// propriétaire, root reste root), dates de modification conservées. Les liens vers des dossiers ne sont pas suivis
-    /// (<see cref="LocalTree"/>). À vérifier d'abord avec <see cref="UstarProblem"/>.
+    /// Crée l'archive : format ustar (POSIX, lu par tous les tar ; noms en UTF-8), chemins relatifs
+    /// « dossier/sous-dossier/fichier » (jamais « / » en tête, voir <see cref="LocalTree.UploadName"/>), droits 0644 pour
+    /// les fichiers, propriétaire 0 (ignoré à l'extraction, voir <see cref="ExtractCommand"/>), dates de modification
+    /// conservées. Seuls les dossiers vides ont leur entrée (0755) : tar crée lui-même les dossiers des fichiers extraits,
+    /// sans toucher aux droits ni au propriétaire de ceux qui existent déjà sur le serveur. Les liens vers des dossiers ne
+    /// sont pas suivis (<see cref="LocalTree"/>). À vérifier d'abord avec <see cref="UstarProblem"/>.
     /// </summary>
     /// <param name="compress">Compression gzip (.tar.gz), sinon simple .tar.</param>
     /// <param name="progress">Octets archivés sur le total (<see cref="TransferProgress.Packing"/>).</param>
@@ -199,6 +203,9 @@ public static class TarGzPacker
         IProgress<TransferProgress>? progress, CancellationToken ct, Action<DirectoryInfo, string>? linkSkipped = null)
     {
         var name = Path.GetFileName(archivePath);
+        // Racine d'un lecteur refusée avant tout parcours : ses membres seraient « /fichier », extraits à la racine du
+        // serveur par les tar d'AIX, HP-UX et Solaris.
+        var roots = paths.Select(LocalTree.UploadName).ToList();
         long total = Measure(paths).Bytes;
         long done = 0;
         int files = 0;
@@ -225,12 +232,20 @@ public static class TarGzPacker
         async Task AddDirectoryAsync(DirectoryInfo directory, string entryName)
         {
             ct.ThrowIfCancellationRequested();
-            await tar.WriteEntryAsync(new UstarTarEntry(TarEntryType.Directory, entryName + "/")
+            var children = LocalTree.Files(directory).ToList();
+            var subdirectories = LocalTree.Directories(directory).ToList();
+            if (children.Count == 0 && subdirectories.Count == 0)
             {
-                Mode = DirectoryMode,
-                ModificationTime = directory.LastWriteTimeUtc,
-            }, ct).ConfigureAwait(false);
-            foreach (var child in LocalTree.Files(directory))
+                // Dossier vide : rien d'autre ne le créerait. Un dossier existant du même nom serait remis en 0755 par
+                // GNU tar : l'archive n'est donc pas proposée quand le dépôt remplace des éléments du serveur.
+                await tar.WriteEntryAsync(new UstarTarEntry(TarEntryType.Directory, entryName + "/")
+                {
+                    Mode = DirectoryMode,
+                    ModificationTime = directory.LastWriteTimeUtc,
+                }, ct).ConfigureAwait(false);
+            }
+
+            foreach (var child in children)
             {
                 await AddFileAsync(child, $"{entryName}/{child.Name}").ConfigureAwait(false);
             }
@@ -240,22 +255,22 @@ public static class TarGzPacker
                 linkSkipped?.Invoke(link, $"{entryName}/{link.Name}");
             }
 
-            foreach (var child in LocalTree.Directories(directory))
+            foreach (var child in subdirectories)
             {
                 await AddDirectoryAsync(child, $"{entryName}/{child.Name}").ConfigureAwait(false);
             }
         }
 
-        foreach (var path in paths)
+        for (int i = 0; i < paths.Count; i++)
         {
-            var trimmed = path.TrimEnd('\\', '/');
+            var trimmed = paths[i].TrimEnd('\\', '/');
             if (Directory.Exists(trimmed))
             {
-                await AddDirectoryAsync(new DirectoryInfo(trimmed), Path.GetFileName(trimmed)).ConfigureAwait(false);
+                await AddDirectoryAsync(new DirectoryInfo(trimmed), roots[i]).ConfigureAwait(false);
             }
             else
             {
-                await AddFileAsync(new FileInfo(trimmed), Path.GetFileName(trimmed)).ConfigureAwait(false);
+                await AddFileAsync(new FileInfo(trimmed), roots[i]).ConfigureAwait(false);
             }
         }
 

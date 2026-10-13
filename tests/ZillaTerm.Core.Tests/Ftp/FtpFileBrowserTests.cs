@@ -385,6 +385,42 @@ public sealed class FtpFileBrowserTests
             Assert.True(check.Matches);
             Assert.Equal(content, File.ReadAllBytes(local));
             Assert.Equal([local], Directory.GetFiles(folder));
+            // Venu d'un serveur : Mark-of-the-Web (Windows), sans nom de serveur.
+            if (OperatingSystem.IsWindows())
+            {
+                Assert.Equal("[ZoneTransfer]\r\nZoneId=3\r\n", MarkOfTheWeb.Read(local));
+            }
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// Serveur qui envoie bien plus que la taille annoncée (2 Kio, plafond 64 Mio de plus) : téléchargement arrêté avec
+    /// un message clair, copie incomplète supprimée, rien d'autre sur le disque.
+    /// </summary>
+    [Fact]
+    public async Task DownloadStopsWhenTheServerSendsFarMoreThanAnnounced()
+    {
+        using var server = new FakeFtp();
+        server.Files["/home/fake/app.conf"] = new byte[65 * 1024 * 1024];
+        var folder = Path.Combine(Path.GetTempPath(), "zt-ftp-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            using var browser = await FtpFileBrowser.ConnectAsync(
+                Connection(server, FtpSecurity.Opportunistic, () => true), CancellationToken.None);
+            var entry = new RemoteEntry("app.conf", "/home/fake/app.conf", false, false, 2048, default, "-rw-r--r--");
+            var checks = new List<TransferCheck>();
+
+            var error = await Assert.ThrowsAsync<InvalidDataException>(() =>
+                browser.DownloadAsync(entry, Path.Combine(folder, "app.conf"), checks, null, background: false, CancellationToken.None));
+
+            Assert.Contains(RemotePath.FormatSize(2048), error.Message, StringComparison.Ordinal);
+            Assert.True(Assert.Single(checks).Failed);
+            Assert.Empty(Directory.GetFileSystemEntries(folder));
         }
         finally
         {
@@ -425,6 +461,52 @@ public sealed class FtpFileBrowserTests
             Assert.Same(link, checks[^1]);
             Assert.Equal(2, checks.Count);
             Assert.DoesNotContain(server.Commands, c => c.Contains("loop", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// Serveur qui n'annonce pas UTF8 dans FEAT (le faux serveur lit pourtant ses commandes en UTF-8) : les noms restent
+    /// en UTF-8 (OPTS UTF8 ON), à la lecture comme à l'envoi, au lieu de devenir « ? » ; un nom que l'UTF-8 ne représente
+    /// pas, ou la racine d'un lecteur, sont refusés avant toute commande.
+    /// </summary>
+    [Fact]
+    public async Task NamesStayInUtf8WhenTheServerDoesNotAnnounceIt()
+    {
+        using var server = new FakeFtp();
+        server.Listings["/home/fake"] = ["-rw-r--r-- 1 alice users 3 Oct 10 08:00 Procédure.txt"];
+        server.Listings["/home/fake/Données"] = [];
+        var folder = Path.Combine(Path.GetTempPath(), "zt-ftp-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var local = Path.Combine(folder, "Procèdure.txt");
+            File.WriteAllText(local, "abc");
+            using var browser = await FtpFileBrowser.ConnectAsync(
+                Connection(server, FtpSecurity.Opportunistic, () => true), CancellationToken.None);
+
+            Assert.Equal("Procédure.txt", Assert.Single(await browser.ListAsync("/home/fake", true, CancellationToken.None)).Name);
+            await browser.ListAsync("/home/fake/Données", true, CancellationToken.None);
+            var checks = new List<TransferCheck>();
+            await browser.UploadAsync(local, "/home/fake", TransferProtocol.Ftp, checks, null, background: false, CancellationToken.None);
+
+            Assert.Contains("OPTS UTF8 ON", server.Commands);
+            Assert.Equal("abc"u8.ToArray(), server.Files["/home/fake/Procèdure.txt"]);
+            Assert.True(Assert.Single(checks).Matches);
+            Assert.DoesNotContain(server.Commands, c => c.Contains('?', StringComparison.Ordinal));
+
+            await Assert.ThrowsAsync<ArgumentException>(() => browser.CreateDirectoryAsync("/home/fake/a\uD800b", CancellationToken.None));
+            if (OperatingSystem.IsWindows())
+            {
+                await Assert.ThrowsAsync<ArgumentException>(() =>
+                    browser.UploadAsync(Path.GetPathRoot(folder)!, "/home/fake", TransferProtocol.Ftp, checks, null, background: false, CancellationToken.None));
+            }
+
+            Assert.False(server.Received("MKD"));
+            Assert.Single(server.Commands, c => c.StartsWith("STOR ", StringComparison.Ordinal));
         }
         finally
         {

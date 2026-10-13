@@ -43,6 +43,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.ColumnSpan="2" Text="{x:Static loc:Strings.DisplaySection}" Style="{StaticResource SectionTitle}" />
@@ -79,6 +80,8 @@
             <CheckBox Grid.Row="10" Grid.Column="1" x:Name="X11Box" Margin="0,0,0,8" ToolTip="{x:Static loc:Strings.X11ForwardingTip}">
                 <AccessText Text="{x:Static loc:Strings.X11Forwarding}" TextWrapping="Wrap" />
             </CheckBox>
+            <TextBlock Grid.Row="11" Grid.Column="1" x:Name="X11Effect" Style="{StaticResource CheckedOptionEffect}" Tag="{Binding ElementName=X11Box}"
+                       Margin="20,-6,0,8" Text="{x:Static loc:Strings.X11ForwardingEffect}" />
         </Grid>
     </DockPanel>
 </Window>

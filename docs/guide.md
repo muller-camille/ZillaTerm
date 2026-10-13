@@ -24,8 +24,9 @@
 
 Enter the PVWA address (`pvwa.mydomain.local` is enough: `https://` and `/PasswordVault` are added), choose the
 authentication method, then your user name and password. If the RADIUS server asks a question (OTP code), the window
-shows it and waits for your answer. While you type a password, a "Caps Lock is on." warning shows if the key is on
-(likewise for KeePass databases and the local vault).
+shows it and waits for your answer; "Back" (or `Esc`) returns to the sign-in fields without answering it. While you
+type a password, a "Caps Lock is on." warning shows if the key is on (likewise for KeePass databases and the local
+vault).
 
 The address, method and user name are remembered; **the password never is**.
 
@@ -38,9 +39,10 @@ away in the chosen language, keeping the address and user name you typed.
   shows while an SSH or files session is open. Drag the splitter to change its width; `Ctrl+B` or a double-click on the splitter collapses it (the strip of tabs stays: a click on a
   tab opens it again). `F6` moves from the panel to the session. The window position and size, the panel width and
   whether it is collapsed are remembered.
-- **Session tabs**: a dot shows the state of the session by its colour and by its shape: orange ring while
-  connecting, green dot once connected, grey ring when the session has ended, red dot when it failed (the name is
-  then dimmed). The tooltip gives the full name, the state and the mode: "Through the PSMP …: session managed by
+- **Session tabs**: a dot shows the state of the session by its colour and by its shape, readable in high contrast
+  too: orange ring while connecting, solid green dot once connected, half-filled orange dot when the connection is
+  interrupted, grey square when the session has ended, red cross when it failed (the name is then dimmed). The
+  tooltip gives the full name, the state and the mode: "Through the PSMP …: session managed by
   CyberArk" or "Direct emergency access (KeePass): outside CyberArk, written to urgence.log". A name that is too long
   is truncated; a name already open is numbered ("srv01 (2)"). When the tabs no longer fit, the strip scrolls (mouse
   wheel, the selected tab stays visible) and "⌄" lists them all with their state. `Ctrl+Tab` / `Ctrl+Shift+Tab`:
@@ -162,7 +164,9 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   depending on the PSM configuration, the connection to the target server may keep its original size: turn the option
   off then, the session keeps a fixed size and its picture is scaled to the tab.
 - **Keyboard**: when the tab has the keyboard (click in the session), all keys go to the session, Windows shortcuts
-  included (Alt+Tab, Windows key). Click elsewhere in ZillaTerm to get them back.
+  included (Alt+Tab, Windows key). Click elsewhere in ZillaTerm to get them back. A tab chosen with the keyboard
+  (`Ctrl+Tab`, `Ctrl+F4`…) does not take the keyboard: `Ctrl+Tab` thus goes through the remote desktop tabs; `Enter`
+  on the tab, `F6` or a click in the session gives it the keyboard.
 - **PSM certificate**: read by ZillaTerm while the progress bar shows, before anything is sent to the PSM (neither
   token nor user), and checked with the authorities Windows trusts (PSM name, dates, revocation when it can be
   reached). Trusted: nothing to confirm. Otherwise (self-signed certificate, issued for another name), ZillaTerm shows
@@ -178,8 +182,11 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   CyberArk, on by default) asks the PVWA for them, like the "Map local drives" box of its connection window
   (`AllowMappingLocalDrives` parameter). When the connection component allows it, the PVWA writes them into the RDP
   file and they appear in the session (File Explorer › This PC), in the tab and in Remote Desktop Connection alike.
+  With the option off, no drive is shared in the tab, even if the PVWA asks for it (choice kept in the PVWA, component
+  setting); Remote Desktop Connection follows the PVWA's signed file, which cannot be modified.
 - **Reconnect**, "Duplicate tab": new request to the PVWA (a PSM session token is used only once); reason and ticket
-  stay those of the first connection.
+  stay those of the first connection. If the CyberArk session has expired in the meantime, the sign-in window is
+  offered, then the request starts again.
 - The tab shows the server's tag (PROD, QA…) and its coloured frame; "Capture" adds a picture to the log of an
   intervention being recorded.
 - A connection through a Remote Desktop gateway still opens in Remote Desktop Connection; so does the session if the
@@ -248,7 +255,9 @@ as with `ssh -X`:
    allowed: display `:0` listens on port 6000. The X server is set in **Settings › Terminal › Local X server** (`:0`
    by default; this computer only, since the X protocol is not encrypted).
 2. Tick **"X11 forwarding (graphical applications)"** for the server: right-click → "Properties…" in "My servers", or
-   in "Advanced options…" for a single connection. SSH sessions only; unticked by default.
+   in "Advanced options…" for a single connection. SSH sessions only; unticked by default. Once ticked, the box
+   recalls its effect just below ("⚠ Effect: a compromised server could see the other X windows of this computer and
+   send keystrokes to them.").
 3. Open the session: a grey line tells whether forwarding is active, refused (by the server, whose `sshd_config` needs
    `X11Forwarding yes`, or by the PSMP) or whether no X server is listening on the computer.
 
@@ -297,8 +306,12 @@ each PSMP is checked on its first connection. The tab tooltip names the PSMP use
   window shows the fingerprints already accepted and the new one, and "Accept this key and connect" is only possible
   after ticking "I checked this fingerprint with the CyberArk team".
 - **Terminal**: selecting copies, the mouse wheel or the scroll bar on the right goes through the history; once you
-  have scrolled up, "↓ Back to the end" (or typing) takes you back to the end. AltGr works on international
-  keyboards. Close the tab with its cross, a middle click or `Ctrl+F4` (confirmation if the session is connected).
+  have scrolled up, "↓ Back to the end" (or typing) takes you back to the end. Precision touchpad scrolling is
+  tracked finely (history, `less`, `vim`), as is zooming with `Ctrl`. A command, a path or a URL too long for the
+  width, wrapped over several lines, is copied as a single line, "Save the terminal content" writes it whole, and the
+  search finds a word split by the wrapping. A window that opens during a mouse selection stops it and copies it.
+  `\e[3J` (`tput E3`) only clears the history, not the screen. AltGr works on international keyboards. Close the tab
+  with its cross, a middle click or `Ctrl+F4` (confirmation if the session is connected).
 - **End of session**: a banner at the top of the terminal gives the reason, with "Reconnect"; the last lines stay
   readable, selectable and copyable.
 - **Right-click in the terminal** (or the keyboard's Menu key): copy, paste, select all, search, save the content,
@@ -318,8 +331,9 @@ each PSMP is checked on its first connection. The tab tooltip names the PSMP use
 - **Detach a tab** (another screen): drag the SSH tab out of the window, or right-click → "Detach to a new window".
   The terminal moves to a separate window and the session goes on. The tab keeps its place ("Show the window",
   "Bring it back here") and the Files tab works on this session when it is selected. Closing the separate window
-  brings the terminal back to its tab without closing the session. Remote desktop tabs do not detach (use "Full
-  screen"); a PSM session opened in Windows Remote Desktop Connection is already a window of its own.
+  brings the terminal back to its tab without closing the session. Remote desktop tabs do not detach: maximize the
+  ZillaTerm window on the screen you want ("Full screen" only exists with the Windows Remote Desktop control); a PSM
+  session opened in Windows Remote Desktop Connection is already a window of its own.
 - **Parallel view** (up to 8 sessions on screen): "Parallel" toolbar button (greyed out while no SSH session is
   open), or right-click an SSH tab → "Add to the
   parallel view". Tick the open SSH sessions to show together (8 at most): they are laid out as a grid in the
@@ -376,7 +390,8 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
 - **Toolbar buttons**: Download, Edit, Rename, Permissions and Delete are greyed out, as in the menu, while the
   selection does not fit; their tooltip says what to select ("Select a single file (not a folder)."…).
 - **Upload files**: drag them from Explorer onto the list (or the "Upload" button). Sent over **SFTP** by default
-  (SCP can be chosen in Settings), folders included. Dropped on a folder row, they go into that folder: the row is
+  (SCP can be chosen in Settings), folders included; a whole drive (`E:\`) or the root of a share is refused, with a
+  message. Dropped on a folder row, they go into that folder: the row is
   highlighted and the status bar shows the destination ("Drop into server:/path"). If items already exist on the
   server (hidden ones included, even when they are not shown), a confirmation names the server and the items, and
   offers "Replace", "Skip existing" or "Cancel" (the default); a replaced file is rewritten in place and stays
@@ -402,13 +417,19 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
 - **Transfer queue**: uploads and downloads run one at a time, in the order requested; what you ask for during a
   transfer is added to the queue instead of being ignored. An upload goes to the folder shown when you dropped the
   files (or to the folder they were dropped on), and the overwrite confirmation also counts uploads still waiting.
-  The "Transfers" panel, above the status bar, shows each item with its server (waiting, progress and file n/N,
-  check, result): ✕ removes a waiting item, "Cancel" stops the running one, "Cancel all" cancels everything left.
+  The "Upload" window and the "New folder" question name the server and the folder: the upload, the download or the
+  new folder always go there, even if you switch sessions during the question (parallel view, detached terminal) or
+  if the panel follows the terminal. The "Transfers" panel, above the status bar, shows each item with its server
+  (waiting, progress and file n/N, check, result): ✕ removes a waiting item, "Cancel" stops the running one,
+  "Cancel all" cancels everything left.
   The results stay shown once the transfers are over: "✓ done · SHA-256 verified (n/n)", "⚠ done · not verified: n
   of N", or the failure in red; "Details" on a finished line shows the SHA-256 checksum of each file, and "Clear
   finished" removes the finished, failed and cancelled transfers from the list (the transfer history keeps them).
   A stopped transfer deletes the file being transferred, which is incomplete (on the
-  server for an upload, on this computer for a download); files already transferred stay. Beware: if the upload was
+  server for an upload, on this computer for a download); files already transferred stay. An upload stopped through a
+  symbolic link of the server keeps the link and the file it points to, and the summary says so. A download also
+  stops when the server sends far more than the announced size (double, or 64 MB more): the incomplete copy is
+  deleted. Beware: if the upload was
   replacing an existing file and had started writing it, its old content is lost; stopped before any content, the
   server file stays as it was. Over SCP, stopping ends only that transfer: the next items go
   on over the same connection; a transfer that no longer moves (server not reading) stops 2 s after "Cancel" and the next
@@ -422,13 +443,16 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   thousands, much faster through the PSMP. The archive is made on this computer (in the queue, can be cancelled),
   sent and checked (SHA-256), then deleted from this computer; each dropped item is at the root of the archive
   (permissions 0644 and 0755). Nothing is run on the server: an orange box shows up at the bottom of the Files tab
-  with the extraction command, for example `cd '/opt/app' && /usr/bin/gzip -dc './deploy.tar.gz' | tar xf - && rm -f
-  './deploy.tar.gz'` (the archive is deleted from the server once extracted). "Copy the command", or "Type it in the
-  terminal", which types it at the prompt of the session without running it: check it, then press Enter. The box
-  stays (for that session) until you close it. "Send the files one by one" keeps the usual upload; "Don't offer
-  again" turns the option off.
+  with the extraction command, for example `cd '/opt/app' && /usr/bin/gzip -dc './deploy.tar.gz' | tar xof - && rm -f
+  './deploy.tar.gz'` (the archive is deleted from the server once extracted). The extracted files belong to whoever
+  extracts them (`o`), and only empty folders have an entry in the archive: a folder that already exists keeps its
+  permissions and owner. The archive is not offered when the drop replaces items on the server: the one-by-one upload
+  rewrites them in place (permissions, owner and ACLs kept), and the replace question says so. "Copy the command", or
+  "Type it in the terminal", which types it at the prompt of the session without running it: check it, then press
+  Enter. The box stays (for that session) until you close it. "Send the files one by one" keeps the usual upload;
+  "Don't offer again" turns the option off.
   - **Every Unix** (Red Hat 5 to 9, HP-UX 11.11 and 11.31, Solaris, AIX…): the archive is in the standard POSIX tar
-    format (ustar), read by every tar, and the command uses `gzip` and `tar xf` separately, with no GNU tar specific
+    format (ustar), read by every tar, and the command uses `gzip` and `tar xof` separately, with no GNU tar specific
     option. It can be typed in any shell (sh, ksh, bash, zsh, csh, tcsh).
   - **gzip** is looked for on the server (through SFTP) where each system installs it: `/bin`, `/usr/bin`,
     `/usr/contrib/bin` (HP-UX), `/usr/local/bin`, `/opt/freeware/bin` (AIX), `/usr/sfw/bin` and `/opt/csw/bin`
@@ -443,8 +467,9 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
 - **Compare**: right-click a file → "Compare with…": the same path (or another one) on a server with an open SSH
   session, or a file of this computer; with two files selected, "Compare the 2 files". "Browse…" next to the path
   opens an explorer of the other server, on the same folder with the file preselected (or on the closest existing
-  parent folder): double-click a folder to enter it, Backspace to go up, a path can also be typed; the chosen file
-  replaces the path. The Files tab of that server stays on its folder. The same file on the same server is refused;
+  parent folder): double-click a folder to enter it, Backspace to go up, typing the start of a name selects the file
+  (spaces included), a path can also be typed; the chosen file replaces the path. The Files tab of that server stays
+  on its folder. The same file on the same server is refused;
   with no other server open, a file of this computer is offered. The files are read **in
   memory** (50 MB at most each), without a copy on this computer. The window shows the lines side by side: removed
   in red on the left, added in green on the right. `F7` / `Shift+F7`: next / previous difference; "Ignore spaces";
@@ -484,11 +509,14 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   overwriting it. Opening a file that is already open downloads it again, every time: if its content changed on the
   server (edited in the terminal, by someone else, before a reconnection…), the copy opened in the editor is replaced
   by the current version; otherwise it is left as is. Only exception: if your copy has changes not sent back and the
-  file also changed on the server, ZillaTerm asks whether to "Reload the server version" or "Keep my copy".
+  file also changed on the server, ZillaTerm asks whether to "Reload the server version" or "Keep my copy". While an
+  edited file is being sent back, closing the tab, exiting or signing out waits for the send-back to finish (the
+  status bar says so), so as not to leave a half-written file on the server.
 - **Follow a file (tail -f)**: right-click one or several files → "Follow (tail -f)". A window shows the end of the
   file, then each new line as soon as it is written, like `tail -f`, reading the file over SFTP every second: no
   command runs on the server. A file truncated or replaced by a rotation is read again from the start; the last
-  10,000 lines are kept.
+  10,000 lines are kept. A line longer than 8,192 characters is cut, with "… [line cut after 8,192 characters]"
+  (also in copies and saved files); the rest of that line is ignored.
   - **Colours and alerts**: errors (ERROR, FATAL, CRITICAL…) in red, warnings (WARN) in orange; words of your choice
     highlighted in yellow ("Highlight", separated by commas). "Alert on" (e.g. `ERROR, OutOfMemory, Connection
     refused`): every new line containing one of these words is marked, the "⚠ n alerts" counter goes up (a click
@@ -528,6 +556,8 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   error; the other items are processed.
 - **Operation in progress**: while a delete, a rename or a permission change runs on one server, the other servers
   stay usable; on the same server, Delete, `F2` and Permissions are refused until it ends, and the status bar says so.
+  If you have moved to another session in the meantime, the outcome of a delete or a permission change (errors
+  included) is shown when you come back to it.
 - **Filter**: the box under the path keeps only the items of the folder whose name contains the text (`nginx`), or
   matches a mask with `*` and `?` (`*.log`, `app?.conf`; several separated by `;`: `*.log;*.gz`), ignoring case.
   `..` stays to go up; the status bar says how many items are shown. It is cleared when you change folder; `Ctrl+F`
@@ -567,9 +597,11 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   `Enter` or `↓` selects the first result, `Esc` or the ✕ at the end of the box clears. With thousands of servers,
   the list is filtered once you stop typing.
 - **Several servers at once**: `Ctrl+click` adds or removes a server (or all those of a folder), `Shift+click` picks
-  a range of servers; `Esc` or a plain click cancels. Right-click one of them → "Open the N servers in the parallel
-  view" or "Connect to the N servers" (one tab each). Right-click a folder → "Open in the parallel view" or "Connect
-  to the N servers".
+  a range of servers; `Esc` or a plain click cancels. With the keyboard: `Ctrl+Space` adds or removes the selected
+  server, `Shift+↑` / `Shift+↓` extends the range; the arrows alone keep the chosen servers, and the Menu key (or
+  `Shift+F10`) opens the menu of the selection. Right-click one of them → "Open the N servers in the parallel view"
+  or "Connect to the N servers" (one tab each). Right-click a folder → "Open in the parallel view" or "Connect to the
+  N servers".
 - **Tag** (PROD, QA, DEV…): right-click → "Tag ▸", see [below](#tags-prod-qa-dev).
 - **Settings of each server** (right-click → "Properties…"):
 
@@ -614,8 +646,8 @@ see the new color.
 - **Change**: right-click a server or a selection (`Ctrl+click`) → "Tag ▸", or a folder → "Tag the servers of the
   folder ▸", then the tag, or "No tag". "Suggest from the name" tags at once the servers that have none yet (those
   without a suggestion stay untagged). Also in "Properties…".
-- **List of tags**: Settings › General › "Server tags" (name of 16 characters at most, color). Renaming a tag renames
-  it on the servers; deleting it removes it from the servers.
+- **List of tags**: Settings › General › "Server tags" (name of 16 characters at most, color; 20 tags at most).
+  Renaming a tag renames it on the servers; deleting it removes it from the servers.
 - The tag follows the server in the export of "My servers" and in shared lists; a tag missing from your Settings is
   shown in gray. The list of tags (names and colors) is shared with the team by the
   [environment file](#shared-environment).
@@ -643,7 +675,8 @@ other):
   - **Add**: right-click a server or a folder of "My servers" → "Share in a list" (the folder is kept), or drag a
     server, a folder or an account of "Available" onto the list or one of its folders (confirmation). The default
     reason stays personal: it is never shared.
-  - **Remove**: right-click → "Remove from the shared list…" (or `Del`), after confirmation.
+  - **Remove**: right-click → "Remove from the shared list…" (or `Del`), after confirmation. During a search,
+    "Remove the folder" removes all its servers, including those the search hides: the confirmation says how many.
   - **Use**: double-click to connect; right-click for the advanced options, the password, the safe members or
     "Copy into My servers". Everyone connects with their own CyberArk rights: an account you cannot see in the
     CyberArk Vault shows "⚠ not found in CyberArk". The tooltip shows the account as CyberArk describes it, the target machine, who added the server
@@ -690,13 +723,18 @@ To move to ZillaTerm without typing your servers again, and stop connecting to t
    - Of a suitable type: Windows for Remote Desktop, Unix or network for SSH; another type only when there is none;
      never a database account.
    - Otherwise, a domain account of the same user (`CORP\admin`, `admin@corp.local`) allowed on that server: the
-     server becomes its target machine. `CORP\admin` never means the local `admin` account of the server.
+     server becomes its target machine. `CORP\admin` never means the local `admin` account of the server. Accounts of
+     the server's domain come before the others; a session with no domain given that only finds an account of another
+     domain (`admin@corp.local` for `web01.dmz.local`) only gets it as a suggestion, not ticked: "Account from another
+     domain than the server: check it".
    - A session that already went through the PSMP (`vault@target@server@psmp`) or through PSM (start program
      `psm /u account /a server /c component` of an `.rdp` file) is decoded: the target account and server are what
      count, and the PSM component is kept.
    - Several possible accounts: the most likely one is proposed ("to check"), but the session is not ticked; choosing
      an account in the list of the "PVWA account" column ticks it (or tick it to keep the proposed one). The
-     "Import (n)" button shows how many sessions will be added.
+     "Import (n)" button shows how many sessions will be added. The header box ticks the rows shown (those of the
+     "Only problems" filter when it is ticked), or unticks them if they all are; it is half filled when only some are
+     ticked.
 3. **Saved connection**, never direct: Remote Desktop through PSM; SSH and files (SFTP, SCP) through the PSMP when
    there is one for that server (files only for an "SFTP" platform), otherwise through PSM (`PSM-WinSCP` for files);
    Telnet through `PSM-Telnet`.
@@ -749,14 +787,19 @@ servers, over SSH, remote desktop or VNC, or to their files only (SFTP, FTP, FTP
   entry's password is used directly; it is never shown or written to disk.
   - **SSH**: terminal + Files tabs. On the first connection, the fingerprint of the server key is to be compared
     with the one given by its administrator, in the same window as for the PSMP (see
-    [section 4](#4-open-an-ssh-session-through-the-psmp)).
-  - **Remote desktop**: the tab follows its size (remote desktop resolution) and offers "Full screen"
-    (`Ctrl+Alt+Break` to come back), "Disconnect" and "Reconnect". Before each connection, ZillaTerm reads the
-    server's certificate. If Windows does not trust it (self-signed…), its subject, its issuer, its dates and its
-    SHA-256 fingerprint are shown on the first connection, then it is remembered for that server; if it changes later,
-    the remembered and the new fingerprints are shown, and you must tick "I confirmed this change with the server's
-    administrator". The password is only read and handed to the Remote Desktop control after this check; a server
-    that does not accept TLS encryption is refused. No image of the session is kept on the computer's disk.
+    [section 4](#4-open-an-ssh-session-through-the-psmp)). The entry's password is only sent once per connection: an
+    outdated password in the database does not count several failures on the server (risk of locking the account),
+    and "Cancel" cuts the connection without sending anything.
+  - **Remote desktop**: tab with the FreeRDP client embedded in ZillaTerm (failing that, the Windows Remote Desktop
+    control, which also offers "Full screen", `Ctrl+Alt+Break` to come back), with "Disconnect" and "Reconnect".
+    Before each connection, ZillaTerm reads the server's certificate. If Windows does not trust it (self-signed…),
+    its subject, its issuer, its dates and its SHA-256 fingerprint are shown on the first connection, then it is
+    remembered for that server; if it changes later, the remembered and the new fingerprints are shown, and you must
+    tick "I confirmed this change with the server's administrator". The password is only read after this check;
+    FreeRDP receives it on its standard input (never on the command line) and only accepts the checked certificate.
+    An entry without a password fails authentication. A server that does not accept TLS encryption is refused. No
+    image of the session is kept on the computer's disk, including in Remote Desktop Connection opened when ZillaTerm
+    has no client (the password must then be typed there).
   - **VNC** (`vnc://server`, port 5900; `vnc://server:1` means display 1, port 5901): desktop in a tab, fitted to
     the window or at real size ("Fit"), "Ctrl+Alt+Del" (after confirmation: depending on the machine, it opens the
     security screen or restarts some virtual machine consoles), "Send clipboard" and "Copy remote text" buttons: the
@@ -783,7 +826,8 @@ servers, over SSH, remote desktop or VNC, or to their files only (SFTP, FTP, FTP
   box nor in its custom fields) is not saved. The rest of the database (attachments, fields, settings) is kept; the
   previous version of an entry goes to its history, like in KeePass. While saving, the previous version of the file
   is kept as `database.kdbx.bak`, then deleted as soon as the new file reads back identical: no old copy, which
-  would still open with an old master password, stays next to the database (shared or not).
+  would still open with an old master password, stays next to the database (shared or not). Exception: if another
+  computer saved the database at the same moment, its version is kept in the `.bak` rather than lost.
 - **Lock**: right-click → "Lock". Databases also lock on sign-out of CyberArk, on exit and when **Windows is locked**.
 
 **Local vault**: the master passwords you choose to remember are kept in `%APPDATA%\ZillaTerm\coffre-local.dat`,
@@ -831,14 +875,21 @@ The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPP
 by block as recording goes (a crash only loses the last two seconds, and the report says so). A block removed, moved
 or changed is reported. ⚠ Passwords typed without echo are not in it, but **whatever a terminal shows is** (the
 contents of a configuration file, for example); the exported report is **not encrypted**: keep it in a safe place.
-Terminal text is capped at 64 million characters per intervention (the other events are still kept beyond that).
+Terminal text is capped at 64 million characters per intervention (the other events are still kept beyond that); a
+very large output is written in several blocks, without losing the rest of the report. A disconnection cancelled at
+the confirmation is not in it.
+
+**Disk refusing the journal** (full, quota, access removed): the status bar shows "⚠ Intervention: recording
+interrupted" in red, and the window "Recording interrupted at 14:10.": nothing more is kept from that time on, the
+note and the capture are greyed out. Free some space, then "Stop recording" and "Record the intervention" to start
+again in a new recording.
 
 ## Shortcuts
 
 | Where | Action | Shortcut |
 | --- | --- | --- |
-| Everywhere (except the Files tab) | Reload the accounts from the PVWA | `F5` |
-| Everywhere | Filter the accounts (in "My servers": search a server; in "Files": filter the folder) | `Ctrl+F` |
+| Outside the terminal and the Files tab | Reload the accounts from the PVWA | `F5` |
+| Outside the terminal | Filter the accounts (in "My servers": search a server; in "Files": filter the folder) | `Ctrl+F` |
 | Everywhere | Next / previous session tab | `Ctrl+Tab` / `Ctrl+Shift+Tab` |
 | Everywhere | Close the session tab | `Ctrl+F4` or `Ctrl+Shift+W` |
 | Everywhere | "Available", "My servers", "Files" tabs of the side panel | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` |
@@ -851,7 +902,7 @@ Terminal text is capped at 64 million characters per intervention (the other eve
 | Search | Clear the filter | `Esc` or ✕ at the end of the box |
 | Home | Remove a recent session from the list | `Del` |
 | My servers | Rename / remove or delete | `F2` / `Del` |
-| My servers | Pick several servers (then right-click to open them together) | `Ctrl+click`, `Shift+click`; `Esc` cancels |
+| My servers | Pick several servers (then right-click to open them together) | `Ctrl+click`, `Shift+click`, `Ctrl+Space`, `Shift+↑` / `Shift+↓`; `Esc` cancels |
 | Terminal | Copy | Mouse selection, or `Ctrl+Shift+C` |
 | Terminal | Paste | `Shift+Insert` or `Ctrl+Shift+V` (right-click with the Settings option) |
 | Terminal | Menu: copy, paste, select all, search, save, clear the history, font size, tab actions | Right-click or Menu key (Shift+right-click with the paste option) |
@@ -870,17 +921,21 @@ Terminal text is capped at 64 million characters per intervention (the other eve
 | Files | Go to the item whose name starts with these letters (the same letter again: the next one) | Type the start of the name |
 | KeePass database | Connect / edit / delete an entry | Double-click or `Enter` / `F2` / `Del` |
 
-In a terminal, `Ctrl+K`, `Ctrl+B` and `F6` are sent to the server (`F6` to applications such as mc); `Ctrl+Tab`,
-`Ctrl+F4`, `Ctrl+Shift+W` and `Ctrl+1/2/3` stay with ZillaTerm.
+In a terminal, `F5`, `Ctrl+F`, `Ctrl+K`, `Ctrl+B` and `F6` are sent to the server (`F6` to applications such as
+mc); `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Shift+W` and `Ctrl+1/2/3` stay with ZillaTerm. In a remote desktop session, the keys
+go to the remote session.
 
 **Keyboard and accessibility**: the toolbar can be reached with `Tab` (the focus is visible), every menu and every
 window has its access keys (`Alt` + underlined letter, without duplicates, in English, French and Italian), and the
 menu of an item of "My servers" opens at the same place with a right-click, `Shift+F10` or the Menu key. Password
 boxes (sign-in, KeePass database, local vault) warn when Caps Lock is on. Screen readers announce the names of list
-and tree items, of icon or symbol buttons (✕, ↑, ↓), of fields (path, ticket number…), the status bar messages and
-connection errors. The toolbars of "My servers" and of the Files tab are a single `Tab` stop (the arrow keys move
-from one button to the other). In the Settings, every box has its access key, without duplicates in the page shown. In high contrast mode, the
-interface takes the Windows system colours and follows their changes.
+and tree items, of icon or symbol buttons (✕, ↑, ↓), of fields (path, ticket number…), each button and each box by
+its label, the status bar messages and connection errors; a refused password is announced with the attempt number
+("Attempt 2 of 3"), also read with the field, and a server that no longer responds or an ended session is announced
+only once. On the selected row of trees and tables, the secondary texts (counters, "matches: …", ⚠) stay readable,
+with or without the focus. The toolbars of "My servers" and of the Files tab are a single `Tab` stop (the arrow keys
+move from one button to the other). In the Settings, every box has its access key, without duplicates in the page
+shown. In high contrast mode, the interface takes the Windows system colours and follows their changes.
 
 **Dark theme**: Settings → General → Appearance → Theme: "Same as Windows" (default: the app mode chosen in Windows,
 Personalization → Colors, followed even when it changes), "Light" or "Dark". The change applies right away, to open
@@ -948,8 +1003,12 @@ apply" is the default. The PVWA and the PSMPs receive your CyberArk password: wh
 adds a server key or a shared list on a network server (Windows signs in to it at each start; the server is named),
 "I have checked…" must be ticked before applying. A server key already accepted on the computer is never replaced by a
 file (it is reported). Only the keys of the PSMPs (those of the computer or of the file) are taken: the key of another
-server, an emergency access one for example, is ignored and checked at its first connection. An invalid file (http address, wrong component name…) is refused as a
-whole. A file already offered is offered again only when it has changed. A setting left empty on the exporting PC is
+server, an emergency access one for example, is ignored and checked at its first connection. A key taken from a
+file only applies to connections to the PSMP: a direct connection to the same server (KeePass) still has its key
+checked. In Settings, these keys appear as `psmp://host:port`.
+A file written in "UTF-8 with BOM" (PowerShell 5.1: `Set-Content -Encoding UTF8`) is accepted, like a shared list. An
+invalid file (http address, wrong component name…) is refused as a whole. A file already offered is offered again
+only when it has changed. A setting left empty on the exporting PC is
 not exported: it clears nothing on the importing one. Paths (shared lists, central file) are full: `C:\…` or
 `\\server\…`. Your user name, "My servers" and your
 recent sessions are never touched; shared lists are added without removing yours. The tags of the file replace those
@@ -958,8 +1017,10 @@ of the computer; your servers keep theirs (a tag missing from the file is then s
 All preferences are saved in `%APPDATA%\ZillaTerm\settings.json`: language, PVWA address, sign-in method and user
 name, the settings above, "My servers", their folders and the files followed on them (paths), recent sessions,
 location of the KeePass databases and of their key files, and of the open shared lists, window position and size,
-width and state of the side panel. This file contains **no password, token or private key**. To
-start from scratch, close the application and delete it. It is written to a temporary file first, then put in place,
+width and state of the side panel. This file contains **no password, token or private key**. To start from scratch,
+close the application and delete `settings.json` and `settings.json.bak` (the backup alone would be used, with a
+message); if the old `%APPDATA%\CyberArkTerm` folder still exists, delete or rename it too, otherwise its settings are
+picked up at start-up. It is written to a temporary file first, then put in place,
 the previous one being kept as `settings.json.bak`: if the file ever cannot be read, it is set aside (never
 overwritten), the backup is used and a message says so. ZillaTerm opens only once per Windows session: two
 instances would overwrite each other's settings. The transfer history of the Files tab is next to it, in
@@ -977,18 +1038,29 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
 
 ## Security
 
-- **HTTPS required** to the PVWA; certificate validation is never disabled. A redirection from the PVWA is never
-  followed (your password would go to the address given): it is reported with that address. The PVWA address may
-  only contain the server name, a port and a path: a "name@" before the server (which would reach another server than
-  the one shown), a space, a "\" or a non-ASCII letter are refused.
+- **HTTPS required** to the PVWA; certificate validation is never disabled. The revocation of the PVWA certificate
+  (and of GitHub's for updates) is checked online: a revoked certificate is refused; if the revocation list cannot be
+  reached (closed network), the connection goes through after 5 seconds at most, and the debug log notes it; the
+  result is kept for an hour. A redirection from the PVWA is never followed (your password would go to the address
+  given): it is reported with that address. The PVWA address may only contain the server name, a port and a path: a
+  "name@" before the server (which would reach another server than the one shown), a space, a "\" or a non-ASCII
+  letter are refused.
 - **File names from the server**: invisible characters (writing direction override, zero-width space, control
-  characters) are shown as "�" in the list and confirmations, and become "_" in the name of the downloaded file, so
-  that a name cannot imitate another one (".exe" shown as ".pdf"). Special files (a device such as `/dev/zero`, a
-  named pipe, a socket) are neither opened nor downloaded, and are skipped when a folder is downloaded.
+  characters) are shown as "�" in the list, the confirmations, the choice of a file of the other server, the
+  comparison, the transfer queue and history, and when following a file (tail), and become "_" in the name of the
+  downloaded file, so that a name cannot imitate another one (".exe" shown as ".pdf"). Files coming from the servers
+  (downloads, copies opened in the editor, dragging to Explorer) carry the mark of files from the Internet (Internet
+  zone; the server's name is never written in it, as Windows may send it to Microsoft): SmartScreen checks an
+  executable before running it,
+  and office applications open a document in Protected View. Special files (a device such as `/dev/zero`, a named
+  pipe, a socket) are neither opened nor downloaded, and are skipped when a folder is downloaded.
 - **No secret on disk**: CyberArk password, session token, MFA key and PSMP password stay in memory for the session.
   Kept PSMP passwords and the MFA key are forgotten when Windows locks; the MFA key is wiped after each connection and
   removed from the PVWA at logoff (`Logoff`), done on exit.
 - PVWA session opened with `concurrentSession`: your PVWA web session, if any, is not closed.
+- **End of the Windows session** (sign-out, shutdown): ZillaTerm closes without asking; its sessions are closed
+  (copies of edited files deleted), the KeePass databases and the local vault locked, the clipboard holding the
+  password cleared and the PVWA session closed (2 seconds at most).
 - **Copying a password**: the PVWA response is read into a buffer wiped afterwards and decoded without going through
   a string; the password goes straight to the Windows clipboard, marked to be excluded from the history (`Win+V`),
   from cross-device sync and from clipboard monitoring tools, then cleared after 20 s if it is still there (tried
@@ -1023,7 +1095,10 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
 - **New version**: no request to the Internet without your action or the Settings option (off by default); only the
   addresses of the project repository are followed, the archive is kept only when its SHA-256 checksum is the one of
   `SHA256SUMS.txt` of the same release (which detects an incomplete or damaged download, not a release published by
-  someone who took over the repository), and nothing is installed or started.
+  someone who took over the repository), and nothing is installed or started. The kept archive carries the mark of
+  files from the Internet ("Mark-of-the-Web"): SmartScreen checks the extracted executable. Since 0.30.0, the
+  published archive has a provenance attestation, which proves that it was built by the project repository:
+  `gh attestation verify ZillaTerm-<version>-win-x64.zip --repo muller-camille/ZillaTerm`.
 - **PSMP host keys pinned** on first use: the fingerprint is to be compared before accepting ("Cancel connection" by
   default); a changed key is flagged by a banner and only replaces the old one after a confirmation box is ticked
   (the same for servers reached in emergency access and for FTPS and Remote Desktop certificates). One key is
@@ -1041,12 +1116,12 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
     kept), the decrypted result is checked and the file is replaced in one step (a `.bak` copy during the
     replacement, deleted once the file reads back identical); an entry changed elsewhere in the meantime is not
     overwritten;
-  - direct remote desktop: the password is only passed to the Remote Desktop control (no file, no credential
-    manager), with network level authentication (NLA) and a warning if the server is not recognized; the server
-    certificate is read before the password is sent and pinned on first use (a change is reported and blocked until
-    it is confirmed), a server without TLS is refused, the persistent bitmap cache is off. Limit: the control then
-    runs its own TLS negotiation, and the pinned fingerprint cannot be imposed on it; for a certificate that Windows
-    does not trust, it still shows its own warning;
+  - direct remote desktop: the server certificate is read before the password is read, and pinned on first use (a
+    change is reported and blocked until it is confirmed), a server without TLS is refused, the persistent bitmap
+    cache is off. With FreeRDP, the password goes through its standard input (no command line, no file, no credential
+    manager) and the connection only accepts the pinned certificate. Limit, with the Windows control only (FreeRDP
+    missing): it runs its own TLS negotiation, and the pinned fingerprint cannot be imposed on it, and for a
+    certificate that Windows does not trust, it still shows its own warning;
   - VNC: the protocol encrypts neither the screen, nor the keystrokes, nor the clipboard (permanent banner); the
     password is not sent as is (challenge-response of the protocol), and only after your agreement: the server is
     not authenticated and can recover its first 8 characters; the clipboard is only exchanged on a click; beeps are
@@ -1148,6 +1223,9 @@ no standard checksum: each upload is read back from the server and compared by S
 compare and live follow. After an interrupted transfer, the connection is reopened and the incomplete file deleted.
 Overwriting a file writes it in place: it keeps its permissions. Symbolic links: the first 40 of a folder are
 resolved (one round trip each); beyond that, a link shows as a file and opening it enters the folder if it is one.
+Names are exchanged in UTF-8 (`OPTS UTF8 ON`), even if the server does not announce it; a name that UTF-8 cannot
+represent is refused rather than changed. Over SFTP, the links of a folder are followed in batches of 16 requests, 400
+at most (beyond that, as over FTP); a link to a file takes the size of that file.
 
 ### Remote desktop sessions
 
@@ -1189,7 +1267,8 @@ user is sent) and checks it: chain up to an authority Windows trusts, name, usag
 otherwise fingerprint pinned (`rdp://server:port` among the accepted server keys) or confirmed by the user. A PSM that
 only accepts the old "RDP security" without TLS: ZillaTerm reads its key the same way (connection request whose answer
 holds the key; nothing else is sent) and pins it (`rdp://server:port`, type `RDP-RSA`; fingerprint: SHA-256 of the
-key in DER PKCS#1, the one FreeRDP compares), with 128-bit encryption at least; a PSM without encryption is refused, and
+key in DER PKCS#1, the one FreeRDP compares), with 128-bit encryption at least; the question shows the key size and
+warns in red below 2,048 bits (a shorter key can be broken); a PSM without encryption is refused, and
 so is a key from a server that has already presented a TLS certificate (TLS removed: possible interception). Several
 certificates and keys per address (load-balanced PSM: one per server, each confirmed once): the client receives them
 all. Questions come before the client is launched, never during the connection; once one is answered, the connection
@@ -1272,7 +1351,7 @@ sh or fish, following is not set up and nothing stays on screen.
 
 | Symptom | Likely cause and fix |
 | --- | --- |
-| "The PVWA has no connection component “PSM-RDP” for this account" (`EPVWA093E Failed to get the relevant connection component`) | The account's platform uses a component with another name (for example `WIN-PSM`): the one offered by the PVWA "Connect" button, or the name after `/c` in a `psm /u … /a … /c …` command. Enter it in "Component"; "Remember this component for platform" is ticked for the next connections. |
+| "The PVWA has no connection component “PSM-RDP” for this account" (`EPVWA093E Failed to get the relevant connection component`) | The account's platform uses a component with another name (for example `WIN-PSM`): the one offered by the PVWA "Connect" button, or the name after `/c` in a `psm /u … /a … /c …` command. Enter it in "Component" and tick "Remember this component for platform": it is kept once the PVWA accepts the connection. |
 | "TLS connection refused: this computer does not trust the PVWA certificate" | The certificate (or its issuing authority) is not in the workstation's Windows store. |
 | "The PVWA must be reached over HTTPS" | Type the address without `http://` (or with `https://`). |
 | "The PVWA refused the user name or the password" (`ITATS004E Authentication failure…`) | Check the user name, the password and Caps Lock before trying again: after several failures, CyberArk suspends the account. |
@@ -1312,7 +1391,7 @@ sh or fish, following is not set up and nothing stays on screen.
 | A PSM session opens in Remote Desktop Connection despite the "in a tab" option | Connection through a Remote Desktop gateway, or FreeRDP client cannot be launched on the computer (computer policy): the status bar says so. |
 | Alt+Tab or the Windows key no longer respond | The tab of a PSM session has the keyboard: all keys go to the session. Click elsewhere in ZillaTerm (another tab, the list). |
 | PSM session in a tab: Ctrl+V of a file or text copied on the computer does nothing | The PVWA may not allow the clipboard, or the PSM may only allow text. Settings → Debug log, reproduce (copy, click in the session, paste), then "Show the debug log file": the `freerdp` lines give the redirections asked by the PVWA (`presse-papiers oui/non`), each change of the computer clipboard (program, formats: files, text; never the contents) and the clipboard exchanges with the PSM (`cliprdr`: `CB_STREAM_FILECLIP_ENABLED` missing from the server flags means no file copy). |
-| PSM session: "Check the key of this PSM" | The PSM only accepts the legacy "RDP security", without TLS: only the fingerprint of its key identifies it. Accept it on first use (it is remembered) and ask the CyberArk administrator to enable TLS on the PSM. |
+| PSM session: "Check the key of this PSM" | The PSM only accepts the legacy "RDP security", without TLS: only the fingerprint of its key identifies it. Accept it on first use (it is remembered) and ask the CyberArk administrator to enable TLS on the PSM. "Weak key" in red: the key is shorter than 2,048 bits; this request is then urgent. |
 | PSM session: "New key for this PSM" | The PSM address probably groups several servers (load balancing), each with its own key: trust it if the CyberArk administrator confirms. The keys already accepted stay accepted. |
 | SSH or PSMP session: "The connection was cut by the server or the network" or "Session closed by the server" after sleep, a lock or a break | The connection is lost: the computer went to sleep, the network or VPN changed, a firewall forgot it, or the PSMP closed the session (inactivity). ZillaTerm detects it within a minute (keep-alive request every 15 s, which the server must answer): "Reconnect" opens a new session; the Files tab offers to reopen its own. |
 | SSH or PSMP session: "The server has not answered for N s", terminal grayed out | What you typed got no answer, nor did the request ZillaTerm then sends to the server (after 2 s). Everything comes back as soon as the server answers; otherwise the connection is declared lost after about a minute. "Reconnect" opens a new session right away. |

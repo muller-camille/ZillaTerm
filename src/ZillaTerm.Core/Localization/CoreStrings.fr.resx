@@ -304,7 +304,7 @@
     <value>Cette liste de serveurs a été écrite par une version plus récente de ZillaTerm (format {0}) : mettez ZillaTerm à jour pour l'ouvrir.</value>
   </data>
   <data name="ServerListNotShared" xml:space="preserve">
-    <value>Ce fichier est un export de Mes serveurs, pas une liste partagée : importez-le plutôt.</value>
+    <value>Ce fichier est un export de « Mes serveurs », pas une liste partagée : importez-le plutôt.</value>
   </data>
   <data name="ServerListBusy" xml:space="preserve">
     <value>La liste partagée est en cours de modification par quelqu'un d'autre : réessayez dans un instant.</value>
@@ -409,10 +409,10 @@
     <value>Non importé : connexion {0} non prise en charge</value>
   </data>
   <data name="MigrationAlreadyPresent" xml:space="preserve">
-    <value>Déjà dans Mes serveurs, dossier {0}</value>
+    <value>Déjà dans « Mes serveurs », dossier {0}</value>
   </data>
   <data name="MigrationAlreadyPresentRoot" xml:space="preserve">
-    <value>Déjà dans Mes serveurs</value>
+    <value>Déjà dans « Mes serveurs »</value>
   </data>
   <data name="MigrationExcluded" xml:space="preserve">
     <value>Non importé : décoché</value>
@@ -448,7 +448,7 @@
     <value>L'adresse du PVWA ne peut contenir que le nom du serveur, puis un port et un chemin si besoin : pas de « nom@ » devant le serveur, pas d'espace ni de « \ », pas de lettre accentuée ou d'un autre alphabet (un nom international s'écrit sous sa forme « xn-- »).</value>
   </data>
   <data name="PvwaRedirectNotFollowed" xml:space="preserve">
-    <value>Le PVWA a répondu par une redirection (HTTP {0}) vers {1}. Elle n'est pas suivie, pour que votre mot de passe et votre session ne partent jamais vers une autre adresse : vérifiez l'adresse du PVWA dans les Paramètres (nom exact du serveur et chemin de PasswordVault).</value>
+    <value>Le PVWA a répondu par une redirection (HTTP {0}) vers {1}. Elle n'est pas suivie, pour que votre mot de passe et votre session ne partent jamais vers une autre adresse : corrigez le champ « Adresse PVWA » de la fenêtre d'identification (nom exact du serveur et chemin de PasswordVault).</value>
   </data>
   <data name="SpecialFileRefused" xml:space="preserve">
     <value>« {0} » est un fichier spécial (périphérique, tube nommé ou socket) : il ne peut être ni ouvert ni téléchargé, car sa lecture ne finirait pas ou bloquerait le serveur.</value>
@@ -560,5 +560,26 @@
   </data>
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>Le serveur Bureau à distance n'utilise aucun chiffrement : rien ne prouve son identité ni ne protège la connexion, elle est refusée.</value>
+  </data>
+  <data name="TailLineCut" xml:space="preserve">
+    <value> … [ligne coupée après {0:N0} caractères]</value>
+  </data>
+  <data name="MigrationCheckOtherDomain" xml:space="preserve">
+    <value>Compte d'un autre domaine que le serveur : vérifiez-le</value>
+  </data>
+  <data name="PvwaTooManyPages" xml:space="preserve">
+    <value>Le PVWA a renvoyé une liste anormalement longue (plus de {0} pages) : chargement arrêté. Signalez-le aux administrateurs CyberArk.</value>
+  </data>
+  <data name="UploadWholeDrive" xml:space="preserve">
+    <value>« {0} » est un lecteur ou un partage entier : déposez plutôt les dossiers ou fichiers qu'il contient.</value>
+  </data>
+  <data name="TransferIncompleteLinkKept" xml:space="preserve">
+    <value>lien symbolique : sa cible {0} reste incomplète (ni le lien ni sa cible n'ont été supprimés)</value>
+  </data>
+  <data name="FtpNameNotEncodable" xml:space="preserve">
+    <value>« {0} » contient un caractère invalide (caractère Unicode incomplet) : il ne peut pas être envoyé au serveur FTP. Renommez-le d'abord.</value>
+  </data>
+  <data name="DownloadExceedsAnnounced" xml:space="preserve">
+    <value>Le serveur a envoyé plus de {0} pour un fichier annoncé à {1} : téléchargement arrêté.</value>
   </data>
 </root>

@@ -60,8 +60,8 @@
 
         <StackPanel Grid.Row="2">
             <!-- Avertissement Verr. Maj, pendant la saisie du mot de passe. -->
-            <TextBlock x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}" Margin="0,0,0,6"
-                       Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+            <views:AnnouncedText x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}" Margin="0,0,0,6"
+                                 Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
             <views:ErrorLine x:Name="StatusText" Margin="0,4,0,8" Visibility="Collapsed" />
         </StackPanel>
 
@@ -71,8 +71,13 @@
                       AutomationProperties.Name="{x:Static loc:Strings.LoginLanguageName}" />
             <ProgressBar x:Name="Busy" DockPanel.Dock="Left" Width="70" Height="6" Margin="10,0,0,0"
                          IsIndeterminate="True" Visibility="Hidden" VerticalAlignment="Center" />
-            <!-- Sans connexion, l'application se ferme : le bouton le dit. -->
-            <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.LoginQuit}" IsCancel="True" Margin="8,0,0,0" />
+            <!-- Sans connexion, l'application se ferme : le bouton le dit. Pendant la question RADIUS, Échap fait « Retour ». -->
+            <Button DockPanel.Dock="Right" x:Name="QuitButton" Content="{x:Static loc:Strings.LoginQuit}" IsCancel="True" Margin="8,0,0,0" />
+            <!-- Pas d'IsCancel : un bouton d'annulation fermerait la fenêtre (Échap est pris dans OnPreviewKeyDown). -->
+            <Button DockPanel.Dock="Right" x:Name="BackButton" Margin="8,0,0,0" Visibility="Collapsed" Click="OnBackClick"
+                    ToolTip="{x:Static loc:Strings.LoginBackTip}">
+                <AccessText Text="{x:Static loc:Strings.LoginBack}" />
+            </Button>
             <Button DockPanel.Dock="Right" x:Name="LoginButton" Content="{x:Static loc:Strings.LoginButton}" IsDefault="True"
                     Click="OnLoginClick" />
         </DockPanel>

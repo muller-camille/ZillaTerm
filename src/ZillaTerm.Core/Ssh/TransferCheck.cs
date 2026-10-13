@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using ZillaTerm.Core.Localization;
 
 namespace ZillaTerm.Core.Ssh;
 
@@ -100,6 +102,20 @@ public sealed record TransferCheck(
         return new TransferCheck(link.Name, link.FullName, remotePath, -1, [], -1, [], target) { Upload = true, Skipped = true };
     }
 
+    /// <summary>Marge d'un téléchargement au-delà de la taille annoncée, pour un fichier qui grossit pendant la copie (journal).</summary>
+    private const long DownloadMargin = 64L * 1024 * 1024;
+
+    /// <summary>
+    /// Au plus ce qu'un téléchargement écrit sur le poste pour un fichier annoncé à <paramref name="announced"/> octets :
+    /// le double, ou 64 Mio de plus, au plus grand des deux. Un serveur qui annonce peu puis envoie sans fin ne remplit
+    /// pas le disque du poste (voir <see cref="HashingStream"/>).
+    /// </summary>
+    internal static long DownloadLimit(long announced)
+    {
+        long size = Math.Max(announced, 0);
+        return size > long.MaxValue / 2 ? long.MaxValue : Math.Max(size * 2, size + DownloadMargin);
+    }
+
     /// <summary>Crée le fichier d'un téléchargement en cours ; échoue plutôt que de remplacer un fichier du même nom.</summary>
     internal static FileStream CreatePartial(string partialPath) =>
         new(partialPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
@@ -123,7 +139,12 @@ public sealed record TransferCheck(
 /// Flux qui calcule le SHA-256 des octets qui le traversent, lus depuis le flux interne ou écrits vers lui ; sans flux
 /// interne, les octets écrits sont seulement hachés. Lecture et écriture séquentielles seulement.
 /// </summary>
-internal sealed class HashingStream(Stream? inner) : Stream
+/// <param name="limit">
+/// Octets au plus (téléchargement, voir <see cref="TransferCheck.DownloadLimit"/>) : au-delà, <see cref="InvalidDataException"/>
+/// (pas une <see cref="IOException"/>, que FluentFTP traiterait comme une coupure à reprendre), avant toute écriture.
+/// </param>
+/// <param name="announced">Taille annoncée par le serveur, pour le message.</param>
+internal sealed class HashingStream(Stream? inner, long limit = long.MaxValue, long announced = -1) : Stream
 {
     private readonly IncrementalHash _hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
 
@@ -208,6 +229,12 @@ internal sealed class HashingStream(Stream? inner) : Stream
 
     private void Append(ReadOnlySpan<byte> data)
     {
+        if (data.Length > limit - Count)
+        {
+            throw new InvalidDataException(string.Format(CultureInfo.CurrentCulture, CoreStrings.DownloadExceedsAnnounced,
+                RemotePath.FormatSize(limit), RemotePath.FormatSize(Math.Max(announced, 0))));
+        }
+
         _hash.AppendData(data);
         Count += data.Length;
     }

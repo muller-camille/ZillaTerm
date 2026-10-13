@@ -237,10 +237,16 @@ public sealed class AppSettings
 
     public const int MaxRecent = 15;
 
+    /// <summary>
+    /// Ajoute une connexion récente en tête ; elle remplace la même connexion (compte, mode, PVWA et machine cible : un
+    /// compte de domaine utilisé sur deux serveurs donne deux connexions récentes).
+    /// </summary>
     public void AddRecent(RecentSession session)
     {
         Recent.RemoveAll(r => r.AccountId == session.AccountId && r.Mode == session.Mode
-                              && string.Equals(r.PvwaHost, session.PvwaHost, StringComparison.OrdinalIgnoreCase));
+                              && string.Equals(r.PvwaHost, session.PvwaHost, StringComparison.OrdinalIgnoreCase)
+                              && string.Equals((r.RemoteMachine ?? "").Trim(), (session.RemoteMachine ?? "").Trim(),
+                                  StringComparison.OrdinalIgnoreCase));
         Recent.Insert(0, session);
         if (Recent.Count > MaxRecent)
         {
@@ -307,8 +313,8 @@ public sealed class AppSettings
             Add(session.Component);
         }
 
-        // Le mode d'une connexion récente est son composant PSM, ou « SSH » (PSMP).
-        foreach (var recent in Recent.Where(r => !string.Equals(r.Mode, RecentSession.SshMode, StringComparison.OrdinalIgnoreCase)))
+        // Le mode d'une connexion récente est son composant PSM, ou « SSH » / « SFTP » (PSMP), qui n'en sont pas.
+        foreach (var recent in Recent.Where(r => SessionLibrary.RecentMode(r.Mode ?? "") == ConnectMode.Psm))
         {
             Add(recent.Mode);
         }
@@ -369,32 +375,40 @@ public sealed class AppSettings
     /// Premier démarrage sous le nom ZillaTerm : copie le dossier de CyberArkTerm (réglages et leur sauvegarde, coffre local,
     /// historique des transferts…) quand <paramref name="directory"/> n'a pas encore de réglages. L'ancien dossier est gardé
     /// (retour possible à l'ancienne version) et un fichier déjà présent n'est jamais remplacé. <c>settings.json</c> est
-    /// copié en dernier : une copie interrompue est reprise au démarrage suivant. Des réglages ZillaTerm illisibles mis de
-    /// côté (voir <see cref="Load"/>) ne sont jamais remplacés par les anciens : ZillaTerm a déjà servi.
+    /// copié en dernier (sa sauvegarde juste après) : une copie interrompue est reprise au démarrage suivant. Des réglages
+    /// ZillaTerm illisibles mis de côté, ou leur sauvegarde <c>settings.json.bak</c> seule (fichier supprimé, remplacement
+    /// interrompu ; voir <see cref="Load"/>), ne sont jamais remplacés par les anciens : ZillaTerm a déjà servi.
     /// </summary>
     /// <returns>Vrai si les réglages ont été repris.</returns>
     public static bool ImportLegacyFolder(string legacyDirectory, string directory)
     {
         var settings = Path.Combine(directory, "settings.json");
         var legacySettings = Path.GetFullPath(Path.Combine(legacyDirectory, "settings.json"));
-        if (File.Exists(settings) || !File.Exists(legacySettings)
+        var legacyBackup = BackupPath(legacySettings);
+        if (File.Exists(settings) || File.Exists(BackupPath(settings)) || !File.Exists(legacySettings)
             || (Directory.Exists(directory) && Directory.EnumerateFiles(directory, "settings.json" + SetAsideSuffix + "*").Any()))
         {
             return false;
         }
 
-        CopyMissing(new DirectoryInfo(legacyDirectory), directory, legacySettings);
+        CopyMissing(new DirectoryInfo(legacyDirectory), directory, [legacySettings, legacyBackup]);
         File.Copy(legacySettings, settings, overwrite: false);
+        // Sauvegarde copiée après les réglages : présente sans eux, elle ne peut venir que de ZillaTerm (voir plus haut).
+        if (File.Exists(legacyBackup))
+        {
+            File.Copy(legacyBackup, BackupPath(settings), overwrite: false);
+        }
+
         return true;
     }
 
-    private static void CopyMissing(DirectoryInfo source, string target, string last)
+    private static void CopyMissing(DirectoryInfo source, string target, string[] skipped)
     {
         Directory.CreateDirectory(target);
         foreach (var file in source.EnumerateFiles())
         {
             var to = Path.Combine(target, file.Name);
-            if (!string.Equals(file.FullName, last, StringComparison.OrdinalIgnoreCase) && !File.Exists(to))
+            if (!skipped.Contains(file.FullName, StringComparer.OrdinalIgnoreCase) && !File.Exists(to))
             {
                 file.CopyTo(to);
             }
@@ -402,7 +416,7 @@ public sealed class AppSettings
 
         foreach (var sub in source.EnumerateDirectories())
         {
-            CopyMissing(sub, Path.Combine(target, sub.Name), last);
+            CopyMissing(sub, Path.Combine(target, sub.Name), skipped);
         }
     }
 
@@ -413,7 +427,10 @@ public sealed class AppSettings
     [System.Text.Json.Serialization.JsonIgnore]
     public string? SetAsideFile { get; private set; }
 
-    /// <summary>Réglages repris de la sauvegarde précédente (<c>settings.json.bak</c>) après un fichier illisible.</summary>
+    /// <summary>
+    /// Réglages repris de la sauvegarde précédente (<c>settings.json.bak</c>) après un fichier illisible
+    /// (<see cref="SetAsideFile"/> renseigné) ou absent (supprimé, remplacement interrompu) ; l'application le signale.
+    /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public bool RestoredFromBackup { get; private set; }
 

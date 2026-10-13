@@ -95,8 +95,9 @@ public partial class TransferHistoryDialog : Window
         Add(Strings.ChecksColDirection, new Binding(nameof(TransferRecord.Upload)) { Converter = new DirectionConverter() }, 1, DataGridLengthUnitType.Auto,
             Strings.ChecksUploaded, Strings.ChecksDownloaded);
         Add(Strings.HistoryColServer, new Binding(nameof(TransferRecord.Server)));
-        Add(Strings.HistoryColItem, new Binding(nameof(TransferRecord.Label)), 1.2);
-        Add(Strings.HistoryColDestination, new Binding(nameof(TransferRecord.Destination)), 1.5);
+        // Noms et dossiers du serveur : caractères invisibles remplacés par « � » (historique ancien compris).
+        Add(Strings.HistoryColItem, new Binding(nameof(TransferRecord.Label)) { Converter = new VisibleConverter() }, 1.2);
+        Add(Strings.HistoryColDestination, new Binding(nameof(TransferRecord.Destination)) { Converter = new VisibleConverter() }, 1.5);
         Add(Strings.HistoryColFiles, new Binding(nameof(TransferRecord.FileCount)), 1, DataGridLengthUnitType.Auto, "0000");
         // Téléchargements : toujours par la connexion SFTP de l'onglet.
         Add(Strings.HistoryColProtocol, new Binding(nameof(TransferRecord.Protocol)) { TargetNullValue = "SFTP" }, 1, DataGridLengthUnitType.Auto,
@@ -192,6 +193,16 @@ public partial class TransferHistoryDialog : Window
     {
         public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) =>
             value is DateTime time ? time.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture) : "";
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) =>
+            throw new NotSupportedException();
+    }
+
+    /// <summary>Texte venant du serveur, caractères invisibles remplacés par « � » (voir <see cref="RemoteEntry.DisplayName"/>).</summary>
+    internal sealed class VisibleConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) =>
+            value is string text ? RemoteEntry.Visible(text) : "";
 
         public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) =>
             throw new NotSupportedException();

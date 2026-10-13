@@ -576,6 +576,62 @@ public class PvwaClientTests
             (pvwa.Requests[3].Method, pvwa.Requests[3].PathAndQuery));
     }
 
+    /// <summary>
+    /// PVWA qui renvoie toujours la même page avec un total énorme (compromis, ou qui ignore l'offset) : la lecture
+    /// s'arrête à la première page sans compte nouveau, sans les doublons.
+    /// </summary>
+    [Fact]
+    public async Task GetAccounts_StopsWhenAPageBringsNothingNew()
+    {
+        var page = JsonSerializer.Serialize(new
+        {
+            value = Enumerable.Range(0, 3).Select(i => new { id = $"1_{i}", address = $"srv{i:D2}.corp.local", userName = "root" }),
+            count = int.MaxValue,
+        });
+        var pvwa = new FakePvwa(req => FakePvwa.IsLogon(req) ? FakePvwa.Json("\"tok\"") : FakePvwa.Json(page));
+        using var client = await pvwa.CreateLoggedOnClientAsync();
+
+        var accounts = await client.GetAccountsAsync();
+
+        Assert.Equal(["1_0", "1_1", "1_2"], accounts.Select(a => a.Id));
+        Assert.Equal(["/PasswordVault/API/Accounts?offset=0&limit=1000", "/PasswordVault/API/Accounts?offset=3&limit=1000"],
+            pvwa.Requests.Skip(1).Select(r => r.PathAndQuery));
+    }
+
+    /// <summary>
+    /// Sans total (count 0) et avec une page suivante toujours annoncée, chaque page apportant un nouvel élément : erreur
+    /// après <see cref="PvwaClient.MaxPages"/> pages au lieu d'une boucle sans fin (comptes et membres d'un safe).
+    /// </summary>
+    [Fact]
+    public async Task Pagination_StopsWithAnErrorAfterTheMaximumNumberOfPages()
+    {
+        int served = 0;
+        var pvwa = new FakePvwa(req =>
+        {
+            if (FakePvwa.IsLogon(req))
+            {
+                return FakePvwa.Json("\"tok\"");
+            }
+
+            int n = Interlocked.Increment(ref served);
+            return FakePvwa.Json(JsonSerializer.Serialize(new
+            {
+                value = new[] { new { id = $"1_{n}", memberName = $"user{n}", address = "srv01.corp.local", userName = "root" } },
+                count = 0,
+                nextLink = "api/next",
+            }));
+        });
+        using var client = await pvwa.CreateLoggedOnClientAsync();
+
+        var accounts = await Assert.ThrowsAsync<PvwaException>(() => client.GetAccountsAsync());
+        Assert.Equal(PvwaClient.MaxPages, served);
+        Assert.Contains(PvwaClient.MaxPages.ToString(System.Globalization.CultureInfo.CurrentCulture), accounts.Message);
+
+        served = 0;
+        await Assert.ThrowsAsync<PvwaException>(() => client.GetSafeMembersAsync("Prod"));
+        Assert.Equal(PvwaClient.MaxPages, served);
+    }
+
     [Fact]
     public async Task GetAccounts_StopsOnEmptyPage()
     {

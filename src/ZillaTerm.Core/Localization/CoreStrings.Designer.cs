@@ -1702,5 +1702,68 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("RdpNoEncryption", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to  … [line cut after {0:N0} characters].
+        /// </summary>
+        public static string TailLineCut {
+            get {
+                return ResourceManager.GetString("TailLineCut", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Account from another domain than the server: check it.
+        /// </summary>
+        public static string MigrationCheckOtherDomain {
+            get {
+                return ResourceManager.GetString("MigrationCheckOtherDomain", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The PVWA returned an abnormally long list (more than {0} pages): loading stopped. Report it to the CyberArk administrators..
+        /// </summary>
+        public static string PvwaTooManyPages {
+            get {
+                return ResourceManager.GetString("PvwaTooManyPages", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” is a whole drive or share: drop the folders or files it contains instead..
+        /// </summary>
+        public static string UploadWholeDrive {
+            get {
+                return ResourceManager.GetString("UploadWholeDrive", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to symbolic link: its target {0} remains incomplete (neither the link nor its target was deleted).
+        /// </summary>
+        public static string TransferIncompleteLinkKept {
+            get {
+                return ResourceManager.GetString("TransferIncompleteLinkKept", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” contains an invalid character (incomplete Unicode character): it cannot be sent to the FTP server. Rename it first..
+        /// </summary>
+        public static string FtpNameNotEncodable {
+            get {
+                return ResourceManager.GetString("FtpNameNotEncodable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server sent more than {0} for a file announced at {1}: download stopped..
+        /// </summary>
+        public static string DownloadExceedsAnnounced {
+            get {
+                return ResourceManager.GetString("DownloadExceedsAnnounced", resourceCulture);
+            }
+        }
     }
 }
