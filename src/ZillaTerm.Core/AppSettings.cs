@@ -88,8 +88,9 @@ public sealed class AppSettings
     public bool PsmDynamicResolution { get; set; } = true;
 
     /// <summary>
-    /// Sessions PSM Windows (onglet et Connexion Bureau à distance) : tous les disques de ce poste partagés avec la session
-    /// (activé par défaut). Désactivé : seulement si le fichier du PVWA le demande. Le serveur PSM peut le refuser.
+    /// Sessions PSM Windows (onglet et Connexion Bureau à distance) : disques de ce poste demandés au PVWA (paramètre
+    /// <c>AllowMappingLocalDrives</c>, case « Map local drives » de sa fenêtre de connexion), activé par défaut. Le PVWA
+    /// les écrit dans le fichier RDP si le composant de connexion le permet.
     /// </summary>
     public bool PsmRedirectDrives { get; set; } = true;
 

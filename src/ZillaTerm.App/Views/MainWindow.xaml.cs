@@ -1048,6 +1048,8 @@ public partial class MainWindow : Window
                 TicketingSystemName = request.TicketingSystem,
                 TicketId = request.TicketId,
                 RemoteMachine = request.RemoteMachine,
+                // Case « Map local drives » du PVWA : le PVWA l'écrit dans le fichier RDP si le composant le permet.
+                MapLocalDrives = _settings.PsmRedirectDrives,
             };
             if (PsmTabClient(label, out var mstscReason) is { } freeRdp)
             {
@@ -1128,9 +1130,8 @@ public partial class MainWindow : Window
         string? mstscReason = null;
         bool toMstsc = false;
         int attempts = 0;
-        // Même mode d'affichage et mêmes disques pour toutes les connexions de l'onglet (reconnexions comprises).
+        // Même mode d'affichage pour toutes les connexions de l'onglet (reconnexions comprises).
         bool dynamicResolution = _settings.PsmDynamicResolution;
-        bool redirectDrives = _settings.PsmRedirectDrives;
         session = AddRdpTab(label, async ct =>
         {
             bool initial = attempts++ == 0;
@@ -1152,7 +1153,7 @@ public partial class MainWindow : Window
             if (initial)
             {
                 first = file;
-                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, redirectDrives, out mstscReason) is not { } tab)
+                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, out mstscReason) is not { } tab)
                 {
                     toMstsc = true;
                     throw new RdpHandedOffException("session PSM confiée à mstsc");
@@ -1173,7 +1174,7 @@ public partial class MainWindow : Window
                     throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
                 }
 
-                settings = settings.ForPsmTab(dynamicResolution, redirectDrives);
+                settings = settings.ForPsmTab(dynamicResolution);
             }
 
             ShowPsmAddress(session, settings.Server);
@@ -1223,25 +1224,17 @@ public partial class MainWindow : Window
         InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: true));
     }
 
-    /// <summary>
-    /// Session PSM dans Connexion Bureau à distance (mstsc), en fenêtre(s) à part : le fichier du PVWA, avec les disques du
-    /// poste si l'option est cochée et que le fichier n'est pas signé (mstsc en vérifie la signature).
-    /// </summary>
+    /// <summary>Session PSM dans Connexion Bureau à distance (mstsc), en fenêtre(s) à part : le fichier du PVWA tel quel.</summary>
     private void LaunchPsmInMstsc(ConnectRequest request, string label, byte[] rdp, string? reason)
     {
-        bool drives = _settings.PsmRedirectDrives && !RdpFile.IsSigned(rdp);
-        if (_settings.PsmRedirectDrives && !drives)
-        {
-            DebugLog.Write("psm", "Fichier .rdp signé par le PVWA : donné tel quel à mstsc, sans les disques du poste (signature vérifiée).");
-        }
-
-        _launcher.LaunchRdp(drives ? RdpFile.WithAllDrives(rdp) : rdp, label);
+        _launcher.LaunchRdp(rdp, label);
         SetStatus(reason ?? Text.Format(Strings.PsmStarted, label, request.Component));
         InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: false));
     }
 
-    private static string PsmRequestLog(PvwaAccount account, ConnectRequest request, string label) =>
-        $"Demande de connexion PSM pour {label} (compte {account.Id}, composant {request.Component}, machine cible « {request.RemoteMachine} »)";
+    private string PsmRequestLog(PvwaAccount account, ConnectRequest request, string label) =>
+        $"Demande de connexion PSM pour {label} (compte {account.Id}, composant {request.Component}, machine cible « {request.RemoteMachine} », "
+        + $"disques du poste demandés {(_settings.PsmRedirectDrives ? "oui" : "non")})";
 
     /// <summary>Fichier .rdp renvoyé par le PVWA, dans le journal de débogage (jetons et signature masqués).</summary>
     private static void LogRdpFile(byte[] rdp)

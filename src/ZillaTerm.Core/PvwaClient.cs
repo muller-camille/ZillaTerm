@@ -459,12 +459,29 @@ public sealed class PvwaClient : IDisposable
     /// Demande au PVWA une connexion PSM pour le compte (équivalent du bouton « Connect » du PVWA)
     /// et renvoie le fichier RDP à ouvrir avec <c>mstsc.exe</c>.
     /// </summary>
+    /// <remarks>
+    /// Disques du poste demandés (<see cref="PsmConnectOptions.MapLocalDrives"/>) et refusés par le PVWA comme paramètre
+    /// (composant qui ne le propose pas) : nouvelle demande, sans eux.
+    /// </remarks>
     /// <exception cref="PvwaException">Refus du PVWA (composant inconnu, motif exigé, accès non autorisé...).</exception>
     public async Task<byte[]> PsmConnectAsync(string accountId, PsmConnectOptions options, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(accountId);
         ArgumentException.ThrowIfNullOrWhiteSpace(options.ConnectionComponent);
+        try
+        {
+            return await RequestPsmConnectAsync(accountId, options, ct).ConfigureAwait(false);
+        }
+        catch (PvwaException e) when (options.MapLocalDrives && !e.IsUnauthorized && !e.IsUnknownComponent
+                                      && $"{e.ErrorCode} {e.Message} {e.ServerMessage}".Contains("param", StringComparison.OrdinalIgnoreCase))
+        {
+            DebugLog.Write("pvwa", $"PSMConnect refusé avec les disques du poste ({e.ErrorCode}) : nouvelle demande sans eux.");
+            return await RequestPsmConnectAsync(accountId, options.WithoutLocalDrives(), ct).ConfigureAwait(false);
+        }
+    }
 
+    private async Task<byte[]> RequestPsmConnectAsync(string accountId, PsmConnectOptions options, CancellationToken ct)
+    {
         using var request = CreateAuthenticatedRequest(HttpMethod.Post, $"API/Accounts/{Uri.EscapeDataString(accountId)}/PSMConnect");
         // « octet-stream » : le PVWA renvoie le fichier RDP ; « json » renverrait les données PSM Gateway (HTML5).
         request.Headers.Accept.Clear();

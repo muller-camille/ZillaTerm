@@ -16,6 +16,22 @@ public sealed class PsmConnectOptions
     /// <summary>Machine cible pour un compte de domaine (paramètre <c>PSMRemoteMachine</c>).</summary>
     public string? RemoteMachine { get; init; }
 
+    /// <summary>
+    /// Disques du poste partagés avec la session (paramètre <c>AllowMappingLocalDrives</c> : case « Map local drives » de
+    /// la fenêtre de connexion du PVWA). Le PVWA l'écrit dans le fichier RDP si le composant de connexion le permet.
+    /// </summary>
+    public bool MapLocalDrives { get; init; }
+
+    /// <summary>La même demande sans <see cref="MapLocalDrives"/>.</summary>
+    internal PsmConnectOptions WithoutLocalDrives() => new()
+    {
+        ConnectionComponent = ConnectionComponent,
+        Reason = Reason,
+        TicketingSystemName = TicketingSystemName,
+        TicketId = TicketId,
+        RemoteMachine = RemoteMachine,
+    };
+
     internal Dictionary<string, object> ToRequestBody()
     {
         var body = new Dictionary<string, object> { ["ConnectionComponent"] = ConnectionComponent.Trim() };
@@ -34,12 +50,20 @@ public sealed class PsmConnectOptions
             body["TicketId"] = TicketId.Trim();
         }
 
+        var parameters = new Dictionary<string, object>();
         if (!string.IsNullOrWhiteSpace(RemoteMachine))
         {
-            body["ConnectionParams"] = new Dictionary<string, object>
-            {
-                ["PSMRemoteMachine"] = new Dictionary<string, object> { ["value"] = RemoteMachine.Trim(), ["ShouldSave"] = false },
-            };
+            parameters["PSMRemoteMachine"] = new Dictionary<string, object> { ["value"] = RemoteMachine.Trim(), ["ShouldSave"] = false };
+        }
+
+        if (MapLocalDrives)
+        {
+            parameters["AllowMappingLocalDrives"] = new Dictionary<string, object> { ["value"] = "Yes", ["ShouldSave"] = false };
+        }
+
+        if (parameters.Count > 0)
+        {
+            body["ConnectionParams"] = parameters;
         }
 
         return body;

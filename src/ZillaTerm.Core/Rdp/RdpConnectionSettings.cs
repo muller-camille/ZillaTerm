@@ -127,7 +127,8 @@ public sealed record RdpConnectionSettings
     /// <summary>
     /// Lit un fichier .rdp (celui du PVWA pour une session PSM). Les redirections absentes du fichier restent
     /// désactivées (sauf le presse-papiers, comme pour mstsc) ; une liste de lecteurs précise n'est pas reprise, seul
-    /// « * » (tous les lecteurs) l'est. Le mode d'affichage du fichier (plein écran, taille, écrans) n'est pas repris :
+    /// « * » (tous les lecteurs, éventuellement avec « DynamicDrives ») l'est, ou l'ancienne clé « redirectdrives:i:1 »
+    /// sans « drivestoredirect ». Le mode d'affichage du fichier (plein écran, taille, écrans) n'est pas repris :
     /// la session prend la taille de l'onglet.
     /// </summary>
     /// <exception cref="FormatException">Fichier sans adresse de serveur.</exception>
@@ -159,7 +160,9 @@ public sealed record RdpConnectionSettings
             EnableCredSsp = Bool("enablecredsspsupport", true),
             NegotiateSecurityLayer = Bool("negotiate security layer", true),
             RedirectClipboard = Bool("redirectclipboard", true),
-            RedirectDrives = Text("drivestoredirect").Trim() == "*",
+            RedirectDrives = values.TryGetValue("drivestoredirect", out var drives)
+                ? drives.Split(';', StringSplitOptions.TrimEntries).Contains("*")
+                : Bool("redirectdrives", false),
             RedirectPrinters = Bool("redirectprinters", false),
             RedirectPorts = Bool("redirectcomports", false),
             RedirectSmartCards = Bool("redirectsmartcards", false),
@@ -192,18 +195,15 @@ public sealed record RdpConnectionSettings
     /// à la taille de sa propre session, qui ne doit plus changer. Pas de cache d'images sur le disque de ce poste (écran
     /// d'une session d'administration). Jamais de connexion sans vérification du serveur : le niveau d'authentification 1
     /// (refus) reste 1, les autres deviennent 2 (avertissement de Windows si le certificat présenté n'est ni approuvé
-    /// par Windows ni celui que ZillaTerm a vérifié juste avant). Les redirections restent celles du fichier, plus les
-    /// disques du poste si <paramref name="redirectDrives"/>.
+    /// par Windows ni celui que ZillaTerm a vérifié juste avant). Les redirections restent celles du fichier, jamais plus.
     /// </summary>
     /// <param name="dynamicResolution">
     /// Redimensionnement dynamique (expérimental) : la résolution du bureau distant suit la taille de l'onglet au lieu
     /// d'une image mise à l'échelle. La connexion du PSM vers la cible peut garder sa taille d'origine.
     /// </param>
-    /// <param name="redirectDrives">Tous les disques du poste partagés avec la session, même si le fichier ne le demande pas.</param>
-    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false, bool redirectDrives = false) => this with
+    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false) => this with
     {
         SmartSizing = !dynamicResolution,
-        RedirectDrives = RedirectDrives || redirectDrives,
         BitmapPersistence = false,
         AuthenticationLevel = AuthenticationLevel == 1 ? 1 : 2,
     };
