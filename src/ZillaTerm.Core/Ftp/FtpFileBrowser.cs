@@ -727,7 +727,9 @@ public sealed class FtpFileBrowser : IRemoteFiles
                 }
             }
 
-            // Copie complète : elle ne remplace le fichier local existant que maintenant.
+            // Copie complète : marquée comme venue d'ailleurs (Mark-of-the-Web, gardée par le renommage), puis elle ne
+            // remplace le fichier local existant que maintenant.
+            MarkOfTheWeb.Apply(partial);
             File.Move(partial, localPath, overwrite: true);
         }
         catch (Exception e) when (e is not OutOfMemoryException && started)

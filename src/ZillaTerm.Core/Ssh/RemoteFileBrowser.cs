@@ -618,8 +618,9 @@ public sealed class RemoteFileBrowser : IRemoteFiles
                 received = hashing.Count;
             }
 
-            // Copie complète : elle ne remplace le fichier local existant que maintenant (un échec en cours de route le laisse
-            // intact).
+            // Copie complète : marquée comme venue d'ailleurs (Mark-of-the-Web, gardée par le renommage), puis elle ne
+            // remplace le fichier local existant que maintenant (un échec en cours de route le laisse intact).
+            MarkOfTheWeb.Apply(partial);
             File.Move(partial, localPath, overwrite: true);
         }
         catch (Exception e) when (e is not OutOfMemoryException && started)

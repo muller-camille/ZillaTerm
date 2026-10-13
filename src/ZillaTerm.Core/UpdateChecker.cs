@@ -180,6 +180,9 @@ public static class UpdateChecker
                 }
             }
 
+            // Archive venue d'Internet (Mark-of-the-Web, gardée par le renommage, reprise par l'extraction de Windows) :
+            // SmartScreen contrôle ensuite l'exécutable extrait.
+            MarkOfTheWeb.Apply(partial, Uri.TryCreate(info.PackageUrl, UriKind.Absolute, out var url) ? url : null);
             File.Move(partial, target, overwrite: true);
             return target;
         }

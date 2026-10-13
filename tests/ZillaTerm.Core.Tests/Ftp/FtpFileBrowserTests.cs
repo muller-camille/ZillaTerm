@@ -385,6 +385,11 @@ public sealed class FtpFileBrowserTests
             Assert.True(check.Matches);
             Assert.Equal(content, File.ReadAllBytes(local));
             Assert.Equal([local], Directory.GetFiles(folder));
+            // Venu d'un serveur : Mark-of-the-Web (Windows), sans nom de serveur.
+            if (OperatingSystem.IsWindows())
+            {
+                Assert.Equal("[ZoneTransfer]\r\nZoneId=3\r\n", MarkOfTheWeb.Read(local));
+            }
         }
         finally
         {
