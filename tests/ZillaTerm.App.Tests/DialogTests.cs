@@ -17,7 +17,7 @@ namespace ZillaTerm.App.Tests;
 /// gestionnaire appelé avant que ses champs existent) les ferait planter chez l'utilisateur.
 /// </summary>
 [Collection(WpfCollection.Name)]
-public sealed class DialogTests
+public sealed partial class DialogTests
 {
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
 

@@ -85,16 +85,17 @@ public partial class FileBrowserPanel
     /// Met en file l'envoi de fichiers ou de dossiers locaux vers le dossier affiché, ou vers <paramref name="target"/>
     /// (dossier de la liste sur lequel on les a déposés).
     /// </summary>
-    private async Task EnqueueUploadAsync(IReadOnlyList<string> paths, string? target = null)
+    /// <param name="from">Serveur et dossier pris avant la fenêtre de choix des fichiers ; par défaut ceux affichés.</param>
+    internal async Task EnqueueUploadAsync(IReadOnlyList<string> paths, string? target = null, ShownFolder? from = null)
     {
-        var browser = _browser;
-        var session = _session;
-        if (browser is null || session is null || paths.Count == 0)
+        if ((from ?? CurrentFolder()) is not { } folder || paths.Count == 0)
         {
             return;
         }
 
-        var directory = target ?? browser.CurrentDirectory;
+        var browser = folder.Connection;
+        var session = folder.Session;
+        var directory = target ?? folder.Directory;
         var names = paths.Select(p => Path.GetFileName(p.TrimEnd('\\', '/'))).ToList();
 
         // Beaucoup de fichiers d'un coup : proposer une seule archive .tar.gz (option des Paramètres).
@@ -222,7 +223,7 @@ public partial class FileBrowserPanel
         {
             Owner = session,
             Server = session.Label,
-            Protocol = Protocol,
+            Protocol = ProtocolOf(browser),
             Names = names,
         });
     }
@@ -269,21 +270,23 @@ public partial class FileBrowserPanel
         {
             Owner = session,
             Server = session.Label,
-            Protocol = Protocol,
+            Protocol = ProtocolOf(browser),
             Names = names,
         });
     }
 
     /// <summary>Met en file le téléchargement de fichiers vers <paramref name="targets"/> (un chemin local par fichier).</summary>
-    private void EnqueueDownload(IReadOnlyList<RemoteEntry> files, string folder, IReadOnlyList<string> targets)
+    /// <param name="from">Serveur des fichiers, pris avant la fenêtre d'enregistrement.</param>
+    internal void EnqueueDownload(IReadOnlyList<RemoteEntry> files, string folder, IReadOnlyList<string> targets, ShownFolder from)
     {
-        var browser = _browser;
-        if (browser is null || files.Count == 0)
+        var browser = from.Connection;
+        if (files.Count == 0)
         {
             return;
         }
 
-        var label = files.Count == 1 ? files[0].Name : Text.Format(Strings.QueueFiles, files.Count);
+        // Nom affiché (caractères invisibles remplacés) : la file et l'historique ne montrent jamais le nom brut.
+        var label = files.Count == 1 ? files[0].DisplayName : Text.Format(Strings.QueueFiles, files.Count);
         Enqueue(new TransferItem(false, label, folder, async (item, ct) =>
         {
             var progress = new Progress<TransferProgress>(item.Report);
@@ -295,8 +298,8 @@ public partial class FileBrowserPanel
             }
         })
         {
-            Owner = _session,
-            Server = _session?.Label,
+            Owner = from.Session,
+            Server = from.Session.Label,
         });
     }
 
