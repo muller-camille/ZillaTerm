@@ -552,8 +552,8 @@
                            Text="{x:Static loc:Strings.DebugLogActive}" />
                 <TextBlock x:Name="CountText" Foreground="{DynamicResource StatusForeground}" Margin="0,0,16,0" />
                 <ProgressBar x:Name="LoadProgress" Width="140" Height="8" Margin="0,0,16,0" Visibility="Collapsed" />
-                <TextBlock x:Name="StatusText" Foreground="{DynamicResource StatusOkForeground}" TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite"
-                           ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                <views:AnnouncedText x:Name="StatusText" Foreground="{DynamicResource StatusOkForeground}" TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite"
+                                     ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
             </DockPanel>
         </Border>
 
@@ -598,8 +598,8 @@
                         </StackPanel>
                         <!-- État de la liste : chargement, échec (Réessayer), aucun compte, aucun résultat (Effacer le filtre). -->
                         <StackPanel DockPanel.Dock="Top" x:Name="AvailableState" Margin="10,4,10,0" Visibility="Collapsed">
-                            <TextBlock x:Name="AvailableStateText" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
-                                       AutomationProperties.LiveSetting="Polite" />
+                            <views:AnnouncedText x:Name="AvailableStateText" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
+                                                 AutomationProperties.LiveSetting="Polite" />
                             <Button x:Name="AvailableStateButton" HorizontalAlignment="Left" Margin="0,8,0,0" Click="OnAvailableStateAction" />
                         </StackPanel>
                         <TreeView x:Name="SessionTree" BorderThickness="0" Background="Transparent" Padding="2,0,0,0"
@@ -932,8 +932,8 @@
                                     CornerRadius="0,0,4,4" Visibility="Collapsed" Margin="0,0,0,8">
                                 <DockPanel>
                                     <!-- Aucun résultat, liste limitée, chargement en cours : dit plutôt que de masquer la liste. -->
-                                    <TextBlock DockPanel.Dock="Bottom" x:Name="QuickInfo" Margin="10,6" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource MutedBrush}" AutomationProperties.LiveSetting="Polite" />
+                                    <views:AnnouncedText DockPanel.Dock="Bottom" x:Name="QuickInfo" Margin="10,6" TextWrapping="Wrap"
+                                                         Foreground="{DynamicResource MutedBrush}" AutomationProperties.LiveSetting="Polite" />
                                     <ListBox x:Name="QuickResults" BorderThickness="0" MaxHeight="320"
                                              ItemTemplate="{StaticResource AccountRow}" ItemContainerStyle="{StaticResource AccountListItem}"
                                              SelectionChanged="OnListSelectionChanged" KeyDown="OnListKeyDown"

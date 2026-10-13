@@ -40,8 +40,8 @@
             </StackPanel>
             <ProgressBar x:Name="Busy" Height="6" IsIndeterminate="True" Margin="0,4,0,4" Visibility="Hidden" />
             <views:ErrorLine x:Name="ErrorMessage" Visibility="Collapsed" />
-            <TextBlock x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}"
-                       Margin="0,4,0,0" Visibility="Collapsed" />
+            <views:AnnouncedText x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}"
+                                 Margin="0,4,0,0" Visibility="Collapsed" />
         </StackPanel>
     </DockPanel>
 </Window>

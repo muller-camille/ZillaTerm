@@ -48,6 +48,8 @@ public partial class App : Application
                 window.Icon = icon;
             }
         }));
+        // Boutons et cases à libellé AccessText : un nom pour les lecteurs d'écran.
+        AccessibleName.Follow();
         _systemCulture = CultureInfo.CurrentUICulture;
         // Premier démarrage sous le nom ZillaTerm : réglages repris du dossier de CyberArkTerm.
         string? imported = null;

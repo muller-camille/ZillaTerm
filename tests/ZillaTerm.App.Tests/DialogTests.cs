@@ -2736,6 +2736,85 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Lecteurs d'écran : une case ou un bouton dont le libellé est un AccessText (seul ou avec une image) est nommé par ce
+    /// libellé, sans la touche d'accès, et suit ses changements (« Enregistrer » / « Arrêter l'enregistrement ») ; un nom
+    /// explicite reste.
+    /// </summary>
+    [Fact]
+    public void AccessTextLabelsNameTheirButtons()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            AccessibleName.Follow();
+            var box = new System.Windows.Controls.CheckBox { Content = new System.Windows.Controls.AccessText { Text = "_Garder la session" } };
+            var label = new System.Windows.Controls.AccessText { Text = "_Enregistrer l'intervention" };
+            var record = new System.Windows.Controls.Button
+            {
+                Content = new System.Windows.Controls.StackPanel
+                {
+                    Orientation = System.Windows.Controls.Orientation.Horizontal,
+                    Children = { new System.Windows.Shapes.Ellipse { Width = 10, Height = 10 }, label },
+                },
+            };
+            var named = new System.Windows.Controls.Button { Content = new System.Windows.Controls.AccessText { Text = "_Ajouter" } };
+            System.Windows.Automation.AutomationProperties.SetName(named, "Ajouter une étiquette");
+            var window = new Window
+            {
+                Content = new System.Windows.Controls.StackPanel { Children = { box, record, named } },
+                Width = 300, Height = 200, ShowInTaskbar = false, ShowActivated = false,
+            };
+            window.Show();
+            try
+            {
+                // Nom donné au chargement des contrôles.
+                PumpUntil(() => box.IsLoaded && record.IsLoaded && named.IsLoaded);
+                static string NameOf(UIElement element) => System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(element).GetName();
+                Assert.Equal("Garder la session", NameOf(box));
+                Assert.Equal("Enregistrer l'intervention", NameOf(record));
+                label.Text = "_Arrêter l'enregistrement";
+                Assert.Equal("Arrêter l'enregistrement", NameOf(record));
+                Assert.Equal("Ajouter une étiquette", NameOf(named));
+                Assert.Equal("PROMPT_COMMAND", AccessibleName.WithoutAccessKey("_PROMPT__COMMAND"));
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Question du PSMP après un refus : l'avertissement (essai n sur 3, Verr. Maj) est lu avec le champ, qui prend le focus ;
+    /// au premier essai, rien de plus que la question.
+    /// </summary>
+    [Fact]
+    public void RefusedAnswerIsReadWithTheField()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            const string refused = "Refusé par le serveur. Essai 2 sur 3 : vérifiez-le (Verr. Maj ?).";
+            var again = new PromptDialog("", "Password:", echo: false, refused: refused);
+            Assert.Equal(refused, System.Windows.Automation.AutomationProperties.GetHelpText(again.SecretBox));
+            Assert.Equal("Password:", System.Windows.Automation.AutomationProperties.GetName(again.SecretBox));
+            again.Close();
+
+            var first = new PromptDialog("", "Password:", echo: false);
+            Assert.Equal("", System.Windows.Automation.AutomationProperties.GetHelpText(first.SecretBox));
+            first.Close();
+        });
+    }
+
+    /// <summary>
     /// Thème sombre : les fenêtres s'ouvrent avec ses modèles (listes déroulantes, onglets, tableaux, cases), le choix
     /// est relu des réglages, et les icônes foncées sont éclaircies (écran de terminal cerné d'un trait clair).
     /// </summary>

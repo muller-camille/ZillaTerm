@@ -231,8 +231,8 @@
                             <Label Content="{x:Static loc:Strings.PsmpTestLabel}" Target="{Binding ElementName=PsmpTestBox}" />
                             <TextBox Grid.Column="1" x:Name="PsmpTestBox" VerticalContentAlignment="Center" TextChanged="OnPsmpChanged" />
                         </Grid>
-                        <TextBlock x:Name="PsmpTestText" Style="{StaticResource OptionHelp}" Margin="0,0,0,8"
-                                   AutomationProperties.LiveSetting="Polite" />
+                        <views:AnnouncedText x:Name="PsmpTestText" Style="{StaticResource OptionHelp}" Margin="0,0,0,8"
+                                             AutomationProperties.LiveSetting="Polite" />
                         <TextBlock Style="{StaticResource OptionEffect}" Margin="0,0,0,16" Text="{x:Static loc:Strings.PsmpSecurityEffect}" />
 
                         <TextBlock Text="{x:Static loc:Strings.ComponentsSection}" Style="{StaticResource SectionTitle}" />

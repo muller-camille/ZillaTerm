@@ -1273,13 +1273,14 @@ public partial class MainWindow : Window
             _statusClear.Start();
         }
 
-        StatusText.Text = message;
         StatusText.SetResourceReference(TextBlock.ForegroundProperty, isError ? "StatusErrorForeground" : "StatusOkForeground");
-        // Annoncé par les lecteurs d'écran (zone « polie » de la barre d'état).
-        if (message.Length > 0 && System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(StatusText) is { } peer)
+        // Annoncé par les lecteurs d'écran (AnnouncedText, zone « polie » de la barre d'état), même redit à l'identique.
+        if (StatusText.Text == message)
         {
-            peer.RaiseAutomationEvent(System.Windows.Automation.Peers.AutomationEvents.LiveRegionChanged);
+            StatusText.Announce();
         }
+
+        StatusText.Text = message;
     }
 
     private static readonly TimeSpan StatusLifetime = TimeSpan.FromSeconds(10);

@@ -41,9 +41,15 @@ public partial class PromptDialog : Window
             HintText.Visibility = Visibility.Visible;
         }
 
-        // Nom accessible des champs : la question du serveur.
+        // Nom accessible des champs : la question du serveur. Réponse refusée : le refus (numéro de l'essai) est lu avec le
+        // champ, qui prend le focus à l'ouverture ; sinon le lecteur d'écran redirait la même chose qu'au premier essai.
         System.Windows.Automation.AutomationProperties.SetName(SecretBox, PromptText.Text);
         System.Windows.Automation.AutomationProperties.SetName(TextBox, PromptText.Text);
+        if (RefusedText.Visibility == Visibility.Visible)
+        {
+            System.Windows.Automation.AutomationProperties.SetHelpText(SecretBox, RefusedText.Text);
+            System.Windows.Automation.AutomationProperties.SetHelpText(TextBox, RefusedText.Text);
+        }
         SecretBox.Visibility = echo ? Visibility.Collapsed : Visibility.Visible;
         CapsLockWarning.Attach(CapsLockText, SecretBox);
         TextBox.Visibility = echo ? Visibility.Visible : Visibility.Collapsed;
