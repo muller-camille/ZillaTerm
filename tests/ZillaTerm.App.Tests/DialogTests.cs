@@ -1249,7 +1249,8 @@ public sealed partial class DialogTests
             window.PollAsync().GetAwaiter().GetResult();
             Assert.Equal("un\n", window.Shown);
             Assert.Contains("/var/log/facture\uFFFDfdp.log", window.Title);
-            Assert.DoesNotContain("\u202E", window.Title);
+            // Comparaison ordinale : celle de la culture ignore les caractères invisibles (trouvés partout, en position 0).
+            Assert.DoesNotContain("\u202E", window.Title, StringComparison.Ordinal);
             Assert.Equal("root@srv01 facture\uFFFDfdp.log", feed.Label);
             Assert.Equal("root@srv01 : /var/log/facture\uFFFDfdp.log", feed.Tip);
 
@@ -1519,6 +1520,9 @@ public sealed partial class DialogTests
             dialog.TagRows.Add(new SettingsDialog.TagRow(null, "DR", "#00838F"));
             Assert.Null(dialog.ReadTags());
             Assert.Equal(Strings.InvalidServerTag, dialog.ErrorText.Text);
+            // Retour à 20 : toujours grisé ; à 19, de nouveau possible.
+            dialog.TagRows.RemoveAt(dialog.TagRows.Count - 1);
+            Assert.False(dialog.AddTagButton.IsEnabled);
             dialog.TagRows.RemoveAt(dialog.TagRows.Count - 1);
             Assert.True(dialog.AddTagButton.IsEnabled);
             dialog.Close();

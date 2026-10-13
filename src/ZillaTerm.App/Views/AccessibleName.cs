@@ -18,7 +18,11 @@ internal static class AccessibleName
 {
     private static bool _following;
 
-    /// <summary>Nomme les boutons et les cases à leur chargement, dans toutes les fenêtres.</summary>
+    /// <summary>
+    /// Nomme les boutons et les cases dès leur premier affichage, dans toutes les fenêtres. WPF ne déclenche Loaded que sur
+    /// les éléments qui ont eux-mêmes un gestionnaire de Loaded (un gestionnaire de classe n'en est pas un) : la première
+    /// mise en page (SizeChanged, levé pour tout élément affiché), elle, arrive toujours.
+    /// </summary>
     public static void Follow()
     {
         if (_following)
@@ -28,6 +32,8 @@ internal static class AccessibleName
 
         _following = true;
         EventManager.RegisterClassHandler(typeof(ButtonBase), FrameworkElement.LoadedEvent, new RoutedEventHandler((sender, _) => Apply((ButtonBase)sender)));
+        EventManager.RegisterClassHandler(typeof(ButtonBase), FrameworkElement.SizeChangedEvent,
+            new SizeChangedEventHandler((sender, _) => Apply((ButtonBase)sender)));
     }
 
     /// <summary>Lie le nom du contrôle au libellé AccessText de son contenu, s'il n'a pas déjà un nom.</summary>
