@@ -13,8 +13,8 @@ namespace ZillaTerm.App.Services.Rdp;
 /// </summary>
 /// <remarks>
 /// Les captures et leur encodage se font sur un fil à part, pas sur celui de l'interface. Seul l'onglet affiché est
-/// capturé (<see cref="Show"/>) : un onglet en arrière-plan ou une fenêtre réduite n'a rien à montrer. Chaque fois que
-/// l'onglet est de nouveau affiché, l'écran entier est gardé (image clé).
+/// capturé (<see cref="Show"/>) : un onglet en arrière-plan ou une fenêtre réduite n'a rien à montrer. De retour sur
+/// l'onglet, ce qui a changé entre-temps est gardé comme tout autre changement.
 /// </remarks>
 internal sealed class RdpScreenRecorder : IDisposable
 {
@@ -27,7 +27,6 @@ internal sealed class RdpScreenRecorder : IDisposable
     private readonly InterventionRecorder _recorder;
     private readonly CancellationTokenSource _stop = new();
     private IntPtr _slot;
-    private int _keyWanted;
     private int _disposed;
 
     // Fil des captures seulement.
@@ -47,15 +46,7 @@ internal sealed class RdpScreenRecorder : IDisposable
     /// Bureau de la session affiché (vrai) ou non (onglet en arrière-plan, connexion en cours, fin de session), avec la
     /// fenêtre de son emplacement (fil de l'interface).
     /// </summary>
-    public void Show(bool showing, IntPtr slot)
-    {
-        var target = showing ? slot : IntPtr.Zero;
-        var previous = Interlocked.Exchange(ref _slot, target);
-        if (target != IntPtr.Zero && target != previous)
-        {
-            Volatile.Write(ref _keyWanted, 1);
-        }
-    }
+    public void Show(bool showing, IntPtr slot) => Interlocked.Exchange(ref _slot, showing ? slot : IntPtr.Zero);
 
     public void Dispose()
     {
@@ -107,21 +98,16 @@ internal sealed class RdpScreenRecorder : IDisposable
             return;
         }
 
-        bool key = Interlocked.Exchange(ref _keyWanted, 0) == 1;
         if (WindowCapture.CaptureChildPixels(slot, _buffer) is not { } pixels
             || pixels.Width > ScreenTileEncoder.MaxSide || pixels.Height > ScreenTileEncoder.MaxSide)
         {
-            if (key)
-            {
-                Volatile.Write(ref _keyWanted, 1);
-            }
-
             return;
         }
 
         _buffer = pixels.Bgra;
         _lastCapture = now;
-        // Nouvel enregistrement : nouvel enregistrement d'écran, qui commence par une image clé.
+        // Nouvel enregistrement : nouvel enregistrement d'écran, qui commence par une image clé. L'encodeur voit chaque
+        // capture, même sans changement : un reste sous le seuil de bruit se rattrape une fois l'écran immobile.
         if (_encoder is null || journal != _journal)
         {
             _encoder = new ScreenTileEncoder(Interlocked.Increment(ref _streams));
@@ -129,7 +115,7 @@ internal sealed class RdpScreenRecorder : IDisposable
         }
 
         int stride = pixels.Width * 4;
-        if (_encoder.Encode(now, pixels.Bgra.AsSpan(0, stride * pixels.Height), pixels.Width, pixels.Height, stride, key) is { } frame)
+        if (_encoder.Encode(now, pixels.Bgra.AsSpan(0, stride * pixels.Height), pixels.Width, pixels.Height, stride) is { } frame)
         {
             _recorder.RecordScreen(journal, _session.Label, frame, now);
         }

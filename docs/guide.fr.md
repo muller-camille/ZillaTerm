@@ -931,10 +931,12 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
     affiché est capturé chaque seconde et seules les zones modifiées sont gardées (carrés de 64 × 64 pixels en couleurs
     16 bits, compressés ; une zone déjà vue, comme un menu qui revient, n'est gardée qu'une fois). « ● Écran
     enregistré » dans la barre de l'onglet le rappelle. Un onglet en arrière-plan, une fenêtre réduite et le plein écran
-    ne sont pas capturés ; à chaque retour sur l'onglet, l'écran entier est gardé. Au-delà de **100 Mo de journal**,
-    l'écran n'est plus gardé qu'une fois toutes les 10 secondes : le journal le note, l'onglet « Intervention » le dit
-    et l'indicateur devient « ● Écran enregistré (toutes les 10 s) ». Une session ouverte avec Connexion Bureau à
-    distance (mstsc) n'est pas enregistrée ainsi : seule la capture la garde.
+    ne sont pas capturés ; de retour sur l'onglet, ce qui a changé entre-temps est gardé. Un petit changement isolé (un
+    caractère tapé) l'est dès que l'écran ne bouge plus pendant 3 secondes, au plus tard après une minute ; un écran
+    immobile ne coûte rien. Au-delà de **100 Mo de journal**, l'écran n'est plus gardé qu'une fois toutes les 10
+    secondes : le journal le note, l'onglet « Intervention » le dit et l'indicateur devient « ● Écran enregistré (toutes
+    les 10 s) ». Une session ouverte avec Connexion Bureau à distance (mstsc) n'est pas enregistrée ainsi : seule la
+    capture la garde.
 - **Onglet « Intervention » du panneau de gauche** (`Ctrl+4`) : il apparaît au début de l'enregistrement, avec une
   pastille rouge tant que l'enregistrement dure : titre, notes et historique restent à côté de la session. Ouvrir une
   session SSH ne le remplace pas par l'onglet « Fichiers ». Un clic sur « ● Intervention enregistrée » dans la barre
@@ -959,17 +961,18 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   résumé, chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention. Les écrans
   enregistrés y ont chacun leur lecteur : « Lecture », « Vitesse » (1× à 60×) et un curseur de position, sous lequel un
   graphique montre l'activité de l'écran (part modifiée à chaque instant) : un clic sur un pic y mène. Le lecteur est le
-  seul script de la page, autorisé par son empreinte ; il demande un navigateur récent (Edge, Chrome, Firefox).
-  **« Supprimer… »** efface un enregistrement terminé.
+  seul script de la page, autorisé par son empreinte ; il demande un navigateur récent (Edge, Chrome, Firefox). Une
+  image manquante (journal abîmé) fige l'écran jusqu'à la prochaine image complète, avec un avis. **« Supprimer… »**
+  efface un enregistrement terminé.
 
 Le journal est **chiffré pour votre compte Windows seul** (DPAPI) dans `%LOCALAPPDATA%\ZillaTerm\Interventions` (le
-titre aussi, dans un fichier `.title` à côté, pour la liste), bloc par bloc au fil de l'enregistrement (un arrêt brutal
-ne perd que les deux dernières secondes, et le rapport le signale). Un bloc retiré, déplacé ou modifié est signalé dans
-le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas, mais **tout ce qu'affiche un terminal ou un Bureau à
-distance dans un onglet y est** (contenu d'un fichier de configuration, par exemple) ; le rapport exporté n'est **pas
-chiffré** : rangez-le en lieu sûr. Le texte des terminaux est plafonné à 64 millions de caractères par intervention (les
-autres événements continuent d'être gardés au-delà) ; un très gros affichage est écrit en plusieurs blocs, sans perdre
-la suite du rapport. Une déconnexion annulée à la confirmation n'y figure pas.
+titre aussi, dans un fichier `.title` à côté, pour la liste), bloc par bloc au fil de l'enregistrement, son texte
+compressé (un arrêt brutal ne perd que les deux dernières secondes, et le rapport le signale). Un bloc retiré, déplacé
+ou modifié est signalé dans le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas, mais **tout ce qu'affiche
+un terminal ou un Bureau à distance dans un onglet y est** (contenu d'un fichier de configuration, par exemple) ; le
+rapport exporté n'est **pas chiffré** : rangez-le en lieu sûr. Le texte des terminaux est plafonné à 64 millions de
+caractères par intervention (les autres événements continuent d'être gardés au-delà) ; un très gros affichage est écrit
+en plusieurs blocs, sans perdre la suite du rapport. Une déconnexion annulée à la confirmation n'y figure pas.
 
 **Disque qui refuse le journal** (plein, quota, accès retiré) : la barre d'état affiche « ⚠ Intervention :
 enregistrement interrompu » en rouge, et la fenêtre « Enregistrement interrompu à 14:10. » : plus rien n'est gardé

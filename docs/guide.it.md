@@ -929,10 +929,12 @@ reperibilità o no:
     visualizzata è catturata ogni secondo e sono conservate solo le zone modificate (quadrati di 64 × 64 pixel a colori
     16 bit, compressi; una zona già vista, come un menu che ricompare, è conservata una volta sola). «● Schermo
     registrato» nella barra della scheda lo ricorda. Una scheda in secondo piano, una finestra ridotta a icona e lo
-    schermo intero non sono catturati; a ogni ritorno sulla scheda viene conservato lo schermo intero. Oltre **100 MB di
-    registro** lo schermo è conservato solo una volta ogni 10 secondi: il registro lo annota, la scheda «Intervento» lo
-    dice e l'indicatore diventa «● Schermo registrato (ogni 10 s)». Una sessione aperta con Connessione Desktop remoto
-    (mstsc) non è registrata così: solo la cattura la conserva.
+    schermo intero non sono catturati; di ritorno sulla scheda, ciò che è cambiato nel frattempo viene conservato. Una
+    piccola modifica isolata (un carattere digitato) è conservata non appena lo schermo resta fermo per 3 secondi, al
+    più tardi dopo un minuto; uno schermo fermo non costa nulla. Oltre **100 MB di registro** lo schermo è conservato
+    solo una volta ogni 10 secondi: il registro lo annota, la scheda «Intervento» lo dice e l'indicatore diventa «●
+    Schermo registrato (ogni 10 s)». Una sessione aperta con Connessione Desktop remoto (mstsc) non è registrata così:
+    solo la cattura la conserva.
 - **Scheda «Intervento» del pannello laterale** (`Ctrl+4`): compare all'inizio della registrazione, con un pallino rosso
   finché la registrazione dura: titolo, note e cronologia restano accanto alla sessione. Aprire una sessione SSH non la
   sostituisce con la scheda «File». Un clic su «● Intervento registrato» nella barra di stato o su **«Titolo, note e
@@ -957,16 +959,17 @@ reperibilità o no:
   registrato vi ha il suo lettore: «Riproduci», «Velocità» (da 1× a 60×) e un cursore di posizione, sotto il quale un
   grafico mostra l'attività dello schermo (parte modificata in ogni istante): un clic su un picco porta lì. Il lettore è
   l'unico script della pagina, autorizzato dalla sua impronta; richiede un browser recente (Edge, Chrome, Firefox).
+  Un'immagine mancante (registro danneggiato) blocca lo schermo fino alla prossima immagine completa, con un avviso.
   **«Elimina…»** cancella una registrazione terminata.
 
 Il registro è **cifrato solo per il vostro account Windows** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (anche
-il titolo, in un file `.title` accanto, per l'elenco), blocco per blocco durante la registrazione (un arresto improvviso
-perde solo gli ultimi due secondi, e il rapporto lo segnala). Un blocco rimosso, spostato o modificato viene segnalato.
-⚠ Le password digitate senza eco non ci sono, ma **tutto ciò che mostra un terminale o un desktop remoto in una scheda
-sì** (il contenuto di un file di configurazione, per esempio); il rapporto esportato **non è cifrato**: conservatelo in
-un luogo sicuro. Il testo dei terminali è limitato a 64 milioni di caratteri per intervento (gli altri eventi continuano
-a essere conservati oltre); un output molto grande viene scritto in più blocchi, senza perdere il seguito del rapporto.
-Una disconnessione annullata alla conferma non vi compare.
+il titolo, in un file `.title` accanto, per l'elenco), blocco per blocco durante la registrazione, con il testo
+compresso (un arresto improvviso perde solo gli ultimi due secondi, e il rapporto lo segnala). Un blocco rimosso,
+spostato o modificato viene segnalato. ⚠ Le password digitate senza eco non ci sono, ma **tutto ciò che mostra un
+terminale o un desktop remoto in una scheda sì** (il contenuto di un file di configurazione, per esempio); il rapporto
+esportato **non è cifrato**: conservatelo in un luogo sicuro. Il testo dei terminali è limitato a 64 milioni di
+caratteri per intervento (gli altri eventi continuano a essere conservati oltre); un output molto grande viene scritto
+in più blocchi, senza perdere il seguito del rapporto. Una disconnessione annullata alla conferma non vi compare.
 
 **Disco che rifiuta il registro** (pieno, quota, accesso revocato): la barra di stato mostra «⚠ Intervento:
 registrazione interrotta» in rosso, e la finestra «Registrazione interrotta alle 14:10.»: da quell'ora non viene più

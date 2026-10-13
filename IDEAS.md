@@ -265,6 +265,20 @@ courbe d'activité sous le curseur. Restent à y ajouter :
 - l'**enregistrement par mstsc** (sessions PSM ouvertes avec Connexion Bureau à distance), aujourd'hui gardées par les
   seules captures à la demande.
 
+### Écran enregistré : encore moins de place
+
+Déjà en place : seules les tuiles modifiées, en différence pour un petit changement, rien pour un écran immobile.
+Pistes à mesurer sur de vraies sessions PSM (une ligne de statistiques par image dans le journal de débogage, sans
+pixels) :
+
+- **défilement détecté** : un journal ou l'Observateur d'événements qui défile renvoie aujourd'hui toutes les tuiles
+  de la zone ; « copier cette zone N lignes plus haut », comme RDP, ne garderait que les lignes apparues ;
+- **tuiles en palette** : une tuile d'interface a souvent 16 couleurs au plus, 4 bits par pixel au lieu de 16 ;
+- **zones qui bougent sans arrêt** (horloge avec les secondes, graphe du Gestionnaire des tâches, barre de progression
+  animée) gardées une fois toutes les 10 secondes ;
+- **budget par période** plutôt qu'un seuil unique à 100 Mo : un pic d'activité ralentit les captures un moment, sans
+  brider le reste de l'intervention.
+
 ### Bureau à distance : fin de session, pause, dernière image
 
 - **Fin de session précise** dans le journal : déconnectée par le serveur, inactivité, reprise depuis une autre

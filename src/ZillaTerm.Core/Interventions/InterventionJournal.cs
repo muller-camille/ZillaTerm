@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -78,7 +79,9 @@ public sealed record InterventionFile(string Path, DateTime Start, long Length, 
 /// Un bloc contient des événements JSON, l'identifiant du journal et son numéro d'ordre : un bloc d'un autre journal,
 /// déplacé ou retiré est signalé à la lecture. Depuis le format 2, les images (captures, écran en tuiles) suivent le
 /// JSON en binaire, sans base64 : le JSON est précédé de sa longueur (4 octets) et chaque événement donne la longueur
-/// de son image. Le format 1 (images en base64 dans le JSON) se relit toujours. Les événements arrivent de plusieurs fils : ils sont gardés en mémoire et
+/// de son image. Le format 3 compresse le JSON (zlib) avant le chiffrement : le texte des terminaux prend une dizaine
+/// de fois moins de place ; les images, déjà compressées, ne le sont pas de nouveau. Les formats 1 (images en base64
+/// dans le JSON) et 2 se relisent toujours. Les événements arrivent de plusieurs fils : ils sont gardés en mémoire et
 /// écrits ensemble au plus tard toutes les <see cref="FlushInterval"/>, en blocs bornés (<see cref="MaxWrittenChunk"/>).
 /// </para>
 /// <para>
@@ -109,6 +112,9 @@ public sealed class InterventionJournal : IDisposable
 
     /// <summary>Format 2 : images en binaire après le JSON de chaque bloc.</summary>
     private static readonly byte[] MagicV2 = "ZTINTV2\n"u8.ToArray();
+
+    /// <summary>Format 3 : comme le format 2, JSON compressé (zlib).</summary>
+    private static readonly byte[] MagicV3 = "ZTINTV3\n"u8.ToArray();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -195,7 +201,7 @@ public sealed class InterventionJournal : IDisposable
         }
 
         var file = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
-        file.Write(MagicV2);
+        file.Write(MagicV3);
         file.Flush(flushToDisk: true);
         return new InterventionJournal(path, file, protector, terminalTextLimit);
     }
@@ -291,22 +297,33 @@ public sealed class InterventionJournal : IDisposable
         failed?.Invoke();
     }
 
-    /// <summary>Bloc du format 2 : longueur du JSON, JSON des événements, puis leurs images à la suite, chiffrés ensemble.</summary>
+    /// <summary>
+    /// Bloc du format 3 : longueur du JSON compressé, JSON des événements compressé, puis leurs images à la suite,
+    /// chiffrés ensemble.
+    /// </summary>
     private void WriteChunk(List<InterventionEntry> entries)
     {
         var stored = entries.Select(e => new StoredEntry(e.Time, e.Kind, e.Source, e.Text, null, e.Image?.Length)).ToList();
         byte[] json = JsonSerializer.SerializeToUtf8Bytes(new Chunk(_id, _sequence, stored), JsonOptions);
-        var plain = new byte[4 + json.Length + entries.Sum(e => e.Image?.Length ?? 0)];
-        BinaryPrimitives.WriteInt32LittleEndian(plain, json.Length);
-        json.CopyTo(plain, 4);
-        int at = 4 + json.Length;
+        var packed = new MemoryStream();
+        using (var zlib = new ZLibStream(packed, CompressionLevel.Optimal, leaveOpen: true))
+        {
+            zlib.Write(json);
+        }
+
+        Array.Clear(json);
+        int packedLength = (int)packed.Length;
+        var plain = new byte[4 + packedLength + entries.Sum(e => e.Image?.Length ?? 0)];
+        BinaryPrimitives.WriteInt32LittleEndian(plain, packedLength);
+        packed.GetBuffer().AsSpan(0, packedLength).CopyTo(plain.AsSpan(4));
+        Array.Clear(packed.GetBuffer());
+        int at = 4 + packedLength;
         foreach (var image in entries.Select(e => e.Image).OfType<byte[]>())
         {
             image.CopyTo(plain, at);
             at += image.Length;
         }
 
-        Array.Clear(json);
         byte[] protectedBytes = _protector.Protect(plain);
         Array.Clear(plain);
         Span<byte> length = stackalloc byte[4];
@@ -462,9 +479,13 @@ public sealed class InterventionJournal : IDisposable
     public static InterventionRecording Read(string path, ISecretProtector protector)
     {
         using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        var magic = new byte[MagicV2.Length];
-        bool binary = file.ReadAtLeast(magic, magic.Length, throwOnEndOfStream: false) == magic.Length && magic.AsSpan().SequenceEqual(MagicV2);
-        if (!binary && !magic.AsSpan().SequenceEqual(MagicV1))
+        var magic = new byte[MagicV3.Length];
+        int format = file.ReadAtLeast(magic, magic.Length, throwOnEndOfStream: false) < magic.Length ? 0
+            : magic.AsSpan().SequenceEqual(MagicV3) ? 3
+            : magic.AsSpan().SequenceEqual(MagicV2) ? 2
+            : magic.AsSpan().SequenceEqual(MagicV1) ? 1
+            : 0;
+        if (format == 0)
         {
             throw new InvalidDataException("Not a ZillaTerm intervention journal.");
         }
@@ -505,7 +526,7 @@ public sealed class InterventionJournal : IDisposable
             try
             {
                 byte[] plain = protector.Unprotect(data);
-                (chunk, chunkEntries) = binary ? ReadBinaryChunk(plain) : ReadJsonChunk(plain);
+                (chunk, chunkEntries) = format == 1 ? ReadJsonChunk(plain) : ReadBinaryChunk(plain, compressed: format == 3);
                 Array.Clear(plain);
             }
             catch (Exception e) when (e is System.Security.Cryptography.CryptographicException or JsonException or InvalidDataException)
@@ -543,9 +564,11 @@ public sealed class InterventionJournal : IDisposable
             .Select(e => new InterventionEntry(e.Time, e.Kind, e.Source, e.Text, e.Image)).ToList());
     }
 
-    /// <summary>Bloc du format 2 : longueur du JSON, JSON, puis les images des événements à la suite.</summary>
-    /// <exception cref="InvalidDataException">Longueurs incohérentes.</exception>
-    private static (Chunk?, List<InterventionEntry>?) ReadBinaryChunk(byte[] plain)
+    /// <summary>
+    /// Bloc des formats 2 et 3 : longueur du JSON, JSON (compressé au format 3), puis les images des événements à la suite.
+    /// </summary>
+    /// <exception cref="InvalidDataException">Longueurs incohérentes, ou JSON compressé illisible ou trop gros.</exception>
+    private static (Chunk?, List<InterventionEntry>?) ReadBinaryChunk(byte[] plain, bool compressed)
     {
         int jsonLength = plain.Length >= 4 ? BinaryPrimitives.ReadInt32LittleEndian(plain) : -1;
         if (jsonLength < 0 || jsonLength > plain.Length - 4)
@@ -553,7 +576,18 @@ public sealed class InterventionJournal : IDisposable
             throw new InvalidDataException("Invalid chunk.");
         }
 
-        var chunk = JsonSerializer.Deserialize<Chunk>(plain.AsSpan(4, jsonLength), JsonOptions);
+        Chunk? chunk;
+        if (compressed)
+        {
+            byte[] json = Inflate(plain, 4, jsonLength);
+            chunk = JsonSerializer.Deserialize<Chunk>(json, JsonOptions);
+            Array.Clear(json);
+        }
+        else
+        {
+            chunk = JsonSerializer.Deserialize<Chunk>(plain.AsSpan(4, jsonLength), JsonOptions);
+        }
+
         if (chunk?.Entries is null)
         {
             return (chunk, null);
@@ -578,6 +612,36 @@ public sealed class InterventionJournal : IDisposable
         }
 
         return (chunk, entries);
+    }
+
+    /// <summary>JSON compressé d'un bloc : au plus <see cref="MaxChunk"/> octets une fois décompressé.</summary>
+    /// <exception cref="InvalidDataException">Données illisibles ou trop grosses.</exception>
+    private static byte[] Inflate(byte[] data, int offset, int count)
+    {
+        using var zlib = new ZLibStream(new MemoryStream(data, offset, count, writable: false), CompressionMode.Decompress);
+        using var json = new MemoryStream();
+        var buffer = new byte[81920];
+        try
+        {
+            int read;
+            while ((read = zlib.Read(buffer)) > 0)
+            {
+                if (json.Length + read > MaxChunk)
+                {
+                    throw new InvalidDataException("Chunk too large.");
+                }
+
+                json.Write(buffer, 0, read);
+            }
+
+            return json.ToArray();
+        }
+        finally
+        {
+            // Texte des terminaux : pas de copie qui traîne en mémoire.
+            Array.Clear(buffer);
+            Array.Clear(json.GetBuffer());
+        }
     }
 
     private sealed record Chunk(string Id, long Sequence, List<StoredEntry> Entries);

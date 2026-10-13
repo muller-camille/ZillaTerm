@@ -16967,5 +16967,14 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("InterventionReportScriptNeeded", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Images missing here (damaged journal): the screen resumes at the next full image..
+        /// </summary>
+        public static string InterventionReportScreenGap {
+            get {
+                return ResourceManager.GetString("InterventionReportScreenGap", resourceCulture);
+            }
+        }
     }
 }

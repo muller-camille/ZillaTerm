@@ -205,6 +205,7 @@ public partial class InterventionWindow : Window
         Speed = Strings.InterventionReportSpeed,
         Activity = Strings.InterventionReportActivity,
         ScriptNeeded = Strings.InterventionReportScriptNeeded,
+        ScreenGap = Strings.InterventionReportScreenGap,
     };
 
     private void OnRecorderChanged()

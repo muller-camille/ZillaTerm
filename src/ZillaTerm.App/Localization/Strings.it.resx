@@ -5689,4 +5689,7 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="InterventionReportScriptNeeded" xml:space="preserve">
     <value>Il lettore richiede JavaScript e un browser recente.</value>
   </data>
+  <data name="InterventionReportScreenGap" xml:space="preserve">
+    <value>Immagini mancanti qui (registro danneggiato): lo schermo riprende alla prossima immagine completa.</value>
+  </data>
 </root>

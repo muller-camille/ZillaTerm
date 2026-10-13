@@ -5689,4 +5689,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="InterventionReportScriptNeeded" xml:space="preserve">
     <value>Le lecteur demande JavaScript et un navigateur récent.</value>
   </data>
+  <data name="InterventionReportScreenGap" xml:space="preserve">
+    <value>Images manquantes ici (journal abîmé) : l'écran reprend à la prochaine image complète.</value>
+  </data>
 </root>

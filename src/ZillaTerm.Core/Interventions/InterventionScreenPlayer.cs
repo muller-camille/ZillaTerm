@@ -84,6 +84,7 @@ internal static class InterventionScreenPlayer
                 .Append("</h3>\n<div class=\"stage\"><canvas class=\"screen-canvas\" width=\"")
                 .Append(key.Width.ToString(CultureInfo.InvariantCulture)).Append("\" height=\"")
                 .Append(key.Height.ToString(CultureInfo.InvariantCulture)).Append("\"></canvas></div>\n")
+                .Append("<p class=\"note warn gap\" hidden>").Append(Encode(text.ScreenGap)).Append("</p>\n")
                 .Append("<div class=\"controls\"><button type=\"button\" class=\"play\">").Append(Encode(text.Play))
                 .Append("</button> <label>").Append(Encode(text.Speed))
                 .Append(" <select class=\"speed\"><option value=\"1\">1×</option><option value=\"4\">4×</option>")
@@ -121,6 +122,7 @@ internal static class InterventionScreenPlayer
     /// <summary>
     /// Lecteur : décode le conteneur d'images d'une session, rejoue depuis l'image clé précédente pour aller à une heure,
     /// lit à la vitesse choisie, et dessine sous le curseur l'activité (part de l'écran modifiée, en millièmes, par image).
+    /// Une image manquante ou illisible fige l'écran jusqu'à l'image clé suivante, avec un avis.
     /// </summary>
     internal const string Script = """
 (() => {
@@ -140,51 +142,67 @@ internal static class InterventionScreenPlayer
       if (o + n > data.length) break;
       const p = data.subarray(o, o + n);
       o += n;
-      if (p.length < 28 || p[0] !== 90 || p[1] !== 84 || p[2] !== 83 || p[3] !== 49) continue;
+      if (p.length < 32 || p[0] !== 90 || p[1] !== 84 || p[2] !== 83 || p[3] !== 50) continue;
       const h = new DataView(p.buffer, p.byteOffset, p.byteLength);
-      frames.push({ t, p, w: h.getUint16(8, true), h: h.getUint16(10, true), key: (p[12] & 1) === 1, size: p[13],
-        activity: h.getUint16(14, true), first: h.getUint32(16, true), count: h.getUint32(20, true), places: h.getUint32(24, true) });
+      frames.push({ t, p, seq: h.getUint32(8, true), w: h.getUint16(12, true), h: h.getUint16(14, true), key: (p[16] & 1) === 1,
+        size: p[17], activity: h.getUint16(18, true), first: h.getUint32(20, true), count: h.getUint32(24, true), places: h.getUint32(28, true) });
     }
     if (!frames.length) continue;
     const canvas = section.querySelector('canvas.screen-canvas'), ctx = canvas.getContext('2d');
     const seek = section.querySelector('input.seek'), clock = section.querySelector('.clock');
     const play = section.querySelector('button.play'), speed = section.querySelector('select.speed');
-    const graph = section.querySelector('canvas.activity'), g = graph.getContext('2d');
+    const graph = section.querySelector('canvas.activity'), g = graph.getContext('2d'), gap = section.querySelector('.gap');
     const start = Number(section.dataset.start) || 0;
     const duration = frames[frames.length - 1].t + 1000;
     seek.max = String(duration);
     let tiles = new Map(), image = null, width = 0, height = 0, current = -1, wanted = -1, running = false;
     let playing = false, position = 0, last = 0;
 
-    const apply = async f => {
+    // Écran en RGB565 (base des différences) et en RGBA (affiché) ; une image qui ne suit pas la précédente (numéro) ou
+    // illisible arrête la lecture jusqu'à l'image clé suivante.
+    let screen = null, next = -1, valid = false;
+    const paint = (f, body) => {
       if (f.key) {
         tiles = new Map();
         if (f.w !== width || f.h !== height) {
           width = f.w; height = f.h; canvas.width = width; canvas.height = height;
           image = ctx.createImageData(width, height);
+          screen = new Uint16Array(width * height);
         }
-      }
-      if (!image || f.w !== width || f.h !== height) return;
-      const body = await inflate(f.p.subarray(28));
+        valid = true;
+      } else if (f.seq !== next || f.w !== width || f.h !== height) valid = false;
+      next = f.seq + 1;
+      if (!valid || !image) return;
+      if (!body) { valid = false; return; }
       const b = new DataView(body.buffer, body.byteOffset, body.byteLength);
-      const size = f.size, px = size * size, at = f.places * 8;
-      if (body.length < at + f.count * px * 2) return;
+      const size = f.size, px = size * size, basesAt = f.places * 8, at = basesAt + f.count * 4;
+      const columns = Math.ceil(width / size), cells = columns * Math.ceil(height / size);
+      if (body.length !== at + f.count * px * 2) { valid = false; return; }
+      const each = (index, visit) => {
+        const x0 = (index % columns) * size, y0 = Math.floor(index / columns) * size;
+        for (let y = 0; y < size && y0 + y < height; y++)
+          for (let x = 0; x < size && x0 + x < width; x++) visit(y * size + x, (y0 + y) * width + x0 + x);
+      };
+      const fresh = [];
       for (let i = 0; i < f.count; i++) {
-        const tile = new Uint16Array(px);
+        const tile = new Uint16Array(px), base = b.getUint32(basesAt + i * 4, true);
         for (let k = 0; k < px; k++) tile[k] = b.getUint16(at + (i * px + k) * 2, true);
-        tiles.set(f.first + i, tile);
+        if (base !== 0xFFFFFFFF) {
+          if (f.key || base >= cells) { valid = false; return; }
+          each(base, (k, o) => { tile[k] ^= screen[o]; });
+        }
+        fresh.push(tile);
       }
-      const columns = Math.ceil(width / size), pixels = image.data;
+      fresh.forEach((tile, i) => tiles.set(f.first + i, tile));
+      const pixels = image.data;
       for (let i = 0; i < f.places; i++) {
         const index = b.getUint32(i * 8, true), tile = tiles.get(b.getUint32(i * 8 + 4, true));
-        if (!tile) continue;
-        const x0 = (index % columns) * size, y0 = Math.floor(index / columns) * size;
-        for (let y = 0; y < size && y0 + y < height; y++) {
-          for (let x = 0; x < size && x0 + x < width; x++) {
-            const v = tile[y * size + x], o = ((y0 + y) * width + x0 + x) * 4;
-            pixels[o] = (v >> 11) * 255 / 31; pixels[o + 1] = ((v >> 5) & 63) * 255 / 63; pixels[o + 2] = (v & 31) * 255 / 31; pixels[o + 3] = 255;
-          }
-        }
+        if (!tile || index >= cells) { valid = false; return; }
+        each(index, (k, o) => {
+          const v = tile[k], p = o * 4;
+          screen[o] = v;
+          pixels[p] = (v >> 11) * 255 / 31; pixels[p + 1] = ((v >> 5) & 63) * 255 / 63; pixels[p + 2] = (v & 31) * 255 / 31; pixels[p + 3] = 255;
+        });
       }
     };
 
@@ -194,6 +212,7 @@ internal static class InterventionScreenPlayer
       return found;
     };
 
+    // Va à l'image voulue : depuis l'image clé précédente, ou à la suite ; les images sont décompressées par lots.
     const run = async () => {
       running = true;
       try {
@@ -202,9 +221,14 @@ internal static class InterventionScreenPlayer
           let key = target;
           while (key > 0 && !frames[key].key) key--;
           const from = target < current || key > current ? key : current + 1;
-          for (let i = from; i <= target; i++) await apply(frames[i]);
+          for (let i = from; i <= target; i += 32) {
+            const batch = frames.slice(i, Math.min(target + 1, i + 32));
+            const bodies = await Promise.all(batch.map(f => inflate(f.p.subarray(32)).catch(() => null)));
+            batch.forEach((f, j) => paint(f, bodies[j]));
+          }
           current = target;
           if (image) ctx.putImageData(image, 0, 0);
+          gap.hidden = valid;
         }
       } finally { running = false; }
     };

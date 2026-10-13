@@ -55,6 +55,9 @@ public sealed class InterventionReportText
     public string Activity { get; init; } = "Position and screen activity";
 
     public string ScriptNeeded { get; init; } = "The player needs JavaScript and a recent browser.";
+
+    /// <summary>Images d'écran manquantes (bloc du journal abîmé) : l'écran reste figé jusqu'à l'image clé suivante.</summary>
+    public string ScreenGap { get; init; } = "Images missing here (damaged journal): the screen resumes at the next full image.";
 }
 
 /// <summary>

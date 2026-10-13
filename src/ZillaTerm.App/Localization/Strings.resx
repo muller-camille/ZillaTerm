@@ -5689,4 +5689,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="InterventionReportScriptNeeded" xml:space="preserve">
     <value>The player needs JavaScript and a recent browser.</value>
   </data>
+  <data name="InterventionReportScreenGap" xml:space="preserve">
+    <value>Images missing here (damaged journal): the screen resumes at the next full image.</value>
+  </data>
 </root>

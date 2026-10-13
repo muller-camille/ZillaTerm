@@ -70,6 +70,7 @@ public sealed partial class ScreenTilesTests : IDisposable
 
         Assert.True(frame.Header.Key);
         Assert.Equal(7, frame.Header.Stream);
+        Assert.Equal(0, frame.Header.Sequence);
         Assert.Equal(4 * 3, frame.Header.Placements);
         Assert.Equal(1000, frame.Header.Activity);
         // Fond uni : tuiles pleines toutes pareilles ; celles du bord (complétées de zéros) diffèrent selon leur découpe.
@@ -126,43 +127,185 @@ public sealed partial class ScreenTilesTests : IDisposable
     }
 
     /// <summary>
-    /// Image clé périodique, à la demande et après un changement de taille : l'écran entier, cache reparti de zéro ; une
-    /// image qui n'est pas une image clé ne se lit pas sans elle.
+    /// Images clés : pas sur un écran immobile, même longtemps ; à la demande et après un changement de taille ; au plus
+    /// tard 30 minutes après la précédente si l'écran a changé ; plus tôt (5 minutes au moins) quand les images depuis
+    /// pèsent 4 fois l'image clé. Le cache repart de chacune.
     /// </summary>
     [Fact]
-    public void KeyFramesComeBackAndResetTheCache()
+    public void KeyFramesFollowTheActivity()
     {
         const int width = 128, height = 128;
         var screen = Screen(width, height);
         var encoder = new ScreenTileEncoder(stream: 2);
         var first = encoder.Encode(T0, screen, width, height, width * 4)!;
         Assert.True(first.Header.Key);
+        Assert.Null(encoder.Encode(T0 + TimeSpan.FromHours(2), screen, width, height, width * 4));
 
-        var later = encoder.Encode(T0 + ScreenTileEncoder.KeyFrameInterval, screen, width, height, width * 4)!;
-        Assert.True(later.Header.Key);
-        Assert.Equal(4, later.Header.Placements);
-        Assert.Equal(first.Header.NewTiles, later.Header.NewTiles);
-        Assert.Equal(0, later.Header.Activity);
-
-        var asked = encoder.Encode(T0 + ScreenTileEncoder.KeyFrameInterval + TimeSpan.FromSeconds(1), screen, width, height, width * 4, key: true)!;
+        var asked = encoder.Encode(T0 + TimeSpan.FromHours(2), screen, width, height, width * 4, key: true)!;
         Assert.True(asked.Header.Key);
+        Assert.Equal(4, asked.Header.Placements);
+        Assert.Equal(first.Header.NewTiles, asked.Header.NewTiles);
+        Assert.Equal(0, asked.Header.Activity);
+        Assert.Equal(1, asked.Header.Sequence);
+
+        // Un petit changement, puis plus rien : image clé 30 minutes après la précédente, pas avant.
+        var start = T0 + TimeSpan.FromHours(2);
+        var changed = (byte[])screen.Clone();
+        Paint(changed, width, 0, 0, 20, 20, 0);
+        Assert.False(encoder.Encode(start.AddSeconds(1), changed, width, height, width * 4)!.Header.Key);
+        Assert.Null(encoder.Encode(start + ScreenTileEncoder.KeyFrameMaxInterval - TimeSpan.FromSeconds(1), changed, width, height, width * 4));
+        var late = encoder.Encode(start + ScreenTileEncoder.KeyFrameMaxInterval, changed, width, height, width * 4)!;
+        Assert.True(late.Header.Key);
+        Assert.Equal(0, late.Header.Activity);
+
+        // Écran très actif (bruit) : images clés selon leur poids, au plus tôt 5 minutes après la précédente.
+        var noisy = new ScreenTileEncoder(stream: 3);
+        var random = new Random(3);
+        var pixels = new byte[width * height * 4];
+        Assert.True(noisy.Encode(T0, Screen(width, height, (_, _) => (240, 244, 248)), width, height, width * 4)!.Header.Key);
+        var keys = new List<int>();
+        for (int second = 1; second <= 11 * 60; second++)
+        {
+            random.NextBytes(pixels);
+            if (noisy.Encode(T0.AddSeconds(second), pixels, width, height, width * 4)!.Header.Key)
+            {
+                keys.Add(second);
+            }
+        }
+
+        Assert.Equal([300, 600], keys);
 
         var wider = Screen(192, 128);
-        var resized = encoder.Encode(T0 + ScreenTileEncoder.KeyFrameInterval + TimeSpan.FromSeconds(2), wider, 192, 128, 192 * 4)!;
+        var resized = encoder.Encode(start + TimeSpan.FromHours(1), wider, 192, 128, 192 * 4)!;
         Assert.True(resized.Header.Key);
         Assert.Equal(6, resized.Header.Placements);
-
-        var change = (byte[])wider.Clone();
-        Paint(change, 192, 0, 0, 64, 64, 0);
-        var delta = encoder.Encode(T0 + ScreenTileEncoder.KeyFrameInterval + TimeSpan.FromSeconds(3), change, 192, 128, 192 * 4)!;
-        Assert.False(new ScreenTileDecoder().Apply(delta.Data));
         Assert.False(ScreenFrameHeader.TryRead("pas une image"u8, out _));
+        // En-tête trafiqué : écran de 65535 × 65535 (grille d'un million de tuiles) refusé.
+        var huge = (byte[])resized.Data.Clone();
+        huge[12] = huge[13] = huge[14] = huge[15] = 0xFF;
+        Assert.False(ScreenFrameHeader.TryRead(huge, out _));
         Assert.Throws<ArgumentException>(() => encoder.Encode(T0, new byte[10], 192, 128, 192 * 4));
     }
 
     /// <summary>
-    /// Journal au format 2 : captures et images d'écran en binaire après le JSON (pas de base64), relues à l'identique ;
-    /// les images d'écran ne comptent pas comme événements ; la taille du fichier est suivie (bridage à 100 Mo).
+    /// Rattrapage : un caractère tapé sous le seuil de bruit est gardé une fois la tuile immobile 3 secondes ; un curseur
+    /// qui clignote seul ne coûte rien ; à côté d'un caractère tapé, la tuile est gardée au plus tard après une minute.
+    /// </summary>
+    [Fact]
+    public void ResidueBelowTheNoiseThresholdIsCaughtUp()
+    {
+        const int width = 192, height = 128;
+        var screen = Screen(width, height, (_, _) => (240, 244, 248));
+        var encoder = new ScreenTileEncoder(stream: 4);
+        var decoder = new ScreenTileDecoder();
+        Assert.True(decoder.Apply(encoder.Encode(T0, screen, width, height, width * 4)!.Data));
+
+        // « y » : 5 × 5 pixels, sous le seuil.
+        Paint(screen, width, 10, 10, 5, 5, 0);
+        Assert.Null(encoder.Encode(T0.AddSeconds(1), screen, width, height, width * 4));
+        Assert.Null(encoder.Encode(T0.AddSeconds(2), screen, width, height, width * 4));
+        Assert.Null(encoder.Encode(T0.AddSeconds(3), screen, width, height, width * 4));
+        var caughtUp = encoder.Encode(T0.AddSeconds(4), screen, width, height, width * 4)!;
+        Assert.False(caughtUp.Header.Key);
+        Assert.Equal(1, caughtUp.Header.Placements);
+        Assert.True(decoder.Apply(caughtUp.Data));
+        Assert.Equal(Rgb565(screen), decoder.Pixels);
+        Assert.Null(encoder.Encode(T0.AddSeconds(10), screen, width, height, width * 4));
+
+        // Curseur seul qui clignote, dans une autre tuile : un de ses deux états est l'écran gardé, rien à garder.
+        var blink = (byte[])screen.Clone();
+        Paint(blink, width, 100, 10, 1, 12, 0);
+        for (int second = 11; second <= 80; second++)
+        {
+            Assert.Null(encoder.Encode(T0.AddSeconds(second), second % 2 == 0 ? blink : screen, width, height, width * 4));
+        }
+
+        // Caractère tapé juste avant le curseur qui clignote : la tuile ne s'immobilise jamais, gardée après 60 s.
+        var off = (byte[])screen.Clone();
+        Paint(off, width, 90, 10, 5, 5, 0);
+        var on = (byte[])off.Clone();
+        Paint(on, width, 100, 10, 1, 6, 0);
+        var frames = new List<int>();
+        for (int second = 81; second <= 220; second++)
+        {
+            var image = second % 2 == 0 ? on : off;
+            if (encoder.Encode(T0.AddSeconds(second), image, width, height, width * 4) is { } frame)
+            {
+                frames.Add(second);
+                Assert.True(decoder.Apply(frame.Data));
+                Assert.Equal(Rgb565(image), decoder.Pixels);
+            }
+        }
+
+        // Reste en attente depuis 80 s (dernier clignotement seul) : gardé à 140 s.
+        Assert.Equal([140], frames);
+    }
+
+    /// <summary>
+    /// Différence : sur un fond qui ne se compresse pas, un caractère tapé ne coûte que quelques octets (la tuile entière en
+    /// coûterait 8 Ko) ; une tuile beaucoup modifiée est gardée entière ; l'écran relu est exact.
+    /// </summary>
+    [Fact]
+    public void SmallChangesAreKeptAsDifferences()
+    {
+        const int width = 128, height = 64;
+        var random = new Random(5);
+        var screen = new byte[width * height * 4];
+        random.NextBytes(screen);
+        var encoder = new ScreenTileEncoder(stream: 5);
+        var decoder = new ScreenTileDecoder();
+        var key = encoder.Encode(T0, screen, width, height, width * 4)!;
+        Assert.True(key.Data.Length > 2 * 8000, $"{key.Data.Length} octets");
+        Assert.True(decoder.Apply(key.Data));
+
+        Paint(screen, width, 20, 20, 7, 12, 0);
+        var typed = encoder.Encode(T0.AddSeconds(1), screen, width, height, width * 4)!;
+        Assert.Equal(1, typed.Header.NewTiles);
+        Assert.True(typed.Data.Length < 300, $"{typed.Data.Length} octets");
+        Assert.True(decoder.Apply(typed.Data));
+        Assert.Equal(Rgb565(screen), decoder.Pixels);
+
+        // Moitié de la tuile repeinte : gardée entière.
+        random.NextBytes(screen.AsSpan(0, width * 4 * 32));
+        var repainted = encoder.Encode(T0.AddSeconds(2), screen, width, height, width * 4)!;
+        Assert.True(decoder.Apply(repainted.Data));
+        Assert.Equal(Rgb565(screen), decoder.Pixels);
+    }
+
+    /// <summary>
+    /// Image manquante (bloc du journal abîmé) : la suivante ne s'applique pas, ni rien jusqu'à l'image clé suivante,
+    /// qui reprend l'écran exact ; une image qui n'est pas une image clé ne se lit pas seule.
+    /// </summary>
+    [Fact]
+    public void MissingFrameStopsDecodingUntilTheNextKeyFrame()
+    {
+        const int width = 128, height = 128;
+        var screen = Screen(width, height);
+        var encoder = new ScreenTileEncoder(stream: 6);
+        var frames = new List<ScreenFrame> { encoder.Encode(T0, screen, width, height, width * 4)! };
+        for (int i = 1; i <= 3; i++)
+        {
+            Paint(screen, width, 10 * i, 10, 8, 8, (byte)(40 * i));
+            frames.Add(encoder.Encode(T0.AddSeconds(i), screen, width, height, width * 4)!);
+        }
+
+        frames.Add(encoder.Encode(T0.AddSeconds(4), screen, width, height, width * 4, key: true)!);
+        Assert.Equal([0, 1, 2, 3, 4], frames.Select(f => f.Header.Sequence));
+        Assert.False(new ScreenTileDecoder().Apply(frames[1].Data));
+
+        var decoder = new ScreenTileDecoder();
+        Assert.True(decoder.Apply(frames[0].Data));
+        Assert.True(decoder.Apply(frames[1].Data));
+        Assert.False(decoder.Apply(frames[3].Data));
+        Assert.False(decoder.Apply(frames[2].Data));
+        Assert.True(decoder.Apply(frames[4].Data));
+        Assert.Equal(Rgb565(screen), decoder.Pixels);
+    }
+
+    /// <summary>
+    /// Journal au format 3 : captures et images d'écran en binaire après le JSON compressé (pas de base64), relues à
+    /// l'identique ; les images d'écran ne comptent pas comme événements ; la taille du fichier est suivie (bridage à
+    /// 100 Mo) ; le texte des terminaux prend bien moins de place qu'en clair.
     /// </summary>
     [Fact]
     public void JournalKeepsImagesInBinary()
@@ -179,17 +322,33 @@ public sealed partial class ScreenTilesTests : IDisposable
             journal.Write(new InterventionEntry(T0, InterventionKind.Started, "", "jdoe"));
             journal.Write(new InterventionEntry(T0.AddSeconds(1), InterventionKind.Screenshot, "srv01", "Capture", png));
             journal.Write(new InterventionEntry(T0.AddSeconds(2), InterventionKind.Screen, "srv01", "", frame));
-            Assert.Equal(2, journal.Count);
+            for (int i = 0; i < 2000; i++)
+            {
+                journal.Write(new InterventionEntry(T0.AddSeconds(3), InterventionKind.Terminal, "root@srv01",
+                    $"-rw-r--r--. 1 root root {i * 37,8} Oct 13 14:{i % 60:00} /var/log/messages-2026101{i % 10}"));
+            }
+
+            Assert.Equal(2002, journal.Count);
             journal.Flush();
             written = journal.Length;
             Assert.Equal(new FileInfo(path).Length, written);
             journal.Stop(new InterventionEntry(T0.AddMinutes(1), InterventionKind.Stopped, "", ""));
         }
 
-        // Le JSON du bloc ne contient que la longueur des images, pas leur base64.
+        // Le JSON du bloc, compressé, ne contient que la longueur des images, pas leur base64 ; les images suivent.
         var plain = protector.Unprotect(File.ReadAllBytes(path)[12..(int)written]);
-        Assert.DoesNotContain(Convert.ToBase64String(png), Encoding.UTF8.GetString(plain), StringComparison.Ordinal);
-        Assert.Equal("ZTINTV2\n", Encoding.ASCII.GetString(File.ReadAllBytes(path), 0, 8));
+        int packed = BitConverter.ToInt32(plain, 0);
+        using (var zlib = new System.IO.Compression.ZLibStream(new MemoryStream(plain, 4, packed), System.IO.Compression.CompressionMode.Decompress))
+        using (var reader = new StreamReader(zlib))
+        {
+            var json = reader.ReadToEnd();
+            Assert.Contains("\"ImageLength\":7", json, StringComparison.Ordinal);
+            Assert.DoesNotContain(Convert.ToBase64String(png), json, StringComparison.Ordinal);
+            Assert.True(written < json.Length / 5, $"{written} octets pour {json.Length} de JSON");
+        }
+
+        Assert.Equal(png, plain[(4 + packed)..(4 + packed + png.Length)]);
+        Assert.Equal("ZTINTV3\n", Encoding.ASCII.GetString(File.ReadAllBytes(path), 0, 8));
 
         var recording = InterventionJournal.Read(path, protector);
         Assert.False(recording.Damaged);
@@ -197,6 +356,67 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.Equal(frame, recording.Entries[2].Image);
         Assert.Equal(InterventionKind.Screen, recording.Entries[2].Kind);
         Assert.Null(recording.Entries[0].Image);
+        Assert.Equal("-rw-r--r--. 1 root root    73963 Oct 13 14:19 /var/log/messages-20261019", recording.Entries[^2].Text);
+    }
+
+    /// <summary>Journal du format 2 (JSON non compressé, images en binaire) : toujours relu.</summary>
+    [Fact]
+    public void FormatTwoJournalIsStillRead()
+    {
+        var protector = new XorProtector();
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "intervention-20261013-140000.zij");
+        var json = Encoding.UTF8.GetBytes(
+            "{\"Id\":\"abc\",\"Sequence\":0,\"Entries\":[{\"Time\":\"2026-10-13T14:00:00Z\",\"Kind\":\"Started\",\"Source\":\"\",\"Text\":\"jdoe\"},"
+            + "{\"Time\":\"2026-10-13T14:00:01Z\",\"Kind\":\"Screenshot\",\"Source\":\"srv01\",\"Text\":\"Capture\",\"ImageLength\":3}]}");
+        var plain = BitConverter.GetBytes(json.Length).Concat(json).Concat(new byte[] { 7, 8, 9 }).ToArray();
+        var block = protector.Protect(plain);
+        using (var file = File.Create(path))
+        {
+            file.Write("ZTINTV2\n"u8);
+            file.Write(BitConverter.GetBytes(block.Length));
+            file.Write(block);
+        }
+
+        var recording = InterventionJournal.Read(path, protector);
+        Assert.False(recording.Damaged);
+        Assert.Equal(new byte[] { 7, 8, 9 }, recording.Entries[1].Image);
+    }
+
+    /// <summary>
+    /// Bloc dont le JSON compressé dépasserait 64 Mo une fois décompressé : marqué abîmé sans être décompressé en entier,
+    /// le bloc suivant se relit.
+    /// </summary>
+    [Fact]
+    public void OversizedCompressedBlockIsRefused()
+    {
+        var protector = new XorProtector();
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "intervention-20261013-140000.zij");
+        byte[] Block(byte[] json)
+        {
+            var packed = new MemoryStream();
+            using (var zlib = new System.IO.Compression.ZLibStream(packed, System.IO.Compression.CompressionLevel.Fastest, leaveOpen: true))
+            {
+                zlib.Write(json);
+            }
+
+            var plain = BitConverter.GetBytes((int)packed.Length).Concat(packed.ToArray()).ToArray();
+            var block = protector.Protect(plain);
+            return BitConverter.GetBytes(block.Length).Concat(block).ToArray();
+        }
+
+        using (var file = File.Create(path))
+        {
+            file.Write("ZTINTV3\n"u8);
+            file.Write(Block(new byte[65 * 1024 * 1024]));
+            file.Write(Block(Encoding.UTF8.GetBytes(
+                "{\"Id\":\"abc\",\"Sequence\":1,\"Entries\":[{\"Time\":\"2026-10-13T14:00:00Z\",\"Kind\":\"Note\",\"Source\":\"\",\"Text\":\"suite\"}]}")));
+        }
+
+        var recording = InterventionJournal.Read(path, protector);
+        Assert.True(recording.Damaged);
+        Assert.Equal("suite", Assert.Single(recording.Entries).Text);
     }
 
     /// <summary>Journal du format 1 (images en base64 dans le JSON) : toujours relu.</summary>
@@ -281,6 +501,7 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.DoesNotContain("\u202E", html, StringComparison.Ordinal);
         Assert.Single(Regex.Matches(html, "<section class=\"screen\""));
         Assert.Contains("width=\"192\" height=\"128\"", html, StringComparison.Ordinal);
+        Assert.Contains("<p class=\"note warn gap\" hidden>", html, StringComparison.Ordinal);
         // Chronologie : le début et la fin, pas les images d'écran.
         Assert.Equal(2, Regex.Matches(html, "<td class=\"time\">").Count);
 
