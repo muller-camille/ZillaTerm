@@ -570,4 +570,7 @@
   <data name="FtpNameNotEncodable" xml:space="preserve">
     <value>“{0}” contains an invalid character (incomplete Unicode character): it cannot be sent to the FTP server. Rename it first.</value>
   </data>
+  <data name="DownloadExceedsAnnounced" xml:space="preserve">
+    <value>The server sent more than {0} for a file announced at {1}: download stopped.</value>
+  </data>
 </root>

@@ -695,12 +695,15 @@ public sealed class FtpFileBrowser : IRemoteFiles
                 started = true;
                 try
                 {
+                    // Plafond d'après la taille annoncée (SIZE, sinon la liste) : un serveur qui enverrait sans fin ne
+                    // remplit pas le disque du poste.
+                    long announced = Math.Max(await _client.GetFileSize(Checked(entry.FullPath), -1, ct).ConfigureAwait(false), entry.Length);
                     await using (var file = TransferCheck.CreatePartial(partial))
                     {
                         created = true;
-                        using var hashing = new HashingStream(file);
+                        using var hashing = new HashingStream(file, TransferCheck.DownloadLimit(announced), announced);
                         var report = progress is null ? null : new Progress<FtpProgress>(
-                            p => progress.Report(new TransferProgress(entry.Name, p.TransferredBytes, entry.Length)));
+                            p => progress.Report(new TransferProgress(entry.Name, p.TransferredBytes, announced)));
                         if (!await _client.DownloadStream(hashing, Checked(entry.FullPath), 0, report, ct).ConfigureAwait(false))
                         {
                             throw new IOException(string.Format(CultureInfo.CurrentCulture, CoreStrings.FtpTransferFailed, entry.FullPath));
@@ -709,6 +712,13 @@ public sealed class FtpFileBrowser : IRemoteFiles
                         remoteHash = hashing.GetHash();
                         received = hashing.Count;
                     }
+                }
+                catch (FtpException e) when (e.InnerException is InvalidDataException tooMuch)
+                {
+                    // Plafond dépassé (FluentFTP l'enveloppe dans une erreur générale) : son propre message.
+                    await ReconnectAsync().ConfigureAwait(false);
+                    System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tooMuch).Throw();
+                    throw;
                 }
                 catch (Exception e) when (e is not OutOfMemoryException && NeedsRecovery(e))
                 {

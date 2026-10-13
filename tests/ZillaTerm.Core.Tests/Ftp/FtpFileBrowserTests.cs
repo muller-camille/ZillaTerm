@@ -393,6 +393,37 @@ public sealed class FtpFileBrowserTests
     }
 
     /// <summary>
+    /// Serveur qui envoie bien plus que la taille annoncée (2 Kio, plafond 64 Mio de plus) : téléchargement arrêté avec
+    /// un message clair, copie incomplète supprimée, rien d'autre sur le disque.
+    /// </summary>
+    [Fact]
+    public async Task DownloadStopsWhenTheServerSendsFarMoreThanAnnounced()
+    {
+        using var server = new FakeFtp();
+        server.Files["/home/fake/app.conf"] = new byte[65 * 1024 * 1024];
+        var folder = Path.Combine(Path.GetTempPath(), "zt-ftp-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            using var browser = await FtpFileBrowser.ConnectAsync(
+                Connection(server, FtpSecurity.Opportunistic, () => true), CancellationToken.None);
+            var entry = new RemoteEntry("app.conf", "/home/fake/app.conf", false, false, 2048, default, "-rw-r--r--");
+            var checks = new List<TransferCheck>();
+
+            var error = await Assert.ThrowsAsync<InvalidDataException>(() =>
+                browser.DownloadAsync(entry, Path.Combine(folder, "app.conf"), checks, null, background: false, CancellationToken.None));
+
+            Assert.Contains(RemotePath.FormatSize(2048), error.Message, StringComparison.Ordinal);
+            Assert.True(Assert.Single(checks).Failed);
+            Assert.Empty(Directory.GetFileSystemEntries(folder));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    /// <summary>
     /// Envoi d'un dossier : un lien vers un dossier (ici vers le dossier lui-même, une boucle) n'est pas suivi ; il est
     /// noté dans les vérifications, après les fichiers envoyés.
     /// </summary>

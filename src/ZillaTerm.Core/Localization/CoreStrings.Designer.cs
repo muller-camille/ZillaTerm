@@ -1729,5 +1729,14 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("FtpNameNotEncodable", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server sent more than {0} for a file announced at {1}: download stopped..
+        /// </summary>
+        public static string DownloadExceedsAnnounced {
+            get {
+                return ResourceManager.GetString("DownloadExceedsAnnounced", resourceCulture);
+            }
+        }
     }
 }

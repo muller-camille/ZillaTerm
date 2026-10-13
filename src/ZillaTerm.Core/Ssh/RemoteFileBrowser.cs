@@ -593,9 +593,12 @@ public sealed class RemoteFileBrowser : IRemoteFiles
             using (await _gate.EnterAsync(background, ct).ConfigureAwait(false))
             {
                 // Avant de créer la copie locale : un fichier spécial (ou disparu) est refusé sans rien laisser sur le poste.
+                long announced;
                 try
                 {
-                    EnsureNotSpecial(entry.FullPath, await _sftp.GetAttributesAsync(entry.FullPath, ct).ConfigureAwait(false));
+                    var attributes = await _sftp.GetAttributesAsync(entry.FullPath, ct).ConfigureAwait(false);
+                    EnsureNotSpecial(entry.FullPath, attributes);
+                    announced = Math.Max(attributes.Size, entry.Length);
                 }
                 catch (Exception e) when (e is not (OutOfMemoryException or OperationCanceledException))
                 {
@@ -606,9 +609,10 @@ public sealed class RemoteFileBrowser : IRemoteFiles
                 started = true;
                 await using var file = TransferCheck.CreatePartial(partial);
                 created = true;
-                using var hashing = new HashingStream(file);
+                // Plafond d'après la taille annoncée : un serveur qui enverrait sans fin ne remplit pas le disque du poste.
+                using var hashing = new HashingStream(file, TransferCheck.DownloadLimit(announced), announced);
                 var report = progress is null ? null : new Progress<Renci.SshNet.DownloadFileProgressReport>(
-                    p => progress.Report(new TransferProgress(entry.Name, (long)p.TotalBytesDownloaded, entry.Length)));
+                    p => progress.Report(new TransferProgress(entry.Name, (long)p.TotalBytesDownloaded, announced)));
                 await _sftp.DownloadFileAsync(entry.FullPath, hashing, report, ct).ConfigureAwait(false);
                 remoteHash = hashing.GetHash();
                 received = hashing.Count;
