@@ -561,4 +561,7 @@
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>Le serveur Bureau à distance n'utilise aucun chiffrement : rien ne prouve son identité ni ne protège la connexion, elle est refusée.</value>
   </data>
+  <data name="MigrationCheckOtherDomain" xml:space="preserve">
+    <value>Compte d'un autre domaine que le serveur : vérifiez-le</value>
+  </data>
 </root>

@@ -561,4 +561,7 @@
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>Il server Desktop remoto non usa alcuna cifratura: nulla ne prova l'identità né protegge la connessione, che viene rifiutata.</value>
   </data>
+  <data name="MigrationCheckOtherDomain" xml:space="preserve">
+    <value>Account di un altro dominio rispetto al server: verificalo</value>
+  </data>
 </root>

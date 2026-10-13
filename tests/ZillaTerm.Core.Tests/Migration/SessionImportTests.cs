@@ -101,6 +101,53 @@ public sealed class SessionImportTests
         Assert.Equal(["7"], Ids(Rdp("srv-b", "svc")));
     }
 
+    /// <summary>
+    /// Sans domaine indiqué, un compte de domaine d'un autre domaine que le serveur (« administrator » de web01.dmz.local,
+    /// souvent son compte local absent du coffre) n'est qu'une supposition : proposé après ceux du domaine du serveur, la
+    /// session est à vérifier et n'est pas cochée d'office. Même domaine, nom court ou adresse IP : prêt, comme avant.
+    /// </summary>
+    [Fact]
+    public void DomainAccountOfAnotherDomainIsOnlyAProposal()
+    {
+        var corp = Account("20", "administrator", "corp.local", "WinDomain", "corp.local");
+        var dmz = Account("21", "administrator", "dmz.local", "WinDomain", "DMZ");
+        var matcher = new SessionMatcher([corp], KnownDomains.From(["corp.local"], []));
+        var settings = new AppSettings();
+        var import = new SessionImport(settings, Pvwa, matcher,
+        [
+            Rdp("web01.dmz.local", "administrator"),
+            Rdp("srv77.corp.local", "administrator"),
+            Rdp("srv78", "administrator"),
+            Rdp("10.0.0.9", "administrator"),
+        ]);
+
+        var other = import.Items[0];
+        Assert.True(Assert.Single(other.Candidates).OtherDomain);
+        Assert.Equal((ImportState.Check, false), (other.State, other.Include));
+        using (UiCulture.Use("fr-FR"))
+        {
+            Assert.Equal("Compte d'un autre domaine que le serveur : vérifiez-le", other.StateText);
+        }
+
+        Assert.All(import.Items.Skip(1), i => Assert.Equal((ImportState.Ready, true, false), (i.State, i.Include, i.Chosen!.OtherDomain)));
+        Assert.False(Assert.Single(Matcher().Candidates(Rdp("srv77.corp.local", "admin"))).OtherDomain);
+
+        // Domaine indiqué (CORP\administrator) : le compte voulu, rien à vérifier.
+        Assert.False(Assert.Single(matcher.Candidates(Rdp("web01.dmz.local", "CORP\\administrator"))).OtherDomain);
+
+        // Compte du domaine du serveur d'abord.
+        var both = new SessionMatcher([corp, dmz], KnownDomains.From(["corp.local", "dmz.local"], []));
+        Assert.Equal(["21", "20"], both.Candidates(Rdp("web01.dmz.local", "administrator")).Select(c => c.Account.Id));
+
+        // Non cochée : pas importée ; cochée à la main, elle l'est.
+        Assert.Equal(3, import.Apply());
+        Assert.Equal(ImportState.Excluded, other.State);
+        var again = new SessionImport(settings, Pvwa, matcher, [Rdp("web01.dmz.local", "administrator")]);
+        again.Items[0].Include = true;
+        Assert.Equal(1, again.Apply());
+        Assert.Equal("web01.dmz.local", again.Items[0].Created!.RemoteMachine);
+    }
+
     [Fact]
     public void ImportsIntoMyServersThroughPsmOrPsmp()
     {
