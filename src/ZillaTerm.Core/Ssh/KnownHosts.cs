@@ -14,11 +14,27 @@ public enum HostKeyStatus
 /// Empreintes des clés d'hôte déjà acceptées (« premier usage de confiance », comme known_hosts), par serveur et par type
 /// de clé : un serveur peut en présenter plusieurs (RSA, puis ed25519), chacune vérifiée une fois.
 /// Clé « hôte:port » → « algorithme SHA256:empreinte » pour la première clé acceptée (format des versions précédentes),
-/// « hôte:port type » pour les clés d'un autre type.
+/// « hôte:port type » pour les clés d'un autre type, « psmp://hôte:port » pour celles d'un PSMP reçues d'un fichier
+/// d'environnement (<see cref="EnvironmentPrefix"/>).
 /// </summary>
 public static class KnownHosts
 {
+    /// <summary>
+    /// Préfixe des clés d'un PSMP reçues d'un fichier d'environnement : elles ne valent que pour les connexions au PSMP,
+    /// jamais pour une connexion directe au même serveur (accès d'urgence, KeePass, où partent des mots de passe) ; un
+    /// serveur déclaré PSMP dans un fichier ne ferait sinon plus vérifier sa clé. Une clé acceptée à la connexion passe
+    /// avant.
+    /// </summary>
+    public const string EnvironmentPrefix = "psmp://";
+
     public static string Key(string host, int port) => $"{host.Trim().ToLowerInvariant()}:{port}";
+
+    /// <summary>
+    /// Hôte dont les clés valent pour une connexion : le serveur lui-même ; pour un PSMP dont aucune clé n'a encore été
+    /// acceptée à la connexion, celles reçues de son fichier d'environnement.
+    /// </summary>
+    public static string HostFor(IReadOnlyDictionary<string, string> store, string host, int port, bool psmp) =>
+        psmp && KnownKeys(store, host, port).Count == 0 ? EnvironmentPrefix + host.Trim() : host;
 
     public static string Format(string algorithm, string sha256) => $"{algorithm} SHA256:{sha256}";
 

@@ -23,7 +23,10 @@ internal sealed class SshInteraction(Window owner, AppSettings settings, Action 
     public bool CheckHostKey(string host, int port, string algorithm, string sha256Fingerprint) =>
         Dispatcher.Invoke(() =>
         {
-            var status = KnownHosts.Check(settings.KnownHosts, host, port, algorithm, sha256Fingerprint);
+            // PSMP sans clé acceptée à la connexion : celle de son fichier d'environnement. Jamais pour une connexion
+            // directe : le même serveur, déclaré PSMP dans un fichier, ne ferait plus vérifier sa clé.
+            var keys = KnownHosts.HostFor(settings.KnownHosts, host, port, psmp: !direct);
+            var status = KnownHosts.Check(settings.KnownHosts, keys, port, algorithm, sha256Fingerprint);
             if (status == HostKeyStatus.Trusted)
             {
                 return true;
@@ -31,8 +34,8 @@ internal sealed class SshInteraction(Window owner, AppSettings settings, Action 
 
             if (!AskHostKey(owner, direct, host, port, algorithm, sha256Fingerprint, status,
                     status == HostKeyStatus.Changed
-                        ? [KnownHosts.Known(settings.KnownHosts, host, port, algorithm)!.Value]
-                        : KnownHosts.KnownKeys(settings.KnownHosts, host, port)))
+                        ? [KnownHosts.Known(settings.KnownHosts, keys, port, algorithm)!.Value]
+                        : KnownHosts.KnownKeys(settings.KnownHosts, keys, port)))
             {
                 return false;
             }
@@ -44,7 +47,8 @@ internal sealed class SshInteraction(Window owner, AppSettings settings, Action 
 
     // Rien si l'application se ferme (Invoke ne rend alors rien) : l'ordre de négociation reste celui par défaut.
     public IReadOnlyCollection<string> KnownHostKeyTypes(string host, int port) =>
-        Dispatcher.Invoke(() => KnownHosts.KnownKeys(settings.KnownHosts, host, port).Select(k => KnownHosts.KeyType(k.Algorithm)).ToList())
+        Dispatcher.Invoke(() => KnownHosts.KnownKeys(settings.KnownHosts, KnownHosts.HostFor(settings.KnownHosts, host, port, psmp: !direct), port)
+            .Select(k => KnownHosts.KeyType(k.Algorithm)).ToList())
         ?? [];
 
     /// <summary>

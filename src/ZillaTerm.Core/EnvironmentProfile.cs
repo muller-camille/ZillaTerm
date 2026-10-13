@@ -160,10 +160,13 @@ public sealed class EnvironmentProfile
         var psmps = settings.PsmpServers.Select(p => (Address: p.Address, Port: p.Port))
             .Prepend((Address: settings.PsmpAddress, Port: settings.PsmpPort))
             .Where(p => !string.IsNullOrWhiteSpace(p.Address));
+        // Clé acceptée à la connexion, sinon celle reçue d'un fichier d'environnement.
         var hostKeys = psmps.Select(p => KnownHosts.Key(p.Address, p.Port))
             .Distinct()
-            .Where(settings.KnownHosts.ContainsKey)
-            .ToDictionary(k => k, k => settings.KnownHosts[k]);
+            .Select(k => (Server: k, Key: settings.KnownHosts.GetValueOrDefault(k)
+                                         ?? settings.KnownHosts.GetValueOrDefault(KnownHosts.EnvironmentPrefix + k)))
+            .Where(k => k.Key is not null)
+            .ToDictionary(k => k.Server, k => k.Key!);
         return new EnvironmentProfile
         {
             Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim(),
@@ -409,7 +412,7 @@ public sealed class EnvironmentProfile
         foreach (var (host, key) in HostKeys ?? [])
         {
             var id = host.Trim().ToLowerInvariant();
-            var known = KnownHosts.KnownKeys(settings.KnownHosts, id).Select(k => KnownHosts.Format(k.Algorithm, k.Sha256)).ToList();
+            var known = AcceptedKeys(settings, id).Select(k => KnownHosts.Format(k.Algorithm, k.Sha256)).ToList();
             if (known.Contains(key.Trim(), StringComparer.Ordinal))
             {
                 // Clé déjà acceptée : rien à changer.
@@ -531,9 +534,10 @@ public sealed class EnvironmentProfile
         foreach (var (host, key) in HostKeys ?? [])
         {
             var id = host.Trim().ToLowerInvariant();
-            if (psmps.Contains(id) && KnownHosts.KnownKeys(settings.KnownHosts, id).Count == 0)
+            if (psmps.Contains(id) && AcceptedKeys(settings, id).Count == 0)
             {
-                settings.KnownHosts[id] = key.Trim();
+                // Rangée à part : valable pour les connexions au PSMP seulement (voir KnownHosts.EnvironmentPrefix).
+                settings.KnownHosts[KnownHosts.EnvironmentPrefix + id] = key.Trim();
             }
         }
 
@@ -565,9 +569,13 @@ public sealed class EnvironmentProfile
         }
     }
 
+    /// <summary>Clés de ce serveur (« hôte:port ») acceptées à la connexion ou reçues d'un fichier d'environnement.</summary>
+    private static List<(string Algorithm, string Sha256)> AcceptedKeys(AppSettings settings, string server) =>
+        [.. KnownHosts.KnownKeys(settings.KnownHosts, server), .. KnownHosts.KnownKeys(settings.KnownHosts, KnownHosts.EnvironmentPrefix + server)];
+
     /// <summary>
     /// « hôte:port » de chaque PSMP : ceux des réglages et ceux de ce fichier (qui seront appliqués avec lui). Seules
-    /// leurs clés peuvent venir d'un fichier d'environnement.
+    /// leurs clés peuvent venir d'un fichier d'environnement, et elles ne valent que pour les connexions au PSMP.
     /// </summary>
     private HashSet<string> PsmpEndpoints(AppSettings settings)
     {
