@@ -192,13 +192,19 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
 - A connection through a Remote Desktop gateway still opens in Remote Desktop Connection; so does the session if the
   FreeRDP client cannot be launched on the computer (computer policy, for example): the status bar says so.
 
-- **PSM component**: deduced from the platform (`PSM-RDP` for Windows, `PSM-SSH` for Unix and network,
-  `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Tick "Remember this component" to keep it for the whole platform. Your
-  PVWA may name its components differently (for example `WIN-PSM`): enter the name its "Connect" button offers; the
-  list then offers the components already used, the platform's first. For all your Windows accounts, set the
-  component once in **Settings › CyberArk** ("Windows accounts", for example `WIN-PSM`); a component remembered for a
-  platform still comes first. Per-platform components are shown and edited in the same place ("Component per
-  platform").
+- **PSM component**: ZillaTerm reads from the PVWA the connection components of the account's platform (those its
+  "Connect" button offers), once per platform and per session, in 5 seconds at most. If the planned component is not
+  among them (deduced, set for Windows accounts, remembered for the platform or saved with a server of "My servers"),
+  the platform's first component is taken instead, rather than a refusal from the PVWA; a component entered in
+  "Advanced options…" is always used as is, and the list there offers the platform's ones first. If the PVWA refuses
+  this read or does not answer in time, nothing changes: the component is deduced from the platform (`PSM-RDP` for
+  Windows, `PSM-SSH` for Unix and network, `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Tick "Remember this component"
+  to keep it for the whole platform. Your PVWA may name its components differently (for example `WIN-PSM`): enter the
+  name its "Connect" button offers; the list then offers the components already used, the platform's first. For all
+  your Windows accounts, set the component once in **Settings › CyberArk** ("Windows accounts", for example
+  `WIN-PSM`); a component remembered for a platform still comes first. Per-platform components are shown and edited
+  in the same place ("Component per platform"). The debug log notes the components read for each platform and each
+  replacement.
 - **Domain accounts**: an account registered for its domain has no server. It is recognized by its domain platform,
   being restricted to its allowed machines, or its address: its logon domain, a domain with other servers below it
   (`corp.local` when an account targets `srv01.corp.local`), or the domain of the PVWA or of the workstation. A local
@@ -1048,9 +1054,12 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
 - **File names from the server**: invisible characters (writing direction override, zero-width space, control
   characters) are shown as "�" in the list, the confirmations, the choice of a file of the other server, the
   comparison, the transfer queue and history, and when following a file (tail), and become "_" in the name of the
-  downloaded file, so that a name cannot imitate another one (".exe" shown as ".pdf"). Special files (a device such
-  as `/dev/zero`, a named pipe, a socket) are neither opened nor downloaded, and are skipped when a folder is
-  downloaded.
+  downloaded file, so that a name cannot imitate another one (".exe" shown as ".pdf"). Files coming from the servers
+  (downloads, copies opened in the editor, dragging to Explorer) carry the mark of files from the Internet (Internet
+  zone; the server's name is never written in it, as Windows may send it to Microsoft): SmartScreen checks an
+  executable before running it,
+  and office applications open a document in Protected View. Special files (a device such as `/dev/zero`, a named
+  pipe, a socket) are neither opened nor downloaded, and are skipped when a folder is downloaded.
 - **No secret on disk**: CyberArk password, session token, MFA key and PSMP password stay in memory for the session.
   Kept PSMP passwords and the MFA key are forgotten when Windows locks; the MFA key is wiped after each connection and
   removed from the PVWA at logoff (`Logoff`), done on exit.
@@ -1092,7 +1101,10 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
 - **New version**: no request to the Internet without your action or the Settings option (off by default); only the
   addresses of the project repository are followed, the archive is kept only when its SHA-256 checksum is the one of
   `SHA256SUMS.txt` of the same release (which detects an incomplete or damaged download, not a release published by
-  someone who took over the repository), and nothing is installed or started.
+  someone who took over the repository), and nothing is installed or started. The kept archive carries the mark of
+  files from the Internet ("Mark-of-the-Web"): SmartScreen checks the extracted executable. Since 0.30.0, the
+  published archive has a provenance attestation, which proves that it was built by the project repository:
+  `gh attestation verify ZillaTerm-<version>-win-x64.zip --repo muller-camille/ZillaTerm`.
 - **PSMP host keys pinned** on first use: the fingerprint is to be compared before accepting ("Cancel connection" by
   default); a changed key is flagged by a banner and only replaces the old one after a confirmation box is ticked
   (the same for servers reached in emergency access and for FTPS and Remote Desktop certificates). One key is
@@ -1167,6 +1179,7 @@ To report a vulnerability, see [SECURITY.md](../SECURITY.md) (private reporting,
 | `POST /PasswordVault/API/auth/{CyberArk\|LDAP\|RADIUS\|Windows}/Logon` | Sign in |
 | `GET /PasswordVault/API/Accounts?offset=…&limit=1000` | Paged account list |
 | `POST /PasswordVault/API/Accounts/{id}/PSMConnect` | RDP file of the PSM session |
+| `GET /PasswordVault/API/Platforms/{platform}/` | PSM connection components of an account's platform (once per platform and per session) |
 | `POST /PasswordVault/API/Accounts` | Creates an account in a safe ("Add an account") |
 | `POST /PasswordVault/API/Accounts` (once per line) | Imports accounts from a CSV |
 | `PATCH` / `DELETE /PasswordVault/API/Accounts/{id}` | Edits (changed fields only) and deletes an account |
@@ -1217,6 +1230,9 @@ no standard checksum: each upload is read back from the server and compared by S
 compare and live follow. After an interrupted transfer, the connection is reopened and the incomplete file deleted.
 Overwriting a file writes it in place: it keeps its permissions. Symbolic links: the first 40 of a folder are
 resolved (one round trip each); beyond that, a link shows as a file and opening it enters the folder if it is one.
+Names are exchanged in UTF-8 (`OPTS UTF8 ON`), even if the server does not announce it; a name that UTF-8 cannot
+represent is refused rather than changed. Over SFTP, the links of a folder are followed in batches of 16 requests, 400
+at most (beyond that, as over FTP); a link to a file takes the size of that file.
 
 ### Remote desktop sessions
 
@@ -1342,7 +1358,7 @@ sh or fish, following is not set up and nothing stays on screen.
 
 | Symptom | Likely cause and fix |
 | --- | --- |
-| "The PVWA has no connection component “PSM-RDP” for this account" (`EPVWA093E Failed to get the relevant connection component`) | The account's platform uses a component with another name (for example `WIN-PSM`): the one offered by the PVWA "Connect" button, or the name after `/c` in a `psm /u … /a … /c …` command. Enter it in "Component" and tick "Remember this component for platform": it is kept once the PVWA accepts the connection. |
+| "The PVWA has no connection component “PSM-RDP” for this account" (`EPVWA093E Failed to get the relevant connection component`) | The account's platform uses a component with another name (for example `WIN-PSM`): the one offered by the PVWA "Connect" button, or the name after `/c` in a `psm /u … /a … /c …` command. Enter it in "Component" and tick "Remember this component for platform": it is kept once the PVWA accepts the connection. This no longer happens when the PVWA lets the platform's components be read (the debug log says whether they were read). |
 | "TLS connection refused: this computer does not trust the PVWA certificate" | The certificate (or its issuing authority) is not in the workstation's Windows store. |
 | "The PVWA must be reached over HTTPS" | Type the address without `http://` (or with `https://`). |
 | "The PVWA refused the user name or the password" (`ITATS004E Authentication failure…`) | Check the user name, the password and Caps Lock before trying again: after several failures, CyberArk suspends the account. |

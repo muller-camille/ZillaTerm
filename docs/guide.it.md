@@ -204,13 +204,20 @@ nessuna finestra separata.
   se il client FreeRDP non può essere avviato sul computer (criteri del computer, per esempio): la barra di stato lo
   dice.
 
-- **Componente PSM**: dedotto dalla piattaforma (`PSM-RDP` per Windows, `PSM-SSH` per Unix e rete,
+- **Componente PSM**: ZillaTerm legge dal PVWA i componenti di connessione della piattaforma dell'account (quelli
+  proposti dal suo pulsante «Connect»), una volta per piattaforma e per sessione, in 5 secondi al massimo. Se il
+  componente previsto non è tra questi (dedotto, impostato per gli account Windows, memorizzato per la piattaforma o
+  salvato con un server di «I miei server»), al suo posto viene preso il primo componente della piattaforma, invece
+  di un rifiuto del PVWA; un componente inserito in «Opzioni avanzate…» viene sempre usato così com'è, e l'elenco vi
+  propone prima quelli della piattaforma. Se il PVWA rifiuta questa lettura o non risponde in tempo, non cambia
+  nulla: il componente viene dedotto dalla piattaforma (`PSM-RDP` per Windows, `PSM-SSH` per Unix e rete,
   `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Seleziona «Memorizza questo componente» per conservarlo per tutta la
   piattaforma. Il tuo PVWA può chiamare i suoi componenti in un altro modo (ad esempio `WIN-PSM`): inserisci il nome
   proposto dal suo pulsante «Connect»; l'elenco propone poi i componenti già usati, quello della piattaforma per
   primo. Per tutti i tuoi account Windows, imposta una volta il componente in **Impostazioni › CyberArk** («Account
   Windows», ad esempio `WIN-PSM`); un componente memorizzato per una piattaforma resta prioritario. I componenti per
-  piattaforma si vedono e si modificano nello stesso punto («Componente per piattaforma»).
+  piattaforma si vedono e si modificano nello stesso punto («Componente per piattaforma»). Il registro di debug
+  annota i componenti letti per ogni piattaforma e ogni sostituzione.
 - **Account di dominio**: un account registrato per il suo dominio non ha un server. Viene riconosciuto dalla
   piattaforma di dominio, dalla limitazione alle sue macchine autorizzate o dall'indirizzo: il dominio di accesso, un
   dominio sotto cui si trovano altri server (`corp.local` quando un account punta a `srv01.corp.local`), o il dominio
@@ -1117,8 +1124,11 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   zero, caratteri di controllo) compaiono come «�» nell'elenco, nelle conferme, nella scelta di un file dell'altro
   server, nel confronto, nella coda e nella cronologia dei trasferimenti, e quando si segue un file (tail), e
   diventano «_» nel nome del file scaricato, perché un nome non possa imitarne un altro («.exe» mostrato come
-  «.pdf»). I file speciali (un dispositivo come `/dev/zero`, una named pipe, un socket) non vengono né aperti né
-  scaricati, e vengono ignorati nel download di una cartella.
+  «.pdf»). I file provenienti dai server (download, copie aperte nell'editor, trascinamento verso Esplora file)
+  portano il contrassegno dei file provenienti da Internet (zona Internet; il nome del server non vi è mai annotato,
+  perché Windows potrebbe inviarlo a Microsoft): SmartScreen controlla un eseguibile prima di avviarlo, e le applicazioni per ufficio aprono un documento in
+  visualizzazione protetta. I file speciali (un dispositivo come `/dev/zero`, una named pipe, un socket) non vengono
+  né aperti né scaricati, e vengono ignorati nel download di una cartella.
 - **Nessun segreto su disco**: password CyberArk, token di sessione, chiave MFA e password PSMP restano in memoria
   per la durata della sessione. Password PSMP conservate e chiave MFA dimenticate al blocco di Windows; la chiave MFA
   viene cancellata dopo ogni connessione e rimossa dal PVWA alla disconnessione (`Logoff`), fatta alla chiusura.
@@ -1165,7 +1175,10 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   (disattivata per impostazione predefinita); vengono seguiti solo gli indirizzi del repository del progetto,
   l'archivio viene conservato solo se il suo checksum SHA-256 è quello di `SHA256SUMS.txt` della stessa versione (il
   che rileva un download incompleto o danneggiato, non una versione pubblicata da qualcuno che avesse preso il
-  controllo del repository), e nulla viene installato né avviato.
+  controllo del repository), e nulla viene installato né avviato. L'archivio conservato porta il contrassegno dei file
+  provenienti da Internet («Mark-of-the-Web»): SmartScreen controlla l'eseguibile estratto. Dalla 0.30.0, l'archivio
+  pubblicato ha un'attestazione di provenienza, che prova che è stato compilato dal repository del progetto:
+  `gh attestation verify ZillaTerm-<version>-win-x64.zip --repo muller-camille/ZillaTerm`.
 - **Chiavi host del PSMP fissate** al primo utilizzo: l'impronta va confrontata prima di accettare («Annulla la
   connessione» predefinito); una chiave cambiata è segnalata da una fascia e sostituisce la vecchia solo dopo aver
   selezionato una casella di conferma (lo stesso per i server raggiunti in accesso di emergenza e per i certificati
@@ -1242,6 +1255,7 @@ Per segnalare una vulnerabilità, vedi [SECURITY.md](../SECURITY.md) (segnalazio
 | `POST /PasswordVault/API/auth/{CyberArk\|LDAP\|RADIUS\|Windows}/Logon` | Apertura della sessione |
 | `GET /PasswordVault/API/Accounts?offset=…&limit=1000` | Elenco paginato degli account |
 | `POST /PasswordVault/API/Accounts/{id}/PSMConnect` | File RDP della sessione PSM |
+| `GET /PasswordVault/API/Platforms/{piattaforma}/` | Componenti di connessione PSM della piattaforma di un account (una volta per piattaforma e per sessione) |
 | `POST /PasswordVault/API/Accounts` | Creazione di un account in un safe («Aggiungi un account») |
 | `POST /PasswordVault/API/Accounts` (una volta per riga) | Importazione di account da un CSV |
 | `PATCH` / `DELETE /PasswordVault/API/Accounts/{id}` | Modifica (solo i campi cambiati) ed eliminazione di un account |
@@ -1295,7 +1309,10 @@ dal server e confrontato con
 SHA-256. Lettura parziale (`REST`) per il confronto e il monitoraggio in tempo reale. Dopo un trasferimento
 interrotto, la connessione è riaperta e il file incompleto eliminato. Un file sostituito viene riscritto sul posto:
 conserva i suoi permessi. Collegamenti simbolici: i primi 40 di una cartella vengono risolti (un'andata e ritorno
-ciascuno); oltre, un collegamento appare come un file, e aprirlo entra nella cartella se è una cartella.
+ciascuno); oltre, un collegamento appare come un file, e aprirlo entra nella cartella se è una cartella. I nomi sono
+scambiati in UTF-8 (`OPTS UTF8 ON`), anche se il server non lo annuncia; un nome che l'UTF-8 non può rappresentare
+viene rifiutato invece di essere cambiato. In SFTP, i collegamenti di una cartella sono seguiti a pacchetti di 16
+richieste, 400 al massimo (oltre, come in FTP); un collegamento verso un file prende la dimensione di quel file.
 
 ### Sessioni Desktop remoto
 
@@ -1428,7 +1445,7 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 
 | Sintomo | Causa probabile e soluzione |
 | --- | --- |
-| «Il PVWA non ha un componente di connessione «PSM-RDP» per questo account» (`EPVWA093E Failed to get the relevant connection component`) | La piattaforma dell'account usa un componente con un altro nome (ad esempio `WIN-PSM`): quello proposto dal pulsante «Connect» del PVWA, o il nome dopo `/c` in un comando `psm /u … /a … /c …`. Inseriscilo in «Componente» e seleziona «Memorizza questo componente per la piattaforma»: viene memorizzato una volta che il PVWA ha accettato la connessione. |
+| «Il PVWA non ha un componente di connessione «PSM-RDP» per questo account» (`EPVWA093E Failed to get the relevant connection component`) | La piattaforma dell'account usa un componente con un altro nome (ad esempio `WIN-PSM`): quello proposto dal pulsante «Connect» del PVWA, o il nome dopo `/c` in un comando `psm /u … /a … /c …`. Inseriscilo in «Componente» e seleziona «Memorizza questo componente per la piattaforma»: viene memorizzato una volta che il PVWA ha accettato la connessione. Questo caso non si verifica più quando il PVWA consente di leggere i componenti della piattaforma (il registro di debug dice se sono stati letti). |
 | «Connessione TLS rifiutata: il certificato del PVWA non è considerato attendibile» | Il certificato (o l'autorità che lo ha emesso) non è nell'archivio Windows della postazione. |
 | «Il PVWA deve essere raggiunto in HTTPS» | Inserisci l'indirizzo senza `http://` (o con `https://`). |
 | «Il PVWA rifiuta il nome utente o la password» (`ITATS004E Authentication failure…`) | Verifica il nome utente, la password e il Bloc Maiusc prima di riprovare: dopo vari tentativi falliti, CyberArk sospende l'account. |

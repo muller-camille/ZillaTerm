@@ -1121,7 +1121,8 @@ renommé) : téléchargez-la une fois depuis la page des versions.
   serveur, la comparaison, la file et l'historique des transferts, et le suivi (tail), et deviennent « _ » dans le nom du
   fichier téléchargé, pour qu'un nom ne puisse pas en imiter un autre (« .exe » affiché « .pdf »). Les fichiers venus
   des serveurs (téléchargements, copies ouvertes dans l'éditeur, glisser vers l'Explorateur) portent la marque des
-  fichiers venus d'Internet (zone Internet, sans l'adresse du serveur, qui n'en sort pas) : SmartScreen contrôle un
+  fichiers venus d'Internet (zone Internet ; le nom du serveur n'y est jamais noté, Windows pouvant l'envoyer à
+  Microsoft) : SmartScreen contrôle un
   exécutable avant de le lancer, et les logiciels bureautiques ouvrent un document en mode protégé. Les fichiers
   spéciaux (périphérique comme `/dev/zero`, tube nommé, socket) ne sont ni ouverts ni téléchargés, et sont ignorés
   dans le téléchargement d'un dossier.
