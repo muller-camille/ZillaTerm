@@ -70,6 +70,10 @@ and opens your sessions with a double-click: remote desktop through **PSM**, or 
    `SHA256SUMS.txt`).
 3. Run `ZillaTerm.exe`: a single file, no runtime to install, no administrator rights needed.
 
+From version 0.30.0, the archive has a build provenance attestation: it proves that it was built by this
+repository's `release.yml` workflow, which `SHA256SUMS.txt` alone cannot. To check it with the GitHub CLI:
+`gh attestation verify ZillaTerm-<version>-win-x64.zip --repo muller-camille/ZillaTerm`.
+
 Development builds: the executable of every build is also available as the `ZillaTerm-win-x64`
 artifact in the [Actions](https://github.com/muller-camille/ZillaTerm/actions/workflows/build.yml) tab.
 
@@ -221,7 +225,9 @@ self-contained executable as the `ZillaTerm-win-x64` artifact for every pull req
 From GitHub: **Actions → release → Run workflow** on `main`, with the `X.Y.Z` number. The
 [`release.yml`](.github/workflows/release.yml) workflow runs the tests and builds the executable with that version
 number (with a read-only token), then a second job, which builds nothing, creates the tag if it does not exist and
-publishes the GitHub *Release* with the zip and `SHA256SUMS.txt`. Release notes are read from
+publishes the GitHub *Release* with the zip, `SHA256SUMS.txt` and a build provenance attestation of the zip. Run
+again for a version already published, it only updates the notes, and fails if the published files do not come from
+this workflow (no attestation, other or missing files). Release notes are read from
 `docs/releases/vX.Y.Z.md` when that file exists. "Check without publishing" runs the whole chain without publishing
 anything, from any branch.
 

@@ -70,6 +70,10 @@ avez accès et ouvre vos sessions en un double-clic : bureau à distance via **P
    `SHA256SUMS.txt`).
 3. Lancez `ZillaTerm.exe` : un seul fichier, aucun runtime à installer, aucun droit administrateur requis.
 
+Depuis la version 0.30.0, l'archive a une attestation de provenance : elle prouve qu'elle a été compilée par le
+workflow `release.yml` de ce dépôt, ce que `SHA256SUMS.txt` seul ne peut pas prouver. Pour la vérifier avec l'outil
+GitHub en ligne de commande : `gh attestation verify ZillaTerm-<version>-win-x64.zip --repo muller-camille/ZillaTerm`.
+
 Version de développement : l'exécutable de chaque compilation est aussi disponible en artefact
 `ZillaTerm-win-x64` dans l'onglet [Actions](https://github.com/muller-camille/ZillaTerm/actions/workflows/build.yml).
 
@@ -231,7 +235,9 @@ autonome en artefact `ZillaTerm-win-x64` pour chaque pull request et chaque push
 Depuis GitHub : **Actions → release → Run workflow** sur `main`, en indiquant le numéro `X.Y.Z`. Le workflow
 [`release.yml`](.github/workflows/release.yml) exécute les tests, compile l'exécutable avec ce numéro de version
 (avec un jeton en lecture seule), puis un second job, qui ne compile rien, crée le tag s'il n'existe pas et publie la
-*Release* GitHub avec le zip et `SHA256SUMS.txt`. Les notes de version sont lues dans `docs/releases/vX.Y.Z.md` si
+*Release* GitHub avec le zip, `SHA256SUMS.txt` et une attestation de provenance du zip. Relancé pour une version
+déjà publiée, il ne met à jour que les notes, et échoue si les fichiers publiés ne viennent pas de ce workflow (sans
+attestation, fichiers autres ou manquants). Les notes de version sont lues dans `docs/releases/vX.Y.Z.md` si
 ce fichier existe. « Vérifier sans publier » fait toute la chaîne sans rien publier, depuis n'importe quelle branche.
 
 ## Limites et pistes
