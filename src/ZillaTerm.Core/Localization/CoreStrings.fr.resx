@@ -561,4 +561,7 @@
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>Le serveur Bureau à distance n'utilise aucun chiffrement : rien ne prouve son identité ni ne protège la connexion, elle est refusée.</value>
   </data>
+  <data name="TailLineCut" xml:space="preserve">
+    <value> … [ligne coupée après {0:N0} caractères]</value>
+  </data>
 </root>

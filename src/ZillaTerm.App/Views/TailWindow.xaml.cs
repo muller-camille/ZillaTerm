@@ -20,7 +20,7 @@ namespace ZillaTerm.App.Views;
 /// dans la même fenêtre : leurs lignes s'intercalent dans l'ordre d'arrivée, préfixées par le fichier d'origine.
 /// Couleurs par niveau, mots surlignés, alertes, filtre (texte ou expression régulière, exclusion, contexte),
 /// recherche, repères, enregistrement ; reprise après une reconnexion de l'onglet. Les 10 000 dernières lignes sont
-/// gardées.
+/// gardées, chacune jusqu'à <see cref="TailLineSplitter.MaxLineLength"/> caractères.
 /// </summary>
 public partial class TailWindow : Window
 {

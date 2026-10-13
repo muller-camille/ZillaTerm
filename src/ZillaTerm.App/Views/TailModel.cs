@@ -424,7 +424,10 @@ internal static class TailBrushes
 /// </summary>
 public static class TailRowText
 {
-    /// <summary>Au-delà, la ligne est coupée à l'affichage (elle reste entière pour la copie et l'enregistrement).</summary>
+    /// <summary>
+    /// Au-delà, la ligne est coupée à l'affichage ; la copie et l'enregistrement en ont davantage (jusqu'à
+    /// <see cref="TailLineSplitter.MaxLineLength"/> caractères).
+    /// </summary>
     public const int MaxShown = 4_000;
 
     public static readonly DependencyProperty RowProperty = DependencyProperty.RegisterAttached(

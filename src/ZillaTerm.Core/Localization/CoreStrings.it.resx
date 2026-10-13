@@ -561,4 +561,7 @@
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>Il server Desktop remoto non usa alcuna cifratura: nulla ne prova l'identità né protegge la connessione, che viene rifiutata.</value>
   </data>
+  <data name="TailLineCut" xml:space="preserve">
+    <value> … [riga troncata dopo {0:N0} caratteri]</value>
+  </data>
 </root>

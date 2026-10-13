@@ -561,4 +561,7 @@
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>The Remote Desktop server uses no encryption: nothing proves its identity nor protects the connection, it is refused.</value>
   </data>
+  <data name="TailLineCut" xml:space="preserve">
+    <value> … [line cut after {0:N0} characters]</value>
+  </data>
 </root>
