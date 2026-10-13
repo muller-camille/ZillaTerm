@@ -206,10 +206,18 @@ public sealed class EnvironmentProfile
             throw new EnvironmentFileException(EnvironmentProblem.TooLarge, path);
         }
 
+        // Fichier modifié à la main : un BOM UTF-8 (PowerShell 5.1, « UTF-8 avec BOM ») est ignoré ; l'empreinte reste
+        // celle du fichier tel quel.
+        var json = bytes.AsSpan();
+        if (json.StartsWith(System.Text.Encoding.UTF8.Preamble))
+        {
+            json = json[System.Text.Encoding.UTF8.Preamble.Length..];
+        }
+
         EnvironmentProfile profile;
         try
         {
-            profile = JsonSerializer.Deserialize<EnvironmentProfile>(bytes, JsonOptions)
+            profile = JsonSerializer.Deserialize<EnvironmentProfile>(json, JsonOptions)
                       ?? throw new EnvironmentFileException(EnvironmentProblem.InvalidJson, path);
         }
         catch (JsonException ex)

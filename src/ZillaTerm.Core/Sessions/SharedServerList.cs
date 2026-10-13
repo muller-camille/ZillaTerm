@@ -315,7 +315,15 @@ public sealed class SharedServerList(string path)
         return bytes;
     }
 
-    private static ServerListFile Parse(byte[] bytes) => ServerListFile.Parse(Encoding.UTF8.GetString(bytes));
+    /// <summary>
+    /// Liste lue, avec ou sans BOM UTF-8 : modifiée à la main, elle en a souvent un (PowerShell 5.1, option « UTF-8 avec
+    /// BOM » des éditeurs).
+    /// </summary>
+    private static ServerListFile Parse(byte[] bytes)
+    {
+        var json = bytes.AsSpan();
+        return ServerListFile.Parse(Encoding.UTF8.GetString(json.StartsWith(Encoding.UTF8.Preamble) ? json[Encoding.UTF8.Preamble.Length..] : json));
+    }
 
     // ERROR_SHARING_VIOLATION (32) / ERROR_LOCK_VIOLATION (33) sous Windows ; ailleurs, message du système.
     private static bool IsSharingViolation(IOException e) =>

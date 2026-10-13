@@ -204,6 +204,23 @@ public sealed class EnvironmentProfileTests : IDisposable
         Assert.Equal(problem, Assert.Throws<EnvironmentFileException>(() => EnvironmentProfile.Load(path)).Problem);
     }
 
+    /// <summary>
+    /// Fichier modifié à la main et écrit avec un BOM UTF-8 (PowerShell 5.1, « UTF-8 avec BOM ») : lu comme sans BOM ;
+    /// l'empreinte reste celle du fichier tel quel.
+    /// </summary>
+    [Fact]
+    public void FileWithAByteOrderMarkIsRead()
+    {
+        var path = Path.Combine(_dir, "bom.env.json");
+        File.WriteAllText(path, """{ "PvwaUrl": "pvwa.corp.com", "PsmpAddress": "psmp.corp.com" }""", new System.Text.UTF8Encoding(true));
+        var bytes = File.ReadAllBytes(path);
+        Assert.Equal(0xEF, bytes[0]);
+
+        var loaded = EnvironmentProfile.Load(path);
+        Assert.Equal(("pvwa.corp.com", "psmp.corp.com"), (loaded.Profile.PvwaUrl, loaded.Profile.PsmpAddress));
+        Assert.Equal(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant(), loaded.Sha256);
+    }
+
     /// <summary>Champs inconnus (un mot de passe ajouté à la main…) : ignorés, jamais repris dans les réglages.</summary>
     [Fact]
     public void UnknownFieldsAreIgnored()
