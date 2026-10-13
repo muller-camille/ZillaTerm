@@ -35,13 +35,8 @@
         <TextBlock x:Name="StatusText" DockPanel.Dock="Bottom" TextWrapping="Wrap" Margin="0,6,0,0"
                    Foreground="{DynamicResource MutedBrush}" />
 
-        <ListView x:Name="FileList" SelectionMode="Single" PreviewKeyDown="OnListKeyDown" SelectionChanged="OnSelectionChanged">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="Padding" Value="2,1" />
-                    <EventSetter Event="MouseDoubleClick" Handler="OnItemDoubleClick" />
-                </Style>
-            </ListView.ItemContainerStyle>
+        <ListView x:Name="FileList" SelectionMode="Single" PreviewKeyDown="OnListKeyDown" SelectionChanged="OnSelectionChanged"
+                  MouseDoubleClick="OnItemDoubleClick" ItemContainerStyle="{DynamicResource FileRow}">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="{x:Static corel:CoreStrings.ColumnName}" Width="330">
