@@ -192,19 +192,13 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
 - A connection through a Remote Desktop gateway still opens in Remote Desktop Connection; so does the session if the
   FreeRDP client cannot be launched on the computer (computer policy, for example): the status bar says so.
 
-- **PSM component**: ZillaTerm reads from the PVWA the connection components of the account's platform (those its
-  "Connect" button offers), once per platform and per session, in 5 seconds at most. If the planned component is not
-  among them (deduced, set for Windows accounts, remembered for the platform or saved with a server of "My servers"),
-  the platform's first component is taken instead, rather than a refusal from the PVWA; a component entered in
-  "Advanced options…" is always used as is, and the list there offers the platform's ones first. If the PVWA refuses
-  this read or does not answer in time, nothing changes: the component is deduced from the platform (`PSM-RDP` for
-  Windows, `PSM-SSH` for Unix and network, `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Tick "Remember this component"
-  to keep it for the whole platform. Your PVWA may name its components differently (for example `WIN-PSM`): enter the
-  name its "Connect" button offers; the list then offers the components already used, the platform's first. For all
-  your Windows accounts, set the component once in **Settings › CyberArk** ("Windows accounts", for example
-  `WIN-PSM`); a component remembered for a platform still comes first. Per-platform components are shown and edited
-  in the same place ("Component per platform"). The debug log notes the components read for each platform and each
-  replacement.
+- **PSM component**: deduced from the platform (`PSM-RDP` for Windows, `PSM-SSH` for Unix and network,
+  `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Tick "Remember this component" to keep it for the whole platform. Your
+  PVWA may name its components differently (for example `WIN-PSM`): enter the name its "Connect" button offers; the
+  list then offers the components already used, the platform's first. For all your Windows accounts, set the
+  component once in **Settings › CyberArk** ("Windows accounts", for example `WIN-PSM`); a component remembered for a
+  platform still comes first. Per-platform components are shown and edited in the same place ("Component per
+  platform").
 - **Domain accounts**: an account registered for its domain has no server. It is recognized by its domain platform,
   being restricted to its allowed machines, or its address: its logon domain, a domain with other servers below it
   (`corp.local` when an account targets `srv01.corp.local`), or the domain of the PVWA or of the workstation. A local
@@ -1179,7 +1173,6 @@ To report a vulnerability, see [SECURITY.md](../SECURITY.md) (private reporting,
 | `POST /PasswordVault/API/auth/{CyberArk\|LDAP\|RADIUS\|Windows}/Logon` | Sign in |
 | `GET /PasswordVault/API/Accounts?offset=…&limit=1000` | Paged account list |
 | `POST /PasswordVault/API/Accounts/{id}/PSMConnect` | RDP file of the PSM session |
-| `GET /PasswordVault/API/Platforms/{platform}/` | PSM connection components of an account's platform (once per platform and per session) |
 | `POST /PasswordVault/API/Accounts` | Creates an account in a safe ("Add an account") |
 | `POST /PasswordVault/API/Accounts` (once per line) | Imports accounts from a CSV |
 | `PATCH` / `DELETE /PasswordVault/API/Accounts/{id}` | Edits (changed fields only) and deletes an account |
@@ -1358,7 +1351,7 @@ sh or fish, following is not set up and nothing stays on screen.
 
 | Symptom | Likely cause and fix |
 | --- | --- |
-| "The PVWA has no connection component “PSM-RDP” for this account" (`EPVWA093E Failed to get the relevant connection component`) | The account's platform uses a component with another name (for example `WIN-PSM`): the one offered by the PVWA "Connect" button, or the name after `/c` in a `psm /u … /a … /c …` command. Enter it in "Component" and tick "Remember this component for platform": it is kept once the PVWA accepts the connection. This no longer happens when the PVWA lets the platform's components be read (the debug log says whether they were read). |
+| "The PVWA has no connection component “PSM-RDP” for this account" (`EPVWA093E Failed to get the relevant connection component`) | The account's platform uses a component with another name (for example `WIN-PSM`): the one offered by the PVWA "Connect" button, or the name after `/c` in a `psm /u … /a … /c …` command. Enter it in "Component" and tick "Remember this component for platform": it is kept once the PVWA accepts the connection. |
 | "TLS connection refused: this computer does not trust the PVWA certificate" | The certificate (or its issuing authority) is not in the workstation's Windows store. |
 | "The PVWA must be reached over HTTPS" | Type the address without `http://` (or with `https://`). |
 | "The PVWA refused the user name or the password" (`ITATS004E Authentication failure…`) | Check the user name, the password and Caps Lock before trying again: after several failures, CyberArk suspends the account. |

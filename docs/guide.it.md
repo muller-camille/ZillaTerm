@@ -204,20 +204,13 @@ nessuna finestra separata.
   se il client FreeRDP non può essere avviato sul computer (criteri del computer, per esempio): la barra di stato lo
   dice.
 
-- **Componente PSM**: ZillaTerm legge dal PVWA i componenti di connessione della piattaforma dell'account (quelli
-  proposti dal suo pulsante «Connect»), una volta per piattaforma e per sessione, in 5 secondi al massimo. Se il
-  componente previsto non è tra questi (dedotto, impostato per gli account Windows, memorizzato per la piattaforma o
-  salvato con un server di «I miei server»), al suo posto viene preso il primo componente della piattaforma, invece
-  di un rifiuto del PVWA; un componente inserito in «Opzioni avanzate…» viene sempre usato così com'è, e l'elenco vi
-  propone prima quelli della piattaforma. Se il PVWA rifiuta questa lettura o non risponde in tempo, non cambia
-  nulla: il componente viene dedotto dalla piattaforma (`PSM-RDP` per Windows, `PSM-SSH` per Unix e rete,
+- **Componente PSM**: dedotto dalla piattaforma (`PSM-RDP` per Windows, `PSM-SSH` per Unix e rete,
   `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Seleziona «Memorizza questo componente» per conservarlo per tutta la
   piattaforma. Il tuo PVWA può chiamare i suoi componenti in un altro modo (ad esempio `WIN-PSM`): inserisci il nome
   proposto dal suo pulsante «Connect»; l'elenco propone poi i componenti già usati, quello della piattaforma per
   primo. Per tutti i tuoi account Windows, imposta una volta il componente in **Impostazioni › CyberArk** («Account
   Windows», ad esempio `WIN-PSM`); un componente memorizzato per una piattaforma resta prioritario. I componenti per
-  piattaforma si vedono e si modificano nello stesso punto («Componente per piattaforma»). Il registro di debug
-  annota i componenti letti per ogni piattaforma e ogni sostituzione.
+  piattaforma si vedono e si modificano nello stesso punto («Componente per piattaforma»).
 - **Account di dominio**: un account registrato per il suo dominio non ha un server. Viene riconosciuto dalla
   piattaforma di dominio, dalla limitazione alle sue macchine autorizzate o dall'indirizzo: il dominio di accesso, un
   dominio sotto cui si trovano altri server (`corp.local` quando un account punta a `srv01.corp.local`), o il dominio
@@ -1255,7 +1248,6 @@ Per segnalare una vulnerabilità, vedi [SECURITY.md](../SECURITY.md) (segnalazio
 | `POST /PasswordVault/API/auth/{CyberArk\|LDAP\|RADIUS\|Windows}/Logon` | Apertura della sessione |
 | `GET /PasswordVault/API/Accounts?offset=…&limit=1000` | Elenco paginato degli account |
 | `POST /PasswordVault/API/Accounts/{id}/PSMConnect` | File RDP della sessione PSM |
-| `GET /PasswordVault/API/Platforms/{piattaforma}/` | Componenti di connessione PSM della piattaforma di un account (una volta per piattaforma e per sessione) |
 | `POST /PasswordVault/API/Accounts` | Creazione di un account in un safe («Aggiungi un account») |
 | `POST /PasswordVault/API/Accounts` (una volta per riga) | Importazione di account da un CSV |
 | `PATCH` / `DELETE /PasswordVault/API/Accounts/{id}` | Modifica (solo i campi cambiati) ed eliminazione di un account |
@@ -1445,7 +1437,7 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 
 | Sintomo | Causa probabile e soluzione |
 | --- | --- |
-| «Il PVWA non ha un componente di connessione «PSM-RDP» per questo account» (`EPVWA093E Failed to get the relevant connection component`) | La piattaforma dell'account usa un componente con un altro nome (ad esempio `WIN-PSM`): quello proposto dal pulsante «Connect» del PVWA, o il nome dopo `/c` in un comando `psm /u … /a … /c …`. Inseriscilo in «Componente» e seleziona «Memorizza questo componente per la piattaforma»: viene memorizzato una volta che il PVWA ha accettato la connessione. Questo caso non si verifica più quando il PVWA consente di leggere i componenti della piattaforma (il registro di debug dice se sono stati letti). |
+| «Il PVWA non ha un componente di connessione «PSM-RDP» per questo account» (`EPVWA093E Failed to get the relevant connection component`) | La piattaforma dell'account usa un componente con un altro nome (ad esempio `WIN-PSM`): quello proposto dal pulsante «Connect» del PVWA, o il nome dopo `/c` in un comando `psm /u … /a … /c …`. Inseriscilo in «Componente» e seleziona «Memorizza questo componente per la piattaforma»: viene memorizzato una volta che il PVWA ha accettato la connessione. |
 | «Connessione TLS rifiutata: il certificato del PVWA non è considerato attendibile» | Il certificato (o l'autorità che lo ha emesso) non è nell'archivio Windows della postazione. |
 | «Il PVWA deve essere raggiunto in HTTPS» | Inserisci l'indirizzo senza `http://` (o con `https://`). |
 | «Il PVWA rifiuta il nome utente o la password» (`ITATS004E Authentication failure…`) | Verifica il nome utente, la password e il Bloc Maiusc prima di riprovare: dopo vari tentativi falliti, CyberArk sospende l'account. |
