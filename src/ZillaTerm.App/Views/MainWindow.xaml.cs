@@ -1868,6 +1868,14 @@ public partial class MainWindow : Window
         IsEnabled = false;
         // Transferts annulés d'abord : le fichier interrompu est supprimé tant que la connexion est ouverte.
         await FilesPanel.CancelTransfersAsync(null);
+        // Renvoi d'un fichier modifié en cours : attendu, une coupure en pleine écriture laisserait le fichier tronqué.
+        var editors = _remoteSessions.Select(s => s.Editor).OfType<RemoteEditor>().ToList();
+        if (editors.Any(r => !r.WritesDone.IsCompleted))
+        {
+            SetStatus(Strings.EditWaitingForWrite);
+            await Task.WhenAll(editors.Select(r => r.WritesDone));
+        }
+
         _lifetime.Cancel();
         _searchDebounce.Stop();
         _savedSearchDebounce.Stop();

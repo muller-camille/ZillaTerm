@@ -5544,4 +5544,17 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="ArchiveNotForReplace" xml:space="preserve">
     <value>Pas d'archive .tar.gz pour ce dépôt : son extraction recréerait les éléments remplacés avec d'autres droits et un autre propriétaire. Les fichiers partent un par un.</value>
   </data>
+  <data name="EditWriteInterruptedClosed" xml:space="preserve">
+    <value>L'envoi de {0} a été interrompu : le fichier sur le serveur est peut-être incomplet.
+
+{1}
+
+L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depuis l'éditeur, puis renvoyez le fichier depuis un nouvel onglet.</value>
+  </data>
+  <data name="CloseAllEditWriting" xml:space="preserve">
+    <value>Fichiers modifiés en cours de renvoi : {0} (la fermeture attend la fin de leur écriture)</value>
+  </data>
+  <data name="EditWaitingForWrite" xml:space="preserve">
+    <value>Attente de la fin du renvoi du fichier modifié avant la fermeture…</value>
+  </data>
 </root>
