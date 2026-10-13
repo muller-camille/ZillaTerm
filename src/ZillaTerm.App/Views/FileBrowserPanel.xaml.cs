@@ -878,19 +878,36 @@ public partial class FileBrowserPanel : UserControl
             return;
         }
 
+        TypeAheadSelect(e.Text);
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Espace pendant la saisie d'un nom (« rapport final ») : elle fait partie du nom. La liste la traite sinon avant
+    /// TextInput (sélection de l'élément qui a le clavier) et la frappe suivante chercherait « rapportf ».
+    /// </summary>
+    private void OnListPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None && _typeAhead.IsTyping(DateTime.UtcNow))
+        {
+            TypeAheadSelect(" ");
+            e.Handled = true;
+        }
+    }
+
+    private void TypeAheadSelect(string text)
+    {
         var items = FileList.Items.OfType<RemoteEntry>().ToList();
         // Point de départ : l'élément qui a le clavier (sélection multiple), sinon la sélection.
         var focused = Keyboard.FocusedElement is ListViewItem container
             ? FileList.ItemContainerGenerator.ItemFromContainer(container)
             : FileList.SelectedItem;
         int current = items.FindIndex(i => ReferenceEquals(i, focused));
-        int index = _typeAhead.Find(items.ConvertAll(i => i.DisplayName), current, e.Text, DateTime.UtcNow);
+        int index = _typeAhead.Find(items.ConvertAll(i => i.DisplayName), current, text, DateTime.UtcNow);
         if (index >= 0)
         {
             SelectAndFocus(items[index]);
         }
-
-        e.Handled = true;
     }
 
     private void OnMenuOpened(object sender, RoutedEventArgs e)

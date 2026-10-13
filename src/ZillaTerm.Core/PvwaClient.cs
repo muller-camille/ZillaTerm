@@ -472,12 +472,27 @@ public sealed class PvwaClient : IDisposable
         {
             return await RequestPsmConnectAsync(accountId, options, ct).ConfigureAwait(false);
         }
-        catch (PvwaException e) when (options.MapLocalDrives && !e.IsUnauthorized && !e.IsUnknownComponent
-                                      && $"{e.ErrorCode} {e.Message} {e.ServerMessage}".Contains("param", StringComparison.OrdinalIgnoreCase))
+        catch (PvwaException e) when (options.MapLocalDrives && MayRefuseLocalDrives(e))
         {
             DebugLog.Write("pvwa", $"PSMConnect refusé avec les disques du poste ({e.ErrorCode}) : nouvelle demande sans eux.");
             return await RequestPsmConnectAsync(accountId, options.WithoutLocalDrives(), ct).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Refus qui peut venir du paramètre des disques : le texte des refus varie selon la version et la langue du PVWA,
+    /// donc toute demande refusée (400, 500), sauf les refus connus pour une autre cause (session, droits, composant
+    /// inconnu, motif ou ticket exigé). Au pire, une demande de plus, refusée pour la même raison.
+    /// </summary>
+    private static bool MayRefuseLocalDrives(PvwaException e)
+    {
+        if (e.StatusCode is not (HttpStatusCode.BadRequest or HttpStatusCode.InternalServerError) || e.IsUnknownComponent)
+        {
+            return false;
+        }
+
+        var text = $"{e.ServerMessage} {e.Message}";
+        return !text.Contains("reason", StringComparison.OrdinalIgnoreCase) && !text.Contains("ticket", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<byte[]> RequestPsmConnectAsync(string accountId, PsmConnectOptions options, CancellationToken ct)

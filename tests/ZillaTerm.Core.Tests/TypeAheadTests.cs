@@ -57,6 +57,21 @@ public class TypeAheadTests
     }
 
     [Fact]
+    public void IsTyping_OnlyWhileANameIsBeingTyped()
+    {
+        var search = new TypeAhead();
+        Assert.False(search.IsTyping(T0));
+
+        search.Find(Names, -1, "r", T0);
+        Assert.True(search.IsTyping(T0.AddMilliseconds(500)));
+        Assert.False(search.IsTyping(T0.AddSeconds(2)));
+
+        // Rien trouvé : la saisie continue quand même (la suite peut correspondre, comme dans l'Explorateur).
+        search.Find(Names, -1, "x", T0.AddSeconds(5));
+        Assert.True(search.IsTyping(T0.AddSeconds(5.5)));
+    }
+
+    [Fact]
     public void EmptyList_SelectsNothing() =>
         Assert.Equal(-1, new TypeAhead().Find([], -1, "a", T0));
 }
