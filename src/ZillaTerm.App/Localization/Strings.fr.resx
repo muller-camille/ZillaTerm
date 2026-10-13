@@ -5541,4 +5541,10 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>Identité de {0} impossible à vérifier : {1}</value>
   </data>
+  <data name="SettingsMissingRestored" xml:space="preserve">
+    <value>Votre fichier de réglages (settings.json) était absent : les réglages précédents ont été repris de leur sauvegarde (settings.json.bak).
+
+Pour repartir des réglages par défaut, fermez ZillaTerm et supprimez ces deux fichiers du dossier :
+{0}</value>
+  </data>
 </root>

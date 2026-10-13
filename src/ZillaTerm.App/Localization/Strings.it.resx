@@ -5541,4 +5541,10 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>Impossibile verificare l'identità di {0}: {1}</value>
   </data>
+  <data name="SettingsMissingRestored" xml:space="preserve">
+    <value>Il file delle impostazioni (settings.json) era assente: le impostazioni precedenti sono state riprese dal loro backup (settings.json.bak).
+
+Per ripartire dalle impostazioni predefinite, chiudi ZillaTerm ed elimina questi due file dalla cartella:
+{0}</value>
+  </data>
 </root>

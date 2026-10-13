@@ -16534,5 +16534,17 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("FreeRdpCheckFailed", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Your settings file (settings.json) was missing: the previous settings were restored from their backup (settings.json.bak).
+        ///
+        ///To start over with the default settings, close ZillaTerm and delete these two files from the folder:
+        ///{0}.
+        /// </summary>
+        public static string SettingsMissingRestored {
+            get {
+                return ResourceManager.GetString("SettingsMissingRestored", resourceCulture);
+            }
+        }
     }
 }

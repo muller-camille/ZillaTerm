@@ -5541,4 +5541,10 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>The identity of {0} could not be checked: {1}</value>
   </data>
+  <data name="SettingsMissingRestored" xml:space="preserve">
+    <value>Your settings file (settings.json) was missing: the previous settings were restored from their backup (settings.json.bak).
+
+To start over with the default settings, close ZillaTerm and delete these two files from the folder:
+{0}</value>
+  </data>
 </root>

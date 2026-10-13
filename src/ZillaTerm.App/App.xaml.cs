@@ -90,6 +90,12 @@ public partial class App : Application
             MessageBox.Show(Text.Format(_settings.RestoredFromBackup ? Strings.SettingsSetAsideRestored : Strings.SettingsSetAsideReset, aside),
                 "ZillaTerm", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+        else if (_settings.RestoredFromBackup)
+        {
+            // settings.json absent (supprimé pour repartir de zéro, remplacement interrompu) : sauvegarde reprise, et dit.
+            MessageBox.Show(Text.Format(Strings.SettingsMissingRestored, Path.GetDirectoryName(AppSettings.DefaultPath)),
+                "ZillaTerm", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
 
         // Environnement de l'équipe : fichier à côté de l'exécutable et fichier central, proposés s'ils ont changé.
         EnvironmentImport.OfferAtStartup(_settings);
