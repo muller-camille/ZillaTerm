@@ -52,6 +52,9 @@
                    Style="{StaticResource SectionTitle}" />
         <TextBlock x:Name="CappedText" DockPanel.Dock="Bottom" Text="{x:Static loc:Strings.InterventionHistoryCapped}" TextWrapping="Wrap"
                    Foreground="{DynamicResource WarningBrush}" Margin="0,4,0,0" Visibility="Collapsed" />
+        <!-- Journal au-delà de 100 Mo : l'écran des Bureaux à distance n'est plus gardé qu'une fois toutes les 10 s. -->
+        <TextBlock x:Name="ScreenThrottledText" DockPanel.Dock="Bottom" Text="{x:Static loc:Strings.InterventionScreenThrottled}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource WarningBrush}" Margin="0,4,0,0" Visibility="Collapsed" />
         <!-- Historique : un bloc par événement, ou par commande d'un terminal et son retour ; un long bloc se déplie. -->
         <ListBox x:Name="HistoryList" AutomationProperties.LabeledBy="{Binding ElementName=HistoryTitle}"
                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.ScrollUnit="Pixel"

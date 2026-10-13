@@ -16850,5 +16850,122 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("InterventionCloseHistory", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Screen.
+        /// </summary>
+        public static string InterventionKindScreen {
+            get {
+                return ResourceManager.GetString("InterventionKindScreen", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Journal over 100 MB: remote desktop screens are now kept only once every 10 s..
+        /// </summary>
+        public static string InterventionScreenThrottled {
+            get {
+                return ResourceManager.GetString("InterventionScreenThrottled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ● Screen recorded.
+        /// </summary>
+        public static string RdpScreenRecorded {
+            get {
+                return ResourceManager.GetString("RdpScreenRecorded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ● Screen recorded (every 10 s).
+        /// </summary>
+        public static string RdpScreenThrottled {
+            get {
+                return ResourceManager.GetString("RdpScreenThrottled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Intervention being recorded: this session's screen is kept in the journal (changed areas only, one image per second at most, one every 10 s beyond 100 MB of journal). Only the displayed tab is captured..
+        /// </summary>
+        public static string RdpScreenRecordedTip {
+            get {
+                return ResourceManager.GetString("RdpScreenRecordedTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Recorded screens.
+        /// </summary>
+        public static string InterventionReportScreens {
+            get {
+                return ResourceManager.GetString("InterventionReportScreens", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. The graph under the cursor shows the share of the screen that changed: click a peak to go there..
+        /// </summary>
+        public static string InterventionReportScreenHelp {
+            get {
+                return ResourceManager.GetString("InterventionReportScreenHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1} to {2} ({3}).
+        /// </summary>
+        public static string InterventionReportScreenHeading {
+            get {
+                return ResourceManager.GetString("InterventionReportScreenHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Play.
+        /// </summary>
+        public static string InterventionReportPlay {
+            get {
+                return ResourceManager.GetString("InterventionReportPlay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Pause.
+        /// </summary>
+        public static string InterventionReportPause {
+            get {
+                return ResourceManager.GetString("InterventionReportPause", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Speed.
+        /// </summary>
+        public static string InterventionReportSpeed {
+            get {
+                return ResourceManager.GetString("InterventionReportSpeed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Position and screen activity.
+        /// </summary>
+        public static string InterventionReportActivity {
+            get {
+                return ResourceManager.GetString("InterventionReportActivity", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The player needs JavaScript and a recent browser..
+        /// </summary>
+        public static string InterventionReportScriptNeeded {
+            get {
+                return ResourceManager.GetString("InterventionReportScriptNeeded", resourceCulture);
+            }
+        }
     }
 }

@@ -50,9 +50,14 @@ public sealed class InterventionHistory
         }
     }
 
-    /// <summary>Ajoute un événement (sans son image).</summary>
+    /// <summary>Ajoute un événement (sans son image) ; les images d'écran en tuiles ne sont pas gardées (une par seconde).</summary>
     public void Add(InterventionEntry entry)
     {
+        if (entry.Kind == InterventionKind.Screen)
+        {
+            return;
+        }
+
         lock (_lock)
         {
             if (entry.Kind == InterventionKind.Terminal)

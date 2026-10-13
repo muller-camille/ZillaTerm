@@ -21,19 +21,34 @@ namespace ZillaTerm.App.Services;
 /// </remarks>
 public sealed class InterventionRecorder
 {
+    /// <summary>
+    /// Taille du journal au-delà de laquelle l'écran des sessions Bureau à distance n'est plus gardé qu'une fois toutes les
+    /// <see cref="ScreenThrottledInterval"/> (une longue intervention sur un écran très actif ne remplit pas le disque).
+    /// </summary>
+    public const long ScreenThrottleBytes = 100L * 1024 * 1024;
+
+    /// <summary>Intervalle des captures de l'écran une fois le journal au-delà de <see cref="ScreenThrottleBytes"/>.</summary>
+    public static readonly TimeSpan ScreenThrottledInterval = TimeSpan.FromSeconds(10);
+
     /// <summary>Distingue les blocs du journal d'intervention des autres données protégées par DPAPI.</summary>
     private static readonly byte[] Entropy = "ZillaTerm.InterventionJournal.v1"u8.ToArray();
 
     private readonly ConditionalWeakTable<SshSession, InterventionTerminalTranscript> _transcripts = [];
     private readonly ISecretProtector _protector;
     private readonly string _directory;
+    private readonly long _screenThrottleBytes;
     private volatile InterventionJournal? _journal;
     private volatile InterventionHistory? _history;
+    private readonly object _throttleLock = new();
+    private InterventionJournal? _throttled;
+    private SynchronizationContext? _ui;
 
-    public InterventionRecorder(string directory, ISecretProtector protector)
+    /// <param name="screenThrottleBytes">Taille du journal au-delà de laquelle l'écran est bridé (tests).</param>
+    public InterventionRecorder(string directory, ISecretProtector protector, long screenThrottleBytes = ScreenThrottleBytes)
     {
         _directory = directory;
         _protector = protector;
+        _screenThrottleBytes = screenThrottleBytes;
     }
 
     /// <summary>Enregistrement de l'application (journaux dans <see cref="InterventionJournal.DefaultDirectory"/>, DPAPI).</summary>
@@ -77,6 +92,22 @@ public sealed class InterventionRecorder
     /// </summary>
     public InterventionHistory? History => _history;
 
+    /// <summary>
+    /// Le journal en cours dépasse <see cref="ScreenThrottleBytes"/> : l'écran des sessions Bureau à distance n'est plus
+    /// gardé qu'une fois toutes les <see cref="ScreenThrottledInterval"/> (voir <see cref="UpdateScreenThrottle"/>).
+    /// </summary>
+    public bool ScreenThrottled
+    {
+        get
+        {
+            var journal = _journal;
+            lock (_throttleLock)
+            {
+                return journal is not null && ReferenceEquals(journal, _throttled);
+            }
+        }
+    }
+
     /// <summary>Titre de l'intervention en cours ; vide s'il n'y en a pas.</summary>
     public string Title { get; private set; } = "";
 
@@ -96,18 +127,11 @@ public sealed class InterventionRecorder
         var journal = InterventionJournal.Start(_directory, _protector, now);
         var history = new InterventionHistory();
         // Disque plein ou écriture refusée (écritures du minuteur, sur un autre fil) : l'interface le dit aussitôt.
-        var ui = SynchronizationContext.Current;
+        _ui = SynchronizationContext.Current;
         journal.Failed += () =>
         {
             DebugLog.Write("intervention", $"Journal d'intervention refusé par le disque : {journal.Failure?.Message}");
-            if (ui is null)
-            {
-                Changed?.Invoke();
-            }
-            else
-            {
-                ui.Post(_ => Changed?.Invoke(), null);
-            }
+            PostChanged();
         };
         var started = new InterventionEntry(now, InterventionKind.Started, "",
             Text.Format(Strings.InterventionStartedEntry, who, Environment.MachineName, UpdateChecker.CurrentVersion, mode));
@@ -153,6 +177,61 @@ public sealed class InterventionRecorder
     /// <summary>Ajoute un événement si l'enregistrement est lancé (depuis n'importe quel fil).</summary>
     public void Record(InterventionKind kind, string source, string text, byte[]? image = null) =>
         Write(new InterventionEntry(DateTime.UtcNow, kind, source, text, image));
+
+    /// <summary>
+    /// Image d'écran d'une session Bureau à distance, prise à <paramref name="time"/> (depuis n'importe quel fil). Elle ne va
+    /// qu'au journal pour lequel elle a été encodée (<paramref name="journalPath"/>) : la suite d'images d'un enregistrement
+    /// arrêté n'a pas de sens dans le suivant, qui commence par sa propre image clé. Pas dans l'historique affiché.
+    /// </summary>
+    public void RecordScreen(string journalPath, string source, ScreenFrame frame, DateTime time)
+    {
+        if (_journal is { } journal && journal.Path == journalPath)
+        {
+            journal.Write(new InterventionEntry(time, InterventionKind.Screen, source, "", frame.Data));
+        }
+    }
+
+    /// <summary>
+    /// Regarde si le journal en cours dépasse <see cref="ScreenThrottleBytes"/> (depuis n'importe quel fil) : la première
+    /// fois, le journal le note et l'interface en est prévenue (<see cref="Changed"/>).
+    /// </summary>
+    /// <returns>Vrai si l'écran n'est plus gardé qu'une fois toutes les <see cref="ScreenThrottledInterval"/>.</returns>
+    public bool UpdateScreenThrottle()
+    {
+        var journal = _journal;
+        if (journal is null || journal.Length < _screenThrottleBytes)
+        {
+            return false;
+        }
+
+        lock (_throttleLock)
+        {
+            if (ReferenceEquals(journal, _throttled))
+            {
+                return true;
+            }
+
+            _throttled = journal;
+        }
+
+        DebugLog.Write("intervention", "Journal au-delà de 100 Mo : écran des Bureaux à distance gardé toutes les 10 s.");
+        Write(new InterventionEntry(DateTime.UtcNow, InterventionKind.Action, "", Strings.InterventionScreenThrottled));
+        PostChanged();
+        return true;
+    }
+
+    /// <summary><see cref="Changed"/> sur le fil de l'interface, depuis un autre fil.</summary>
+    private void PostChanged()
+    {
+        if (_ui is { } ui)
+        {
+            ui.Post(_ => Changed?.Invoke(), null);
+        }
+        else
+        {
+            Changed?.Invoke();
+        }
+    }
 
     /// <summary>Événement gardé par le journal, et alors ajouté à l'historique affiché.</summary>
     private void Write(InterventionEntry entry)

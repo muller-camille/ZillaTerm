@@ -926,7 +926,15 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   - le **titre** de l'intervention et vos **notes** (onglet « Intervention », ci-dessous) ;
   - les **captures** : « Capturer un Bureau à distance… » (onglet « Intervention ») prend une image d'une fenêtre
     Connexion Bureau à distance (sessions PSM ; une fenêtre réduite ne peut pas l'être), et le bouton « Capture » des
-    onglets Bureau à distance de ZillaTerm prend celle du bureau affiché.
+    onglets Bureau à distance de ZillaTerm prend celle du bureau affiché ;
+  - l'**écran des sessions Bureau à distance ouvertes dans un onglet**, comme le protocole RDP l'envoie : l'onglet
+    affiché est capturé chaque seconde et seules les zones modifiées sont gardées (carrés de 64 × 64 pixels en couleurs
+    16 bits, compressés ; une zone déjà vue, comme un menu qui revient, n'est gardée qu'une fois). « ● Écran
+    enregistré » dans la barre de l'onglet le rappelle. Un onglet en arrière-plan, une fenêtre réduite et le plein écran
+    ne sont pas capturés ; à chaque retour sur l'onglet, l'écran entier est gardé. Au-delà de **100 Mo de journal**,
+    l'écran n'est plus gardé qu'une fois toutes les 10 secondes : le journal le note, l'onglet « Intervention » le dit
+    et l'indicateur devient « ● Écran enregistré (toutes les 10 s) ». Une session ouverte avec Connexion Bureau à
+    distance (mstsc) n'est pas enregistrée ainsi : seule la capture la garde.
 - **Onglet « Intervention » du panneau de gauche** (`Ctrl+4`) : il apparaît au début de l'enregistrement, avec une
   pastille rouge tant que l'enregistrement dure : titre, notes et historique restent à côté de la session. Ouvrir une
   session SSH ne le remplace pas par l'onglet « Fichiers ». Un clic sur « ● Intervention enregistrée » dans la barre
@@ -948,17 +956,20 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   (l'onglet disparaît) ou au prochain enregistrement ; le rapport s'exporte depuis la fenêtre Intervention.
 - **« Interventions enregistrées »** : la liste des enregistrements, du plus récent au plus ancien, avec leur titre. À
   l'arrêt, l'intervention reste sélectionnée : **« Exporter le rapport… »** (ou double-clic) en fait une page HTML :
-  résumé, chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention.
+  résumé, chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention. Les écrans
+  enregistrés y ont chacun leur lecteur : « Lecture », « Vitesse » (1× à 60×) et un curseur de position, sous lequel un
+  graphique montre l'activité de l'écran (part modifiée à chaque instant) : un clic sur un pic y mène. Le lecteur est le
+  seul script de la page, autorisé par son empreinte ; il demande un navigateur récent (Edge, Chrome, Firefox).
   **« Supprimer… »** efface un enregistrement terminé.
 
 Le journal est **chiffré pour votre compte Windows seul** (DPAPI) dans `%LOCALAPPDATA%\ZillaTerm\Interventions` (le
 titre aussi, dans un fichier `.title` à côté, pour la liste), bloc par bloc au fil de l'enregistrement (un arrêt brutal
 ne perd que les deux dernières secondes, et le rapport le signale). Un bloc retiré, déplacé ou modifié est signalé dans
-le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas, mais **tout ce qu'affiche un terminal y est** (contenu
-d'un fichier de configuration, par exemple) ; le rapport exporté n'est **pas chiffré** : rangez-le en lieu sûr. Le texte
-des terminaux est plafonné à 64 millions de caractères par intervention (les autres événements continuent d'être gardés
-au-delà) ; un très gros affichage est écrit en plusieurs blocs, sans perdre la suite du rapport. Une déconnexion annulée
-à la confirmation n'y figure pas.
+le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas, mais **tout ce qu'affiche un terminal ou un Bureau à
+distance dans un onglet y est** (contenu d'un fichier de configuration, par exemple) ; le rapport exporté n'est **pas
+chiffré** : rangez-le en lieu sûr. Le texte des terminaux est plafonné à 64 millions de caractères par intervention (les
+autres événements continuent d'être gardés au-delà) ; un très gros affichage est écrit en plusieurs blocs, sans perdre
+la suite du rapport. Une déconnexion annulée à la confirmation n'y figure pas.
 
 **Disque qui refuse le journal** (plein, quota, accès retiré) : la barre d'état affiche « ⚠ Intervention :
 enregistrement interrompu » en rouge, et la fenêtre « Enregistrement interrompu à 14:10. » : plus rien n'est gardé

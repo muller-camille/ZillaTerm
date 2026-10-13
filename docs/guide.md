@@ -869,7 +869,14 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   - the intervention **title** and your **notes** ("Intervention" tab, below);
   - **captures**: "Capture a remote desktop…" ("Intervention" tab) takes an image of a Remote Desktop Connection window
     (PSM sessions; a minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs
-    takes the desktop shown.
+    takes the desktop shown;
+  - the **screen of remote desktop sessions opened in a tab**, the way the RDP protocol sends it: the tab shown is
+    captured every second and only the changed areas are kept (64 × 64 pixel squares in 16-bit colour, compressed; an
+    area already seen, like a menu that comes back, is kept only once). "● Screen recorded" in the tab bar reminds you.
+    A tab in the background, a minimized window and full screen are not captured; each time you come back to the tab,
+    the whole screen is kept. Beyond **100 MB of journal**, the screen is kept only once every 10 seconds: the journal
+    notes it, the "Intervention" tab says so and the indicator becomes "● Screen recorded (every 10 s)". A session
+    opened with Remote Desktop Connection (mstsc) is not recorded this way: only a capture keeps it.
 - **"Intervention" tab of the side panel** (`Ctrl+4`): it appears when recording starts, with a red dot while recording
   lasts: title, notes and history stay next to the session. Opening an SSH session does not replace it with the "Files"
   tab. A click on "● Intervention recorded" in the status bar or on **"Title, notes and history"** in the Intervention
@@ -890,15 +897,18 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   away) or the next recording; the report is exported from the Intervention window.
 - **"Recorded interventions"**: the list of recordings, newest first, with their title. When you stop, the intervention
   stays selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
-  terminal text and captures, to attach to the intervention report. **"Delete…"** erases a finished recording.
+  terminal text and captures, to attach to the intervention report. Each recorded screen has its own player: "Play",
+  "Speed" (1× to 60×) and a position slider, under which a graph shows the screen activity (share changed at each
+  moment): click a peak to go there. The player is the only script of the page, allowed by its hash; it needs a recent
+  browser (Edge, Chrome, Firefox). **"Delete…"** erases a finished recording.
 
 The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (the
 title too, in a `.title` file next to it, for the list), block by block as recording goes (a crash only loses the last
 two seconds, and the report says so). A block removed, moved or changed is reported. ⚠ Passwords typed without echo are
-not in it, but **whatever a terminal shows is** (the contents of a configuration file, for example); the exported report
-is **not encrypted**: keep it in a safe place. Terminal text is capped at 64 million characters per intervention (the
-other events are still kept beyond that); a very large output is written in several blocks, without losing the rest of
-the report. A disconnection cancelled at the confirmation is not in it.
+not in it, but **whatever a terminal or a remote desktop in a tab shows is** (the contents of a configuration file, for
+example); the exported report is **not encrypted**: keep it in a safe place. Terminal text is capped at 64 million
+characters per intervention (the other events are still kept beyond that); a very large output is written in several
+blocks, without losing the rest of the report. A disconnection cancelled at the confirmation is not in it.
 
 **Disk refusing the journal** (full, quota, access removed): the status bar shows "⚠ Intervention: recording
 interrupted" in red, and the window "Recording interrupted at 14:10.": nothing more is kept from that time on, the

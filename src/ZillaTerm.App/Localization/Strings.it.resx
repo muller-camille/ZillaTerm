@@ -4975,7 +4975,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Registrazione dalle {0} ({1}), {2:# evento|# eventi}.</value>
   </data>
   <data name="InterventionRecordingHelp" xml:space="preserve">
-    <value>Per qualsiasi intervento, in reperibilità o no. Tutto viene conservato fino all'interruzione: il testo dei terminali SSH, le connessioni, le azioni sugli account, i trasferimenti di file con il loro SHA-256, le tue note e le catture. Il registro è cifrato solo per il tuo account Windows. Le password digitate senza eco non ci sono, ma tutto ciò che mostra un terminale sì. All'inizio della registrazione, la scheda «Intervento» del pannello di sinistra mostra titolo, note, catture e cronologia.</value>
+    <value>Per qualsiasi intervento, in reperibilità o no. Tutto viene conservato fino all'interruzione: il testo dei terminali SSH, le connessioni, le azioni sugli account, i trasferimenti di file con il loro SHA-256, le tue note, le catture e lo schermo delle sessioni desktop remoto aperte in una scheda (zone modificate). Il registro è cifrato solo per il tuo account Windows. Le password digitate senza eco non ci sono, ma tutto ciò che mostra un terminale o un desktop remoto in una scheda sì. All'inizio della registrazione, la scheda «Intervento» del pannello di sinistra mostra titolo, note, catture e cronologia.</value>
   </data>
   <data name="InterventionNotePlaceholder" xml:space="preserve">
     <value>Constatazione, decisione, azione…</value>
@@ -5152,7 +5152,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Una parte del registro è illeggibile o è stata modificata.</value>
   </data>
   <data name="InterventionReportConfidential" xml:space="preserve">
-    <value>Riservato: questo rapporto contiene ciò che hanno mostrato i terminali. Non è cifrato.</value>
+    <value>Riservato: questo rapporto contiene ciò che hanno mostrato i terminali e gli schermi dei desktop remoti. Non è cifrato.</value>
   </data>
   <data name="InterventionReportSummary" xml:space="preserve">
     <value>Riepilogo</value>
@@ -5649,5 +5649,44 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   </data>
   <data name="InterventionCloseHistory" xml:space="preserve">
     <value>Chiudi la c_ronologia</value>
+  </data>
+  <data name="InterventionKindScreen" xml:space="preserve">
+    <value>Schermo</value>
+  </data>
+  <data name="InterventionScreenThrottled" xml:space="preserve">
+    <value>Registro oltre 100 MB: lo schermo dei desktop remoti è ora conservato solo una volta ogni 10 s.</value>
+  </data>
+  <data name="RdpScreenRecorded" xml:space="preserve">
+    <value>● Schermo registrato</value>
+  </data>
+  <data name="RdpScreenThrottled" xml:space="preserve">
+    <value>● Schermo registrato (ogni 10 s)</value>
+  </data>
+  <data name="RdpScreenRecordedTip" xml:space="preserve">
+    <value>Intervento in registrazione: lo schermo di questa sessione è conservato nel registro (solo le zone modificate, al massimo un'immagine al secondo, una ogni 10 s oltre 100 MB di registro). Viene catturata solo la scheda visualizzata.</value>
+  </data>
+  <data name="InterventionReportScreens" xml:space="preserve">
+    <value>Schermi registrati</value>
+  </data>
+  <data name="InterventionReportScreenHelp" xml:space="preserve">
+    <value>Sessioni desktop remoto in una scheda: sono conservate solo le zone modificate dello schermo, al massimo un'immagine al secondo. Il grafico sotto il cursore mostra la parte dello schermo modificata: un clic su un picco porta lì.</value>
+  </data>
+  <data name="InterventionReportScreenHeading" xml:space="preserve">
+    <value>{0}: dal {1} al {2} ({3})</value>
+  </data>
+  <data name="InterventionReportPlay" xml:space="preserve">
+    <value>Riproduci</value>
+  </data>
+  <data name="InterventionReportPause" xml:space="preserve">
+    <value>Pausa</value>
+  </data>
+  <data name="InterventionReportSpeed" xml:space="preserve">
+    <value>Velocità</value>
+  </data>
+  <data name="InterventionReportActivity" xml:space="preserve">
+    <value>Posizione e attività dello schermo</value>
+  </data>
+  <data name="InterventionReportScriptNeeded" xml:space="preserve">
+    <value>Il lettore richiede JavaScript e un browser recente.</value>
   </data>
 </root>

@@ -4975,7 +4975,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Enregistrement depuis {0} ({1}), {2:# événement|# événements}.</value>
   </data>
   <data name="InterventionRecordingHelp" xml:space="preserve">
-    <value>Pour toute intervention, d'astreinte ou non. Tout est gardé jusqu'à l'arrêt : le texte des terminaux SSH, les connexions, les actions sur les comptes, les transferts de fichiers avec leur SHA-256, vos notes et les captures. Le journal est chiffré pour votre compte Windows seul. Les mots de passe tapés sans écho n'y sont pas, mais tout ce qu'affiche un terminal y est. Au début de l'enregistrement, l'onglet « Intervention » du panneau de gauche montre le titre, les notes, les captures et l'historique.</value>
+    <value>Pour toute intervention, d'astreinte ou non. Tout est gardé jusqu'à l'arrêt : le texte des terminaux SSH, les connexions, les actions sur les comptes, les transferts de fichiers avec leur SHA-256, vos notes, les captures et l'écran des sessions Bureau à distance ouvertes dans un onglet (zones modifiées). Le journal est chiffré pour votre compte Windows seul. Les mots de passe tapés sans écho n'y sont pas, mais tout ce qu'affiche un terminal ou un Bureau à distance dans un onglet y est. Au début de l'enregistrement, l'onglet « Intervention » du panneau de gauche montre le titre, les notes, les captures et l'historique.</value>
   </data>
   <data name="InterventionNotePlaceholder" xml:space="preserve">
     <value>Constat, décision, action…</value>
@@ -5152,7 +5152,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Une partie du journal est illisible ou a été modifiée.</value>
   </data>
   <data name="InterventionReportConfidential" xml:space="preserve">
-    <value>Confidentiel : ce rapport contient ce qu'ont affiché les terminaux. Il n'est pas chiffré.</value>
+    <value>Confidentiel : ce rapport contient ce qu'ont affiché les terminaux et les écrans des Bureaux à distance. Il n'est pas chiffré.</value>
   </data>
   <data name="InterventionReportSummary" xml:space="preserve">
     <value>Résumé</value>
@@ -5649,5 +5649,44 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="InterventionCloseHistory" xml:space="preserve">
     <value>Fermer l'_historique</value>
+  </data>
+  <data name="InterventionKindScreen" xml:space="preserve">
+    <value>Écran</value>
+  </data>
+  <data name="InterventionScreenThrottled" xml:space="preserve">
+    <value>Journal au-delà de 100 Mo : l'écran des Bureaux à distance n'est plus gardé qu'une fois toutes les 10 s.</value>
+  </data>
+  <data name="RdpScreenRecorded" xml:space="preserve">
+    <value>● Écran enregistré</value>
+  </data>
+  <data name="RdpScreenThrottled" xml:space="preserve">
+    <value>● Écran enregistré (toutes les 10 s)</value>
+  </data>
+  <data name="RdpScreenRecordedTip" xml:space="preserve">
+    <value>Intervention enregistrée : l'écran de cette session est gardé dans le journal (zones modifiées seulement, une image par seconde au plus, une toutes les 10 s au-delà de 100 Mo de journal). Seul l'onglet affiché est capturé.</value>
+  </data>
+  <data name="InterventionReportScreens" xml:space="preserve">
+    <value>Écrans enregistrés</value>
+  </data>
+  <data name="InterventionReportScreenHelp" xml:space="preserve">
+    <value>Sessions Bureau à distance dans un onglet : seules les zones modifiées de l'écran sont gardées, une image par seconde au plus. Le graphique sous le curseur montre la part de l'écran modifiée : un clic sur un pic y mène.</value>
+  </data>
+  <data name="InterventionReportScreenHeading" xml:space="preserve">
+    <value>{0} : du {1} au {2} ({3})</value>
+  </data>
+  <data name="InterventionReportPlay" xml:space="preserve">
+    <value>Lecture</value>
+  </data>
+  <data name="InterventionReportPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="InterventionReportSpeed" xml:space="preserve">
+    <value>Vitesse</value>
+  </data>
+  <data name="InterventionReportActivity" xml:space="preserve">
+    <value>Position et activité de l'écran</value>
+  </data>
+  <data name="InterventionReportScriptNeeded" xml:space="preserve">
+    <value>Le lecteur demande JavaScript et un navigateur récent.</value>
   </data>
 </root>
