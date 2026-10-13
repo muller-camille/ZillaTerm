@@ -412,7 +412,8 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   tant que la sélection ne convient pas ; leur infobulle dit quoi choisir (« Choisissez un seul fichier (pas un
   dossier). »…).
 - **Déposer des fichiers** : glissez-les depuis l'Explorateur sur la liste (ou bouton « Envoyer »). Envoi en **SFTP**
-  par défaut (SCP au choix dans les Paramètres), dossiers compris. Déposés sur la ligne d'un dossier, ils vont dans
+  par défaut (SCP au choix dans les Paramètres), dossiers compris ; un lecteur entier (`E:\`) ou la racine d'un
+  partage est refusé, avec un message. Déposés sur la ligne d'un dossier, ils vont dans
   ce dossier : la ligne est mise en surbrillance et la barre d'état indique la destination (« Déposer dans
   serveur:/chemin »). Si des éléments existent déjà sur le serveur (fichiers cachés compris, même non affichés), une
   confirmation nomme le serveur et les éléments, et propose « Remplacer », « Ignorer les existants » ou « Annuler »
@@ -449,7 +450,10 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   fichier, et « Effacer les terminés » retire de la liste les transferts terminés, en échec ou annulés
   (l'historique des transferts les garde). Un
   transfert arrêté supprime le fichier en cours, incomplet (sur le serveur pour un envoi, sur le poste pour un
-  téléchargement) ; les fichiers déjà transférés restent. Attention : si l'envoi remplaçait un fichier existant et
+  téléchargement) ; les fichiers déjà transférés restent. Un envoi arrêté à travers un lien symbolique du serveur
+  garde le lien et le fichier vers lequel il pointe, et le bilan le dit. Un téléchargement s'arrête aussi quand le
+  serveur envoie bien plus que la taille annoncée (le double, ou 64 Mo de plus) : la copie incomplète est supprimée.
+  Attention : si l'envoi remplaçait un fichier existant et
   avait commencé à l'écrire, son ancien contenu est perdu ; arrêté avant tout contenu, le fichier du serveur reste
   tel quel. En SCP, l'arrêt ne concerne que ce transfert : les éléments suivants continuent sur la
   même connexion ; un transfert qui n'avance plus (serveur qui ne lit plus) s'arrête 2 s après « Annuler » et les
@@ -465,12 +469,16 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   le poste (dans la file, annulable), envoyée et vérifiée (SHA-256), puis supprimée du poste ; chaque élément déposé
   est à la racine de l'archive (droits 0644 et 0755). Rien n'est exécuté sur le serveur : un encadré orange apparaît
   en bas de l'onglet Fichiers avec la commande d'extraction, par exemple `cd '/opt/app' && /usr/bin/gzip -dc
-  './deploy.tar.gz' | tar xf - && rm -f './deploy.tar.gz'` (l'archive est supprimée du serveur une fois extraite).
+  './deploy.tar.gz' | tar xof - && rm -f './deploy.tar.gz'` (l'archive est supprimée du serveur une fois extraite).
+  Les fichiers extraits appartiennent à qui extrait (`o`), et seuls les dossiers vides ont une entrée dans l'archive :
+  un dossier qui existe déjà garde ses droits et son propriétaire. L'archive n'est pas proposée quand le dépôt
+  remplace des éléments du serveur : l'envoi un par un les réécrit sur place (droits, propriétaire et ACL gardés), et
+  la question de remplacement le dit.
   « Copier la commande », ou « Écrire dans le terminal » qui la tape à l'invite de la session sans l'exécuter :
   vérifiez-la, puis appuyez sur Entrée. L'encadré reste affiché (pour la session concernée) jusqu'à ce que vous le
   fermiez. « Envoyer les fichiers un par un » garde l'envoi habituel ; « Ne plus proposer » décoche l'option.
   - **Tous les Unix** (Red Hat 5 à 9, HP-UX 11.11 et 11.31, Solaris, AIX…) : l'archive est au format tar POSIX
-    standard (ustar), lu par tous les tar, et la commande utilise `gzip` et `tar xf` séparément, sans option propre
+    standard (ustar), lu par tous les tar, et la commande utilise `gzip` et `tar xof` séparément, sans option propre
     à GNU tar. Elle se tape dans n'importe quel shell (sh, ksh, bash, zsh, csh, tcsh).
   - **gzip** est cherché sur le serveur (par SFTP) là où chaque système l'installe : `/bin`, `/usr/bin`,
     `/usr/contrib/bin` (HP-UX), `/usr/local/bin`, `/opt/freeware/bin` (AIX), `/usr/sfw/bin` et `/opt/csw/bin`
@@ -530,7 +538,9 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   fois : si son contenu a changé sur le serveur (modifié dans le terminal, par quelqu'un d'autre, avant une
   reconnexion…), la copie ouverte dans l'éditeur est remplacée par la version actuelle ; sinon elle n'est pas touchée.
   Seule exception : si votre copie a des modifications non renvoyées et que le fichier a aussi changé sur le serveur,
-  ZillaTerm demande s'il faut « Recharger la version du serveur » ou « Garder ma copie ».
+  ZillaTerm demande s'il faut « Recharger la version du serveur » ou « Garder ma copie ». Pendant qu'un fichier
+  modifié est renvoyé, fermer l'onglet, quitter ou se déconnecter attend la fin du renvoi (la barre d'état le dit),
+  pour ne pas laisser un fichier à moitié écrit sur le serveur.
 - **Suivre un fichier (tail -f)** : clic droit sur un ou plusieurs fichiers → « Suivre (tail -f) ». Une fenêtre
   montre la fin du fichier puis chaque nouvelle ligne dès qu'elle est écrite, comme `tail -f`, en lisant le fichier
   par SFTP chaque seconde : aucune commande n'est lancée sur le serveur. Un fichier tronqué ou remplacé par une
@@ -824,7 +834,9 @@ qu'elles contiennent.
   écrit sur disque.
   - **SSH** : onglet terminal + Fichiers. À la première connexion, l'empreinte de la clé du serveur est à comparer
     avec celle que donne son administrateur, dans la même fenêtre que pour le PSMP (voir
-    [section 4](#4-ouvrir-une-session-ssh-via-le-psmp)).
+    [section 4](#4-ouvrir-une-session-ssh-via-le-psmp)). Le mot de passe de l'entrée n'est envoyé qu'une fois par
+    connexion : un mot de passe périmé dans la base ne compte pas plusieurs échecs sur le serveur (risque de
+    verrouillage du compte), et « Annuler » coupe la connexion sans rien envoyer.
   - **Bureau à distance** : onglet avec le client FreeRDP embarqué par ZillaTerm (à défaut, le contrôle Bureau à
     distance de Windows, qui propose aussi « Plein écran », `Ctrl+Alt+Pause` pour revenir), avec « Déconnecter » et
     « Reconnecter ». Avant chaque connexion, ZillaTerm lit le
@@ -1100,7 +1112,10 @@ renommé) : téléchargez-la une fois depuis la page des versions.
 - **Noms de fichiers du serveur** : les caractères invisibles (inversion du sens d'écriture, espace sans largeur,
   caractères de contrôle) s'affichent « � » dans la liste, les confirmations, le choix d'un fichier de l'autre
   serveur, la comparaison, la file et l'historique des transferts, et le suivi (tail), et deviennent « _ » dans le nom du
-  fichier téléchargé, pour qu'un nom ne puisse pas en imiter un autre (« .exe » affiché « .pdf »). Les fichiers
+  fichier téléchargé, pour qu'un nom ne puisse pas en imiter un autre (« .exe » affiché « .pdf »). Les fichiers venus
+  des serveurs (téléchargements, copies ouvertes dans l'éditeur, glisser vers l'Explorateur) portent la marque des
+  fichiers venus d'Internet (zone Internet, sans l'adresse du serveur, qui n'en sort pas) : SmartScreen contrôle un
+  exécutable avant de le lancer, et les logiciels bureautiques ouvrent un document en mode protégé. Les fichiers
   spéciaux (périphérique comme `/dev/zero`, tube nommé, socket) ne sont ni ouverts ni téléchargés, et sont ignorés
   dans le téléchargement d'un dossier.
 - **Aucun secret sur disque** : mot de passe CyberArk, jeton de session, clé MFA et mot de passe PSMP restent en
@@ -1148,7 +1163,10 @@ renommé) : téléchargez-la une fois depuis la page des versions.
 - **Nouvelle version** : aucune requête vers Internet sans votre action ou l'option des Paramètres (désactivée par
   défaut) ; seules les adresses du dépôt du projet sont suivies, l'archive n'est gardée que si sa somme SHA-256 est
   celle de `SHA256SUMS.txt` de la même version (ce qui détecte un téléchargement incomplet ou abîmé, pas une version
-  publiée par un tiers qui aurait pris la main sur le dépôt), et rien n'est installé ni lancé.
+  publiée par un tiers qui aurait pris la main sur le dépôt), et rien n'est installé ni lancé. L'archive gardée porte
+  la marque des fichiers venus d'Internet (« Mark-of-the-Web ») : SmartScreen contrôle l'exécutable extrait. Depuis
+  la 0.30.0, l'archive publiée a une attestation de provenance, qui prouve qu'elle a été compilée par le dépôt du
+  projet : `gh attestation verify ZillaTerm-<version>-win-x64.zip --repo muller-camille/ZillaTerm`.
 - **Clés d'hôte PSMP épinglées** au premier usage : l'empreinte est à comparer avant d'accepter (« Annuler la
   connexion » par défaut) ; une clé changée est signalée par un bandeau et ne remplace l'ancienne qu'après une case
   de confirmation (de même pour les serveurs joints en accès d'urgence et les certificats FTPS et Bureau à
@@ -1280,7 +1298,10 @@ comparé par SHA-256. Lecture partielle
 (`REST`) pour la comparaison et le suivi en direct. Après un transfert interrompu, la connexion est rouverte et le
 fichier incomplet supprimé. Un fichier remplacé est réécrit sur place : il garde ses droits. Liens symboliques : les
 40 premiers d'un dossier sont résolus (un aller-retour chacun) ; au-delà, un lien s'affiche comme un fichier, et
-l'ouvrir entre dans le dossier si c'en est un.
+l'ouvrir entre dans le dossier si c'en est un. Les noms sont échangés en UTF-8 (`OPTS UTF8 ON`), même si le serveur ne
+l'annonce pas ; un nom que l'UTF-8 ne peut pas représenter est refusé plutôt que changé. En SFTP, les liens d'un
+dossier sont suivis par paquets de 16 demandes, 400 au plus (au-delà, comme en FTP) ; un lien vers un fichier prend
+la taille de ce fichier.
 
 ### Sessions Bureau à distance
 
