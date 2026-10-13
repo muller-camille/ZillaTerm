@@ -97,11 +97,15 @@ public sealed class TerminalTheme
 
 /// <summary>
 /// Occurrence trouvée dans le terminal : ligne (historique compris, négative), colonne et longueur en cases (un caractère
-/// large en occupe deux).
+/// large en occupe deux). Dans une ligne longue repliée automatiquement, l'occurrence peut continuer sur les lignes
+/// suivantes : sa longueur dépasse alors la fin de sa première ligne.
 /// </summary>
 public readonly record struct TerminalMatch(int Row, int Column, int Length);
 
-/// <summary>Recherche dans le terminal, historique compris ; contenu entier pour l'enregistrer.</summary>
+/// <summary>
+/// Recherche dans le terminal, historique compris ; contenu entier pour l'enregistrer. Une ligne repliée automatiquement
+/// (<see cref="TerminalEmulator.IsWrapped(int)"/>) et sa suite forment une seule ligne de texte.
+/// </summary>
 public static class TerminalSearch
 {
     /// <summary>Occurrences de <paramref name="text"/> (sans tenir compte de la casse), de la plus ancienne à la plus récente.</summary>
@@ -117,14 +121,27 @@ public static class TerminalSearch
         var builder = new StringBuilder();
         var starts = new List<int>();
         var ends = new List<int>();
-        for (int row = -emulator.ScrollbackCount; row < emulator.Rows; row++)
+        var widths = new List<int>();
+        for (int row = -emulator.ScrollbackCount; row < emulator.Rows;)
         {
-            var line = LineText(emulator, row, builder, starts, ends);
+            int first = row;
+            row = LineText(emulator, row, builder, starts, ends, widths);
+            var line = builder.ToString();
             for (int at = line.IndexOf(text, StringComparison.OrdinalIgnoreCase); at >= 0;
                  at = at + 1 < line.Length ? line.IndexOf(text, at + 1, StringComparison.OrdinalIgnoreCase) : -1)
             {
                 int end = Math.Min(at + text.Length, line.Length) - 1;
-                matches.Add(new TerminalMatch(row, starts[at], ends[end] - starts[at]));
+
+                // Ligne et colonne de la première case, dans la ligne repliée où elle se trouve.
+                int matchRow = first;
+                int column = starts[at];
+                for (int i = 0; column >= widths[i]; i++)
+                {
+                    column -= widths[i];
+                    matchRow++;
+                }
+
+                matches.Add(new TerminalMatch(matchRow, column, ends[end] - starts[at]));
             }
         }
 
@@ -136,9 +153,10 @@ public static class TerminalSearch
     {
         var lines = new List<string>();
         var builder = new StringBuilder();
-        for (int row = -emulator.ScrollbackCount; row < emulator.Rows; row++)
+        for (int row = -emulator.ScrollbackCount; row < emulator.Rows;)
         {
-            lines.Add(LineText(emulator, row, builder, null, null).TrimEnd());
+            row = LineText(emulator, row, builder, null, null, null);
+            lines.Add(builder.ToString().TrimEnd());
         }
 
         while (lines.Count > 0 && lines[^1].Length == 0)
@@ -150,27 +168,40 @@ public static class TerminalSearch
     }
 
     /// <summary>
-    /// Texte de la ligne ; pour chacun de ses caractères, <paramref name="starts"/> reçoit la colonne de sa case et
-    /// <paramref name="ends"/> la colonne qui suit cette case.
+    /// Texte de la ligne qui commence à <paramref name="row"/>, suivi de celui des lignes suivantes tant qu'elle est
+    /// repliée (espaces de fin compris) ; rend la ligne qui vient après. Pour chacun de ses caractères,
+    /// <paramref name="starts"/> reçoit la colonne de sa case et <paramref name="ends"/> la colonne qui suit cette case,
+    /// comptées depuis le début de la première ligne ; <paramref name="widths"/> reçoit la largeur de chaque ligne.
     /// </summary>
-    private static string LineText(TerminalEmulator emulator, int row, StringBuilder text, List<int>? starts, List<int>? ends)
+    private static int LineText(TerminalEmulator emulator, int row, StringBuilder text, List<int>? starts, List<int>? ends,
+        List<int>? widths)
     {
-        var cells = emulator.GetLine(row);
         text.Clear();
         starts?.Clear();
         ends?.Clear();
-        for (int col = 0; col < cells.Length; col++)
+        widths?.Clear();
+        int offset = 0;
+        while (true)
         {
-            int length = text.Length;
-            emulator.AppendText(text, cells[col]);
-            int end = col + 1 < cells.Length && cells[col + 1].IsWideTail ? col + 2 : col + 1;
-            for (int i = length; i < text.Length; i++)
+            var cells = emulator.GetLine(row++);
+            for (int col = 0; col < cells.Length; col++)
             {
-                starts?.Add(col);
-                ends?.Add(end);
+                int length = text.Length;
+                emulator.AppendText(text, cells[col]);
+                int end = col + 1 < cells.Length && cells[col + 1].IsWideTail ? col + 2 : col + 1;
+                for (int i = length; i < text.Length; i++)
+                {
+                    starts?.Add(offset + col);
+                    ends?.Add(offset + end);
+                }
+            }
+
+            widths?.Add(cells.Length);
+            offset += cells.Length;
+            if (row >= emulator.Rows || !TerminalEmulator.IsWrapped(cells))
+            {
+                return row;
             }
         }
-
-        return text.ToString();
     }
 }

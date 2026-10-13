@@ -12,6 +12,12 @@ public enum CellFlags : byte
     Underline = 8,
     Inverse = 16,
     Hidden = 32,
+
+    /// <summary>
+    /// Sur la dernière case d'une ligne seulement : la ligne a été repliée automatiquement et se poursuit sur la suivante
+    /// (<see cref="TerminalEmulator.IsWrapped(int)"/>). Attribut de la ligne, sans effet sur l'affichage.
+    /// </summary>
+    Wrapped = 64,
 }
 
 /// <summary>Une case de l'écran : caractère et attributs.</summary>
@@ -200,6 +206,15 @@ public sealed class TerminalEmulator
     /// </summary>
     public long FirstScreenLine => _scrolledOff;
 
+    /// <summary>
+    /// La ligne <paramref name="row"/> (comme <see cref="GetLine"/>) a été repliée automatiquement : son texte se poursuit
+    /// sur la suivante. La copie, la recherche et l'enregistrement les joignent sans saut de ligne.
+    /// </summary>
+    public bool IsWrapped(int row) => IsWrapped(GetLine(row));
+
+    /// <summary>La ligne se poursuit sur la suivante : sa dernière case porte <see cref="CellFlags.Wrapped"/>.</summary>
+    internal static bool IsWrapped(Cell[] line) => line.Length > 0 && (line[^1].Flags & CellFlags.Wrapped) != 0;
+
     /// <summary>Texte d'une case : son caractère et ses marques combinantes ; vide pour la case de droite d'un caractère large.</summary>
     public string CellText(Cell cell) => cell.CodePoint switch
     {
@@ -287,8 +302,10 @@ public sealed class TerminalEmulator
     }
 
     /// <summary>
-    /// Texte de la zone sélectionnée (coordonnées absolues, fin incluse), espaces de fin retirés. Un caractère large
-    /// dont une seule moitié est dans la zone est pris en entier, avec ses marques combinantes.
+    /// Texte de la zone sélectionnée (coordonnées absolues, fin incluse), espaces de fin retirés. Une ligne repliée
+    /// automatiquement (<see cref="IsWrapped(int)"/>) est jointe à la suivante sans saut de ligne, ses espaces de fin
+    /// gardés : une commande ou un chemin longs se copient tels qu'ils ont été écrits. Un caractère large dont une seule
+    /// moitié est dans la zone est pris en entier, avec ses marques combinantes.
     /// </summary>
     public string GetText(int startRow, int startColumn, int endRow, int endColumn)
     {
@@ -300,7 +317,8 @@ public sealed class TerminalEmulator
         var sb = new StringBuilder();
         var text = new StringBuilder();
         int first = Math.Max(startRow, -ScrollbackCount);
-        for (int row = first; row <= Math.Min(endRow, Rows - 1); row++)
+        int last = Math.Min(endRow, Rows - 1);
+        for (int row = first; row <= last; row++)
         {
             var line = GetLine(row);
             int from = row == startRow ? Math.Max(0, startColumn) : 0;
@@ -316,12 +334,18 @@ public sealed class TerminalEmulator
                 AppendText(text, line[col]);
             }
 
-            if (row != first)
+            // Ligne repliée, prise jusqu'au bout (la zone continue) : la suivante la prolonge.
+            if (row < last && IsWrapped(line))
             {
-                sb.Append('\n');
+                sb.Append(text);
+                continue;
             }
 
             sb.Append(text.ToString().TrimEnd());
+            if (row < last)
+            {
+                sb.Append('\n');
+            }
         }
 
         return sb.ToString();
@@ -853,6 +877,10 @@ public sealed class TerminalEmulator
 
         var line = _screen[CursorRow];
         int col = CursorColumn;
+
+        // Repli de la ligne, porté par sa dernière case : il reste quand le texte est réécrit (shell qui réaffiche une
+        // commande longue en cours de modification). Seul un effacement jusqu'au bord droit le retire.
+        bool wrapped = IsWrapped(line);
         if (_wideWritten)
         {
             SplitWide(line, col, col + width);
@@ -865,6 +893,11 @@ public sealed class TerminalEmulator
             _wideWritten = true;
             cell.CodePoint = Cell.WideTail;
             line[col + 1] = cell;
+        }
+
+        if (wrapped)
+        {
+            line[^1].Flags |= CellFlags.Wrapped;
         }
 
         if (col + width >= Columns)
@@ -917,9 +950,15 @@ public sealed class TerminalEmulator
         line[col].CodePoint = id;
     }
 
+    /// <param name="wrap">Retour automatique en fin de ligne : la ligne quittée se poursuit sur la suivante.</param>
     private void LineFeed(bool wrap = false)
     {
         _wrapPending = false;
+        if (wrap)
+        {
+            _screen[CursorRow][^1].Flags |= CellFlags.Wrapped;
+        }
+
         if (LineLeft is { } left && !IsAlternateScreen)
         {
             var text = new StringBuilder(Columns);
@@ -1041,17 +1080,15 @@ public sealed class TerminalEmulator
 
                 break;
             case 2:
-            case 3:
                 for (int r = 0; r < Rows; r++)
                 {
                     Fill(_screen[r], 0, Columns, Erased);
                 }
 
-                if (mode == 3)
-                {
-                    _scrollback.Clear();
-                }
-
+                break;
+            case 3:
+                // « Erase Saved Lines » (xterm) : l'historique seul, l'écran reste (« clear » envoie aussi ED 2).
+                _scrollback.Clear();
                 break;
         }
     }
@@ -1088,6 +1125,7 @@ public sealed class TerminalEmulator
     private void InsertChars(int count)
     {
         var line = _screen[CursorRow];
+        bool wrapped = TakeWrapped(line);
         count = Math.Min(count, Columns - CursorColumn);
         int kept = Columns - CursorColumn - count;
         // Un caractère large coupé par l'insertion, ou dont la moitié droite sort de la ligne, est effacé.
@@ -1100,17 +1138,40 @@ public sealed class TerminalEmulator
         }
 
         Fill(line, CursorColumn, CursorColumn + count, Erased);
+        SetWrapped(line, wrapped);
         _wrapPending = false;
     }
 
     private void DeleteChars(int count)
     {
         var line = _screen[CursorRow];
+        bool wrapped = TakeWrapped(line);
         count = Math.Min(count, Columns - CursorColumn);
         SplitWide(line, CursorColumn, CursorColumn + count);
         Array.Copy(line, CursorColumn + count, line, CursorColumn, Columns - CursorColumn - count);
         Fill(line, Columns - count, Columns, Erased);
+        SetWrapped(line, wrapped);
         _wrapPending = false;
+    }
+
+    /// <summary>
+    /// Retire la marque de repli de la ligne avant un décalage de ses cases (elle ne doit pas glisser au milieu) et dit si
+    /// elle y était, pour la remettre ensuite (<see cref="SetWrapped"/>) : insérer ou supprimer des caractères ne change
+    /// pas la suite de la ligne.
+    /// </summary>
+    private static bool TakeWrapped(Cell[] line)
+    {
+        bool wrapped = IsWrapped(line);
+        line[^1].Flags &= ~CellFlags.Wrapped;
+        return wrapped;
+    }
+
+    private static void SetWrapped(Cell[] line, bool wrapped)
+    {
+        if (wrapped)
+        {
+            line[^1].Flags |= CellFlags.Wrapped;
+        }
     }
 
     /// <summary>
@@ -1514,6 +1575,14 @@ public sealed class TerminalEmulator
                 {
                     // Caractère large coupé par le bord droit : effacé.
                     line[columns - 1] = Cell.Blank(line[columns - 1].Background);
+                }
+
+                // Largeur changée, sans remise en forme des lignes : une ligne repliée ne se poursuit plus sur la suivante.
+                // Rétrécie, elle a perdu sa fin (et sa dernière case, qui portait le repli) ; élargie, des cases vides
+                // la séparent de la suite. Les lignes de l'historique gardent leur largeur et leur repli.
+                if (screen[source].Length < columns)
+                {
+                    line[screen[source].Length - 1].Flags &= ~CellFlags.Wrapped;
                 }
             }
 

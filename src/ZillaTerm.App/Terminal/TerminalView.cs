@@ -246,7 +246,7 @@ public sealed class TerminalView : FrameworkElement
                 continue;
             }
 
-            DrawMatches(dc, row + MatchesShift, Padding + screenRow * _cellHeight);
+            DrawMatches(dc, emulator, row, Padding + screenRow * _cellHeight);
             DrawLine(dc, emulator, row, Padding + screenRow * _cellHeight);
         }
 
@@ -355,19 +355,45 @@ public sealed class TerminalView : FrameworkElement
         }
     }
 
-    /// <summary>Fond des occurrences de la recherche (jaune ; orange pour la courante) ; <paramref name="row"/> au moment du calcul.</summary>
-    private void DrawMatches(DrawingContext dc, int row, double y)
+    /// <summary>
+    /// Fond des occurrences de la recherche (jaune ; orange pour la courante) sur la ligne <paramref name="row"/>. Une
+    /// occurrence coupée par le repli d'une ligne longue continue au début des lignes suivantes.
+    /// </summary>
+    private void DrawMatches(DrawingContext dc, TerminalEmulator emulator, int row, double y)
     {
+        int shift = MatchesShift;
         for (int i = 0; i < _matches.Count; i++)
         {
             var match = _matches[i];
-            if (match.Row == row)
+
+            // Ligne actuelle du début de l'occurrence ; chaque ligne traversée en prend au moins une case.
+            int start = match.Row - shift;
+            if (start > row || row - start >= match.Length)
+            {
+                continue;
+            }
+
+            int column = match.Column;
+            int length = match.Length;
+            for (int r = start; r < row && length > 0; r++)
+            {
+                length -= Math.Max(LineWidth(emulator, r) - column, 1);
+                column = 0;
+            }
+
+            // Bornée au bord droit (occurrences calculées avant un rétrécissement du terminal).
+            int cells = Math.Min(length, LineWidth(emulator, row) - column);
+            if (cells > 0)
             {
                 dc.DrawRectangle(Brush(i == _currentMatch ? 0xFF9632u : 0xFFE066u), null,
-                    new Rect(Padding + match.Column * _cellWidth, y, match.Length * _cellWidth, _cellHeight));
+                    new Rect(Padding + column * _cellWidth, y, cells * _cellWidth, _cellHeight));
             }
         }
     }
+
+    /// <summary>Largeur de la ligne <paramref name="row"/> (celle de l'écran si elle n'est plus dans l'historique).</summary>
+    private static int LineWidth(TerminalEmulator emulator, int row) =>
+        row >= -emulator.ScrollbackCount && row < emulator.Rows ? emulator.GetLine(row).Length : emulator.Columns;
 
     private (uint Fg, uint Bg, bool Bold, bool Underline) Colors(Cell cell, bool selected)
     {
