@@ -5044,7 +5044,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>The recording could not start: {0}</value>
   </data>
   <data name="InterventionWriteFailed" xml:space="preserve">
-    <value>The disk refused the journal: the rest of the intervention is not kept ({0}).</value>
+    <value>The disk refused the journal ({0}): nothing has been kept since {1}. Free some space, then “Stop recording” and “Record the intervention” to start again.</value>
   </data>
   <data name="InterventionTerminalCapped" xml:space="preserve">
     <value>Terminal text limit reached: the terminals are no longer kept (the other events are).</value>
@@ -5540,5 +5540,11 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>The identity of {0} could not be checked: {1}</value>
+  </data>
+  <data name="InterventionInterruptedIndicator" xml:space="preserve">
+    <value>⚠ Intervention: recording interrupted</value>
+  </data>
+  <data name="InterventionInterruptedAt" xml:space="preserve">
+    <value>Recording interrupted at {0}.</value>
   </data>
 </root>

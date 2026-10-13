@@ -2841,6 +2841,66 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Disque qui refuse le journal pendant l'enregistrement : l'interface est prévenue aussitôt, la fenêtre dit depuis
+    /// quand plus rien n'est gardé (couleur d'erreur du thème), et note et capture ne sont plus proposées.
+    /// </summary>
+    [Fact]
+    public void InterventionWindowSaysWhenTheDiskRefusesTheJournal()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var click = new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent);
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new FailingProtector(failFrom: 2));
+                int changed = 0;
+                recorder.Changed += () => changed++;
+                var window = new InterventionWindow("", "", recorder, "jdoe", "session CyberArk (pvwa.corp.local)");
+                window.RecordButton.RaiseEvent(click);
+                Assert.Equal(1, changed);
+                Assert.Null(recorder.FailureMessage);
+
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Note, "", "perdue");
+                recorder.Flush();
+                PumpUntil(() => changed == 2);
+                Assert.Equal(2, changed);
+                Assert.True(recorder.IsRecording);
+                Assert.NotNull(recorder.Failure);
+                int count = recorder.Count;
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Note, "", "ignorée");
+                Assert.Equal(count, recorder.Count);
+
+                var since = recorder.FailedAt!.Value.ToLocalTime().ToString("t", System.Globalization.CultureInfo.CurrentCulture);
+                Assert.Equal(Text.Format(Strings.InterventionInterruptedAt, since), window.StatusText.Text);
+                Assert.Equal(recorder.FailureMessage, window.MessageText.Text);
+                Assert.Contains(since, window.MessageText.Text, StringComparison.Ordinal);
+                Assert.Same(window.FindResource("ErrorBrush"), window.MessageText.Foreground);
+                Assert.False(window.NoteBox.IsEnabled);
+                Assert.False(window.CaptureButton.IsEnabled);
+
+                window.RecordButton.RaiseEvent(click);
+                Assert.False(recorder.IsRecording);
+                Assert.Null(recorder.FailureMessage);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Consignes d'astreinte tirées d'un fichier (tenu à jour par les responsables) : son texte remplace celui des
     /// réglages, inverseurs de sens de lecture retirés ; fichier absent : le texte des réglages reste, avec la raison.
     /// </summary>
@@ -2880,6 +2940,18 @@ public sealed class DialogTests
         {
             Directory.Delete(dir, recursive: true);
         }
+    }
+
+    /// <summary>Protecteur qui refuse à partir du bloc <c>failFrom</c> (comme un disque plein au moment d'écrire).</summary>
+    private sealed class FailingProtector(int failFrom) : ZillaTerm.Core.KeePass.ISecretProtector
+    {
+        private int _calls;
+
+        public byte[] Protect(byte[] data) => ++_calls >= failFrom
+            ? throw new System.Security.Cryptography.CryptographicException("refusé")
+            : data.Select(b => (byte)(b ^ 0x5A)).ToArray();
+
+        public byte[] Unprotect(byte[] data) => data.Select(b => (byte)(b ^ 0x5A)).ToArray();
     }
 
     private sealed class XorProtector : ZillaTerm.Core.KeePass.ISecretProtector

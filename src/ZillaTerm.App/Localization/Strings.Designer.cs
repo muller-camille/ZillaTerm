@@ -16534,5 +16534,23 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("FreeRdpCheckFailed", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ⚠ Intervention: recording interrupted.
+        /// </summary>
+        public static string InterventionInterruptedIndicator {
+            get {
+                return ResourceManager.GetString("InterventionInterruptedIndicator", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Recording interrupted at {0}..
+        /// </summary>
+        public static string InterventionInterruptedAt {
+            get {
+                return ResourceManager.GetString("InterventionInterruptedAt", resourceCulture);
+            }
+        }
     }
 }
