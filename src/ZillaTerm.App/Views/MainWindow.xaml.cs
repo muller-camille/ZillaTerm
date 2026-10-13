@@ -1130,8 +1130,10 @@ public partial class MainWindow : Window
         string? mstscReason = null;
         bool toMstsc = false;
         int attempts = 0;
-        // Même mode d'affichage pour toutes les connexions de l'onglet (reconnexions comprises).
+        // Même mode d'affichage pour toutes les connexions de l'onglet (reconnexions comprises), et mêmes disques partagés :
+        // option décochée, aucun, même si le fichier du PVWA les demande.
         bool dynamicResolution = _settings.PsmDynamicResolution;
+        bool drives = options.MapLocalDrives;
         session = AddRdpTab(label, async ct =>
         {
             bool initial = attempts++ == 0;
@@ -1153,7 +1155,7 @@ public partial class MainWindow : Window
             if (initial)
             {
                 first = file;
-                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, out mstscReason) is not { } tab)
+                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, drives, out mstscReason) is not { } tab)
                 {
                     toMstsc = true;
                     throw new RdpHandedOffException("session PSM confiée à mstsc");
@@ -1174,7 +1176,7 @@ public partial class MainWindow : Window
                     throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
                 }
 
-                settings = settings.ForPsmTab(dynamicResolution);
+                settings = settings.ForPsmTab(dynamicResolution, drives);
             }
 
             ShowPsmAddress(session, settings.Server);

@@ -16534,5 +16534,50 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("FreeRdpCheckFailed", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connecting to {0}: wait until the session has started, then try again..
+        /// </summary>
+        public static string ConnectBusyWait {
+            get {
+                return ResourceManager.GetString("ConnectBusyWait", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Key size.
+        /// </summary>
+        public static string RdpKeySize {
+            get {
+                return ResourceManager.GetString("RdpKeySize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} bits.
+        /// </summary>
+        public static string RdpKeyBits {
+            get {
+                return ResourceManager.GetString("RdpKeyBits", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Weak key: {0} bits, fewer than the recommended {1}. Such a key can be broken, and whoever breaks it can pose as this PSM without any warning. Ask the CyberArk administrator to enable TLS on the PSM..
+        /// </summary>
+        public static string RdpKeyWeak {
+            get {
+                return ResourceManager.GetString("RdpKeyWeak", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Full screen is not available in a tab with the built-in FreeRDP client: maximize the ZillaTerm window on the screen you want. For a full-screen PSM session, clear “Open PSM Windows sessions in a ZillaTerm tab” (Settings): it will open in Remote Desktop Connection..
+        /// </summary>
+        public static string RdpFullScreenFreeRdpTip {
+            get {
+                return ResourceManager.GetString("RdpFullScreenFreeRdpTip", resourceCulture);
+            }
+        }
     }
 }

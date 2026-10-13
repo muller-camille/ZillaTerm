@@ -116,9 +116,10 @@ public partial class MainWindow
     /// Réglages de l'onglet pour ce fichier du PVWA, ou null pour le confier à mstsc : fichier illisible, passerelle
     /// Bureau à distance, application distante sans le client FreeRDP (<paramref name="reason"/> le dit à
     /// l'utilisateur quand il le faut). <paramref name="dynamicResolution"/> : résolution qui suit la taille de l'onglet
-    /// (option expérimentale) au lieu d'une image mise à l'échelle.
+    /// (option expérimentale) au lieu d'une image mise à l'échelle. <paramref name="drives"/> : option « partager les
+    /// disques » ; décochée, aucun disque partagé, même si le fichier le demande.
     /// </summary>
-    private static RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, bool freeRdp, bool dynamicResolution,
+    private static RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, bool freeRdp, bool dynamicResolution, bool drives,
         out string? reason)
     {
         reason = null;
@@ -146,7 +147,7 @@ public partial class MainWindow
             return null;
         }
 
-        return settings.ForPsmTab(dynamicResolution);
+        return settings.ForPsmTab(dynamicResolution, drives);
     }
 
     /// <summary>
@@ -256,6 +257,14 @@ public partial class MainWindow
         }
 
         int known = KnownHosts.CountKeys(_settings.KnownHosts, host, port, KeyType);
+        // Taille de la clé montrée ; moins de 2048 bits, signalée (elle peut être cassée), sans refus.
+        (string, string)[] codes =
+        [
+            (Strings.RdpKeyFingerprint, Spaced(key.Sha256)),
+            (Strings.RdpKeySize, Text.Format(Strings.RdpKeyBits, key.Bits)),
+        ];
+        string[] weak = key.IsWeak ? [Text.Format(Strings.RdpKeyWeak, key.Bits, RdpServerKey.RecommendedBits)] : [];
+        var kind = key.IsWeak ? ConfirmKind.Danger : ConfirmKind.Warning;
         var request = known == 0
             ? new ConfirmRequest
             {
@@ -263,8 +272,9 @@ public partial class MainWindow
                 Heading = Strings.RdpKeyVerifyHeading,
                 Subject = address,
                 Message = Strings.RdpKeyMessage,
-                Codes = [(Strings.RdpKeyFingerprint, Spaced(key.Sha256))],
-                Kind = ConfirmKind.Warning,
+                Bullets = weak,
+                Codes = codes,
+                Kind = kind,
                 Actions = [Strings.HostKeyTrust],
                 CancelLabel = Strings.HostKeyCancel,
             }
@@ -274,8 +284,9 @@ public partial class MainWindow
                 Heading = Strings.RdpKeyAnotherHeading,
                 Subject = address,
                 Message = Text.Format(Strings.RdpKeyAnotherMessage, known),
-                Codes = [(Strings.RdpKeyFingerprint, Spaced(key.Sha256))],
-                Kind = ConfirmKind.Warning,
+                Bullets = weak,
+                Codes = codes,
+                Kind = kind,
                 Actions = [Strings.RdpKeyTrustAnother],
                 CancelLabel = Strings.HostKeyCancel,
                 Acknowledge = Strings.RdpKeyAckLoadBalanced,

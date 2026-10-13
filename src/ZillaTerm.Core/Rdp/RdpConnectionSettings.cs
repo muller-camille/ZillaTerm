@@ -201,11 +201,16 @@ public sealed record RdpConnectionSettings
     /// Redimensionnement dynamique (expérimental) : la résolution du bureau distant suit la taille de l'onglet au lieu
     /// d'une image mise à l'échelle. La connexion du PSM vers la cible peut garder sa taille d'origine.
     /// </param>
-    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false) => this with
+    /// <param name="drives">
+    /// Option « partager les disques » de ZillaTerm : décochée, les disques de ce poste ne sont jamais partagés, même si
+    /// le fichier du PVWA le demande (choix gardé dans le PVWA, réglage du composant).
+    /// </param>
+    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false, bool drives = true) => this with
     {
         SmartSizing = !dynamicResolution,
         BitmapPersistence = false,
         AuthenticationLevel = AuthenticationLevel == 1 ? 1 : 2,
+        RedirectDrives = RedirectDrives && drives,
     };
 
     /// <summary>Réglages d'un fichier .rdp (voir <see cref="Parse"/>), quel que soit son encodage.</summary>
