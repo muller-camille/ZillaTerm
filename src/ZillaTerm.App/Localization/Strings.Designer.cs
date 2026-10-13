@@ -16149,7 +16149,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections are those asked by the PVWA, plus this computer's drives if the option below is checked. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection..
+        ///   Looks up a localized string similar to The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection..
         /// </summary>
         public static string PsmDesktopInTabHelp {
             get {
@@ -16185,7 +16185,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to This computer's drives appear in the session (File Explorer › This PC), to copy files both ways; programs in the session can then read and write them. The PSM server may refuse it, depending on its configuration. Unchecked: only when the PVWA asks for it. Applies to new sessions; in Remote Desktop Connection, only when the PVWA file is not signed (its signature is checked)..
+        ///   Looks up a localized string similar to ZillaTerm asks the PVWA to map this computer's drives, like the “Map local drives” box of its connection window. When the connection component allows it, they appear in the session (File Explorer › This PC) to copy files; programs in the session can then read and write them. In the tab and in Remote Desktop Connection; applies to new sessions..
         /// </summary>
         public static string PsmRedirectDrivesHelp {
             get {

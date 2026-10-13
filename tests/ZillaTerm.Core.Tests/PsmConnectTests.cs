@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using ZillaTerm.Core.Rdp;
 
 namespace ZillaTerm.Core.Tests;
 
@@ -57,6 +56,62 @@ public class PsmConnectTests
         var remote = root.GetProperty("ConnectionParams").GetProperty("PSMRemoteMachine");
         Assert.Equal("srv01.corp.local", remote.GetProperty("value").GetString());
         Assert.False(remote.GetProperty("ShouldSave").GetBoolean());
+    }
+
+    /// <summary>Disques du poste : paramètre de la case « Map local drives » du PVWA, avec la machine cible.</summary>
+    [Fact]
+    public async Task PsmConnect_AsksForLocalDrives()
+    {
+        var pvwa = Pvwa(_ => RdpResponse(Encoding.UTF8.GetBytes(Rdp)));
+        using var client = await pvwa.CreateLoggedOnClientAsync();
+
+        await client.PsmConnectAsync("1_1", new PsmConnectOptions
+        {
+            ConnectionComponent = "WIN-PSM",
+            RemoteMachine = "srv01.corp.local",
+            MapLocalDrives = true,
+        });
+
+        using var json = JsonDocument.Parse(pvwa.Requests[1].Body);
+        var parameters = json.RootElement.GetProperty("ConnectionParams");
+        Assert.Equal("srv01.corp.local", parameters.GetProperty("PSMRemoteMachine").GetProperty("value").GetString());
+        var drives = parameters.GetProperty("AllowMappingLocalDrives");
+        Assert.Equal("Yes", drives.GetProperty("value").GetString());
+        Assert.False(drives.GetProperty("ShouldSave").GetBoolean());
+    }
+
+    /// <summary>Paramètre refusé par le PVWA (composant qui ne le propose pas) : nouvelle demande, sans les disques.</summary>
+    [Fact]
+    public async Task PsmConnect_RetriesWithoutLocalDrivesWhenTheParameterIsRefused()
+    {
+        int calls = 0;
+        var pvwa = Pvwa(_ => ++calls == 1
+            ? FakePvwa.Json("""{"ErrorCode":"PASWS999E","ErrorMessage":"Invalid connection parameter AllowMappingLocalDrives."}""",
+                HttpStatusCode.BadRequest)
+            : RdpResponse(Encoding.UTF8.GetBytes(Rdp)));
+        using var client = await pvwa.CreateLoggedOnClientAsync();
+
+        var file = await client.PsmConnectAsync("1_1", new PsmConnectOptions { ConnectionComponent = "WIN-PSM", MapLocalDrives = true });
+
+        Assert.Equal(Rdp, Encoding.UTF8.GetString(file));
+        Assert.Equal(3, pvwa.Requests.Count);
+        Assert.Contains("AllowMappingLocalDrives", pvwa.Requests[1].Body);
+        Assert.Equal("""{"ConnectionComponent":"WIN-PSM"}""", pvwa.Requests[2].Body);
+    }
+
+    /// <summary>Autre refus (motif exigé) : pas de nouvelle demande, l'erreur est rendue telle quelle.</summary>
+    [Fact]
+    public async Task PsmConnect_DoesNotRetryOtherRefusals()
+    {
+        var pvwa = Pvwa(_ => FakePvwa.Json(
+            """{"ErrorCode":"PASWS204E","ErrorMessage":"You must specify a reason for this operation."}""",
+            HttpStatusCode.BadRequest));
+        using var client = await pvwa.CreateLoggedOnClientAsync();
+
+        await Assert.ThrowsAsync<PvwaException>(
+            () => client.PsmConnectAsync("1_1", new PsmConnectOptions { ConnectionComponent = "WIN-PSM", MapLocalDrives = true }));
+
+        Assert.Equal(2, pvwa.Requests.Count);
     }
 
     [Fact]
@@ -123,40 +178,6 @@ public class PsmConnectTests
 
         Assert.Equal(Rdp, Encoding.Unicode.GetString(file, 2, file.Length - 2));
         Assert.Equal(Encoding.Unicode.GetPreamble(), file[..2]);
-    }
-
-    /// <summary>Session PSM dans mstsc, disques du poste partagés : la ligne est ajoutée, encodage et fins de ligne gardés.</summary>
-    [Fact]
-    public void RdpFile_AddsAllDrives_InTheSameEncoding()
-    {
-        var utf16 = Encoding.Unicode.GetPreamble().Concat(Encoding.Unicode.GetBytes(Rdp)).ToArray();
-
-        var file = RdpFile.WithAllDrives(utf16);
-
-        Assert.Equal(Encoding.Unicode.GetPreamble(), file[..2]);
-        Assert.Equal(Rdp + "drivestoredirect:s:*\r\n", Encoding.Unicode.GetString(file, 2, file.Length - 2));
-        Assert.True(RdpConnectionSettings.FromRdpFile(file).RedirectDrives);
-    }
-
-    /// <summary>Une liste de lecteurs (ou aucun) demandée par le PVWA devient « tous » ; sans fin de ligne finale, la ligne s'ajoute.</summary>
-    [Theory]
-    [InlineData("full address:s:psm.corp.local\ndrivestoredirect:s:\nusername:s:jdoe\n",
-        "full address:s:psm.corp.local\ndrivestoredirect:s:*\nusername:s:jdoe\n")]
-    [InlineData("full address:s:psm.corp.local\r\nDrivesToRedirect:s:C:;D:;\r\n",
-        "full address:s:psm.corp.local\r\ndrivestoredirect:s:*\r\n")]
-    [InlineData("full address:s:psm.corp.local", "full address:s:psm.corp.local\ndrivestoredirect:s:*")]
-    public void RdpFile_ReplacesTheDrivesLine(string rdp, string expected) =>
-        Assert.Equal(expected, Encoding.UTF8.GetString(RdpFile.WithAllDrives(Encoding.UTF8.GetBytes(rdp))));
-
-    /// <summary>Fichier signé par le PVWA : jamais modifié (la Connexion Bureau à distance en vérifie la signature).</summary>
-    [Fact]
-    public void RdpFile_LeavesASignedFileAsIs()
-    {
-        var signed = Encoding.UTF8.GetBytes(Rdp + "signscope:s:Full Address,Alternate Shell\r\nsignature:s:AQABAAEAAAA=\r\n");
-
-        Assert.True(RdpFile.IsSigned(signed));
-        Assert.Same(signed, RdpFile.WithAllDrives(signed));
-        Assert.False(RdpFile.IsSigned(Encoding.UTF8.GetBytes(Rdp + "signature:s:\r\n")));
     }
 
     [Theory]

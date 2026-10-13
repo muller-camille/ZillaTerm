@@ -180,9 +180,12 @@ fenêtre à part.
   (renouvellement), après confirmation. Après une question, la connexion part avec un nouveau jeton demandé au PVWA.
   Jamais de connexion sans vérification, jamais de question pendant la connexion, jamais de question de Windows. Un
   certificat du PSM émis par l'autorité de l'entreprise, à demander à l'équipe CyberArk, évite les confirmations.
-- **Redirections** (presse-papiers, disques…) : celles demandées par le PVWA, plus les disques de ce poste (option
-  « Partager les disques de ce poste avec les sessions PSM Windows », cochée par défaut ; le serveur PSM peut la
-  refuser). Aucune image de la session n'est gardée sur le disque.
+- **Redirections** (presse-papiers, disques…) : celles demandées par le PVWA, jamais plus. Aucune image de la session
+  n'est gardée sur le disque.
+- **Disques du poste** : l'option « Partager les disques de ce poste avec les sessions PSM Windows » (Paramètres ›
+  CyberArk, cochée par défaut) les demande au PVWA, comme la case « Map local drives » de sa fenêtre de connexion
+  (paramètre `AllowMappingLocalDrives`). Si le composant de connexion le permet, le PVWA les écrit dans le fichier RDP
+  et ils apparaissent dans la session (Explorateur › Ce PC), dans l'onglet comme dans la Connexion Bureau à distance.
 - **Reconnecter**, « Dupliquer l'onglet » : nouvelle demande au PVWA (le jeton d'une session PSM ne sert qu'une
   fois) ; motif et ticket restent ceux de la première connexion.
 - L'onglet porte l'étiquette du serveur (PROD, QA…) et son cadre de couleur ; « Capture » ajoute une image au
@@ -964,7 +967,7 @@ disent sous leur case (« ⚠ Effet : … »).
 | CyberArk | PSMP par domaine | Autres PSMP (adresse, port, domaine servi) ; chaque serveur passe par celui du domaine le plus proche du sien (voir [PSMP par domaine](#psmp-par-domaine)) ; « Quel PSMP pour le serveur » pour vérifier | aucun |
 | CyberArk | Composant des comptes Windows | Composant PSM des comptes Windows (domaine ou locaux) sans composant mémorisé pour leur plateforme, par exemple `WIN-PSM` | vide = `PSM-RDP` |
 | CyberArk | Sessions PSM Windows dans un onglet | Session PSM (bureau ou application distante) dans un onglet de ZillaTerm, avec le client FreeRDP embarqué, à la taille de l'onglet (voir [Ouvrir une session PSM](#3-ouvrir-une-session-psm-bureau-à-distance)) ; diffusé par le fichier d'environnement | non |
-| CyberArk | Partager les disques de ce poste avec les sessions PSM Windows | Les disques du poste apparaissent dans la session (Explorateur › Ce PC) pour copier des fichiers ; le serveur PSM peut le refuser. Décochée : seulement si le PVWA le demande. Dans la Connexion Bureau à distance, seulement si le fichier du PVWA n'est pas signé (`drivestoredirect:s:*` ajouté ; un fichier signé est donné tel quel). Diffusé par le fichier d'environnement | oui |
+| CyberArk | Partager les disques de ce poste avec les sessions PSM Windows | Demande les disques du poste au PVWA (case « Map local drives » de sa fenêtre de connexion, `AllowMappingLocalDrives`) ; s'ils sont permis par le composant, ils apparaissent dans la session (Explorateur › Ce PC). Diffusé par le fichier d'environnement | oui |
 | CyberArk | Adapter la résolution du bureau distant à la taille de l'onglet | Sessions PSM dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine. Pour les nouvelles sessions | oui |
 | CyberArk | Composant par plateforme | Tableau Plateforme (ID du PVWA, par exemple `WinDomain`) / Composant PSM : « Ajouter un composant », « Enlever la ligne », cellules modifiables ; prioritaire sur le composant des comptes Windows. « Mémoriser ce composant pour la plateforme » (fenêtre de connexion) y ajoute une ligne | vide |
 | Terminal | SSH dans ZillaTerm | Terminal et onglet Fichiers intégrés ; sinon Windows Terminal | oui |
@@ -1223,15 +1226,14 @@ l'ouvrir entre dans le dossier si c'en est un.
 
 ### Sessions Bureau à distance
 
-Les sessions PSM s'ouvrent avec le fichier RDP renvoyé par `PSMConnect`. Par défaut, il est donné à la Connexion Bureau
-à distance (`mstsc`) tel quel, ou avec `drivestoredirect:s:*` s'il n'est pas signé et que les disques du poste sont
-partagés : elle en vérifie la signature et gère aussi bien le bureau que l'application
+Les sessions PSM s'ouvrent avec le fichier RDP renvoyé par `PSMConnect`. Par défaut, il est donné tel quel à la
+Connexion Bureau à distance (`mstsc`) : elle en vérifie la signature et gère aussi bien le bureau que l'application
 distante (RemoteApp). Le journal de débogage en note la structure (jeton, signature et arguments masqués).
 
 Avec l'option « Sessions PSM Windows dans un onglet », le fichier est lu par ZillaTerm : adresse et port du PSM,
 utilisateur, programme de démarrage (`alternate shell`) ou application distante (`remoteapplicationprogram`, nom et
 arguments), sécurité, passerelle, répartition de charge, redirections (`drivestoredirect:s:*` seulement pour les
-disques, ou tous les disques avec l'option « Partager les disques de ce poste »), effets. Le mode d'affichage du fichier (`screen mode id`, taille, écrans) est ignoré. Une session PSM est
+disques), effets. Le mode d'affichage du fichier (`screen mode id`, taille, écrans) est ignoré. Une session PSM est
 imbriquée : dans sa propre session, le PSM ouvre la connexion vers le serveur cible à la même taille, et changer
 ensuite la résolution de la session PSM ne la change pas pour la cible avec certaines configurations du PSM (bureau
 tronqué, clics décalés). L'option « Adapter la résolution du bureau distant à la taille de l'onglet », activée par

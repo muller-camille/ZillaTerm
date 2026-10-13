@@ -66,12 +66,16 @@ public class RdpConnectionSettingsTests
     }
 
     [Theory]
-    [InlineData("*", true)]
-    [InlineData("C:;D:;", false)]
-    [InlineData("", false)]
-    public void RedirectsDrivesOnlyWhenAllAreRequested(string drives, bool expected)
+    [InlineData("drivestoredirect:s:*", true)]
+    [InlineData("drivestoredirect:s:*;DynamicDrives", true)]
+    [InlineData("drivestoredirect:s:C:;D:;", false)]
+    [InlineData("drivestoredirect:s:", false)]
+    [InlineData("drivestoredirect:s:\r\nredirectdrives:i:1", false)]
+    [InlineData("redirectdrives:i:1", true)]
+    [InlineData("redirectdrives:i:0", false)]
+    public void RedirectsDrivesOnlyWhenAllAreRequested(string lines, bool expected)
     {
-        var s = RdpConnectionSettings.FromRdpFile(Encoding.UTF8.GetBytes($"full address:s:psm.corp.local\r\ndrivestoredirect:s:{drives}\r\n"));
+        var s = RdpConnectionSettings.FromRdpFile(Encoding.UTF8.GetBytes($"full address:s:psm.corp.local\r\n{lines}\r\n"));
 
         Assert.Equal(expected, s.RedirectDrives);
     }
@@ -138,25 +142,6 @@ public class RdpConnectionSettingsTests
         Assert.Equal(file.ForPsmTab() with { SmartSizing = false }, tab);
         Assert.False(tab.BitmapPersistence);
         Assert.Equal(2, tab.AuthenticationLevel);
-    }
-
-    /// <summary>
-    /// Disques du poste (option cochée par défaut) : partagés même si le fichier ne les demande pas ; option décochée, seulement
-    /// si le fichier les demande.
-    /// </summary>
-    [Theory]
-    [InlineData("", false, false)]
-    [InlineData("", true, true)]
-    [InlineData("drivestoredirect:s:*\r\n", false, true)]
-    [InlineData("drivestoredirect:s:C:;\r\n", true, true)]
-    public void PsmTabSharesTheDrivesWhenAsked(string drives, bool redirectDrives, bool expected)
-    {
-        var file = RdpConnectionSettings.FromRdpFile(Encoding.UTF8.GetBytes("full address:s:psm.corp.local\r\n" + drives));
-
-        var tab = file.ForPsmTab(redirectDrives: redirectDrives);
-
-        Assert.Equal(expected, tab.RedirectDrives);
-        Assert.Equal(file.ForPsmTab() with { RedirectDrives = expected }, tab);
     }
 
     /// <summary>Session PSM dans l'onglet : jamais de connexion sans vérification du serveur, même si le fichier le permet.</summary>
