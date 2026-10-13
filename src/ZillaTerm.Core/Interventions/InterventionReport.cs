@@ -59,7 +59,7 @@ public static class InterventionReport
             .Append("<meta charset=\"utf-8\">\n")
             .Append("<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'\">\n")
             .Append("<meta name=\"referrer\" content=\"no-referrer\">\n")
-            .Append("<title>").Append(Encode(text.Title));
+            .Append("<title>").Append(Encode(Heading(recording, text)));
         if (recording.Start is { } titleStart)
         {
             html.Append(" — ").Append(Encode(Local(titleStart)));
@@ -76,7 +76,7 @@ public static class InterventionReport
             .Append("@media print{pre{background:#fff;color:#000;border:1px solid #999}}")
             .Append("\n</style>\n</head>\n<body>\n");
 
-        html.Append("<h1>").Append(Encode(text.Title)).Append("</h1>\n");
+        html.Append("<h1>").Append(Encode(Heading(recording, text))).Append("</h1>\n");
         if (recording.Start is { } start && recording.End is { } end)
         {
             html.Append("<p>").Append(Encode(string.Format(culture, text.Period, Local(start), Local(end), text.Duration(end - start))))
@@ -142,6 +142,41 @@ public static class InterventionReport
 
         html.Append("</table>\n</body>\n</html>\n");
         return html.ToString();
+    }
+
+    /// <summary>Titre du rapport, suivi du titre donné à l'intervention s'il y en a un.</summary>
+    private static string Heading(InterventionRecording recording, InterventionReportText text) =>
+        recording.Title is { } title ? $"{text.Title} — {InterventionJournal.CleanTitle(title)}" : text.Title;
+
+    /// <summary>
+    /// Nom proposé pour le rapport : date et heure de début, puis le titre de l'intervention réduit aux lettres, chiffres,
+    /// espaces, tirets et soulignés (au plus 60 caractères).
+    /// </summary>
+    public static string FileName(DateTime localStart, string? title)
+    {
+        var name = new StringBuilder("intervention-").Append(localStart.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture));
+        var part = new StringBuilder();
+        foreach (char c in InterventionJournal.CleanTitle(title))
+        {
+            char kept = char.IsLetterOrDigit(c) || c is '-' or '_' ? c : ' ';
+            if (kept != ' ' || (part.Length > 0 && part[^1] != ' '))
+            {
+                part.Append(kept);
+            }
+        }
+
+        var clean = part.ToString().Trim();
+        if (clean.Length > 60)
+        {
+            clean = clean[..(char.IsHighSurrogate(clean[59]) ? 59 : 60)].TrimEnd();
+        }
+
+        if (clean.Length > 0)
+        {
+            name.Append(' ').Append(clean);
+        }
+
+        return name.Append(".html").ToString();
     }
 
     private static bool IsPng(byte[] image) => image.AsSpan().StartsWith(PngSignature);

@@ -919,28 +919,47 @@ reperibilità o no:
   - le **azioni**: password copiata (mai la password), richieste al CPM, account aggiunti, modificati, eliminati o
     importati, finestre X11, passaggio all'accesso di emergenza, disconnessione;
   - i **trasferimenti di file**, con lo SHA-256 di ogni file;
-  - le vostre **note** (campo «Nota per il registro»: numero di incidente, decisione presa…);
-  - le **catture**: «Cattura un desktop remoto…» acquisisce l'immagine di una finestra Connessione Desktop remoto
-    (sessioni PSM; una finestra ridotta a icona non può essere catturata), e il pulsante «Cattura» delle schede
-    desktop remoto di ZillaTerm acquisisce il desktop visualizzato.
-- **«Interventi registrati»**: l'elenco delle registrazioni, dalla più recente. All'interruzione l'intervento resta
-  selezionato: **«Esporta il rapporto…»** (o doppio clic) ne fa una pagina HTML: riepilogo, cronologia, blocchi di
-  testo dei terminali e catture, da allegare al resoconto dell'intervento. **«Elimina…»** cancella una registrazione
-  terminata.
+  - il **titolo** dell'intervento e le vostre **note** (finestra mobile, qui sotto);
+  - le **catture**: «Cattura un desktop remoto…» (finestra mobile) acquisisce l'immagine di una finestra Connessione
+    Desktop remoto (sessioni PSM; una finestra ridotta a icona non può essere catturata), e il pulsante «Cattura» delle
+    schede desktop remoto di ZillaTerm acquisisce il desktop visualizzato.
+- **Finestra mobile «Intervento: titolo, note e cronologia»**: si apre all'inizio della registrazione, in alto a destra
+  della finestra principale, e resta **in primo piano** (casella «Sempre in primo piano» per toglierlo), anche davanti a
+  una finestra Connessione Desktop remoto; resta visibile quando ZillaTerm è ridotto a icona. Chiusa, si riapre con un
+  clic su «● Intervento registrato» nella barra di stato, o con **«Titolo, note e cronologia…»** nella finestra
+  Intervento. Contiene:
+  - il **titolo dell'intervento** (ticket, incidente, server…), conservato con `Invio` o lasciando il campo: viene
+    scritto nel registro, ripreso nell'elenco «Interventi registrati», in testa al rapporto e nel nome proposto per il
+    suo file. Una riga, al massimo 200 caratteri;
+  - la **nota**: `Invio` la aggiunge al registro, `Maiusc+Invio` va a capo;
+  - **«Cattura un desktop remoto…»**;
+  - la **cronologia** dell'intervento, man mano: inizio, titolo, note, connessioni, azioni, trasferimenti (con il loro
+    SHA-256), catture e testo dei terminali. Un comando e il suo output formano un blocco (un nuovo blocco inizia dopo 2
+    secondi senza output); un blocco di più di 8 righe è ridotto alle prime 6, e **«Mostra tutto (N righe)»** lo espande
+    per intero (testo selezionabile), «Riduci» lo richiude. `Ctrl+C` copia l'evento scelto. L'elenco segue i nuovi
+    eventi finché è in fondo. La cronologia è conservata solo in memoria; il suo testo dei terminali è limitato a 8
+    milioni di caratteri (oltre, un messaggio lo dice, e il testo resta nel rapporto).
 
-Il registro è **cifrato solo per il vostro account Windows** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions`, blocco
-per blocco durante la registrazione (un arresto improvviso perde solo gli ultimi due secondi, e il rapporto lo
-segnala). Un blocco rimosso, spostato o modificato viene segnalato. ⚠ Le password digitate senza eco non ci sono, ma
-**tutto ciò che mostra un terminale sì** (il contenuto di un file di configurazione, per esempio); il rapporto
-esportato **non è cifrato**: conservatelo in un luogo sicuro. Il testo dei terminali è limitato a 64 milioni di
-caratteri per intervento (gli altri eventi continuano a essere conservati oltre); un output molto grande viene
-scritto in più blocchi, senza perdere il seguito del rapporto. Una disconnessione annullata alla conferma non vi
-compare.
+  All'interruzione della registrazione l'inserimento è in grigio e la cronologia resta visibile fino alla chiusura della
+  finestra; il rapporto si esporta dalla finestra Intervento.
+- **«Interventi registrati»**: l'elenco delle registrazioni, dalla più recente, con il loro titolo. All'interruzione
+  l'intervento resta selezionato: **«Esporta il rapporto…»** (o doppio clic) ne fa una pagina HTML: riepilogo,
+  cronologia, blocchi di testo dei terminali e catture, da allegare al resoconto dell'intervento. **«Elimina…»**
+  cancella una registrazione terminata.
+
+Il registro è **cifrato solo per il vostro account Windows** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (anche
+il titolo, in un file `.title` accanto, per l'elenco), blocco per blocco durante la registrazione (un arresto improvviso
+perde solo gli ultimi due secondi, e il rapporto lo segnala). Un blocco rimosso, spostato o modificato viene segnalato.
+⚠ Le password digitate senza eco non ci sono, ma **tutto ciò che mostra un terminale sì** (il contenuto di un file di
+configurazione, per esempio); il rapporto esportato **non è cifrato**: conservatelo in un luogo sicuro. Il testo dei
+terminali è limitato a 64 milioni di caratteri per intervento (gli altri eventi continuano a essere conservati oltre);
+un output molto grande viene scritto in più blocchi, senza perdere il seguito del rapporto. Una disconnessione annullata
+alla conferma non vi compare.
 
 **Disco che rifiuta il registro** (pieno, quota, accesso revocato): la barra di stato mostra «⚠ Intervento:
 registrazione interrotta» in rosso, e la finestra «Registrazione interrotta alle 14:10.»: da quell'ora non viene più
-conservato nulla, la nota e la cattura sono in grigio. Liberate spazio, poi «Interrompi la registrazione» e «Registra
-l'intervento» per riprendere in una nuova registrazione.
+conservato nulla, il titolo, la nota e la cattura sono in grigio nella finestra mobile. Liberate spazio, poi «Interrompi
+la registrazione» e «Registra l'intervento» per riprendere in una nuova registrazione.
 
 ## Scorciatoie
 

@@ -14850,14 +14850,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Note for the journal.
-        /// </summary>
-        public static string InterventionNoteName {
-            get {
-                return ResourceManager.GetString("InterventionNoteName", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to Add _note.
@@ -16710,6 +16702,150 @@ namespace ZillaTerm.App.Localization {
         public static string ConnectManyLimitTip {
             get {
                 return ResourceManager.GetString("ConnectManyLimitTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Intervention: title, notes and history.
+        /// </summary>
+        public static string InterventionNotesTitle {
+            get {
+                return ResourceManager.GetString("InterventionNotesTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Intervention _title.
+        /// </summary>
+        public static string InterventionTitleLabel {
+            get {
+                return ResourceManager.GetString("InterventionTitleLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Ticket, incident, server….
+        /// </summary>
+        public static string InterventionTitlePlaceholder {
+            get {
+                return ResourceManager.GetString("InterventionTitlePlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Title saved in the journal..
+        /// </summary>
+        public static string InterventionTitleSaved {
+            get {
+                return ResourceManager.GetString("InterventionTitleSaved", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Title.
+        /// </summary>
+        public static string InterventionKindTitle {
+            get {
+                return ResourceManager.GetString("InterventionKindTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Note.
+        /// </summary>
+        public static string InterventionNoteLabel {
+            get {
+                return ResourceManager.GetString("InterventionNoteLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Enter adds the note, Shift+Enter starts a new line..
+        /// </summary>
+        public static string InterventionNoteKeys {
+            get {
+                return ResourceManager.GetString("InterventionNoteKeys", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to History.
+        /// </summary>
+        public static string InterventionHistorySection {
+            get {
+                return ResourceManager.GetString("InterventionHistorySection", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show all ({0} lines).
+        /// </summary>
+        public static string InterventionShowAll {
+            get {
+                return ResourceManager.GetString("InterventionShowAll", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Collapse.
+        /// </summary>
+        public static string InterventionCollapse {
+            get {
+                return ResourceManager.GetString("InterventionCollapse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to History limit reached: later terminal text is no longer shown here. It is still in the report..
+        /// </summary>
+        public static string InterventionHistoryCapped {
+            get {
+                return ResourceManager.GetString("InterventionHistoryCapped", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Al_ways on top.
+        /// </summary>
+        public static string InterventionTopmost {
+            get {
+                return ResourceManager.GetString("InterventionTopmost", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Title, notes and history….
+        /// </summary>
+        public static string InterventionOpenNotes {
+            get {
+                return ResourceManager.GetString("InterventionOpenNotes", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Intervention being recorded: click for the title, notes and history..
+        /// </summary>
+        public static string InterventionIndicatorTip {
+            get {
+                return ResourceManager.GetString("InterventionIndicatorTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} — {1}  ({2}).
+        /// </summary>
+        public static string InterventionJournalItemTitled {
+            get {
+                return ResourceManager.GetString("InterventionJournalItemTitled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Recording stopped. The report is exported from the Intervention window..
+        /// </summary>
+        public static string InterventionNotesStopped {
+            get {
+                return ResourceManager.GetString("InterventionNotesStopped", resourceCulture);
             }
         }
     }

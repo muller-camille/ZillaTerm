@@ -864,26 +864,44 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   - **actions**: password copied (never the password), CPM requests, accounts added, changed, deleted or imported,
     X11 windows, switch to emergency access, sign-out;
   - **file transfers**, with the SHA-256 of each file;
-  - your **notes** ("Note for the journal" field: incident number, decision taken…);
-  - **captures**: "Capture a remote desktop…" takes an image of a Remote Desktop Connection window (PSM sessions; a
-    minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs takes the
-    desktop shown.
-- **"Recorded interventions"**: the list of recordings, newest first. When you stop, the intervention stays
-  selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
+  - the intervention **title** and your **notes** (floating window, below);
+  - **captures**: "Capture a remote desktop…" (floating window) takes an image of a Remote Desktop Connection window
+    (PSM sessions; a minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs
+    takes the desktop shown.
+- **Floating window "Intervention: title, notes and history"**: it opens when recording starts, at the top right of the
+  main window, and stays **on top** ("Always on top" box to turn it off), even over a Remote Desktop Connection window;
+  it stays visible when ZillaTerm is minimized. Once closed, it opens again with a click on "● Intervention recorded" in
+  the status bar, or with **"Title, notes and history…"** in the Intervention window. It holds:
+  - the **intervention title** (ticket, incident, server…), kept with `Enter` or when leaving the field: it is written
+    to the journal, shown in the "Recorded interventions" list, at the top of the report and in the file name suggested
+    for it. One line, 200 characters at most;
+  - the **note**: `Enter` adds it to the journal, `Shift+Enter` starts a new line;
+  - **"Capture a remote desktop…"**;
+  - the **history** of the intervention, as it happens: start, title, notes, connections, actions, transfers (with their
+    SHA-256), captures and terminal text. A command and its output form a block (a new block starts after 2 seconds
+    without output); a block of more than 8 lines is reduced to its first 6, and **"Show all (N lines)"** expands it in
+    full (selectable text), "Collapse" folds it back. `Ctrl+C` copies the selected event. The list follows new events
+    while it is at the bottom. The history is kept in memory only; its terminal text is limited to 8 million characters
+    (beyond that, a message says so, and the text is still in the report).
+
+  When recording stops, input is greyed out and the history stays shown until the window is closed; the report is
+  exported from the Intervention window.
+- **"Recorded interventions"**: the list of recordings, newest first, with their title. When you stop, the intervention
+  stays selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
   terminal text and captures, to attach to the intervention report. **"Delete…"** erases a finished recording.
 
-The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions`, block
-by block as recording goes (a crash only loses the last two seconds, and the report says so). A block removed, moved
-or changed is reported. ⚠ Passwords typed without echo are not in it, but **whatever a terminal shows is** (the
-contents of a configuration file, for example); the exported report is **not encrypted**: keep it in a safe place.
-Terminal text is capped at 64 million characters per intervention (the other events are still kept beyond that); a
-very large output is written in several blocks, without losing the rest of the report. A disconnection cancelled at
-the confirmation is not in it.
+The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (the
+title too, in a `.title` file next to it, for the list), block by block as recording goes (a crash only loses the last
+two seconds, and the report says so). A block removed, moved or changed is reported. ⚠ Passwords typed without echo are
+not in it, but **whatever a terminal shows is** (the contents of a configuration file, for example); the exported report
+is **not encrypted**: keep it in a safe place. Terminal text is capped at 64 million characters per intervention (the
+other events are still kept beyond that); a very large output is written in several blocks, without losing the rest of
+the report. A disconnection cancelled at the confirmation is not in it.
 
 **Disk refusing the journal** (full, quota, access removed): the status bar shows "⚠ Intervention: recording
 interrupted" in red, and the window "Recording interrupted at 14:10.": nothing more is kept from that time on, the
-note and the capture are greyed out. Free some space, then "Stop recording" and "Record the intervention" to start
-again in a new recording.
+title, the note and the capture are greyed out in the floating window. Free some space, then "Stop recording" and
+"Record the intervention" to start again in a new recording.
 
 ## Shortcuts
 

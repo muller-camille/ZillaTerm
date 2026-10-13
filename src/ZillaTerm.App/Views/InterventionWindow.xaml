@@ -28,20 +28,9 @@
                                      AutomationProperties.LiveSetting="Polite" />
             </DockPanel>
             <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.InterventionRecordingHelp}" Margin="0,4,0,8" />
-            <DockPanel Margin="0,0,0,8">
-                <Button x:Name="NoteButton" DockPanel.Dock="Right" Click="OnAddNote" Margin="8,0,0,0">
-                    <AccessText Text="{x:Static loc:Strings.InterventionAddNote}" />
-                </Button>
-                <Grid>
-                    <TextBox x:Name="NoteBox" AutomationProperties.Name="{x:Static loc:Strings.InterventionNoteName}" MaxLength="2000"
-                             KeyDown="OnNoteKeyDown" TextChanged="OnNoteChanged" />
-                    <TextBlock Style="{StaticResource Placeholder}" Tag="{Binding ElementName=NoteBox}"
-                               Text="{x:Static loc:Strings.InterventionNotePlaceholder}" Margin="6,0,0,0" />
-                </Grid>
-            </DockPanel>
-            <Button x:Name="CaptureButton" Click="OnCapture" HorizontalAlignment="Left" ToolTip="{x:Static loc:Strings.InterventionCaptureTip}"
-                    AutomationProperties.HelpText="{x:Static loc:Strings.InterventionCaptureTip}">
-                <AccessText Text="{x:Static loc:Strings.InterventionCaptureRdp}" />
+            <!-- Titre, notes, captures et historique : fenêtre flottante, ouverte au début de l'enregistrement. -->
+            <Button x:Name="NotesButton" Click="OnOpenNotes" HorizontalAlignment="Left">
+                <AccessText Text="{x:Static loc:Strings.InterventionOpenNotes}" />
             </Button>
 
             <TextBlock Text="{x:Static loc:Strings.InterventionPreviousSection}" Style="{StaticResource SectionTitle}" Margin="0,16,0,6" />

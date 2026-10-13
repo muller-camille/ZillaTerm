@@ -546,7 +546,7 @@
                 </TextBlock>
                 <TextBlock DockPanel.Dock="Right" x:Name="InterventionIndicator" Foreground="{DynamicResource StatusWarningForeground}" Margin="0,0,16,0"
                            Visibility="Collapsed" Text="{x:Static loc:Strings.InterventionRecordingIndicator}" Cursor="Hand"
-                           MouseLeftButtonUp="OnInterventionIndicatorClick" ToolTip="{x:Static loc:Strings.ToolInterventionTip}" />
+                           MouseLeftButtonUp="OnInterventionIndicatorClick" ToolTip="{x:Static loc:Strings.InterventionIndicatorTip}" />
                 <TextBlock DockPanel.Dock="Right" x:Name="DebugLogText" Foreground="{DynamicResource StatusWarningForeground}" Margin="0,0,16,0" Visibility="Collapsed"
                            Text="{x:Static loc:Strings.DebugLogActive}" />
                 <TextBlock x:Name="CountText" Foreground="{DynamicResource StatusForeground}" Margin="0,0,16,0" />

@@ -28,6 +28,7 @@ public sealed class InterventionRecorder
     private readonly ISecretProtector _protector;
     private readonly string _directory;
     private volatile InterventionJournal? _journal;
+    private volatile InterventionHistory? _history;
 
     public InterventionRecorder(string directory, ISecretProtector protector)
     {
@@ -70,6 +71,15 @@ public sealed class InterventionRecorder
 
     public bool TerminalTextCapped => _journal?.TerminalTextCapped ?? false;
 
+    /// <summary>
+    /// Historique de l'enregistrement en cours, pour l'afficher pendant l'intervention ; null hors enregistrement. Un nouvel
+    /// enregistrement en a un nouveau ; celui d'un enregistrement arrêté garde sa fin.
+    /// </summary>
+    public InterventionHistory? History => _history;
+
+    /// <summary>Titre de l'intervention en cours ; vide s'il n'y en a pas.</summary>
+    public string Title { get; private set; } = "";
+
     /// <summary>Enregistrement lancé, arrêté, ou interrompu par le disque (sur le fil de l'interface).</summary>
     public event Action? Changed;
 
@@ -84,6 +94,7 @@ public sealed class InterventionRecorder
 
         var now = DateTime.UtcNow;
         var journal = InterventionJournal.Start(_directory, _protector, now);
+        var history = new InterventionHistory();
         // Disque plein ou écriture refusée (écritures du minuteur, sur un autre fil) : l'interface le dit aussitôt.
         var ui = SynchronizationContext.Current;
         journal.Failed += () =>
@@ -98,10 +109,14 @@ public sealed class InterventionRecorder
                 ui.Post(_ => Changed?.Invoke(), null);
             }
         };
-        journal.Write(new InterventionEntry(now, InterventionKind.Started, "",
-            Text.Format(Strings.InterventionStartedEntry, who, Environment.MachineName, UpdateChecker.CurrentVersion, mode)));
+        var started = new InterventionEntry(now, InterventionKind.Started, "",
+            Text.Format(Strings.InterventionStartedEntry, who, Environment.MachineName, UpdateChecker.CurrentVersion, mode));
+        journal.Write(started);
+        history.Add(started);
         journal.Flush();
         StartedAt = now;
+        Title = "";
+        _history = history;
         _journal = journal;
         DebugLog.Write("intervention", $"Intervention enregistrée dans {journal.Path}");
         Changed?.Invoke();
@@ -116,9 +131,18 @@ public sealed class InterventionRecorder
             return;
         }
 
+        var history = _history;
         _journal = null;
+        _history = null;
         StartedAt = null;
-        journal.Stop(new InterventionEntry(DateTime.UtcNow, InterventionKind.Stopped, "", reason));
+        Title = "";
+        var stopped = new InterventionEntry(DateTime.UtcNow, InterventionKind.Stopped, "", reason);
+        if (journal.Write(stopped))
+        {
+            history?.Add(stopped);
+        }
+
+        journal.Dispose();
         DebugLog.Write("intervention", "Fin de l'enregistrement de l'intervention.");
         Changed?.Invoke();
     }
@@ -128,15 +152,55 @@ public sealed class InterventionRecorder
 
     /// <summary>Ajoute un événement si l'enregistrement est lancé (depuis n'importe quel fil).</summary>
     public void Record(InterventionKind kind, string source, string text, byte[]? image = null) =>
-        _journal?.Write(new InterventionEntry(DateTime.UtcNow, kind, source, text, image));
+        Write(new InterventionEntry(DateTime.UtcNow, kind, source, text, image));
+
+    /// <summary>Événement gardé par le journal, et alors ajouté à l'historique affiché.</summary>
+    private void Write(InterventionEntry entry)
+    {
+        var history = _history;
+        if (_journal is { } journal && journal.Write(entry))
+        {
+            history?.Add(entry);
+        }
+    }
+
+    /// <summary>
+    /// Donne un titre à l'intervention en cours (ticket, incident…) : écrit dans le journal, et à côté pour la liste des
+    /// interventions. Sans effet hors enregistrement ou si le titre ne change pas.
+    /// </summary>
+    /// <returns>Vrai si le titre a changé.</returns>
+    public bool SetTitle(string title)
+    {
+        title = InterventionJournal.CleanTitle(title);
+        var journal = _journal;
+        if (journal is null || title == Title)
+        {
+            return false;
+        }
+
+        Title = title;
+        Write(new InterventionEntry(DateTime.UtcNow, InterventionKind.Title, "", title));
+        try
+        {
+            InterventionJournal.WriteTitle(journal.Path, _protector, title);
+        }
+        catch (Exception e) when (e is System.IO.IOException or UnauthorizedAccessException or System.Security.Cryptography.CryptographicException)
+        {
+            // Le journal garde le titre (rapport) ; seule la liste des interventions ne le montrera pas.
+            DebugLog.Write("intervention", $"Titre de l'intervention non écrit à côté du journal : {e.Message}");
+        }
+
+        Changed?.Invoke();
+        return true;
+    }
 
     /// <summary>Texte du terminal d'une session SSH, gardé pendant l'enregistrement (fil de l'interface).</summary>
     public void Attach(SshSession session) =>
         _transcripts.GetValue(session, s => new InterventionTerminalTranscript(s.Emulator, line =>
         {
-            if (_journal is { } journal)
+            if (_journal is not null)
             {
-                journal.Write(new InterventionEntry(DateTime.UtcNow, InterventionKind.Terminal, s.Label, line));
+                Write(new InterventionEntry(DateTime.UtcNow, InterventionKind.Terminal, s.Label, line));
             }
         }));
 

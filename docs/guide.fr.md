@@ -920,27 +920,48 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   - les **actions** : mot de passe copié (jamais le mot de passe), demandes au CPM, comptes ajoutés, modifiés,
     supprimés ou importés, fenêtres X11, passage en accès d'urgence, déconnexion ;
   - les **transferts de fichiers**, avec le SHA-256 de chaque fichier ;
-  - vos **notes** (champ « Note pour le journal » : numéro d'incident, décision prise…) ;
-  - les **captures** : « Capturer un Bureau à distance… » prend une image d'une fenêtre Connexion Bureau à distance
-    (sessions PSM ; une fenêtre réduite ne peut pas l'être), et le bouton « Capture » des onglets Bureau à distance
-    de ZillaTerm prend celle du bureau affiché.
-- **« Interventions enregistrées »** : la liste des enregistrements, du plus récent au plus ancien. À l'arrêt,
-  l'intervention reste sélectionnée : **« Exporter le rapport… »** (ou double-clic) en fait une page HTML : résumé,
-  chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention. **« Supprimer… »**
-  efface un enregistrement terminé.
+  - le **titre** de l'intervention et vos **notes** (fenêtre flottante, ci-dessous) ;
+  - les **captures** : « Capturer un Bureau à distance… » (fenêtre flottante) prend une image d'une fenêtre Connexion
+    Bureau à distance (sessions PSM ; une fenêtre réduite ne peut pas l'être), et le bouton « Capture » des onglets
+    Bureau à distance de ZillaTerm prend celle du bureau affiché.
+- **Fenêtre flottante « Intervention : titre, notes et historique »** : elle s'ouvre au début de l'enregistrement, en
+  haut à droite de la fenêtre principale, et reste **au premier plan** (case « Toujours au premier plan » pour
+  l'enlever), même devant une fenêtre Connexion Bureau à distance ; elle reste visible quand ZillaTerm est réduit.
+  Fermée, elle se rouvre par un clic sur « ● Intervention enregistrée » dans la barre d'état, ou par **« Titre, notes et
+  historique… »** dans la fenêtre Intervention. On y trouve :
+  - le **titre de l'intervention** (ticket, incident, serveur…), gardé par `Entrée` ou en quittant le champ : il est
+    écrit dans le journal, repris dans la liste « Interventions enregistrées », en tête du rapport et dans le nom
+    proposé pour son fichier. Une ligne, 200 caractères au plus ;
+  - la **note** : `Entrée` l'ajoute au journal, `Maj+Entrée` passe à la ligne ;
+  - **« Capturer un Bureau à distance… »** ;
+  - l'**historique** de l'intervention, au fil de l'eau : début, titre, notes, connexions, actions, transferts (avec
+    leur SHA-256), captures et texte des terminaux. Une commande et son retour forment un bloc (un nouveau bloc commence
+    après 2 secondes sans sortie) ; un bloc de plus de 8 lignes est réduit à ses 6 premières, et **« Tout afficher
+    (N lignes) »** le déplie en entier (texte sélectionnable), « Réduire » le replie. `Ctrl+C` copie l'événement choisi.
+    La liste suit les nouveaux événements tant qu'elle est en bas. L'historique est gardé en mémoire seulement ; son
+    texte des terminaux est limité à 8 millions de caractères (au-delà, un message le dit, et le texte reste dans le
+    rapport).
 
-Le journal est **chiffré pour votre compte Windows seul** (DPAPI) dans `%LOCALAPPDATA%\ZillaTerm\Interventions`, bloc par
-bloc au fil de l'enregistrement (un arrêt brutal ne perd que les deux dernières secondes, et le rapport le signale).
-Un bloc retiré, déplacé ou modifié est signalé dans le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas,
-mais **tout ce qu'affiche un terminal y est** (contenu d'un fichier de configuration, par exemple) ; le rapport
-exporté n'est **pas chiffré** : rangez-le en lieu sûr. Le texte des terminaux est plafonné à 64 millions de
-caractères par intervention (les autres événements continuent d'être gardés au-delà) ; un très gros affichage est
-écrit en plusieurs blocs, sans perdre la suite du rapport. Une déconnexion annulée à la confirmation n'y figure pas.
+  À l'arrêt de l'enregistrement, la saisie est grisée et l'historique reste affiché jusqu'à la fermeture de la fenêtre ;
+  le rapport s'exporte depuis la fenêtre Intervention.
+- **« Interventions enregistrées »** : la liste des enregistrements, du plus récent au plus ancien, avec leur titre. À
+  l'arrêt, l'intervention reste sélectionnée : **« Exporter le rapport… »** (ou double-clic) en fait une page HTML :
+  résumé, chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention.
+  **« Supprimer… »** efface un enregistrement terminé.
+
+Le journal est **chiffré pour votre compte Windows seul** (DPAPI) dans `%LOCALAPPDATA%\ZillaTerm\Interventions` (le
+titre aussi, dans un fichier `.title` à côté, pour la liste), bloc par bloc au fil de l'enregistrement (un arrêt brutal
+ne perd que les deux dernières secondes, et le rapport le signale). Un bloc retiré, déplacé ou modifié est signalé dans
+le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas, mais **tout ce qu'affiche un terminal y est** (contenu
+d'un fichier de configuration, par exemple) ; le rapport exporté n'est **pas chiffré** : rangez-le en lieu sûr. Le texte
+des terminaux est plafonné à 64 millions de caractères par intervention (les autres événements continuent d'être gardés
+au-delà) ; un très gros affichage est écrit en plusieurs blocs, sans perdre la suite du rapport. Une déconnexion annulée
+à la confirmation n'y figure pas.
 
 **Disque qui refuse le journal** (plein, quota, accès retiré) : la barre d'état affiche « ⚠ Intervention :
 enregistrement interrompu » en rouge, et la fenêtre « Enregistrement interrompu à 14:10. » : plus rien n'est gardé
-depuis cette heure-là, la note et la capture sont grisées. Libérez de la place, puis « Arrêter l'enregistrement » et
-« Enregistrer l'intervention » pour reprendre dans un nouvel enregistrement.
+depuis cette heure-là, le titre, la note et la capture sont grisés dans la fenêtre flottante. Libérez de la place, puis
+« Arrêter l'enregistrement » et « Enregistrer l'intervention » pour reprendre dans un nouvel enregistrement.
 
 ## Raccourcis
 

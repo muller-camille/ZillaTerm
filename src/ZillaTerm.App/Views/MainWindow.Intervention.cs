@@ -12,6 +12,9 @@ public partial class MainWindow
 {
     private InterventionWindow? _interventionWindow;
 
+    // Enregistrement en cours au dernier changement : son début ouvre la fenêtre flottante.
+    private bool _interventionWasRecording;
+
     private static InterventionRecorder Intervention => InterventionRecorder.Current;
 
     /// <summary>Session CyberArk ou accès d'urgence, écrit au début de l'enregistrement.</summary>
@@ -19,6 +22,8 @@ public partial class MainWindow
 
     private void InitIntervention()
     {
+        // Enregistrement commencé avant cette fenêtre (reconnexion, accès d'urgence) : sa fenêtre flottante n'est pas rouverte.
+        _interventionWasRecording = Intervention.IsRecording;
         Intervention.Changed += UpdateInterventionIndicator;
         Closed += (_, _) => Intervention.Changed -= UpdateInterventionIndicator;
         UpdateInterventionIndicator();
@@ -32,6 +37,13 @@ public partial class MainWindow
     private void UpdateInterventionIndicator()
     {
         bool recording = Intervention.IsRecording;
+        if (recording && !_interventionWasRecording && IsLoaded)
+        {
+            // Début de l'enregistrement : titre, notes et historique à portée de main, au premier plan.
+            InterventionNotesWindow.Open(Intervention, this);
+        }
+
+        _interventionWasRecording = recording;
         InterventionBadge.Visibility = InterventionIndicator.Visibility = recording ? Visibility.Visible : Visibility.Collapsed;
         foreach (var view in _rdpViews)
         {
@@ -41,7 +53,7 @@ public partial class MainWindow
         // Journal refusé par le disque : l'indicateur passe en erreur et la barre d'état dit quoi faire.
         var failure = recording ? Intervention.FailureMessage : null;
         InterventionIndicator.Text = failure is null ? Strings.InterventionRecordingIndicator : Strings.InterventionInterruptedIndicator;
-        InterventionIndicator.ToolTip = failure ?? Strings.ToolInterventionTip;
+        InterventionIndicator.ToolTip = failure ?? Strings.InterventionIndicatorTip;
         InterventionIndicator.SetResourceReference(TextBlock.ForegroundProperty, failure is null ? "StatusWarningForeground" : "StatusErrorForeground");
         if (failure is not null)
         {
@@ -51,7 +63,18 @@ public partial class MainWindow
 
     private void OnIntervention(object sender, RoutedEventArgs e) => ShowIntervention();
 
-    private void OnInterventionIndicatorClick(object sender, MouseButtonEventArgs e) => ShowIntervention();
+    /// <summary>Indicateur d'enregistrement : la fenêtre flottante (titre, notes, historique).</summary>
+    private void OnInterventionIndicatorClick(object sender, MouseButtonEventArgs e)
+    {
+        if (Intervention.IsRecording)
+        {
+            InterventionNotesWindow.Open(Intervention, this);
+        }
+        else
+        {
+            ShowIntervention();
+        }
+    }
 
     private void ShowIntervention()
     {

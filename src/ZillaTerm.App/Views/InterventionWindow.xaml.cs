@@ -16,8 +16,9 @@ using ZillaTerm.Core.Ssh;
 namespace ZillaTerm.App.Views;
 
 /// <summary>
-/// Intervention : les consignes d'astreinte de l'équipe (texte ou fichier), l'enregistrement de ce qui est fait, une note, la
-/// capture d'un Bureau à distance, et les interventions enregistrées avec leur rapport.
+/// Intervention : les consignes d'astreinte de l'équipe (texte ou fichier), l'enregistrement de ce qui est fait, et les
+/// interventions enregistrées avec leur rapport. Titre, notes, captures et historique de l'intervention en cours sont dans
+/// une fenêtre flottante (<see cref="InterventionNotesWindow"/>).
 /// </summary>
 public partial class InterventionWindow : Window
 {
@@ -146,6 +147,28 @@ public partial class InterventionWindow : Window
     internal static string Duration(TimeSpan duration) =>
         Text.Format(Strings.InterventionDuration, (int)Math.Max(0, duration.TotalHours), Math.Max(0, duration.Minutes));
 
+    /// <summary>Nom d'une nature d'événement, dans la langue de l'interface.</summary>
+    internal static string KindName(InterventionKind kind) => kind switch
+    {
+        InterventionKind.Started => Strings.InterventionKindStarted,
+        InterventionKind.Stopped => Strings.InterventionKindStopped,
+        InterventionKind.Note => Strings.InterventionKindNote,
+        InterventionKind.Terminal => Strings.InterventionKindTerminal,
+        InterventionKind.Connection => Strings.InterventionKindConnection,
+        InterventionKind.Action => Strings.InterventionKindAction,
+        InterventionKind.Transfer => Strings.InterventionKindTransfer,
+        InterventionKind.Title => Strings.InterventionKindTitle,
+        _ => Strings.InterventionKindScreenshot,
+    };
+
+    /// <summary>Ligne d'état d'un enregistrement : depuis quand, durée et nombre d'événements, ou depuis quand il est interrompu.</summary>
+    internal static string RecordingStatus(InterventionRecorder recorder) =>
+        !recorder.IsRecording || recorder.StartedAt is not { } start ? Strings.InterventionNotRecording
+            : recorder.FailedAt is { } failedAt
+                ? Text.Format(Strings.InterventionInterruptedAt, failedAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture))
+                : Text.Format(Strings.InterventionRecordingSince, start.ToLocalTime().ToString("t", CultureInfo.CurrentCulture),
+                    Duration(DateTime.UtcNow - start), recorder.Count);
+
     /// <summary>Textes du rapport dans la langue de l'interface.</summary>
     internal static InterventionReportText ReportText() => new()
     {
@@ -159,17 +182,7 @@ public partial class InterventionWindow : Window
         TimeHeader = Strings.InterventionReportTime,
         SourceHeader = Strings.InterventionReportSession,
         EventHeader = Strings.InterventionReportEvent,
-        Kind = kind => kind switch
-        {
-            InterventionKind.Started => Strings.InterventionKindStarted,
-            InterventionKind.Stopped => Strings.InterventionKindStopped,
-            InterventionKind.Note => Strings.InterventionKindNote,
-            InterventionKind.Terminal => Strings.InterventionKindTerminal,
-            InterventionKind.Connection => Strings.InterventionKindConnection,
-            InterventionKind.Action => Strings.InterventionKindAction,
-            InterventionKind.Transfer => Strings.InterventionKindTransfer,
-            _ => Strings.InterventionKindScreenshot,
-        },
+        Kind = KindName,
         Count = (kind, count) => Text.Format(kind switch
         {
             InterventionKind.Connection => Strings.InterventionCountConnection,
@@ -194,16 +207,8 @@ public partial class InterventionWindow : Window
         RecordLabel.Text = recording ? Strings.InterventionStopRecording : Strings.InterventionStartRecording;
         RecordDot.Visibility = recording ? Visibility.Collapsed : Visibility.Visible;
         StopSquare.Visibility = recording ? Visibility.Visible : Visibility.Collapsed;
-        // Journal refusé par le disque : plus rien n'est gardé, ni note ni capture.
-        bool keeping = recording && _recorder.Failure is null;
-        NoteBox.IsEnabled = keeping;
-        NoteButton.IsEnabled = keeping && NoteBox.Text.Trim().Length > 0;
-        CaptureButton.IsEnabled = keeping;
-        var status = !recording || _recorder.StartedAt is not { } start ? Strings.InterventionNotRecording
-            : _recorder.FailedAt is { } failedAt
-                ? Text.Format(Strings.InterventionInterruptedAt, failedAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture))
-                : Text.Format(Strings.InterventionRecordingSince, start.ToLocalTime().ToString("t", CultureInfo.CurrentCulture),
-                    Duration(DateTime.UtcNow - start), _recorder.Count);
+        NotesButton.IsEnabled = recording;
+        var status = RecordingStatus(_recorder);
         // Annoncé au début et à la fin de l'enregistrement, et quand il s'interrompt, pas à chaque seconde (durée, nombre
         // d'événements).
         bool interrupted = _recorder.FailedAt is not null;
@@ -259,70 +264,8 @@ public partial class InterventionWindow : Window
         }
     }
 
-    private void OnNoteChanged(object sender, TextChangedEventArgs e) =>
-        NoteButton.IsEnabled = NoteBox.IsEnabled && NoteBox.Text.Trim().Length > 0;
-
-    private void OnNoteKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
-        {
-            e.Handled = true;
-            AddNote();
-        }
-    }
-
-    private void OnAddNote(object sender, RoutedEventArgs e) => AddNote();
-
-    private void AddNote()
-    {
-        var note = NoteBox.Text.Trim();
-        if (note.Length == 0 || !_recorder.IsRecording)
-        {
-            return;
-        }
-
-        _recorder.Record(InterventionKind.Note, "", note);
-        NoteBox.Clear();
-        ShowMessage(Strings.InterventionNoteAdded);
-    }
-
-    private void OnCapture(object sender, RoutedEventArgs e)
-    {
-        var windows = WindowCapture.RemoteDesktopWindows();
-        switch (windows.Count)
-        {
-            case 0:
-                ShowMessage(Strings.InterventionNoRdpWindow, error: true);
-                break;
-            case 1:
-                Capture(windows[0]);
-                break;
-            default:
-                var menu = new ContextMenu { PlacementTarget = CaptureButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
-                foreach (var window in windows)
-                {
-                    var item = new MenuItem { Header = window.Title.Length > 0 ? window.Title : window.Handle.ToString(CultureInfo.InvariantCulture) };
-                    item.Click += (_, _) => Capture(window);
-                    menu.Items.Add(item);
-                }
-
-                menu.IsOpen = true;
-                break;
-        }
-    }
-
-    private void Capture(RemoteDesktopWindow window)
-    {
-        var png = WindowCapture.CapturePng(window.Handle);
-        if (png is null)
-        {
-            ShowMessage(Strings.InterventionCaptureFailed, error: true);
-            return;
-        }
-
-        _recorder.Record(InterventionKind.Screenshot, window.Title, Text.Format(Strings.InterventionCaptureOf, window.Title), png);
-        ShowMessage(Text.Format(Strings.InterventionCaptured, window.Title));
-    }
+    /// <summary>Titre, notes, captures et historique de l'intervention en cours (fenêtre flottante).</summary>
+    private void OnOpenNotes(object sender, RoutedEventArgs e) => InterventionNotesWindow.Open(_recorder, Owner ?? this);
 
     private void RefreshJournals()
     {
@@ -331,7 +274,7 @@ public partial class InterventionWindow : Window
         IReadOnlyList<InterventionFile> files;
         try
         {
-            files = InterventionJournal.List(_recorder.Directory);
+            files = InterventionJournal.List(_recorder.Directory, _recorder.Protector);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -340,8 +283,10 @@ public partial class InterventionWindow : Window
 
         foreach (var file in files)
         {
-            var label = Text.Format(Strings.InterventionJournalItem, file.Start.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
-                RemotePath.FormatSize(file.Length));
+            var start = file.Start.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
+            var label = file.Title is { } title
+                ? Text.Format(Strings.InterventionJournalItemTitled, start, title, RemotePath.FormatSize(file.Length))
+                : Text.Format(Strings.InterventionJournalItem, start, RemotePath.FormatSize(file.Length));
             if (string.Equals(file.Path, _recorder.JournalPath, StringComparison.OrdinalIgnoreCase))
             {
                 label = Text.Format(Strings.InterventionInProgress, label);
@@ -409,10 +354,9 @@ public partial class InterventionWindow : Window
             return;
         }
 
-        var local = file.Start.ToLocalTime();
         var dialog = new SaveFileDialog
         {
-            FileName = $"intervention-{local:yyyyMMdd-HHmm}.html",
+            FileName = InterventionReport.FileName(file.Start.ToLocalTime(), recording.Title),
             DefaultExt = ".html",
             Filter = "HTML (*.html)|*.html",
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -467,7 +411,7 @@ public partial class InterventionWindow : Window
 
         try
         {
-            File.Delete(file.Path);
+            InterventionJournal.Delete(file.Path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
