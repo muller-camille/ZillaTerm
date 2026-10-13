@@ -83,35 +83,61 @@ public sealed class RemoteFileBrowser : IRemoteFiles
         return await ReadDirectoryAsync(RemotePath.Normalize(directory), showHidden, ct).ConfigureAwait(false);
     }
 
-    /// <summary>Contenu d'un dossier, trié (dossiers d'abord) ; un lien vers un dossier compte comme un dossier.</summary>
+    /// <summary>
+    /// Liens symboliques suivis au plus par dossier lu : chacun coûte deux allers-retours avec le serveur (realpath, puis
+    /// lstat), envoyés par paquets de <see cref="LinkBatch"/>. Au-delà (/usr/lib64...), un lien s'affiche comme un
+    /// fichier, avec sa propre taille ; l'ouvrir entre dans le dossier s'il en est un.
+    /// </summary>
+    internal const int MaxResolvedLinks = 400;
+
+    /// <summary>Liens suivis ensemble : leurs demandes partent sans attendre les réponses (SFTP les numérote).</summary>
+    private const int LinkBatch = 16;
+
+    /// <summary>
+    /// Contenu d'un dossier, trié (dossiers d'abord) ; un lien vers un dossier compte comme un dossier, un lien vers un
+    /// fichier a la taille de sa cible (celle du lien ne dit rien du fichier). Annulable (nouvelle navigation).
+    /// </summary>
     private async Task<List<RemoteEntry>> ReadDirectoryAsync(string directory, bool showHidden, CancellationToken ct)
     {
-        var entries = new List<RemoteEntry>();
+        var files = new List<ISftpFile>();
         await foreach (var file in _sftp.ListDirectoryAsync(directory, ct).ConfigureAwait(false))
         {
-            if (file.Name is "." or ".." || (!showHidden && file.Name.StartsWith('.')))
+            if (file.Name is not ("." or "..") && (showHidden || !file.Name.StartsWith('.')))
             {
-                continue;
+                files.Add(file);
             }
-
-            bool isDirectory = file.IsDirectory;
-            if (file.IsSymbolicLink)
-            {
-                try
-                {
-                    // La liste donne les attributs du lien ; on suit le lien pour savoir s'il mène à un dossier.
-                    isDirectory = (await _sftp.GetAttributesAsync(file.FullName, ct).ConfigureAwait(false)).IsDirectory;
-                }
-                catch (Exception e) when (e is Renci.SshNet.Common.SshException or InvalidOperationException)
-                {
-                    // Lien cassé : affiché comme un fichier.
-                }
-            }
-
-            entries.Add(ToEntry(file, isDirectory));
         }
 
-        return RemoteEntry.Sort(entries);
+        // La liste donne les attributs du lien ; on suit le lien pour savoir s'il mène à un dossier, et sa vraie taille.
+        var targets = new Dictionary<ISftpFile, SftpFileAttributes>();
+        foreach (var batch in files.Where(f => f.IsSymbolicLink).Take(MaxResolvedLinks).Chunk(LinkBatch))
+        {
+            var attributes = await Task.WhenAll(batch.Select(link => TargetAttributesAsync(link, ct))).ConfigureAwait(false);
+            for (int i = 0; i < batch.Length; i++)
+            {
+                if (attributes[i] is { } target)
+                {
+                    targets[batch[i]] = target;
+                }
+            }
+        }
+
+        return RemoteEntry.Sort(files.Select(f => !targets.TryGetValue(f, out var target) ? ToEntry(f, f.IsDirectory)
+            : target.IsDirectory ? ToEntry(f, true)
+            : ToEntry(f, false) with { Length = target.Size }));
+    }
+
+    /// <summary>Attributs de la cible d'un lien ; null pour un lien cassé (affiché comme un fichier).</summary>
+    private async Task<SftpFileAttributes?> TargetAttributesAsync(ISftpFile link, CancellationToken ct)
+    {
+        try
+        {
+            return await _sftp.GetAttributesAsync(link.FullName, ct).ConfigureAwait(false);
+        }
+        catch (Exception e) when (e is Renci.SshNet.Common.SshException or InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Supprime un fichier (rm), un dossier vide (rmdir) ou un lien symbolique lui-même (jamais sa cible).</summary>

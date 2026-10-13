@@ -180,16 +180,20 @@ public sealed class RemoteEditor : IDisposable
     private static IOException CopyRejected(TransferCheck check) =>
         new(check.Verified ? Text.Format(Strings.TransferMismatch, 1) : $"{Text.Format(Strings.TransferNotVerified, 1)} ({check.Error})");
 
+    /// <summary>Vrai si le fichier est assez petit, ou si l'utilisateur accepte de l'ouvrir quand même.</summary>
+    private bool ConfirmSize(RemoteEntry entry, long length) =>
+        length <= LargeFile || ConfirmDialog.Confirm(_owner, new ConfirmRequest
+        {
+            Title = Strings.FileEdit.Replace("_", ""),
+            Heading = Strings.EditLargeHeading,
+            Subject = $"{entry.DisplayName} — {RemotePath.FormatSize(length)}",
+            Message = Strings.EditLargeMessage,
+            Actions = [Strings.ActionOpen],
+        });
+
     private async Task OpenNewAsync(RemoteEntry entry)
     {
-        if (entry.Length > LargeFile && !ConfirmDialog.Confirm(_owner, new ConfirmRequest
-            {
-                Title = Strings.FileEdit.Replace("_", ""),
-                Heading = Strings.EditLargeHeading,
-                Subject = $"{entry.DisplayName} — {entry.SizeText}",
-                Message = Strings.EditLargeMessage,
-                Actions = [Strings.ActionOpen],
-            }))
+        if (!ConfirmSize(entry, entry.Length))
         {
             return;
         }
@@ -204,6 +208,14 @@ public sealed class RemoteEditor : IDisposable
             var local = Path.Combine(folder, EditedFile.LocalCopyName(entry.Name));
             // Date et taille relevées avant la copie : un changement sur le serveur pendant la copie sera signalé au renvoi.
             var (time, length) = await browser.GetStatAsync(entry.FullPath, CancellationToken.None);
+            // Taille réelle (lien symbolique suivi) : celle de la liste peut être celle du lien, ou dater.
+            if (length > entry.Length && entry.Length <= LargeFile && !ConfirmSize(entry, length))
+            {
+                TryDeleteFolder(folder);
+                _status("", false);
+                return;
+            }
+
             var check = await browser.DownloadAsync(entry, local, null, CancellationToken.None);
             if (!check.Matches)
             {
