@@ -2274,7 +2274,7 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour réessay
     <value>{0} · KeePass</value>
   </data>
   <data name="KeePassRdpNoControl" xml:space="preserve">
-    <value>{0} : contrôle Bureau à distance indisponible, Connexion Bureau à distance ouverte sans le mot de passe (prenez-le dans la base KeePass).</value>
+    <value>{0} : aucun client Bureau à distance dans ZillaTerm, Connexion Bureau à distance ouverte sans le mot de passe (prenez-le dans la base KeePass).</value>
   </data>
   <data name="ConnectingDirect" xml:space="preserve">
     <value>Connexion directe (accès d'urgence, hors CyberArk)…</value>

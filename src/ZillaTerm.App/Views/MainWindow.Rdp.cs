@@ -361,9 +361,8 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Connexion directe : le certificat TLS du serveur est lu avant tout envoi (le contrôle Bureau à distance ne permet
-    /// pas d'épingler un certificat), puis vérifié par <see cref="TrustRdpCertificate"/>. Refusé : la connexion
-    /// s'arrête là, sans que le mot de passe soit lu.
+    /// Connexion directe : le certificat TLS du serveur est lu avant tout envoi, puis vérifié par
+    /// <see cref="TrustRdpCertificate"/>. Refusé : la connexion s'arrête là, sans que le mot de passe soit lu.
     /// </summary>
     private async Task CheckRdpCertificateAsync(string address, RdpConnectionSettings settings, CancellationToken ct)
     {
@@ -375,6 +374,26 @@ public partial class MainWindow
             throw new OperationCanceledException(Strings.RdpCertificateDeclined);
         }
     }
+
+    /// <summary>
+    /// Demande d'une connexion directe (accès d'urgence KeePass). Avec le client FreeRDP de ZillaTerm, le certificat
+    /// épinglé est imposé à la connexion même qui porte le mot de passe (« /cert:deny,fingerprint:… ») : un autre serveur
+    /// est refusé sans rien recevoir, et le mot de passe passe par l'entrée standard du client, jamais par sa ligne de
+    /// commande. Sans lui, le contrôle Bureau à distance de Windows : il ouvre sa propre connexion, que rien ne lie au
+    /// certificat épinglé (Windows avertit seulement si le certificat n'est pas approuvé).
+    /// </summary>
+    private RdpConnectionRequest DirectRdpRequest(string address, RdpConnectionSettings settings, string? password, bool freeRdp) =>
+        new(settings, password)
+        {
+            FreeRdp = freeRdp,
+            // Certificat déjà vérifié avant la lecture du mot de passe : relu par le client, il doit être le même (ou
+            // approuvé après une nouvelle question). Ni ancienne sécurité RDP, ni clé : un serveur sans TLS est refusé.
+            VerifyCertificate = freeRdp
+                ? (certificate, server, port) =>
+                    Task.FromResult(TrustRdpCertificate(address, server, port, certificate) ? RdpTrust.Trusted : RdpTrust.Refused)
+                : null,
+            KnownFingerprints = freeRdp ? KnownFreeRdpFingerprints : null,
+        };
 
     /// <summary>
     /// Certificat épinglé par serveur (clé « rdp://hôte:port », comme les certificats FTPS). Approuvé par Windows : noté

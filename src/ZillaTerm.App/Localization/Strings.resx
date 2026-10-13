@@ -2274,7 +2274,7 @@ Your changes stay in the editor: save again to retry.</value>
     <value>{0} · KeePass</value>
   </data>
   <data name="KeePassRdpNoControl" xml:space="preserve">
-    <value>{0}: Remote Desktop control unavailable, Remote Desktop Connection opened without the password (take it from the KeePass database).</value>
+    <value>{0}: no Remote Desktop client in ZillaTerm, Remote Desktop Connection opened without the password (take it from the KeePass database).</value>
   </data>
   <data name="ConnectingDirect" xml:space="preserve">
     <value>Direct connection (emergency access, outside CyberArk)…</value>

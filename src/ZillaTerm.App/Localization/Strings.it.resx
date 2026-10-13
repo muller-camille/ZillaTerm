@@ -2274,7 +2274,7 @@ Le modifiche restano nell'editor: salva di nuovo per riprovare.</value>
     <value>{0} · KeePass</value>
   </data>
   <data name="KeePassRdpNoControl" xml:space="preserve">
-    <value>{0}: controllo Desktop remoto non disponibile, Connessione Desktop remoto aperta senza la password (prendila dal database KeePass).</value>
+    <value>{0}: nessun client Desktop remoto in ZillaTerm, Connessione Desktop remoto aperta senza la password (prendila dal database KeePass).</value>
   </data>
   <data name="ConnectingDirect" xml:space="preserve">
     <value>Connessione diretta (accesso di emergenza, fuori da CyberArk)…</value>

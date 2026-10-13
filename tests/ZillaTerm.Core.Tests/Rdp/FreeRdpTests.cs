@@ -182,6 +182,39 @@ public class FreeRdpTests
         Assert.False(file.ContainsKey("remoteapplicationmode:i"));
     }
 
+    /// <summary>
+    /// Accès d'urgence (entrée KeePass) avec FreeRDP : le certificat épinglé est imposé à la connexion qui porte le mot de
+    /// passe, et ce mot de passe passe par l'entrée standard, jamais par la ligne de commande (visible des autres
+    /// processus du poste).
+    /// </summary>
+    [Fact]
+    public void DirectConnectionPinsTheCertificateAndKeepsThePasswordOffTheCommandLine()
+    {
+        const string password = "P@ss, w:rd \"x\"";
+        var settings = RdpConnectionSettings.Direct("srv01.corp.local", 3389, "CORP\\jdoe");
+
+        var launch = FreeRdpArguments.Build(settings, 1, (1280, 800), password, verbose: true, [Fingerprint]);
+
+        var arguments = launch.Arguments;
+        Assert.Equal("-", arguments[0]);
+        Assert.Contains("/cert:deny,fingerprint:sha256:" + Fingerprint, arguments);
+        Assert.Contains("/from-stdin", arguments);
+        // TLS ou NLA, liés au certificat épinglé ; jamais l'ancienne sécurité RDP.
+        var tune = Assert.Single(arguments, a => a.StartsWith("/tune:", StringComparison.Ordinal));
+        Assert.Contains("FreeRDP_RdpSecurity:FALSE", tune, StringComparison.Ordinal);
+        Assert.DoesNotContain("NlaSecurity:FALSE", tune, StringComparison.Ordinal);
+        Assert.DoesNotContain(arguments, a => a.Contains("P@ss", StringComparison.Ordinal) || a.Contains("w:rd", StringComparison.Ordinal)
+            || a.StartsWith("/p:", StringComparison.Ordinal) || a.Contains("srv01", StringComparison.Ordinal)
+            || a.Contains("jdoe", StringComparison.Ordinal));
+        AssertEachOptionOnce(arguments);
+
+        var file = Fields(launch.ConnectionFile);
+        Assert.Equal("srv01.corp.local", file["full address:s"]);
+        Assert.Equal("jdoe", file["username:s"]);
+        Assert.Equal("CORP", file["domain:s"]);
+        Assert.Equal(password, file["password:s"]);
+    }
+
     [Theory]
     [InlineData("jdoe", "", "jdoe", "")]
     [InlineData("CORP\\jdoe", "", "jdoe", "CORP")]
