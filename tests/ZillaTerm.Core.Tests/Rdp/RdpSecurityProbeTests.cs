@@ -77,6 +77,38 @@ public class RdpSecurityProbeTests
         Assert.Equal(bits, result.Bits);
     }
 
+    /// <summary>Clé de moins de 2048 bits signalée comme faible (montrée dans la question, sans refus).</summary>
+    [Theory]
+    [InlineData(512, true)]
+    [InlineData(1024, true)]
+    [InlineData(2048, false)]
+    public void ShortKeysAreFlaggedAsWeak(int bits, bool weak)
+    {
+        using var rsa = RSA.Create(bits);
+        var key = rsa.ExportParameters(false);
+
+        var result = RdpSecurityProbe.Key(key.Modulus!, key.Exponent!);
+
+        Assert.Equal(bits, result.Bits);
+        Assert.Equal(weak, result.IsWeak);
+    }
+
+    /// <summary>
+    /// Réponse tronquée juste après la clé H.221 « McDn » (ou après le premier octet d'une longueur longue) : « pas un
+    /// serveur Bureau à distance », jamais une autre exception.
+    /// </summary>
+    [Theory]
+    [InlineData(new byte[] { (byte)'M', (byte)'c', (byte)'D', (byte)'n' })]
+    [InlineData(new byte[] { (byte)'M', (byte)'c', (byte)'D', (byte)'n', 0x81 })]
+    [InlineData(new byte[] { (byte)'M', (byte)'c', (byte)'D', (byte)'n', 0x10, 0x02, 0x0C })]
+    public void TruncatedResponseIsNotRdp(byte[] end)
+    {
+        byte[] gcc = [0x00, 0x05, 0x00, 0x14, 0x7C, 0x00, 0x01, .. end];
+
+        var error = Assert.Throws<RdpCertificateException>(() => RdpSecurityProbe.ReadServerKey(McsResponse(gcc)));
+        Assert.Equal(Localization.CoreStrings.RdpNotRdp, error.Message);
+    }
+
     [Fact]
     public void X509ChainGivesTheFingerprintOfTheServerKey()
     {
@@ -189,6 +221,12 @@ public class RdpSecurityProbeTests
             .. blocks,
         ];
 
+        return McsResponse(gcc);
+    }
+
+    /// <summary>X.224 Data et MCS Connect Response portant <paramref name="gcc"/>.</summary>
+    private static byte[] McsResponse(byte[] gcc)
+    {
         var writer = new AsnWriter(AsnEncodingRules.BER);
         using (writer.PushSequence(new Asn1Tag(TagClass.Application, 102, isConstructed: true)))
         {

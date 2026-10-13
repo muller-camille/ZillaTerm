@@ -14,7 +14,17 @@ namespace ZillaTerm.Core.Rdp;
 /// FreeRDP compare aux empreintes acceptées (« /cert:fingerprint ») en sécurité RDP.
 /// </param>
 /// <param name="Bits">Taille de la clé.</param>
-public sealed record RdpServerKey(string Sha256, int Bits);
+public sealed record RdpServerKey(string Sha256, int Bits)
+{
+    /// <summary>Taille en dessous de laquelle la clé est signalée comme faible (elle chiffre l'aléa de la session).</summary>
+    public const int RecommendedBits = 2048;
+
+    /// <summary>
+    /// Vrai pour une clé de moins de <see cref="RecommendedBits"/> bits : une clé de 512 bits se factorise en quelques
+    /// heures, et qui la connaît se fait passer pour le serveur. Signalé dans la question, sans refus.
+    /// </summary>
+    public bool IsWeak => Bits < RecommendedBits;
+}
 
 /// <summary>
 /// Lit la clé d'un serveur Bureau à distance qui n'accepte que l'ancienne sécurité RDP, avant de lui confier quoi que ce
@@ -181,8 +191,9 @@ public static class RdpSecurityProbe
         {
             throw new RdpCertificateException(CoreStrings.RdpNotRdp);
         }
-        catch (ArgumentOutOfRangeException)
+        catch (Exception e) when (e is ArgumentOutOfRangeException or IndexOutOfRangeException)
         {
+            // Réponse tronquée : lue au-delà de sa fin.
             throw new RdpCertificateException(CoreStrings.RdpNotRdp);
         }
     }
@@ -197,6 +208,12 @@ public static class RdpSecurityProbe
         }
 
         var rest = gcc[(key + 4)..];
+        if (rest.Length < 2)
+        {
+            // Ni longueur ni données après « McDn » : réponse tronquée.
+            throw new RdpCertificateException(CoreStrings.RdpNotRdp);
+        }
+
         int length = rest[0];
         int header = 1;
         if ((length & 0x80) != 0)

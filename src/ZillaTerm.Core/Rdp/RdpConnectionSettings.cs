@@ -260,10 +260,11 @@ public sealed record RdpConnectionSettings
     private static int? ParsePort(string text) =>
         int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var port) && port is > 0 and <= 65535 ? port : null;
 
-    private static string Decode(byte[] content)
+    /// <summary>Texte d'un fichier .rdp (ou de la réponse du PVWA qui le porte), quel que soit son encodage.</summary>
+    internal static string Decode(byte[] content)
     {
         // Fichier du PVWA : en général UTF-16 avec BOM ; on accepte aussi l'UTF-8 et l'UTF-16 sans BOM.
-        if (content.Length >= 2 && content[0] != 0 && content[1] == 0 && !HasBom(content))
+        if (IsUtf16WithoutBom(content))
         {
             return Encoding.Unicode.GetString(content);
         }
@@ -271,6 +272,10 @@ public sealed record RdpConnectionSettings
         using var reader = new StreamReader(new MemoryStream(content), Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
         return reader.ReadToEnd();
     }
+
+    /// <summary>UTF-16 petit-boutiste sans BOM : premier caractère ASCII suivi d'un octet nul.</summary>
+    internal static bool IsUtf16WithoutBom(byte[] content) =>
+        content.Length >= 2 && content[0] != 0 && content[1] == 0 && !HasBom(content);
 
     private static bool HasBom(byte[] content) =>
         (content[0] == 0xFF && content[1] == 0xFE) || (content[0] == 0xFE && content[1] == 0xFF)

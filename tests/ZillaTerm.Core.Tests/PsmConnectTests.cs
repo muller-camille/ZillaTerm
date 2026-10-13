@@ -169,6 +169,21 @@ public class PsmConnectTests
         Assert.Same(utf16, RdpFile.FromPsmConnectResponse(utf16, "application/octet-stream"));
     }
 
+    /// <summary>
+    /// Fichier en UTF-16 sans BOM : accepté comme par la lecture de l'onglet, et rendu avec son BOM (mstsc).
+    /// </summary>
+    [Fact]
+    public void RdpFile_AcceptsUtf16WithoutBom()
+    {
+        var bare = Encoding.Unicode.GetBytes(Rdp);
+
+        var file = RdpFile.FromPsmConnectResponse(bare, "application/octet-stream");
+
+        Assert.Equal([.. Encoding.Unicode.GetPreamble(), .. bare], file);
+        Assert.Equal("psm.corp.local", Core.Rdp.RdpConnectionSettings.FromRdpFile(file).Server);
+        Assert.Equal("psm.corp.local", Core.Rdp.RdpConnectionSettings.FromRdpFile(bare).Server);
+    }
+
     [Fact]
     public void RdpFile_UnwrapsJsonString()
     {
