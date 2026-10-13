@@ -189,7 +189,7 @@ nessuna finestra separata.
   drives» della sua finestra di connessione (parametro `AllowMappingLocalDrives`). Se il componente di connessione lo
   consente, il PVWA li scrive nel file RDP e compaiono nella sessione (Esplora file › Questo PC), nella scheda come in
   Connessione Desktop remoto.
-- **Riconnetti**, «Duplica la scheda»: nuova richiesta al PVWA (il token di una sessione PSM vale una sola volta);
+- **Riconnetti**, «Duplica scheda»: nuova richiesta al PVWA (il token di una sessione PSM vale una sola volta);
   motivo e ticket restano quelli della prima connessione.
 - La scheda mostra l'etichetta del server (PROD, QA…) e la sua cornice colorata; «Cattura» aggiunge un'immagine al
   registro di un intervento in corso.

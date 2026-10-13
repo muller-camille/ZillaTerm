@@ -916,8 +916,8 @@ depuis cette heure-là, la note et la capture sont grisées. Libérez de la plac
 
 | Où | Action | Raccourci |
 | --- | --- | --- |
-| Partout (sauf l'onglet Fichiers) | Recharger les comptes depuis le PVWA | `F5` |
-| Partout | Filtrer les comptes (dans « Mes serveurs » : rechercher un serveur ; dans « Fichiers » : filtrer le dossier) | `Ctrl+F` |
+| Hors terminal et onglet Fichiers | Recharger les comptes depuis le PVWA | `F5` |
+| Hors terminal | Filtrer les comptes (dans « Mes serveurs » : rechercher un serveur ; dans « Fichiers » : filtrer le dossier) | `Ctrl+F` |
 | Partout | Onglet de session suivant / précédent | `Ctrl+Tab` / `Ctrl+Maj+Tab` |
 | Partout | Fermer l'onglet de session | `Ctrl+F4` ou `Ctrl+Maj+W` |
 | Partout | Onglets « Disponibles », « Mes serveurs », « Fichiers » du panneau de gauche | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` |
@@ -949,8 +949,9 @@ depuis cette heure-là, la note et la capture sont grisées. Libérez de la plac
 | Fichiers | Aller à l'élément dont le nom commence par ces lettres (la même lettre de nouveau : le suivant) | Taper le début du nom |
 | Base KeePass | Se connecter / modifier / supprimer une entrée | Double-clic ou `Entrée` / `F2` / `Suppr` |
 
-Dans un terminal, `Ctrl+K`, `Ctrl+B` et `F6` sont envoyés au serveur (`F6` aux applications comme mc) ; `Ctrl+Tab`,
-`Ctrl+F4`, `Ctrl+Maj+W` et `Ctrl+1/2/3` restent à ZillaTerm.
+Dans un terminal, `F5`, `Ctrl+F`, `Ctrl+K`, `Ctrl+B` et `F6` sont envoyés au serveur (`F6` aux applications comme
+mc) ; `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Maj+W` et `Ctrl+1/2/3` restent à ZillaTerm. Dans une session Bureau à distance, les
+touches vont à la session distante.
 
 **Clavier et accessibilité** : la barre d'outils s'atteint avec `Tab` (le focus est visible), chaque menu et chaque
 fenêtre a ses touches d'accès (`Alt` + lettre soulignée, sans doublon, en français, anglais et italien), et le menu
