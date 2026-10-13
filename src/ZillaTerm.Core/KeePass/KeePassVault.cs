@@ -309,7 +309,7 @@ public sealed class KeePassVault : IDisposable
             }
 
             Install(temp, FilePath, BackupPath);
-            await RemoveBackupAsync(FilePath, BackupPath, output).ConfigureAwait(false);
+            await RemoveBackupAsync(FilePath, BackupPath, output, original).ConfigureAwait(false);
             return true;
         }
         finally
@@ -357,11 +357,13 @@ public sealed class KeePassVault : IDisposable
     }
 
     /// <summary>
-    /// Supprime la copie de sécurité si le fichier en place est bien <paramref name="written"/> (déjà vérifié) : elle ne
-    /// protège que d'un remplacement interrompu, et resterait sinon sur le partage, où elle s'ouvre avec l'ancien mot de
-    /// passe maître. Fichier différent (modifié entre-temps) ou illisible : elle est gardée.
+    /// Supprime la copie de sécurité si le fichier en place est bien <paramref name="written"/> (déjà vérifié) et si la
+    /// copie est bien <paramref name="original"/>, la version modifiée : elle ne protège alors que d'un remplacement
+    /// interrompu, et resterait sinon sur le partage, où elle s'ouvre avec l'ancien mot de passe maître. Fichier en place
+    /// différent (modifié entre-temps), copie différente (un autre poste a enregistré juste avant le remplacement : sa
+    /// version n'est plus que là) ou illisible : elle est gardée.
     /// </summary>
-    internal static async Task RemoveBackupAsync(string path, string backup, byte[] written)
+    internal static async Task RemoveBackupAsync(string path, string backup, byte[] written, byte[] original)
     {
         try
         {
@@ -369,13 +371,23 @@ public sealed class KeePassVault : IDisposable
             var current = await ReadSharedAsync(path, CancellationToken.None).ConfigureAwait(false);
             bool installed = current.AsSpan().SequenceEqual(written);
             CryptographicOperations.ZeroMemory(current);
-            if (installed)
+            if (!installed)
+            {
+                Diagnostics.DebugLog.Write("keepass", $"{path} relu différent après l'enregistrement : copie de sécurité {backup} gardée");
+                return;
+            }
+
+            var replaced = await ReadSharedAsync(backup, CancellationToken.None).ConfigureAwait(false);
+            bool expected = replaced.AsSpan().SequenceEqual(original);
+            CryptographicOperations.ZeroMemory(replaced);
+            if (expected)
             {
                 File.Delete(backup);
             }
             else
             {
-                Diagnostics.DebugLog.Write("keepass", $"{path} relu différent après l'enregistrement : copie de sécurité {backup} gardée");
+                Diagnostics.DebugLog.Write("keepass",
+                    $"{path} modifié par un autre poste juste avant l'enregistrement : sa version est gardée dans {backup}");
             }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
