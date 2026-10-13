@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using ZillaTerm.App.Localization;
@@ -56,9 +57,20 @@ public sealed class InterventionRecorder
     /// <summary>Le disque a refusé une écriture : la suite de l'intervention n'est plus gardée.</summary>
     public Exception? Failure => _journal?.Failure;
 
+    /// <summary>Heure (UTC) depuis laquelle plus rien n'est gardé (voir <see cref="Failure"/>).</summary>
+    public DateTime? FailedAt => _journal?.FailedAt;
+
+    /// <summary>
+    /// Journal que le disque refuse : la raison, l'heure depuis laquelle plus rien n'est gardé et quoi faire ; null sinon.
+    /// </summary>
+    public string? FailureMessage => _journal is { Failure: { } failure } journal
+        ? Text.Format(Strings.InterventionWriteFailed, failure.Message,
+            (journal.FailedAt ?? DateTime.UtcNow).ToLocalTime().ToString("t", CultureInfo.CurrentCulture))
+        : null;
+
     public bool TerminalTextCapped => _journal?.TerminalTextCapped ?? false;
 
-    /// <summary>Enregistrement lancé ou arrêté (sur le fil de l'interface).</summary>
+    /// <summary>Enregistrement lancé, arrêté, ou interrompu par le disque (sur le fil de l'interface).</summary>
     public event Action? Changed;
 
     /// <summary>Commence l'enregistrement ; <paramref name="who"/> et <paramref name="mode"/> sont écrits en tête.</summary>
@@ -72,6 +84,20 @@ public sealed class InterventionRecorder
 
         var now = DateTime.UtcNow;
         var journal = InterventionJournal.Start(_directory, _protector, now);
+        // Disque plein ou écriture refusée (écritures du minuteur, sur un autre fil) : l'interface le dit aussitôt.
+        var ui = SynchronizationContext.Current;
+        journal.Failed += () =>
+        {
+            DebugLog.Write("intervention", $"Journal d'intervention refusé par le disque : {journal.Failure?.Message}");
+            if (ui is null)
+            {
+                Changed?.Invoke();
+            }
+            else
+            {
+                ui.Post(_ => Changed?.Invoke(), null);
+            }
+        };
         journal.Write(new InterventionEntry(now, InterventionKind.Started, "",
             Text.Format(Strings.InterventionStartedEntry, who, Environment.MachineName, UpdateChecker.CurrentVersion, mode)));
         journal.Flush();

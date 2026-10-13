@@ -5044,7 +5044,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Impossibile avviare la registrazione: {0}</value>
   </data>
   <data name="InterventionWriteFailed" xml:space="preserve">
-    <value>Il disco rifiuta il registro: il resto dell'intervento non viene conservato ({0}).</value>
+    <value>Il disco rifiuta il registro ({0}): non viene più conservato nulla dalle {1}. Libera spazio, poi «Interrompi la registrazione» e «Registra l'intervento» per ricominciare.</value>
   </data>
   <data name="InterventionTerminalCapped" xml:space="preserve">
     <value>Limite del testo dei terminali raggiunto: i terminali non vengono più conservati (gli altri eventi sì).</value>
@@ -5540,5 +5540,11 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>Impossibile verificare l'identità di {0}: {1}</value>
+  </data>
+  <data name="InterventionInterruptedIndicator" xml:space="preserve">
+    <value>⚠ Intervento: registrazione interrotta</value>
+  </data>
+  <data name="InterventionInterruptedAt" xml:space="preserve">
+    <value>Registrazione interrotta alle {0}.</value>
   </data>
 </root>

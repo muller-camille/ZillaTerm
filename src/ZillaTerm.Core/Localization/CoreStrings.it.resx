@@ -564,4 +564,7 @@
   <data name="TailLineCut" xml:space="preserve">
     <value> … [riga troncata dopo {0:N0} caratteri]</value>
   </data>
+  <data name="MigrationCheckOtherDomain" xml:space="preserve">
+    <value>Account di un altro dominio rispetto al server: verificalo</value>
+  </data>
 </root>

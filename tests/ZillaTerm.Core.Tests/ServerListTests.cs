@@ -312,6 +312,30 @@ public sealed class SharedServerListTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// Liste modifiée à la main et réécrite avec un BOM UTF-8 (PowerShell 5.1, « UTF-8 avec BOM ») : lue, modifiable et
+    /// restaurable comme sans BOM.
+    /// </summary>
+    [Fact]
+    public void AListWrittenWithAByteOrderMarkIsRead()
+    {
+        var path = PathOf("equipe.json");
+        var list = SharedServerList.Create(path, "Équipe", "pvwa", "alice");
+        list.Add([Server("1", "web01")], "alice");
+        File.WriteAllText(path, File.ReadAllText(path).Replace("web01", "web01-main", StringComparison.Ordinal), new System.Text.UTF8Encoding(true));
+        Assert.Equal(0xEF, File.ReadAllBytes(path)[0]);
+
+        var other = new SharedServerList(path);
+        Assert.True(other.Load());
+        Assert.Equal(["web01-main"], other.Content!.Servers.Select(s => s.Name));
+        Assert.Equal(1, other.Add([Server("2", "db01")], "bob"));
+
+        // La version gardée (avec son BOM) se restaure.
+        other.Restore(other.Versions().Single(v => v.Revision == 2), "alice");
+        Assert.True(list.Load());
+        Assert.Equal(["web01-main"], list.Content!.Servers.Select(s => s.Name));
+    }
+
     [Fact]
     public void WritesValidJsonWithTheJournal()
     {

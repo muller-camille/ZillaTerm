@@ -376,7 +376,8 @@ public sealed partial class DialogTests
                 // Session à vérifier : pas cochée d'office ; le bouton compte les sessions qui seront ajoutées.
                 Assert.False(window.Rows[1].Include);
                 Assert.EndsWith("(1)", (string)window.ImportButton.Content);
-                Assert.False(((System.Windows.Controls.CheckBox)window.IncludeColumn.Header).IsChecked);
+                // Une session cochée sur deux : case de l'en-tête entre les deux.
+                Assert.Null(((System.Windows.Controls.CheckBox)window.IncludeColumn.Header).IsChecked);
 
                 // Même compte que la première session, dans le même dossier : ajouté une seule fois.
                 window.Rows[1].Chosen = window.Rows[1].Candidates.Single(c => c.Account.Id == "1");
@@ -411,6 +412,64 @@ public sealed partial class DialogTests
             File.Delete(path);
             File.Delete(missing);
         }
+    }
+
+    /// <summary>
+    /// Case de l'en-tête de la reprise des sessions : avec « Seulement les problèmes », elle ne coche que les lignes affichées
+    /// (une session prête décochée, cachée, le reste) ; son état suit les lignes affichées, cochées une à une ou non.
+    /// </summary>
+    [Fact]
+    public void SessionImportHeaderBoxActsOnTheShownRowsOnly()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var click = new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent);
+            PvwaAccount[] accounts =
+            [
+                new() { Id = "1", UserName = "root", Address = "web01.corp.local", PlatformId = "UnixSSH" },
+                new() { Id = "2", UserName = "deploy", Address = "web01.corp.local", PlatformId = "UnixSSH" },
+                new() { Id = "3", UserName = "root", Address = "web02.corp.local", PlatformId = "UnixSSH" },
+            ];
+            var window = new SessionImportWindow(new AppSettings(), "pvwa.corp.local", accounts, KnownDomains.From([], []), _ => { });
+            window.Load(
+            [
+                ImportedSession.Terminal("", "web", ImportProtocol.Ssh, "web01.corp.local", null, "root"),
+                ImportedSession.Terminal("", "any", ImportProtocol.Ssh, "web01.corp.local", null, null),
+                ImportedSession.Terminal("", "web2", ImportProtocol.Ssh, "web02.corp.local", null, "root"),
+            ], "test");
+            var all = (System.Windows.Controls.CheckBox)window.IncludeColumn.Header;
+            Assert.Equal([ImportState.Ready, ImportState.Check, ImportState.Ready], window.Rows.Select(r => r.State));
+            Assert.Null(all.IsChecked);
+
+            // Session prête décochée, puis seulement les problèmes : la case suit la seule ligne affichée (non cochée).
+            window.Rows[0].Include = false;
+            window.ProblemsBox.IsChecked = true;
+            window.ProblemsBox.RaiseEvent(click);
+            Assert.False(all.IsChecked);
+
+            all.RaiseEvent(click);
+            Assert.True(window.Rows[1].Include);
+            Assert.False(window.Rows[0].Include);
+            Assert.True(window.Rows[2].Include);
+            Assert.True(all.IsChecked);
+            Assert.EndsWith("(2)", (string)window.ImportButton.Content);
+
+            // Toutes les lignes de nouveau : une décochée sur trois ; la cocher à la main coche la case de l'en-tête.
+            window.ProblemsBox.IsChecked = false;
+            window.ProblemsBox.RaiseEvent(click);
+            Assert.Null(all.IsChecked);
+            window.Rows[0].Include = true;
+            Assert.True(all.IsChecked);
+            all.RaiseEvent(click);
+            Assert.All(window.Rows, r => Assert.False(r.Include));
+            Assert.False(all.IsChecked);
+            window.Close();
+        });
     }
 
     /// <summary>
@@ -2886,6 +2945,66 @@ public sealed partial class DialogTests
     }
 
     /// <summary>
+    /// Disque qui refuse le journal pendant l'enregistrement : l'interface est prévenue aussitôt, la fenêtre dit depuis
+    /// quand plus rien n'est gardé (couleur d'erreur du thème), et note et capture ne sont plus proposées.
+    /// </summary>
+    [Fact]
+    public void InterventionWindowSaysWhenTheDiskRefusesTheJournal()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var click = new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent);
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new FailingProtector(failFrom: 2));
+                int changed = 0;
+                recorder.Changed += () => changed++;
+                var window = new InterventionWindow("", "", recorder, "jdoe", "session CyberArk (pvwa.corp.local)");
+                window.RecordButton.RaiseEvent(click);
+                Assert.Equal(1, changed);
+                Assert.Null(recorder.FailureMessage);
+
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Note, "", "perdue");
+                recorder.Flush();
+                PumpUntil(() => changed == 2);
+                Assert.Equal(2, changed);
+                Assert.True(recorder.IsRecording);
+                Assert.NotNull(recorder.Failure);
+                int count = recorder.Count;
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Note, "", "ignorée");
+                Assert.Equal(count, recorder.Count);
+
+                var since = recorder.FailedAt!.Value.ToLocalTime().ToString("t", System.Globalization.CultureInfo.CurrentCulture);
+                Assert.Equal(Text.Format(Strings.InterventionInterruptedAt, since), window.StatusText.Text);
+                Assert.Equal(recorder.FailureMessage, window.MessageText.Text);
+                Assert.Contains(since, window.MessageText.Text, StringComparison.Ordinal);
+                Assert.Same(window.FindResource("ErrorBrush"), window.MessageText.Foreground);
+                Assert.False(window.NoteBox.IsEnabled);
+                Assert.False(window.CaptureButton.IsEnabled);
+
+                window.RecordButton.RaiseEvent(click);
+                Assert.False(recorder.IsRecording);
+                Assert.Null(recorder.FailureMessage);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Consignes d'astreinte tirées d'un fichier (tenu à jour par les responsables) : son texte remplace celui des
     /// réglages, inverseurs de sens de lecture retirés ; fichier absent : le texte des réglages reste, avec la raison.
     /// </summary>
@@ -2925,6 +3044,18 @@ public sealed partial class DialogTests
         {
             Directory.Delete(dir, recursive: true);
         }
+    }
+
+    /// <summary>Protecteur qui refuse à partir du bloc <c>failFrom</c> (comme un disque plein au moment d'écrire).</summary>
+    private sealed class FailingProtector(int failFrom) : ZillaTerm.Core.KeePass.ISecretProtector
+    {
+        private int _calls;
+
+        public byte[] Protect(byte[] data) => ++_calls >= failFrom
+            ? throw new System.Security.Cryptography.CryptographicException("refusé")
+            : data.Select(b => (byte)(b ^ 0x5A)).ToArray();
+
+        public byte[] Unprotect(byte[] data) => data.Select(b => (byte)(b ^ 0x5A)).ToArray();
     }
 
     private sealed class XorProtector : ZillaTerm.Core.KeePass.ISecretProtector

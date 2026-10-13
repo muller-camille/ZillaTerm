@@ -5044,7 +5044,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>L'enregistrement n'a pas pu commencer : {0}</value>
   </data>
   <data name="InterventionWriteFailed" xml:space="preserve">
-    <value>Le disque refuse le journal : la suite de l'intervention n'est pas gardée ({0}).</value>
+    <value>Le disque refuse le journal ({0}) : plus rien n'est gardé depuis {1}. Libérez de la place, puis « Arrêter l'enregistrement » et « Enregistrer l'intervention » pour reprendre.</value>
   </data>
   <data name="InterventionTerminalCapped" xml:space="preserve">
     <value>Limite du texte des terminaux atteinte : les terminaux ne sont plus gardés (les autres événements le sont).</value>
@@ -5540,5 +5540,11 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>Identité de {0} impossible à vérifier : {1}</value>
+  </data>
+  <data name="InterventionInterruptedIndicator" xml:space="preserve">
+    <value>⚠ Intervention : enregistrement interrompu</value>
+  </data>
+  <data name="InterventionInterruptedAt" xml:space="preserve">
+    <value>Enregistrement interrompu à {0}.</value>
   </data>
 </root>

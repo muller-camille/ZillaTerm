@@ -1711,5 +1711,14 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("TailLineCut", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Account from another domain than the server: check it.
+        /// </summary>
+        public static string MigrationCheckOtherDomain {
+            get {
+                return ResourceManager.GetString("MigrationCheckOtherDomain", resourceCulture);
+            }
+        }
     }
 }

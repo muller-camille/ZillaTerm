@@ -285,17 +285,24 @@ public sealed class KeePassVaultTests : IDisposable
         Assert.False(File.Exists(temp));
     }
 
-    /// <summary>Fichier en place différent de celui écrit (modifié entre-temps) : la copie de sécurité est gardée.</summary>
+    /// <summary>
+    /// Fichier en place différent de celui écrit (modifié entre-temps), ou copie de sécurité différente de la version
+    /// modifiée (un autre poste a enregistré juste avant le remplacement : sa version n'est plus que dans la copie) : la
+    /// copie de sécurité est gardée.
+    /// </summary>
     [Fact]
     public async Task BackupIsKeptUnlessTheInstalledFileIsTheOneWritten()
     {
         var (path, _, backup) = InstallFiles();
-        File.WriteAllText(backup, "ancien");
+        File.WriteAllText(backup, "précédent");
 
-        await KeePassVault.RemoveBackupAsync(path, backup, "autre"u8.ToArray());
-        Assert.Equal("ancien", File.ReadAllText(backup));
+        await KeePassVault.RemoveBackupAsync(path, backup, "autre"u8.ToArray(), "précédent"u8.ToArray());
+        Assert.Equal("précédent", File.ReadAllText(backup));
 
-        await KeePassVault.RemoveBackupAsync(path, backup, "ancien"u8.ToArray());
+        await KeePassVault.RemoveBackupAsync(path, backup, "ancien"u8.ToArray(), "version du poste 1"u8.ToArray());
+        Assert.Equal("précédent", File.ReadAllText(backup));
+
+        await KeePassVault.RemoveBackupAsync(path, backup, "ancien"u8.ToArray(), "précédent"u8.ToArray());
         Assert.False(File.Exists(backup));
         Assert.Equal("ancien", File.ReadAllText(path));
     }

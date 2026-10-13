@@ -564,4 +564,7 @@
   <data name="TailLineCut" xml:space="preserve">
     <value> … [ligne coupée après {0:N0} caractères]</value>
   </data>
+  <data name="MigrationCheckOtherDomain" xml:space="preserve">
+    <value>Compte d'un autre domaine que le serveur : vérifiez-le</value>
+  </data>
 </root>

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services;
@@ -35,6 +36,16 @@ public partial class MainWindow
         foreach (var view in _rdpViews)
         {
             view.InterventionRecording = recording;
+        }
+
+        // Journal refusé par le disque : l'indicateur passe en erreur et la barre d'état dit quoi faire.
+        var failure = recording ? Intervention.FailureMessage : null;
+        InterventionIndicator.Text = failure is null ? Strings.InterventionRecordingIndicator : Strings.InterventionInterruptedIndicator;
+        InterventionIndicator.ToolTip = failure ?? Strings.ToolInterventionTip;
+        InterventionIndicator.SetResourceReference(TextBlock.ForegroundProperty, failure is null ? "StatusWarningForeground" : "StatusErrorForeground");
+        if (failure is not null)
+        {
+            SetStatus(failure, isError: true);
         }
     }
 
