@@ -1729,5 +1729,41 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("PvwaTooManyPages", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” is a whole drive or share: drop the folders or files it contains instead..
+        /// </summary>
+        public static string UploadWholeDrive {
+            get {
+                return ResourceManager.GetString("UploadWholeDrive", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to symbolic link: its target {0} remains incomplete (neither the link nor its target was deleted).
+        /// </summary>
+        public static string TransferIncompleteLinkKept {
+            get {
+                return ResourceManager.GetString("TransferIncompleteLinkKept", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” contains an invalid character (incomplete Unicode character): it cannot be sent to the FTP server. Rename it first..
+        /// </summary>
+        public static string FtpNameNotEncodable {
+            get {
+                return ResourceManager.GetString("FtpNameNotEncodable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server sent more than {0} for a file announced at {1}: download stopped..
+        /// </summary>
+        public static string DownloadExceedsAnnounced {
+            get {
+                return ResourceManager.GetString("DownloadExceedsAnnounced", resourceCulture);
+            }
+        }
     }
 }

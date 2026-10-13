@@ -16663,5 +16663,45 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("CompareRemoteLabel", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No .tar.gz archive for this drop: extracting it would recreate the replaced items with other permissions and another owner. The files are sent one by one..
+        /// </summary>
+        public static string ArchiveNotForReplace {
+            get {
+                return ResourceManager.GetString("ArchiveNotForReplace", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sending {0} was interrupted: the file on the server may be incomplete.
+        ///
+        ///{1}
+        ///
+        ///The tab is closed: keep your changes by saving them elsewhere from the editor, then send the file again from a new tab..
+        /// </summary>
+        public static string EditWriteInterruptedClosed {
+            get {
+                return ResourceManager.GetString("EditWriteInterruptedClosed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Edited files being sent back: {0} (closing waits until they are written).
+        /// </summary>
+        public static string CloseAllEditWriting {
+            get {
+                return ResourceManager.GetString("CloseAllEditWriting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Waiting for the edited file to be written on the server before closing….
+        /// </summary>
+        public static string EditWaitingForWrite {
+            get {
+                return ResourceManager.GetString("EditWaitingForWrite", resourceCulture);
+            }
+        }
     }
 }

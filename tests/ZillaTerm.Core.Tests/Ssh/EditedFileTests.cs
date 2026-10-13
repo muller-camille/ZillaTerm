@@ -208,6 +208,19 @@ public sealed class EditedFileTests : IDisposable
         Assert.False(file.HasUnsentChanges);
     }
 
+    /// <summary>Nom et chemin affichés (titres, questions) : un caractère invisible du nom distant devient « � ».</summary>
+    [Fact]
+    public void DisplayedNameShowsInvisibleCharacters()
+    {
+        var local = Path.Combine(_dir, "facture.txt");
+        File.WriteAllText(local, "x");
+        using var file = new EditedFile("/srv/doc‮/facture‮fdp.exe", local, DateTime.UnixEpoch, 1);
+
+        Assert.Equal("facture‮fdp.exe", file.Name);
+        Assert.Equal("facture�fdp.exe", file.DisplayName);
+        Assert.Equal("/srv/doc�/facture�fdp.exe", file.DisplayPath);
+    }
+
     [Fact]
     public void InterruptedWrite_IsRememberedUntilTheNextSuccessfulSend()
     {

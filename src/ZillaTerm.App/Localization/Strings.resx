@@ -5586,4 +5586,20 @@ To start over with the default settings, close ZillaTerm and delete these two fi
   <data name="CompareRemoteLabel" xml:space="preserve">
     <value>{0}: {1}</value>
   </data>
+  <data name="ArchiveNotForReplace" xml:space="preserve">
+    <value>No .tar.gz archive for this drop: extracting it would recreate the replaced items with other permissions and another owner. The files are sent one by one.</value>
+  </data>
+  <data name="EditWriteInterruptedClosed" xml:space="preserve">
+    <value>Sending {0} was interrupted: the file on the server may be incomplete.
+
+{1}
+
+The tab is closed: keep your changes by saving them elsewhere from the editor, then send the file again from a new tab.</value>
+  </data>
+  <data name="CloseAllEditWriting" xml:space="preserve">
+    <value>Edited files being sent back: {0} (closing waits until they are written)</value>
+  </data>
+  <data name="EditWaitingForWrite" xml:space="preserve">
+    <value>Waiting for the edited file to be written on the server before closing…</value>
+  </data>
 </root>

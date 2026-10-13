@@ -2474,9 +2474,80 @@ public sealed partial class DialogTests
         });
     }
 
+    /// <summary>
+    /// Onglet fermé pendant le renvoi d'un fichier modifié : la connexion n'est fermée qu'une fois l'écriture finie (coupée,
+    /// elle laisserait le fichier du serveur tronqué), et ce renvoi est signalé à part des fichiers non renvoyés.
+    /// </summary>
+    [Fact]
+    public void ClosingASessionWaitsForTheEditedFileBeingWritten()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var folder = Path.Combine(Path.GetTempPath(), "zt-edit-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var opened = new DateTime(2026, 10, 6, 9, 0, 0);
+                var written = new TaskCompletionSource<(DateTime, long)>();
+                bool writing = false;
+                var files = new FakeFiles("/etc/nginx", [])
+                {
+                    Stat = (opened, 3),
+                    Write = (_, _) =>
+                    {
+                        writing = true;
+                        return written.Task;
+                    },
+                };
+                var session = new ZillaTerm.App.Services.FilesSession("srv01.corp.local", "SFTP", _ => Task.FromResult<IRemoteFiles>(files),
+                    System.Windows.Threading.Dispatcher.CurrentDispatcher);
+                Pump(session.ConnectAsync());
+                var editor = new ZillaTerm.App.Services.RemoteEditor(session, new Window(), new AppSettings(), (_, _) => { }, _ => { });
+                session.Editor = editor;
+                var local = Path.Combine(folder, "nginx.conf");
+                File.WriteAllText(local, "old");
+                using var file = new EditedFile("/etc/nginx/nginx.conf", local, opened, 3);
+                File.WriteAllText(local, "new content");
+
+                var upload = editor.UploadAsync(file);
+                PumpUntil(() => writing);
+                Assert.Equal(["srv01.corp.local:/etc/nginx/nginx.conf"], ZillaTerm.App.Services.RemoteEditor.WritingFiles([editor]));
+                Assert.False(editor.WritesDone.IsCompleted);
+
+                session.Dispose();
+                var later = Task.Delay(300);
+                PumpUntil(() => later.IsCompleted);
+                Assert.False(files.Disposed);
+
+                written.SetResult((opened.AddMinutes(1), 11));
+                Pump(upload);
+                Assert.True(upload.Result);
+                Assert.True(editor.WritesDone.IsCompleted);
+                Assert.Empty(ZillaTerm.App.Services.RemoteEditor.WritingFiles([editor]));
+                PumpUntil(() => files.Disposed);
+            });
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     /// <summary>Fichiers d'un serveur en mémoire : une liste fixe, le reste non utilisé.</summary>
     private sealed class FakeFiles(string home, List<RemoteEntry> entries) : IRemoteFiles
     {
+        /// <summary>Date et taille rendues par <see cref="GetStatAsync"/>.</summary>
+        public (DateTime LastWriteTime, long Length) Stat { get; init; }
+
+        /// <summary>Écriture d'un fichier (renvoi de l'éditeur) ; null : non utilisée.</summary>
+        public Func<string, byte[], Task<(DateTime, long)>>? Write { get; init; }
+
         public bool Disposed { get; private set; }
         public string HomeDirectory { get; } = home;
         public string CurrentDirectory { get; private set; } = home;
@@ -2501,9 +2572,9 @@ public sealed partial class DialogTests
         public Task<long> GetSizeAsync(string path, CancellationToken ct) => throw new NotSupportedException();
         public Task<byte[]> ReadAsync(string path, long offset, int count, CancellationToken ct) => throw new NotSupportedException();
         public Task<byte[]> ReadAllBytesAsync(string path, long maxBytes, CancellationToken ct) => throw new NotSupportedException();
-        public Task<(DateTime LastWriteTime, long Length)> GetStatAsync(string path, CancellationToken ct) => throw new NotSupportedException();
+        public Task<(DateTime LastWriteTime, long Length)> GetStatAsync(string path, CancellationToken ct) => Task.FromResult(Stat);
         public Task<(DateTime LastWriteTime, long Length)> WriteFileAsync(string remotePath, byte[] content, CancellationToken ct) =>
-            throw new NotSupportedException();
+            Write?.Invoke(remotePath, content) ?? throw new NotSupportedException();
         public Task<int?> GetModeAsync(string path, CancellationToken ct) => Task.FromResult<int?>(null);
         public Task<PermissionsResult> SetPermissionsAsync(string path, PermissionChange change, bool recursive,
             bool executeOnlyIfAlready, IProgress<int>? progress, CancellationToken ct) => throw new NotSupportedException();

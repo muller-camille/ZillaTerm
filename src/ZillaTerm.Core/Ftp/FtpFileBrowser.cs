@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using ZillaTerm.Core.Localization;
 using ZillaTerm.Core.Ssh;
 using FluentFTP;
@@ -135,7 +136,12 @@ public sealed class FtpFileBrowser : IRemoteFiles
             TimeConversion = FtpDate.LocalTime,
             ClientTimeZone = TimeZoneInfo.Local,
         };
-        var client = new AsyncFtpClient(connection.Host, connection.UserName, connection.Password() ?? "", connection.Port, config, null);
+        var client = new AsyncFtpClient(connection.Host, connection.UserName, connection.Password() ?? "", connection.Port, config, null)
+        {
+            // Noms en UTF-8 même quand FEAT n'annonce pas UTF8 (la bibliothèque restait alors en ASCII : « é » devenait
+            // « ? », à la lecture comme à l'envoi, qui créait un autre fichier). OPTS UTF8 ON est envoyé après la connexion.
+            Encoding = Encoding.UTF8,
+        };
         string? accepted = null;
         bool refused = false;
         client.ValidateCertificate += (_, e) =>
@@ -356,9 +362,30 @@ public sealed class FtpFileBrowser : IRemoteFiles
         }
     }
 
-    /// <summary>Un retour à la ligne dans un chemin ajouterait une commande FTP : refusé.</summary>
-    private static string Checked(string path) =>
-        path.Any(char.IsControl) ? throw new ArgumentException(CoreStrings.ControlCharacterInPath) : path;
+    private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
+    /// <summary>
+    /// Un retour à la ligne dans un chemin ajouterait une commande FTP : refusé. Un nom que l'UTF-8 ne représente pas
+    /// (caractère Unicode incomplet, possible dans un nom Windows) l'est aussi, au lieu d'être changé en un autre nom.
+    /// </summary>
+    private static string Checked(string path)
+    {
+        if (path.Any(char.IsControl))
+        {
+            throw new ArgumentException(CoreStrings.ControlCharacterInPath);
+        }
+
+        try
+        {
+            StrictUtf8.GetByteCount(path);
+        }
+        catch (EncoderFallbackException)
+        {
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, CoreStrings.FtpNameNotEncodable, RemoteEntry.Visible(path)));
+        }
+
+        return path;
+    }
 
     /// <summary>Chemin affiché dans un message : caractères de contrôle remplacés par « ? ».</summary>
     private static string Printable(string path) => string.Concat(path.Select(c => char.IsControl(c) ? '?' : c));
@@ -368,7 +395,8 @@ public sealed class FtpFileBrowser : IRemoteFiles
     public async Task UploadAsync(string localPath, string remoteDirectory, TransferProtocol protocol, ICollection<TransferCheck> checks,
         IProgress<TransferProgress>? progress, bool background, CancellationToken ct)
     {
-        var name = Path.GetFileName(localPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        // Racine d'un lecteur (« E:\ ») refusée : elle serait versée dans le dossier lui-même.
+        var name = LocalTree.UploadName(localPath);
         var remote = RemotePath.Combine(remoteDirectory, name);
         if (Directory.Exists(localPath))
         {
@@ -667,12 +695,15 @@ public sealed class FtpFileBrowser : IRemoteFiles
                 started = true;
                 try
                 {
+                    // Plafond d'après la taille annoncée (SIZE, sinon la liste) : un serveur qui enverrait sans fin ne
+                    // remplit pas le disque du poste.
+                    long announced = Math.Max(await _client.GetFileSize(Checked(entry.FullPath), -1, ct).ConfigureAwait(false), entry.Length);
                     await using (var file = TransferCheck.CreatePartial(partial))
                     {
                         created = true;
-                        using var hashing = new HashingStream(file);
+                        using var hashing = new HashingStream(file, TransferCheck.DownloadLimit(announced), announced);
                         var report = progress is null ? null : new Progress<FtpProgress>(
-                            p => progress.Report(new TransferProgress(entry.Name, p.TransferredBytes, entry.Length)));
+                            p => progress.Report(new TransferProgress(entry.Name, p.TransferredBytes, announced)));
                         if (!await _client.DownloadStream(hashing, Checked(entry.FullPath), 0, report, ct).ConfigureAwait(false))
                         {
                             throw new IOException(string.Format(CultureInfo.CurrentCulture, CoreStrings.FtpTransferFailed, entry.FullPath));
@@ -682,6 +713,13 @@ public sealed class FtpFileBrowser : IRemoteFiles
                         received = hashing.Count;
                     }
                 }
+                catch (FtpException e) when (e.InnerException is InvalidDataException tooMuch)
+                {
+                    // Plafond dépassé (FluentFTP l'enveloppe dans une erreur générale) : son propre message.
+                    await ReconnectAsync().ConfigureAwait(false);
+                    System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(tooMuch).Throw();
+                    throw;
+                }
                 catch (Exception e) when (e is not OutOfMemoryException && NeedsRecovery(e))
                 {
                     await ReconnectAsync().ConfigureAwait(false);
@@ -689,7 +727,9 @@ public sealed class FtpFileBrowser : IRemoteFiles
                 }
             }
 
-            // Copie complète : elle ne remplace le fichier local existant que maintenant.
+            // Copie complète : marquée comme venue d'ailleurs (Mark-of-the-Web, gardée par le renommage), puis elle ne
+            // remplace le fichier local existant que maintenant.
+            MarkOfTheWeb.Apply(partial);
             File.Move(partial, localPath, overwrite: true);
         }
         catch (Exception e) when (e is not OutOfMemoryException && started)

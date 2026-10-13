@@ -130,6 +130,14 @@ public sealed class UpdateCheckerTests
             Assert.Equal(Path.Combine(folder, "ZillaTerm-0.14.0-win-x64.zip"), path);
             Assert.Equal(package, await File.ReadAllBytesAsync(path));
             Assert.Equal(1.0, progress[^1]);
+            // Archive venue d'Internet : Mark-of-the-Web (Windows), avec son adresse de téléchargement.
+            if (OperatingSystem.IsWindows())
+            {
+                var zone = MarkOfTheWeb.Read(path);
+                Assert.Contains("ZoneId=3", zone, StringComparison.Ordinal);
+                Assert.Contains("HostUrl=" + info.PackageUrl, zone, StringComparison.Ordinal);
+            }
+
             File.Delete(path);
 
             // Somme différente : rien n'est gardé.

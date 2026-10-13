@@ -23,6 +23,8 @@ public partial class FileBrowserPanel : UserControl
     private RemoteSession? _session;
     private IRemoteFiles? _browser;
     private int _generation;
+    // Lecture de dossier en cours, arrêtée par la navigation suivante.
+    private CancellationTokenSource? _listing;
     // Filtre du dossier affiché (null : tout est affiché) et dossier auquel il s'applique.
     private FileNameFilter? _filter;
     private string? _shownDirectory;
@@ -192,14 +194,19 @@ public partial class FileBrowserPanel : UserControl
         }
 
         int generation = _generation;
+        // Une nouvelle navigation arrête la lecture en cours (dossier aux nombreux liens symboliques, qui tient la
+        // connexion) ; une relecture discrète, après un transfert, n'arrête rien et ne s'arrête pas.
+        CancellationTokenSource? listing = null;
         if (!quiet)
         {
             SetStatus(Text.Format(Strings.Reading, path));
+            _listing?.Cancel();
+            listing = _listing = new CancellationTokenSource();
         }
 
         try
         {
-            var entries = await browser.ListAsync(path, _settings.ShowHiddenFiles, CancellationToken.None);
+            var entries = await browser.ListAsync(path, _settings.ShowHiddenFiles, listing?.Token ?? CancellationToken.None);
             if (generation != _generation)
             {
                 return false;
@@ -235,6 +242,11 @@ public partial class FileBrowserPanel : UserControl
 
             return true;
         }
+        catch (OperationCanceledException) when (listing is { IsCancellationRequested: true })
+        {
+            // Remplacée par une autre navigation, qui affiche son propre dossier.
+            return false;
+        }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             if (generation != _generation)
@@ -262,6 +274,18 @@ public partial class FileBrowserPanel : UserControl
             }
 
             return false;
+        }
+        finally
+        {
+            if (listing is not null)
+            {
+                if (ReferenceEquals(_listing, listing))
+                {
+                    _listing = null;
+                }
+
+                listing.Dispose();
+            }
         }
     }
 

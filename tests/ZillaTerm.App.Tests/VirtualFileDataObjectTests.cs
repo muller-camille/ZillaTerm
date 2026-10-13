@@ -47,11 +47,18 @@ public class VirtualFileDataObjectTests
             Assert.Equal(1, Marshal.ReadInt32(medium.unionmember));
             ReleaseStgMedium(ref medium);
 
+            // Zone Internet, que l'Explorateur reporte en Mark-of-the-Web sur les fichiers qu'il crée.
+            var zone = Format(VirtualFileDataObject.ZoneIdentifierFormat, TYMED.TYMED_HGLOBAL);
+            Assert.Equal(0, data.QueryGetData(ref zone));
+            data.GetData(ref zone, out medium);
+            Assert.Equal(3, Marshal.ReadInt32(medium.unionmember));
+            ReleaseStgMedium(ref medium);
+
             var enumerator = data.EnumFormatEtc(DATADIR.DATADIR_GET);
             var formats = new FORMATETC[8];
             var count = new int[1];
             enumerator.Next(formats.Length, formats, count);
-            Assert.Equal(3, count[0]);
+            Assert.Equal(4, count[0]);
             Assert.Equal(0, fetches);
 
             // Au dépôt : contenu du fichier, téléchargé une fois ; un dossier n'a pas de contenu.

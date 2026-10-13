@@ -267,7 +267,8 @@ public partial class FileBrowserPanel
             {
                 Time = DateTime.UtcNow,
                 Server = _session?.Label ?? "",
-                Label = roots.Count == 1 ? roots[0].Name + (roots[0].IsDirectory ? "/" : "") : Text.Format(Strings.QueueItems, roots.Count),
+                // Nom affiché (caractères invisibles remplacés) : il ne peut pas en imiter un autre dans l'historique.
+                Label = roots.Count == 1 ? roots[0].DisplayName + (roots[0].IsDirectory ? "/" : "") : Text.Format(Strings.QueueItems, roots.Count),
                 Destination = Strings.HistoryExplorer,
                 State = ok ? TransferState.Done : dialog.Error is null ? TransferState.Cancelled : TransferState.Failed,
                 Error = dialog.Error is { } dragError ? Describe(dragError) : null,

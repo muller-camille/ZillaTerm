@@ -570,4 +570,16 @@
   <data name="PvwaTooManyPages" xml:space="preserve">
     <value>The PVWA returned an abnormally long list (more than {0} pages): loading stopped. Report it to the CyberArk administrators.</value>
   </data>
+  <data name="UploadWholeDrive" xml:space="preserve">
+    <value>“{0}” is a whole drive or share: drop the folders or files it contains instead.</value>
+  </data>
+  <data name="TransferIncompleteLinkKept" xml:space="preserve">
+    <value>symbolic link: its target {0} remains incomplete (neither the link nor its target was deleted)</value>
+  </data>
+  <data name="FtpNameNotEncodable" xml:space="preserve">
+    <value>“{0}” contains an invalid character (incomplete Unicode character): it cannot be sent to the FTP server. Rename it first.</value>
+  </data>
+  <data name="DownloadExceedsAnnounced" xml:space="preserve">
+    <value>The server sent more than {0} for a file announced at {1}: download stopped.</value>
+  </data>
 </root>

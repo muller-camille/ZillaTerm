@@ -153,20 +153,30 @@ public abstract class RemoteSession : IDisposable
         _lifetime.Dispose();
     }
 
-    /// <summary>Ferme une connexion de fichiers remplacée ou abandonnée, tout de suite ou dès que son ouverture aboutit.</summary>
+    /// <summary>
+    /// Ferme une connexion de fichiers remplacée ou abandonnée, tout de suite ou dès que son ouverture aboutit, et jamais
+    /// pendant le renvoi d'un fichier modifié dans l'éditeur (<see cref="RemoteEditor.WritesDone"/>) : l'écriture, faite sur
+    /// place, laisserait le fichier du serveur tronqué.
+    /// </summary>
     protected void ReleaseBrowser(Task<IRemoteFiles>? browser)
     {
-        if (browser is { IsCompletedSuccessfully: true })
+        var writes = Editor?.WritesDone ?? Task.CompletedTask;
+        if (browser is { IsCompletedSuccessfully: true } && writes.IsCompleted)
         {
             DisposeInBackground(browser.Result);
         }
-        else if (browser is { IsCompleted: false })
+        else if (browser is { IsCompletedSuccessfully: true } or { IsCompleted: false })
         {
-            _ = browser.ContinueWith(t =>
+            if (!writes.IsCompleted)
             {
-                if (t.IsCompletedSuccessfully)
+                DebugLog.Write("files", $"{Label} : connexion de fichiers fermée à la fin du renvoi en cours");
+            }
+
+            _ = Task.WhenAll(browser, writes).ContinueWith(_ =>
+            {
+                if (browser.IsCompletedSuccessfully)
                 {
-                    DisposeInBackground(t.Result);
+                    DisposeInBackground(browser.Result);
                 }
             }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
         }
