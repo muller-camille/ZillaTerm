@@ -564,4 +564,7 @@
   <data name="UploadWholeDrive" xml:space="preserve">
     <value>«{0}» è un'intera unità o condivisione: trascina invece le cartelle o i file che contiene.</value>
   </data>
+  <data name="TransferIncompleteLinkKept" xml:space="preserve">
+    <value>collegamento simbolico: la sua destinazione {0} resta incompleta (né il collegamento né la destinazione sono stati eliminati)</value>
+  </data>
 </root>

@@ -151,38 +151,44 @@ public sealed class RemoteFileBrowser : IRemoteFiles
     public async Task RenameAsync(RemoteEntry entry, string newPath, CancellationToken ct)
     {
         using var entered = await _gate.EnterAsync(background: false, ct).ConfigureAwait(false);
-        // Jamais d'écrasement : certains serveurs remplaceraient la cible sans rien dire.
-        if (await _sftp.ExistsAsync(newPath, ct).ConfigureAwait(false))
+        var directory = RemotePath.Parent(entry.FullPath);
+        var listed = await ListByNameAsync(directory, ct).ConfigureAwait(false);
+        var target = RemotePath.Parent(newPath) == directory ? listed : await ListByNameAsync(RemotePath.Parent(newPath), ct).ConfigureAwait(false);
+        // Jamais d'écrasement : certains serveurs remplaceraient la cible sans rien dire. Nom cherché dans la liste du
+        // dossier : ExistsAsync suit les liens, si bien qu'un lien cassé du même nom passerait pour absent.
+        if (target.ContainsKey(RemotePath.Name(newPath)) || await _sftp.ExistsAsync(newPath, ct).ConfigureAwait(false))
         {
             throw new IOException(string.Format(CultureInfo.CurrentCulture, CoreStrings.RenameTargetExists, newPath));
         }
 
-        if (entry.IsSymbolicLink)
-        {
-            // Comme pour la suppression : RenameFileAsync renommerait la cible du lien (realpath), pas le lien.
-            var link = await LinkItselfAsync(entry, ct).ConfigureAwait(false);
-            await Task.Run(() => link.MoveTo(newPath), ct).ConfigureAwait(false);
-            return;
-        }
-
-        await _sftp.RenameFileAsync(entry.FullPath, newPath, ct).ConfigureAwait(false);
+        // L'élément lui-même, renommé vers le chemin tel quel : RenameFileAsync résoudrait les deux chemins (realpath),
+        // renommant la cible d'un lien plutôt que le lien, ou envoyant le fichier vers la cible d'un lien cassé du nouveau
+        // nom apparu entre-temps.
+        var item = listed.GetValueOrDefault(entry.Name) ?? throw new Renci.SshNet.Common.SftpPathNotFoundException(entry.FullPath);
+        await Task.Run(() => item.MoveTo(newPath), ct).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Le lien symbolique lui-même, pris dans la liste de son dossier : le chemin d'un élément listé garde son nom tel
-    /// quel, alors que les méthodes de SSH.NET qui prennent un chemin le résolvent (realpath) jusqu'à la cible du lien.
+    /// Le lien symbolique lui-même, pris dans la liste de son dossier (voir <see cref="ListByNameAsync"/>).
     /// </summary>
-    private async Task<ISftpFile> LinkItselfAsync(RemoteEntry entry, CancellationToken ct)
+    private async Task<ISftpFile> LinkItselfAsync(RemoteEntry entry, CancellationToken ct) =>
+        (await ListByNameAsync(RemotePath.Parent(entry.FullPath), ct).ConfigureAwait(false)).GetValueOrDefault(entry.Name)
+        ?? throw new Renci.SshNet.Common.SftpPathNotFoundException(entry.FullPath);
+
+    /// <summary>
+    /// Éléments d'un dossier par nom, tels que la liste les donne : le chemin d'un élément listé garde son nom tel quel,
+    /// alors que les méthodes de SSH.NET qui prennent un chemin le résolvent (realpath) jusqu'à la cible d'un lien
+    /// symbolique ; un lien cassé y figure aussi.
+    /// </summary>
+    private async Task<Dictionary<string, ISftpFile>> ListByNameAsync(string directory, CancellationToken ct)
     {
-        await foreach (var file in _sftp.ListDirectoryAsync(RemotePath.Parent(entry.FullPath), ct).ConfigureAwait(false))
+        var listed = new Dictionary<string, ISftpFile>(StringComparer.Ordinal);
+        await foreach (var file in _sftp.ListDirectoryAsync(directory, ct).ConfigureAwait(false))
         {
-            if (file.Name == entry.Name)
-            {
-                return file;
-            }
+            listed[file.Name] = file;
         }
 
-        throw new Renci.SshNet.Common.SftpPathNotFoundException(entry.FullPath);
+        return listed;
     }
 
     /// <summary>
@@ -1098,7 +1104,11 @@ public sealed class RemoteFileBrowser : IRemoteFiles
         }
     }
 
-    /// <summary>Supprime du serveur le fichier dont l'envoi a été interrompu.</summary>
+    /// <summary>
+    /// Supprime du serveur le fichier dont l'envoi a été interrompu, seulement s'il est un fichier ordinaire. Un lien
+    /// symbolique (fichier remplacé à travers le lien) est gardé, et sa cible, incomplète, aussi : SSH.NET supprimerait la
+    /// cible (realpath), peut-être hors du dossier, avec son propriétaire et ses droits, et laisserait le lien cassé.
+    /// </summary>
     private async Task<TransferCheck> DiscardRemoteAsync(string name, string localPath, string remotePath)
     {
         string detail;
@@ -1106,7 +1116,20 @@ public sealed class RemoteFileBrowser : IRemoteFiles
         {
             using (await _gate.EnterAsync(background: false, CancellationToken.None).ConfigureAwait(false))
             {
-                await _sftp.DeleteFileAsync(remotePath, CancellationToken.None).ConfigureAwait(false);
+                var listed = await ListByNameAsync(RemotePath.Parent(remotePath), CancellationToken.None).ConfigureAwait(false);
+                var item = listed.GetValueOrDefault(RemotePath.Name(remotePath));
+                if (item is { IsRegularFile: true })
+                {
+                    // L'élément listé lui-même : son chemin n'est pas résolu.
+                    await item.DeleteAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                else if (item is not null)
+                {
+                    Diagnostics.DebugLog.Write("files", $"Envoi de {name} annulé : {remotePath} n'est pas un fichier ordinaire, rien n'est supprimé");
+                    return new TransferCheck(name, localPath, remotePath, -1, [], -1, [],
+                        string.Format(CultureInfo.CurrentCulture, CoreStrings.TransferIncompleteLinkKept, RemoteEntry.Visible(await TargetOfAsync(item))))
+                        { Upload = true, Interrupted = true };
+                }
             }
 
             detail = CoreStrings.TransferIncompleteDeleted;
@@ -1121,6 +1144,19 @@ public sealed class RemoteFileBrowser : IRemoteFiles
         }
 
         return new TransferCheck(name, localPath, remotePath, -1, [], -1, [], detail) { Upload = true, Interrupted = true };
+    }
+
+    /// <summary>Chemin réel (liens résolus) d'un élément listé ; son propre chemin si le serveur ne le donne pas.</summary>
+    private async Task<string> TargetOfAsync(ISftpFile item)
+    {
+        try
+        {
+            return (await _sftp.GetAsync(item.FullName, CancellationToken.None).ConfigureAwait(false)).FullName;
+        }
+        catch (Exception e) when (e is Renci.SshNet.Common.SshException or InvalidOperationException)
+        {
+            return item.FullName;
+        }
     }
 
     /// <summary>Supprime la copie locale d'un téléchargement interrompu ; renvoie ce qui a été fait.</summary>
