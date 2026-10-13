@@ -600,8 +600,9 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   a range of servers; `Esc` or a plain click cancels. With the keyboard: `Ctrl+Space` adds or removes the selected
   server, `Shift+↑` / `Shift+↓` extends the range; the arrows alone keep the chosen servers, and the Menu key (or
   `Shift+F10`) opens the menu of the selection. Right-click one of them → "Open the N servers in the parallel view"
-  or "Connect to the N servers" (one tab each). Right-click a folder → "Open in the parallel view" or "Connect to the
-  N servers".
+  or "Connect to the N servers" (one tab each, 10 servers at most: beyond that, the menu is greyed out). Right-click a
+  folder → "Open in the parallel view" only (SSH servers, 8 at most): a folder never opens all its servers at once, to
+  avoid hundreds of sessions opened by mistake.
 - **Tag** (PROD, QA, DEV…): right-click → "Tag ▸", see [below](#tags-prod-qa-dev).
 - **Settings of each server** (right-click → "Properties…"):
 

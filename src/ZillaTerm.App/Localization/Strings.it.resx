@@ -5602,4 +5602,7 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="EditWaitingForWrite" xml:space="preserve">
     <value>Attesa della fine dell'invio del file modificato prima della chiusura…</value>
   </data>
+  <data name="ConnectManyLimitTip" xml:space="preserve">
+    <value>Al massimo {0} sessioni alla volta: seleziona meno server.</value>
+  </data>
 </root>

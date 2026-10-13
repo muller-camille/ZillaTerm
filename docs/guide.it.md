@@ -638,8 +638,9 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
   sceglie una serie di server; `Esc` o un clic semplice annulla. Da tastiera: `Ctrl+Spazio` aggiunge o toglie il
   server selezionato, `Maiusc+↑` / `Maiusc+↓` estende la serie; le sole frecce mantengono i server scelti, e il tasto
   Menu (o `Maiusc+F10`) apre il menu della selezione. Clic destro su uno di essi → «Apri i N server nella vista
-  parallela» o «Connettiti ai N server» (una scheda ciascuno). Clic destro su una cartella → «Apri nella vista
-  parallela» o «Connettiti ai N server».
+  parallela» o «Connettiti ai N server» (una scheda ciascuno, al massimo 10 server: oltre, il menu è disattivato).
+  Clic destro su una cartella → solo «Apri nella vista parallela» (server SSH, al massimo 8): una cartella non apre mai
+  tutti i suoi server in una volta, per evitare centinaia di sessioni aperte per errore.
 - **Etichetta** (PROD, QA, DEV…): clic destro → «Etichetta ▸», vedi [più sotto](#etichette-prod-qa-dev).
 - **Configurazione propria di ogni server** (clic destro → «Proprietà…»):
 

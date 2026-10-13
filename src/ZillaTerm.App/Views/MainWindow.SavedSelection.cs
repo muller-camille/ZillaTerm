@@ -220,6 +220,9 @@ public partial class MainWindow
                 case "connectmany":
                     item.Header = Text.Format(Strings.MenuConnectMany, servers.Count);
                     item.Visibility = many ? Visibility.Visible : Visibility.Collapsed;
+                    // Pas de centaines de sessions ouvertes par erreur (sélection d'un grand dossier par Ctrl+clic).
+                    item.IsEnabled = servers.Count <= MaxSessionsAtOnce;
+                    item.ToolTip = item.IsEnabled ? null : Text.Format(Strings.ConnectManyLimitTip, MaxSessionsAtOnce);
                     break;
                 case "connect":
                     item.FontWeight = many ? FontWeights.Normal : FontWeights.SemiBold;
@@ -245,10 +248,6 @@ public partial class MainWindow
                 case "parallel":
                     item.Header = Text.Format(Strings.MenuOpenFolderInParallel, ssh);
                     item.IsEnabled = ssh > 0 && HasPsmp && !IsOffline;
-                    break;
-                case "connectmany":
-                    item.Header = Text.Format(Strings.MenuConnectMany, servers.Count);
-                    item.IsEnabled = servers.Count > 0 && !IsOffline;
                     break;
                 case "share":
                     BuildShareMenu(item, () => servers);
@@ -324,6 +323,12 @@ public partial class MainWindow
         SetStatus(Text.Format(Strings.TagGuessedStatus, tagged, servers.Count - tagged));
     }
 
+    /// <summary>
+    /// Sessions ouvertes au plus d'un coup depuis une sélection de « Mes serveurs » (un onglet chacun). Un dossier n'ouvre
+    /// jamais tous ses serveurs : seulement la vue parallèle, limitée elle aussi.
+    /// </summary>
+    internal const int MaxSessionsAtOnce = 10;
+
     private async void OnOpenSavedInParallel(object sender, RoutedEventArgs e) => await OpenSavedAsync(MenuServers(), parallel: true);
 
     private async void OnConnectMarkedSaved(object sender, RoutedEventArgs e) => await OpenSavedAsync(MenuServers(), parallel: false);
@@ -333,14 +338,6 @@ public partial class MainWindow
         if (SavedTree.SelectedItem is SavedFolderNode folder)
         {
             await OpenSavedAsync(FolderServers(folder), parallel: true);
-        }
-    }
-
-    private async void OnConnectFolder(object sender, RoutedEventArgs e)
-    {
-        if (SavedTree.SelectedItem is SavedFolderNode folder)
-        {
-            await OpenSavedAsync(FolderServers(folder), parallel: false);
         }
     }
 
@@ -364,6 +361,13 @@ public partial class MainWindow
     {
         if (servers.Count == 0)
         {
+            return;
+        }
+
+        // Un onglet par serveur : jamais plus de MaxSessionsAtOnce d'un coup (la vue parallèle a sa propre limite).
+        if (!parallel && servers.Count > MaxSessionsAtOnce)
+        {
+            SetStatus(Text.Format(Strings.ConnectManyLimitTip, MaxSessionsAtOnce), isError: true);
             return;
         }
 

@@ -637,8 +637,9 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   choisit une suite de serveurs ; `Échap` ou un clic simple annule. Au clavier : `Ctrl+Espace` ajoute ou retire le
   serveur sélectionné, `Maj+↑` / `Maj+↓` étend la suite ; les flèches seules gardent les serveurs choisis, et la
   touche Menu (ou `Maj+F10`) ouvre le menu de la sélection. Clic droit sur l'un d'eux → « Ouvrir les N
-  serveurs en vue parallèle » ou « Se connecter aux N serveurs » (un onglet chacun). Clic droit sur un dossier →
-  « Ouvrir en vue parallèle » ou « Se connecter aux N serveurs ».
+  serveurs en vue parallèle » ou « Se connecter aux N serveurs » (un onglet chacun, 10 serveurs au plus : au-delà,
+  le menu est grisé). Clic droit sur un dossier → « Ouvrir en vue parallèle » seulement (serveurs SSH, 8 au plus) : un
+  dossier n'ouvre jamais tous ses serveurs d'un coup, pour éviter des centaines de sessions ouvertes par erreur.
 - **Étiquette** (PROD, QA, DEV…) : clic droit → « Étiquette ▸ », voir [ci-dessous](#étiquettes-prod-qa-dev).
 - **Configuration propre à chaque serveur** (clic droit → « Propriétés… ») :
 

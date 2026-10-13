@@ -5602,4 +5602,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="EditWaitingForWrite" xml:space="preserve">
     <value>Attente de la fin du renvoi du fichier modifié avant la fermeture…</value>
   </data>
+  <data name="ConnectManyLimitTip" xml:space="preserve">
+    <value>{0} sessions au plus d'un coup : sélectionnez moins de serveurs.</value>
+  </data>
 </root>
