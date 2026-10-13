@@ -5547,4 +5547,7 @@ Two instances would overwrite each other's settings, local vault and files being
 To start over with the default settings, close ZillaTerm and delete these two files from the folder:
 {0}</value>
   </data>
+  <data name="SharedRemoveHiddenBySearch" xml:space="preserve">
+    <value>All its servers are removed, including {0:# server|# servers} hidden by the search.</value>
+  </data>
 </root>

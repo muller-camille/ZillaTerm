@@ -5547,4 +5547,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
 Pour repartir des réglages par défaut, fermez ZillaTerm et supprimez ces deux fichiers du dossier :
 {0}</value>
   </data>
+  <data name="SharedRemoveHiddenBySearch" xml:space="preserve">
+    <value>Tous ses serveurs sont retirés, y compris {0:# serveur masqué|# serveurs masqués} par la recherche.</value>
+  </data>
 </root>

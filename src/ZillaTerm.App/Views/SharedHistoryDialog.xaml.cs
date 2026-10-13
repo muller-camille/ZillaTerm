@@ -89,12 +89,18 @@ public partial class SharedHistoryDialog : Window
         StatusText.SetResourceReference(TextBlock.ForegroundProperty, error ? "ErrorBrush" : "MutedBrush");
     }
 
-    private void OnVersionSelected(object sender, SelectionChangedEventArgs e) =>
-        RestoreButton.IsEnabled = VersionsGrid.SelectedItem is VersionRow && _list.Content?.IsShared == true;
+    // Restauration en cours : « Restaurer » reste grisé, même si une autre version est sélectionnée entre-temps (deux
+    // restaurations se croiseraient, la dernière écrite l'emportant).
+    private bool _restoring;
+
+    private void OnVersionSelected(object sender, SelectionChangedEventArgs e) => UpdateRestoreButton();
+
+    private void UpdateRestoreButton() =>
+        RestoreButton.IsEnabled = !_restoring && VersionsGrid.SelectedItem is VersionRow && _list.Content?.IsShared == true;
 
     private async void OnRestore(object sender, RoutedEventArgs e)
     {
-        if (VersionsGrid.SelectedItem is not VersionRow row)
+        if (_restoring || VersionsGrid.SelectedItem is not VersionRow row)
         {
             return;
         }
@@ -112,15 +118,26 @@ public partial class SharedHistoryDialog : Window
             return;
         }
 
-        RestoreButton.IsEnabled = false;
-        if (await _restore(row.Version) is not null)
+        await RestoreAsync(row);
+    }
+
+    /// <summary>Restaure la version (déjà confirmée), puis relit l'historique.</summary>
+    internal async Task RestoreAsync(VersionRow row)
+    {
+        _restoring = true;
+        UpdateRestoreButton();
+        try
         {
-            await LoadAsync();
-            SetStatus(Text.Format(Strings.SharedRestored, row.Revision));
+            if (await _restore(row.Version) is not null)
+            {
+                await LoadAsync();
+                SetStatus(Text.Format(Strings.SharedRestored, row.Revision));
+            }
         }
-        else
+        finally
         {
-            RestoreButton.IsEnabled = true;
+            _restoring = false;
+            UpdateRestoreButton();
         }
     }
 

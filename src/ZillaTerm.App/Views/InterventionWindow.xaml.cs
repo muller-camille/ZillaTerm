@@ -412,7 +412,15 @@ public partial class InterventionWindow : Window
         }
 
         ShowMessage(Text.Format(Strings.InterventionReportSaved, dialog.FileName));
-        WindowsExplorer.ShowFile(dialog.FileName);
+        try
+        {
+            WindowsExplorer.ShowFile(dialog.FileName);
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or ArgumentException)
+        {
+            // Explorateur non lancé : le rapport est enregistré, et son chemin est affiché.
+            Core.Diagnostics.DebugLog.Write("intervention", $"Explorateur non lancé pour le rapport : {ex.Message}");
+        }
     }
 
     private void OnDelete(object sender, RoutedEventArgs e)

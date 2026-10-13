@@ -16546,5 +16546,14 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("SettingsMissingRestored", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to All its servers are removed, including {0:# server|# servers} hidden by the search..
+        /// </summary>
+        public static string SharedRemoveHiddenBySearch {
+            get {
+                return ResourceManager.GetString("SharedRemoveHiddenBySearch", resourceCulture);
+            }
+        }
     }
 }

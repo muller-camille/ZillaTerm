@@ -5547,4 +5547,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
 Per ripartire dalle impostazioni predefinite, chiudi ZillaTerm ed elimina questi due file dalla cartella:
 {0}</value>
   </data>
+  <data name="SharedRemoveHiddenBySearch" xml:space="preserve">
+    <value>Vengono rimossi tutti i suoi server, {0:compreso # server nascosto|compresi # server nascosti} dalla ricerca.</value>
+  </data>
 </root>

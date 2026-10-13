@@ -1553,9 +1553,19 @@ public partial class MainWindow : Window
 
     private void CopyCurrent(Func<PvwaAccount, string> selector)
     {
-        if (_current is { } account)
+        if (_current is not { } account)
+        {
+            return;
+        }
+
+        try
         {
             Clipboard.SetText(selector(account));
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Presse-papiers tenu par une autre application (Bureau à distance, gestionnaire de presse-papiers).
+            SetStatus(Strings.ClipboardBusy, isError: true);
         }
     }
 

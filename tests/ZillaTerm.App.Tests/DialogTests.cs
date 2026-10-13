@@ -237,6 +237,24 @@ public sealed class DialogTests
 
             var actions = new SafeMemberActions((_, _) => Task.CompletedTask, (_, _) => Task.CompletedTask, (_, _) => Task.CompletedTask);
             new SafeMembersDialog("Prod", _ => Task.FromResult(new List<SafeMember>()), actions).Close();
+
+            // Deux chargements qui se croisent : boutons grisés pendant le chargement, et le plus récent l'emporte même
+            // si l'ancien répond après lui.
+            UseDispatcherContext();
+            var loads = new Queue<TaskCompletionSource<List<SafeMember>>>([new(), new()]);
+            var pending = loads.ToArray();
+            var members = new SafeMembersDialog("Prod", _ => loads.Dequeue().Task, actions);
+            var first = members.LoadAsync();
+            Assert.False(members.ManagePanel.IsEnabled);
+            var second = members.LoadAsync();
+            pending[1].SetResult([new SafeMember { MemberName = "jdoe" }]);
+            Pump(second);
+            Assert.True(members.ManagePanel.IsEnabled);
+            pending[0].SetResult([new SafeMember { MemberName = "ancien" }]);
+            Pump(first);
+            Assert.Equal(["jdoe"], Assert.IsAssignableFrom<IEnumerable<SafeMembersDialog.SafeMemberRow>>(members.MembersGrid.ItemsSource).Select(r => r.Name));
+            Assert.True(members.ManagePanel.IsEnabled);
+            members.Close();
         });
     }
 
@@ -2078,6 +2096,20 @@ public sealed class DialogTests
                 Assert.True(dialog.RestoreButton.IsEnabled);
                 Assert.Empty(restored);
                 dialog.Close();
+
+                // Restauration en cours (partage lent) : choisir une autre version ne réactive pas « Restaurer ».
+                var pending = new TaskCompletionSource<int?>();
+                var slow = new SharedHistoryDialog(new SharedServerList(list.Path), _ => pending.Task);
+                Pump(slow.LoadAsync());
+                slow.VersionsGrid.SelectedIndex = 1;
+                var restoring = slow.RestoreAsync(slow.Versions[1]);
+                Assert.False(slow.RestoreButton.IsEnabled);
+                slow.VersionsGrid.SelectedIndex = 0;
+                Assert.False(slow.RestoreButton.IsEnabled);
+                pending.SetResult(null);
+                Pump(restoring);
+                Assert.True(slow.RestoreButton.IsEnabled);
+                slow.Close();
             });
         }
         finally
@@ -2141,6 +2173,37 @@ public sealed class DialogTests
                 Assert.Equal("root@app01", Assert.IsType<SavedSessionNode>(nodes[1]).Title);
                 window.StopWatchingSharedLists();
             });
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// « Retirer le dossier » d'une liste partagée pendant une recherche qui n'en montre qu'un serveur : tous les serveurs
+    /// du dossier (sous-dossiers compris) sont retirés, pas seulement celui affiché ; un serveur seul reste seul.
+    /// </summary>
+    [Fact]
+    public void RemovingASharedFolderTakesTheServersHiddenBySearch()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var directory = Directory.CreateTempSubdirectory("cat-shared-").FullName;
+        try
+        {
+            var list = SharedServerList.Create(Path.Combine(directory, "Équipe.json"), "Équipe", "pvwa.test", "alice");
+            list.Add([Server("1", "web01", "Recette"), Server("2", "db01", "Recette"), Server("3", "app01", "Recette/Interne"),
+                Server("4", "web02", "Prod")], "alice");
+            var web01 = list.Content!.Servers.Single(s => s.Name == "web01");
+            var shown = new SharedServerNode(list, web01, web01.ToSession("pvwa.test", keepId: true), null);
+            var folder = new SharedFolderNode(list, "Recette", [shown], isExpanded: true);
+
+            Assert.Equal(["app01", "db01", "web01"], MainWindow.SharedRemovalEntries(folder).Select(s => s.Name).Order());
+            Assert.Equal(["web01"], MainWindow.SharedRemovalEntries(shown).Select(s => s.Name));
         }
         finally
         {

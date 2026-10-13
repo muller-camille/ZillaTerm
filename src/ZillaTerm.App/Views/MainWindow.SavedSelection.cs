@@ -10,9 +10,10 @@ using ZillaTerm.Core.Terminal;
 namespace ZillaTerm.App.Views;
 
 /// <summary>
-/// Plusieurs serveurs « Mes serveurs » à la fois : Ctrl+clic ajoute ou retire un serveur (ou tous ceux d'un dossier),
-/// Maj+clic choisit une suite de serveurs ; clic droit → « Ouvrir en vue parallèle » ou « Se connecter aux N serveurs ».
-/// Un dossier s'ouvre aussi d'un coup (clic droit sur le dossier). Seuls les serveurs SSH vont dans la vue parallèle.
+/// Plusieurs serveurs « Mes serveurs » à la fois : Ctrl+clic (ou Ctrl+Espace) ajoute ou retire un serveur (ou tous ceux
+/// d'un dossier), Maj+clic (ou Maj+↑/↓) choisit une suite de serveurs ; clic droit (ou touche Menu) → « Ouvrir en vue
+/// parallèle » ou « Se connecter aux N serveurs ». Un dossier s'ouvre aussi d'un coup (clic droit sur le dossier). Seuls
+/// les serveurs SSH vont dans la vue parallèle.
 /// </summary>
 public partial class MainWindow
 {
@@ -49,6 +50,34 @@ public partial class MainWindow
         }
 
         OnDragSourceMouseDown(sender, e);
+    }
+
+    /// <summary>
+    /// Au clavier comme à la souris : Ctrl+Espace vaut Ctrl+clic sur l'élément sélectionné ; Maj+↑/↓ déplace la sélection
+    /// (comme ↑/↓, qui gardent les serveurs choisis), puis choisit la suite de serveurs depuis celui de départ, comme
+    /// Maj+clic.
+    /// </summary>
+    private void OnSavedPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        var modifiers = Keyboard.Modifiers;
+        if (e.Key == Key.Space && modifiers == ModifierKeys.Control && SavedTree.SelectedItem is SavedSessionNode or SavedFolderNode)
+        {
+            ToggleMarks(SavedTree.SelectedItem);
+            e.Handled = true;
+        }
+        else if (e.Key is Key.Up or Key.Down && modifiers == ModifierKeys.Shift && SavedTree.SelectedItem is not null)
+        {
+            // Le TreeView déplace la sélection pendant cette touche : la suite est choisie juste après.
+            _savedAnchor ??= (SavedTree.SelectedItem as SavedSessionNode)?.Session;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
+            {
+                if (SavedTree.SelectedItem is SavedSessionNode target)
+                {
+                    _savedAnchor ??= target.Session;
+                    MarkRange(target.Session);
+                }
+            });
+        }
     }
 
     /// <summary>Ctrl+clic : le serveur (ou les serveurs du dossier) entre dans la sélection, ou en sort.</summary>

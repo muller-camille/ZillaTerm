@@ -610,7 +610,15 @@ public partial class MainWindow
     /// Menu de chaque élément de « Mes serveurs », posé sur l'élément de l'arbre lui-même : le clic droit, Maj+F10 et
     /// la touche Menu ouvrent le même menu.
     /// </summary>
-    private void OnSavedItemLoaded(object sender, RoutedEventArgs e)
+    private void OnSavedItemLoaded(object sender, RoutedEventArgs e) => SetSavedItemMenu(sender);
+
+    /// <summary>
+    /// Menu revu à chaque ouverture : une ligne recyclée par la virtualisation (défilement) change d'élément sans être
+    /// rechargée, et garderait sinon le menu de l'élément précédent (menu d'un dossier sur un serveur…).
+    /// </summary>
+    private void OnSavedItemMenuOpening(object sender, ContextMenuEventArgs e) => SetSavedItemMenu(sender);
+
+    private void SetSavedItemMenu(object sender)
     {
         if (sender is TreeViewItem item && SavedMenuKey(item.DataContext) is { } key)
         {
