@@ -110,6 +110,35 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Déconnexion, arrêt ou redémarrage de Windows : WPF ferme ensuite les fenêtres sans attendre la fermeture ordonnée
+    /// (questions, suites asynchrones), et Windows peut arrêter le processus dès cette réponse donnée. Le nettoyage
+    /// essentiel est donc fait ici, de façon synchrone (<see cref="Views.MainWindow.EndWithWindowsSession"/>), puis
+    /// celui de <see cref="OnExit"/>. Une session Bureau à distance dont la fenêtre n'est pas encore libérée : arrêt
+    /// immédiat, comme à la fermeture (sa fenêtre, d'un autre thread, bloquerait la destruction de la fenêtre principale).
+    /// </summary>
+    protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
+    {
+        base.OnSessionEnding(e);
+        if (e.Cancel)
+        {
+            return;
+        }
+
+        DebugLog.Write("app", $"Fin de la session Windows ({e.ReasonSessionEnding}).");
+        foreach (var main in Windows.OfType<Views.MainWindow>().ToList())
+        {
+            main.EndWithWindowsSession();
+        }
+
+        if (RdpSession.ControlWindowsLeft)
+        {
+            ExitNow();
+        }
+
+        Release();
+    }
+
+    /// <summary>
     /// Fin immédiate, après le nettoyage de <see cref="OnExit"/> : une session Bureau à distance bloquée garde une
     /// fenêtre de son contrôle que l'arrêt normal détruirait en attendant son thread (l'application resterait figée).
     /// </summary>
