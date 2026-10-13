@@ -5541,4 +5541,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>Identité de {0} impossible à vérifier : {1}</value>
   </data>
+  <data name="X11ForwardingEffect" xml:space="preserve">
+    <value>⚠ Effet : un serveur compromis pourrait voir les autres fenêtres X de ce poste et y envoyer des frappes.</value>
+  </data>
 </root>

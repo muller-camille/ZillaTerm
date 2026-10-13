@@ -1104,6 +1104,20 @@
         <Setter Property="Margin" Value="20,0,0,8" />
     </Style>
 
+    <!-- La même, affichée dès que sa case (Tag) est cochée et active : visible au clavier, pas seulement au survol. -->
+    <Style x:Key="CheckedOptionEffect" TargetType="TextBlock" BasedOn="{StaticResource OptionEffect}">
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Tag.IsChecked, RelativeSource={RelativeSource Self}}" Value="True" />
+                    <Condition Binding="{Binding Tag.IsEnabled, RelativeSource={RelativeSource Self}}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Visibility" Value="Visible" />
+            </MultiDataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- Aide sous un réglage. -->
     <Style x:Key="OptionHelp" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />

@@ -5541,4 +5541,7 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>The identity of {0} could not be checked: {1}</value>
   </data>
+  <data name="X11ForwardingEffect" xml:space="preserve">
+    <value>⚠ Effect: a compromised server could see the other X windows of this computer and send keystrokes to them.</value>
+  </data>
 </root>

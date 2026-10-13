@@ -16534,5 +16534,14 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("FreeRdpCheckFailed", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ⚠ Effect: a compromised server could see the other X windows of this computer and send keystrokes to them..
+        /// </summary>
+        public static string X11ForwardingEffect {
+            get {
+                return ResourceManager.GetString("X11ForwardingEffect", resourceCulture);
+            }
+        }
     }
 }

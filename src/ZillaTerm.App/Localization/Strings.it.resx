@@ -5541,4 +5541,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>Impossibile verificare l'identità di {0}: {1}</value>
   </data>
+  <data name="X11ForwardingEffect" xml:space="preserve">
+    <value>⚠ Effetto: un server compromesso potrebbe vedere le altre finestre X di questo computer e inviarvi dei tasti.</value>
+  </data>
 </root>

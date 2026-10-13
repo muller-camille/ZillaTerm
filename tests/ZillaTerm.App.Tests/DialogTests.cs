@@ -1612,7 +1612,8 @@ public sealed class DialogTests
 
     /// <summary>
     /// Transfert X11 : proposé pour une session SSH seulement (grisé pour le PSM et les fichiers seuls, avec la raison),
-    /// repris de la requête et rendu dans le résultat ; de même dans les propriétés d'un serveur de « Mes serveurs ».
+    /// repris de la requête et rendu dans le résultat ; de même dans les propriétés d'un serveur de « Mes serveurs ». Case
+    /// cochée et active : sa conséquence (« ⚠ Effet : … ») est écrite dessous, visible sans survol.
     /// </summary>
     [Fact]
     public void X11ForwardingIsForSshSessionsOnly()
@@ -1630,12 +1631,18 @@ public sealed class DialogTests
             Assert.True(dialog.X11Box.IsEnabled);
             Assert.True(dialog.X11Box.IsChecked);
             Assert.Equal(Strings.X11ForwardingTip, dialog.X11Box.ToolTip);
+            Assert.Equal(Visibility.Visible, dialog.X11Effect.Visibility);
+            Assert.Equal(Strings.X11ForwardingEffect, dialog.X11Effect.Text);
             Assert.True(dialog.Accept());
             Assert.True(dialog.Result?.X11Forwarding);
+            dialog.X11Box.IsChecked = false;
+            Assert.Equal(Visibility.Collapsed, dialog.X11Effect.Visibility);
+            dialog.X11Box.IsChecked = true;
 
             dialog.SftpRadio.IsChecked = true;
             Assert.False(dialog.X11Box.IsEnabled);
             Assert.Equal(Strings.X11SshOnly, dialog.X11Box.ToolTip);
+            Assert.Equal(Visibility.Collapsed, dialog.X11Effect.Visibility);
             Assert.True(dialog.Accept());
             Assert.False(dialog.Result?.X11Forwarding);
             dialog.Close();
@@ -1644,8 +1651,10 @@ public sealed class DialogTests
             var properties = new SessionPropertiesDialog(saved, account, [], sshAvailable: true, [], x11: true);
             Assert.True(properties.X11Box.IsEnabled);
             Assert.True(properties.X11Box.IsChecked);
+            Assert.Equal(Visibility.Visible, properties.X11Effect.Visibility);
             properties.PsmRadio.IsChecked = true;
             Assert.False(properties.X11Box.IsEnabled);
+            Assert.Equal(Visibility.Collapsed, properties.X11Effect.Visibility);
             Assert.Equal(Strings.X11SshOnly, properties.X11Box.ToolTip);
             properties.Close();
         });
