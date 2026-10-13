@@ -16534,5 +16534,14 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("FreeRdpCheckFailed", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No .tar.gz archive for this drop: extracting it would recreate the replaced items with other permissions and another owner. The files are sent one by one..
+        /// </summary>
+        public static string ArchiveNotForReplace {
+            get {
+                return ResourceManager.GetString("ArchiveNotForReplace", resourceCulture);
+            }
+        }
     }
 }

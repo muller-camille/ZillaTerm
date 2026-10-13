@@ -5541,4 +5541,7 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>The identity of {0} could not be checked: {1}</value>
   </data>
+  <data name="ArchiveNotForReplace" xml:space="preserve">
+    <value>No .tar.gz archive for this drop: extracting it would recreate the replaced items with other permissions and another owner. The files are sent one by one.</value>
+  </data>
 </root>

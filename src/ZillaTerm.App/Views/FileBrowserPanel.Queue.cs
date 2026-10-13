@@ -95,12 +95,44 @@ public partial class FileBrowserPanel
         }
 
         var directory = target ?? browser.CurrentDirectory;
-        var names = paths.Select(p => Path.GetFileName(p.TrimEnd('\\', '/'))).ToList();
+        List<string> names;
+        try
+        {
+            // Racine d'un lecteur (« E:\ ») : sans nom, son contenu irait dans le dossier lui-même, sans question.
+            names = paths.Select(LocalTree.UploadName).ToList();
+        }
+        catch (ArgumentException ex)
+        {
+            SetStatus(ex.Message, error: true);
+            return;
+        }
+
+        // Écrasement : noms déjà dans le dossier sur le serveur, fichiers cachés compris (la liste affichée peut les masquer,
+        // ou montrer un autre dossier si l'on a navigué entre-temps), ou attendus d'un envoi en attente vers ce dossier.
+        IEnumerable<string> present;
+        try
+        {
+            SetStatus(Text.Format(Strings.Reading, directory));
+            present = (await browser.BrowseAsync(directory, showHidden: true, CancellationToken.None)).Select(e => e.Name).ToList();
+            SetStatus("");
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            SetStatus(Text.Format(Strings.CannotOpen, directory, ErrorText.Describe(ex)), error: true);
+            return;
+        }
+
+        var existing = present
+            .Concat(_queue.Items
+                .Where(i => i.Upload && i.State is TransferState.Pending or TransferState.Running && ReferenceEquals(i.Owner, session) && i.Destination == directory)
+                .SelectMany(i => i.Names))
+            .ToHashSet(StringComparer.Ordinal);
 
         // Beaucoup de fichiers d'un coup : proposer une seule archive .tar.gz (option des Paramètres).
         string? archiveName = null;
         int archiveFiles = 0;
         string? gzip = null;
+        bool archiveWouldReplace = false;
         // L'archive se décompresse par une commande tapée dans le terminal : pas de proposition sans terminal.
         var terminal = session as SshSession;
         if (_settings.OfferArchive && terminal is not null)
@@ -116,6 +148,12 @@ public partial class FileBrowserPanel
             {
                 // Nom trop long ou fichier trop gros pour le format tar standard : envoi un par un.
                 SetStatus(Text.Format(Strings.ArchiveNotPossible, tooLong));
+            }
+            else if (files >= threshold && names.Any(existing.Contains))
+            {
+                // Le dépôt remplace des éléments du serveur : envoi un par un, qui les réécrit sur place (droits,
+                // propriétaire, ACL gardés), alors que tar recréerait les fichiers remplacés en 644, au nom de qui extrait.
+                archiveWouldReplace = true;
             }
             else if (files >= threshold)
             {
@@ -144,26 +182,6 @@ public partial class FileBrowserPanel
             }
         }
 
-        // Écrasement : noms déjà dans le dossier sur le serveur, fichiers cachés compris (la liste affichée peut les masquer,
-        // ou montrer un autre dossier si l'on a navigué entre-temps), ou attendus d'un envoi en attente vers ce dossier.
-        IEnumerable<string> present;
-        try
-        {
-            SetStatus(Text.Format(Strings.Reading, directory));
-            present = (await browser.BrowseAsync(directory, showHidden: true, CancellationToken.None)).Select(e => e.Name).ToList();
-            SetStatus("");
-        }
-        catch (Exception ex) when (ex is not OutOfMemoryException)
-        {
-            SetStatus(Text.Format(Strings.CannotOpen, directory, ErrorText.Describe(ex)), error: true);
-            return;
-        }
-
-        var existing = present
-            .Concat(_queue.Items
-                .Where(i => i.Upload && i.State is TransferState.Pending or TransferState.Running && ReferenceEquals(i.Owner, session) && i.Destination == directory)
-                .SelectMany(i => i.Names))
-            .ToHashSet(StringComparer.Ordinal);
         var conflicts = names.Where(existing.Contains).Distinct(StringComparer.Ordinal).ToList();
         if (conflicts.Count > 0)
         {
@@ -176,7 +194,7 @@ public partial class FileBrowserPanel
                     ? Text.Format(Strings.UploadConflictHeadingOne, conflicts[0])
                     : Text.Format(Strings.UploadConflictHeadingMany, conflicts.Count),
                 Subject = Text.Format(Strings.ServerPath, session.Label, directory),
-                Message = Strings.UploadConflictMessage,
+                Message = archiveWouldReplace ? Strings.UploadConflictMessage + "\n\n" + Strings.ArchiveNotForReplace : Strings.UploadConflictMessage,
                 Items = conflicts.Count == 1 ? [] : conflicts,
                 Kind = ConfirmKind.Warning,
                 Actions = archiveName is null ? [Strings.ActionReplace, Strings.UploadSkipExisting] : [Strings.ActionReplace],

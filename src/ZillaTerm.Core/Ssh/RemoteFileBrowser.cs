@@ -201,7 +201,8 @@ public sealed class RemoteFileBrowser : IRemoteFiles
     public async Task UploadAsync(string localPath, string remoteDirectory, TransferProtocol protocol, ICollection<TransferCheck> checks,
         IProgress<TransferProgress>? progress, bool background, CancellationToken ct)
     {
-        var name = Path.GetFileName(localPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        // Racine d'un lecteur (« E:\ ») refusée : elle serait versée dans le dossier lui-même.
+        var name = LocalTree.UploadName(localPath);
         var remote = RemotePath.Combine(remoteDirectory, name);
         if (Directory.Exists(localPath))
         {

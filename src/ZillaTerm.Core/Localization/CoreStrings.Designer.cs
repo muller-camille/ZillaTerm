@@ -1702,5 +1702,14 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("RdpNoEncryption", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” is a whole drive or share: drop the folders or files it contains instead..
+        /// </summary>
+        public static string UploadWholeDrive {
+            get {
+                return ResourceManager.GetString("UploadWholeDrive", resourceCulture);
+            }
+        }
     }
 }

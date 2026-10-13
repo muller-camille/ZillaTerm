@@ -23,7 +23,8 @@ public sealed class TarGzPackerTests : IDisposable
     /// <summary>
     /// Chaque élément déposé à la racine de l'archive, dossiers parcourus entièrement (fichiers cachés, noms accentués,
     /// chemin long réparti entre préfixe et nom), format ustar lu par tous les tar, droits fixes, propriétaire 0,
-    /// contenu intact ; avancement en octets.
+    /// contenu intact ; avancement en octets. Seuls les dossiers vides ont une entrée : tar crée les autres sans toucher
+    /// à ceux qui existent déjà sur le serveur. Aucun chemin absolu.
     /// </summary>
     [Fact]
     public async Task PacksDroppedItemsAtTheRoot()
@@ -55,8 +56,10 @@ public sealed class TarGzPackerTests : IDisposable
             }
         }
 
-        Assert.Equal(TarEntryType.Directory, entries["deploy/"].Type);
+        Assert.Equal(TarEntryType.Directory, entries["deploy/vide/"].Type);
         Assert.Equal((UnixFileMode)0b111_101_101, entries["deploy/vide/"].Mode);
+        Assert.Equal(["deploy/vide/"], entries.Where(e => e.Value.Type == TarEntryType.Directory).Select(e => e.Key));
+        Assert.DoesNotContain(entries.Keys, k => k.StartsWith('/'));
         Assert.Equal(("a=1", (UnixFileMode)0b110_100_100), (entries["deploy/app.conf"].Content, entries["deploy/app.conf"].Mode));
         Assert.Equal("long", entries[$"deploy/sous dossier/été/{longName}"].Content);
         Assert.Contains("deploy/.env", entries.Keys);
@@ -88,9 +91,34 @@ public sealed class TarGzPackerTests : IDisposable
         Assert.Equal(1, await TarGzPacker.CreateAsync([Path.Combine(_dir, "site")], archive, compress: false, null, default));
 
         using var reader = new TarReader(File.OpenRead(archive));
-        Assert.Equal("site/", reader.GetNextEntry()!.Name);
         var file = reader.GetNextEntry()!;
         Assert.Equal(("site/index.html", "<h1>ok</h1>"), (file.Name, new StreamReader(file.DataStream!).ReadToEnd()));
+        Assert.Null(reader.GetNextEntry());
+    }
+
+    /// <summary>
+    /// Racine d'un lecteur ou d'un partage (« E:\ ») : refusée, sans rien parcourir ni créer. Sinon son contenu irait
+    /// directement dans le dossier du serveur, et l'archive aurait des membres « /fichier ».
+    /// </summary>
+    [Fact]
+    public async Task RefusesTheRootOfADrive()
+    {
+        var root = OperatingSystem.IsWindows() ? Path.GetPathRoot(_dir)! : "/";
+        var archive = Path.Combine(_dir, "root.tar.gz");
+
+        Assert.Equal("deploy", LocalTree.UploadName(Path.Combine(_dir, "deploy") + Path.DirectorySeparatorChar));
+        var error = Assert.Throws<ArgumentException>(() => LocalTree.UploadName(root));
+        Assert.Contains(root, error.Message, StringComparison.Ordinal);
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Throws<ArgumentException>(() => LocalTree.UploadName(@"E:\"));
+            Assert.Throws<ArgumentException>(() => LocalTree.UploadName(@"\\srv01.corp.local\partage\"));
+        }
+
+        Assert.Throws<ArgumentException>(() => TarGzPacker.ArchiveName([root], DateTime.Now));
+        Assert.Throws<ArgumentException>(() => TarGzPacker.UstarProblem([root]));
+        await Assert.ThrowsAsync<ArgumentException>(() => TarGzPacker.CreateAsync([root], archive, compress: true, null, default));
+        Assert.False(File.Exists(archive));
     }
 
     /// <summary>
@@ -126,7 +154,11 @@ public sealed class TarGzPackerTests : IDisposable
         Assert.Null(await TarGzPacker.FindGzipAsync((_, _) => Task.FromResult(false), default));
     }
 
-    /// <summary>Nom de l'archive et commande d'extraction protégée contre l'injection (apostrophes, nom commençant par « - »).</summary>
+    /// <summary>
+    /// Nom de l'archive et commande d'extraction protégée contre l'injection (apostrophes, nom commençant par « - ») ;
+    /// « o » : le propriétaire de l'archive n'est jamais appliqué, même par root (lettres-clés sans tiret, lues par tous
+    /// les tar).
+    /// </summary>
     [Fact]
     public void NamesTheArchiveAndQuotesTheCommand()
     {
@@ -134,10 +166,10 @@ public sealed class TarGzPackerTests : IDisposable
         Assert.Equal("deploy.tar.gz", TarGzPacker.ArchiveName([Path.Combine(_dir, "deploy") + Path.DirectorySeparatorChar], now));
         Assert.Equal("upload-20261005-183000.tar.gz", TarGzPacker.ArchiveName([Path.Combine(_dir, "a"), Path.Combine(_dir, "b")], now));
         Assert.Equal("upload-20261005-183000.tar", TarGzPacker.ArchiveName([Path.Combine(_dir, "a"), Path.Combine(_dir, "b")], now, compressed: false));
-        Assert.Equal("cd '/opt/l'\\''app' && /usr/contrib/bin/gzip -dc './-x.tar.gz' | tar xf - && rm -f './-x.tar.gz'",
+        Assert.Equal("cd '/opt/l'\\''app' && /usr/contrib/bin/gzip -dc './-x.tar.gz' | tar xof - && rm -f './-x.tar.gz'",
             TarGzPacker.ExtractCommand("/opt/l'app", "-x.tar.gz", "/usr/contrib/bin/gzip"));
         // Sans gzip ; « ! » hors des apostrophes, sinon l'historique de csh ou de bash l'interpréterait.
-        Assert.Equal("cd '/srv/a'\\!'b' && tar xf './x.tar' && rm -f './x.tar'", TarGzPacker.ExtractCommand("/srv/a!b", "x.tar", null));
+        Assert.Equal("cd '/srv/a'\\!'b' && tar xof './x.tar' && rm -f './x.tar'", TarGzPacker.ExtractCommand("/srv/a!b", "x.tar", null));
         Assert.Null(TarGzPacker.ExtractCommand("/opt/a\nb", "x.tar.gz", "/usr/bin/gzip"));
         // Seuls les emplacements connus de gzip entrent dans la commande.
         Assert.Throws<ArgumentOutOfRangeException>(() => TarGzPacker.ExtractCommand("/opt", "x.tar.gz", "gzip; reboot"));

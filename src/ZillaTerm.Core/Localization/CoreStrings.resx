@@ -561,4 +561,7 @@
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>The Remote Desktop server uses no encryption: nothing proves its identity nor protects the connection, it is refused.</value>
   </data>
+  <data name="UploadWholeDrive" xml:space="preserve">
+    <value>“{0}” is a whole drive or share: drop the folders or files it contains instead.</value>
+  </data>
 </root>

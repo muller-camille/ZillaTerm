@@ -1,3 +1,6 @@
+using System.Globalization;
+using ZillaTerm.Core.Localization;
+
 namespace ZillaTerm.Core.Ssh;
 
 /// <summary>
@@ -10,6 +13,17 @@ public static class LocalTree
 {
     // Fichiers cachés et système compris, comme avant (Directory.EnumerateFiles sans options) ; erreurs d'accès signalées.
     private static readonly EnumerationOptions Options = new() { AttributesToSkip = 0, RecurseSubdirectories = false };
+
+    /// <summary>Nom sous lequel un fichier ou un dossier déposé arrive sur le serveur : son nom, sans séparateur final.</summary>
+    /// <exception cref="ArgumentException">
+    /// Racine d'un lecteur ou d'un partage (« E:\ », « \\serveur\partage ») : sans nom, son contenu irait directement dans
+    /// le dossier du serveur, et remplacerait sans question ce qui y porte le même nom.
+    /// </exception>
+    public static string UploadName(string localPath)
+    {
+        var name = Path.GetFileName(localPath.TrimEnd('\\', '/'));
+        return name.Length > 0 ? name : throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, CoreStrings.UploadWholeDrive, localPath));
+    }
 
     /// <summary>Fichiers du dossier, liens vers des fichiers compris.</summary>
     public static IEnumerable<FileInfo> Files(DirectoryInfo directory) => directory.EnumerateFiles("*", Options);

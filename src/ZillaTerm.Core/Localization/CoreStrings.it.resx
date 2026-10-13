@@ -561,4 +561,7 @@
   <data name="RdpNoEncryption" xml:space="preserve">
     <value>Il server Desktop remoto non usa alcuna cifratura: nulla ne prova l'identità né protegge la connessione, che viene rifiutata.</value>
   </data>
+  <data name="UploadWholeDrive" xml:space="preserve">
+    <value>«{0}» è un'intera unità o condivisione: trascina invece le cartelle o i file che contiene.</value>
+  </data>
 </root>

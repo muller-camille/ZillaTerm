@@ -5541,4 +5541,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="FreeRdpCheckFailed" xml:space="preserve">
     <value>Impossibile verificare l'identità di {0}: {1}</value>
   </data>
+  <data name="ArchiveNotForReplace" xml:space="preserve">
+    <value>Nessun archivio .tar.gz per questo invio: l'estrazione ricreerebbe gli elementi sostituiti con altri permessi e un altro proprietario. I file vengono inviati uno alla volta.</value>
+  </data>
 </root>
