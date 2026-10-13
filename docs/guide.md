@@ -886,7 +886,10 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   - the **intervention title** (ticket, incident, server…), kept with `Enter` or when leaving the field: it is written
     to the journal, shown in the "Recorded interventions" list, at the top of the report and in the file name suggested
     for it. One line, 200 characters at most;
-  - the **note**: `Enter` adds it to the journal, `Shift+Enter` starts a new line;
+  - the **note**: `Enter` adds it to the journal, `Shift+Enter` starts a new line. **"Edit"** on a note of the history
+    (or `F2`) brings it back into the field: `Enter` or "Save the change" replaces it in place, `Esc` or "Cancel" gives
+    back what you were typing. The note then shows "edited at …"; the journal keeps the original text and the report
+    shows both. Only the notes of the current recording can be edited;
   - **"Capture a remote desktop…"**;
   - the **history** of the intervention, as it happens: start, title, notes, connections, actions, transfers (with their
     SHA-256), captures and terminal text. A command and its output form a block (a new block starts after 2 seconds
@@ -901,9 +904,11 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   stays selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
   terminal text and captures, to attach to the intervention report. Each recorded screen has its own player: "Play",
   "Speed" (1× to 60×) and a position slider, under which a graph shows the screen activity (share changed at each
-  moment): click a peak to go there. The player is the only script of the page, allowed by its hash; it needs a recent
-  browser (Edge, Chrome, Firefox). A missing image (damaged journal) freezes the screen until the next full image, with
-  a notice. **"Delete…"** erases a finished recording.
+  moment): click a peak to go there. The notes are placed there at their time (orange marks): click one to go there,
+  hover it to read it; the timeline runs until the last trace of the session (tab closed…), so a note taken in front of
+  a still screen is on it. The player is the only script of the page, allowed by its hash; it needs a recent browser
+  (Edge, Chrome, Firefox). A missing image (damaged journal) freezes the screen until the next full image, with a
+  notice. **"Delete…"** erases a finished recording.
 
 The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (the
 title too, in a `.title` file next to it, for the list), block by block as recording goes, its text compressed (a crash
@@ -938,6 +943,7 @@ title, the note and the capture are greyed out in the "Intervention" tab. Free s
 | Home | Remove a recent session from the list | `Del` |
 | My servers | Rename / remove or delete | `F2` / `Del` |
 | My servers | Pick several servers (then right-click to open them together) | `Ctrl+click`, `Shift+click`, `Ctrl+Space`, `Shift+↑` / `Shift+↓`; `Esc` cancels |
+| Intervention | Edit the note selected in the history | `F2`, then `Enter`; `Esc` cancels |
 | Terminal | Copy | Mouse selection, or `Ctrl+Shift+C` |
 | Terminal | Paste | `Shift+Insert` or `Ctrl+Shift+V` (right-click with the Settings option) |
 | Terminal | Menu: copy, paste, select all, search, save, clear the history, font size, tab actions | Right-click or Menu key (Shift+right-click with the paste option) |

@@ -174,6 +174,25 @@ public sealed class InterventionRecorder
     /// <summary>Écrit sur le disque ce qui attend (avant de relire l'intervention en cours).</summary>
     public void Flush() => _journal?.Flush();
 
+    /// <summary>
+    /// Modifie une note de l'enregistrement en cours. Le journal n'est jamais réécrit : la modification s'y ajoute avec
+    /// l'heure de la note (<see cref="InterventionEntry.Edits"/>), et le rapport montre le dernier texte et celui d'origine.
+    /// </summary>
+    /// <param name="noteTime">Heure (UTC) de la note modifiée.</param>
+    /// <returns>Vrai si la modification est gardée (enregistrement en cours, journal accepté).</returns>
+    public bool EditNote(DateTime noteTime, string text)
+    {
+        var history = _history;
+        var entry = new InterventionEntry(DateTime.UtcNow, InterventionKind.Note, "", text, Edits: noteTime);
+        if (_journal is not { } journal || !journal.Write(entry))
+        {
+            return false;
+        }
+
+        history?.Add(entry);
+        return true;
+    }
+
     /// <summary>Ajoute un événement si l'enregistrement est lancé (depuis n'importe quel fil).</summary>
     public void Record(InterventionKind kind, string source, string text, byte[]? image = null) =>
         Write(new InterventionEntry(DateTime.UtcNow, kind, source, text, image));

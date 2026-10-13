@@ -251,11 +251,10 @@ journal (« Ticket ouvert ✓ »). Le texte reste du texte brut : rien d'autre n
 ### Lecteur des écrans enregistrés : repères
 
 L'écran des Bureaux à distance dans un onglet est enregistré en tuiles modifiées, et le rapport a un lecteur avec la
-courbe d'activité sous le curseur. Restent à y ajouter :
+courbe d'activité et les notes sous le curseur. Restent à y ajouter :
 
 - un **cadre** autour de la zone modifiée à chaque image ;
 - les **clics** de l'opérateur (position connue de l'onglet, jamais les touches tapées) ;
-- les **notes** et la fin de session sur la même ligne de temps que la courbe ;
 - l'**enregistrement par mstsc** (sessions PSM ouvertes avec Connexion Bureau à distance), aujourd'hui gardées par les
   seules captures à la demande.
 

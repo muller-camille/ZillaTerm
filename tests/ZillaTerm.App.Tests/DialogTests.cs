@@ -3405,6 +3405,99 @@ public sealed partial class DialogTests
     }
 
     /// <summary>
+    /// Modifier une note : « Modifier » (ou F2) met son texte dans le champ de la note, la note en cours de saisie est mise
+    /// de côté puis revient ; Entrée enregistre, Échap annule. Le bloc de l'historique prend le nouveau texte à sa place
+    /// avec « modifiée à … » ; le journal garde la note d'origine et la modification ; le rapport montre les deux textes.
+    /// À l'arrêt, plus de modification.
+    /// </summary>
+    [Fact]
+    public void InterventionPanelEditsANote()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var click = new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent);
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new XorProtector());
+                var panel = new InterventionPanel();
+                panel.Attach(recorder);
+                var window = new Window { Content = panel, Width = 420, Height = 640, ShowActivated = false, ShowInTaskbar = false };
+                window.Show();
+                recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
+                Assert.True(panel.NotesEditable);
+
+                System.Windows.Input.KeyEventArgs Key(System.Windows.Input.Key key) =>
+                    new(System.Windows.Input.Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0, key)
+                    {
+                        RoutedEvent = System.Windows.Input.Keyboard.PreviewKeyDownEvent,
+                    };
+
+                panel.NoteBox.Text = "Disque /var plein";
+                panel.NoteBox.RaiseEvent(Key(System.Windows.Input.Key.Enter));
+                panel.ReadHistory();
+                var note = panel.HistoryList.Items.Cast<InterventionHistoryItem>().Single(item => item.IsNote);
+                Assert.Equal("", note.Edited);
+
+                // Modifier, puis Échap : rien ne change, la saisie en cours revient.
+                panel.NoteBox.Text = "brouillon";
+                panel.StartEdit(note);
+                Assert.Equal("Disque /var plein", panel.NoteBox.Text);
+                Assert.Equal(Strings.InterventionSaveNoteEdit, panel.NoteButtonText.Text);
+                Assert.Equal(Visibility.Visible, panel.CancelEditButton.Visibility);
+                Assert.Equal(Text.Format(Strings.InterventionEditingNote, note.Time), panel.EditingText.Text);
+                panel.NoteBox.RaiseEvent(Key(System.Windows.Input.Key.Escape));
+                Assert.Equal("brouillon", panel.NoteBox.Text);
+                Assert.Equal(Strings.InterventionAddNote, panel.NoteButtonText.Text);
+                Assert.Equal(Visibility.Collapsed, panel.EditingText.Visibility);
+
+                // F2 sur la note choisie, nouveau texte, Entrée : enregistré à sa place.
+                panel.HistoryList.SelectedItem = note;
+                var f2 = Key(System.Windows.Input.Key.F2);
+                panel.HistoryList.RaiseEvent(f2);
+                Assert.True(f2.Handled);
+                panel.NoteBox.Text = "Disque /var plein sur srv01 : logs purgés";
+                panel.NoteButton.RaiseEvent(click);
+                Assert.Equal(Strings.InterventionNoteSaved, panel.MessageText.Text);
+                Assert.Equal("brouillon", panel.NoteBox.Text);
+                Assert.Equal("Disque /var plein sur srv01 : logs purgés", note.AllText);
+                Assert.StartsWith(Text.Format(Strings.InterventionNoteEditedAt, ""), note.Edited, StringComparison.Ordinal);
+                Assert.Single(panel.HistoryList.Items.Cast<InterventionHistoryItem>(), item => item.IsNote);
+
+                var path = recorder.JournalPath!;
+                recorder.Stop(Strings.InterventionStoppedByUser);
+                Assert.False(panel.NotesEditable);
+                panel.StartEdit(note);
+                Assert.Equal(Strings.InterventionAddNote, panel.NoteButtonText.Text);
+
+                var recording = ZillaTerm.Core.Interventions.InterventionJournal.Read(path, recorder.Protector);
+                var notes = recording.Entries.Where(e => e.Kind == ZillaTerm.Core.Interventions.InterventionKind.Note).ToList();
+                Assert.Equal(2, notes.Count);
+                Assert.Equal(notes[0].Time, notes[1].Edits);
+                var html = ZillaTerm.Core.Interventions.InterventionReport.ToHtml(recording, InterventionWindow.ReportText(), TimeZoneInfo.Local,
+                    System.Globalization.CultureInfo.CurrentUICulture);
+                Assert.Contains(WebUtility.HtmlEncode("Disque /var plein sur srv01 : logs purgés"), html, StringComparison.Ordinal);
+                Assert.Contains("<span class=\"edited\">", html, StringComparison.Ordinal);
+                Assert.Contains(WebUtility.HtmlEncode("Disque /var plein") + "</span>", html, StringComparison.Ordinal);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Écran des Bureaux à distance : les images en tuiles vont au journal, pas dans l'historique affiché ; au-delà de la
     /// taille de bridage, le journal le note une fois, l'interface en est prévenue et l'onglet « Intervention » le dit ; le
     /// rapport rejoue l'écran avec les textes de l'interface.

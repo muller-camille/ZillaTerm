@@ -5669,7 +5669,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Recorded screens</value>
   </data>
   <data name="InterventionReportScreenHelp" xml:space="preserve">
-    <value>Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. The graph under the cursor shows the share of the screen that changed: click a peak to go there.</value>
+    <value>Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. The graph under the cursor shows the share of the screen that changed: click a peak to go there. The orange marks below are the notes: click one to go to its time.</value>
   </data>
   <data name="InterventionReportScreenHeading" xml:space="preserve">
     <value>{0}: {1} to {2} ({3})</value>
@@ -5691,5 +5691,32 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="InterventionReportScreenGap" xml:space="preserve">
     <value>Images missing here (damaged journal): the screen resumes at the next full image.</value>
+  </data>
+  <data name="InterventionEditNote" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="InterventionEditNoteTip" xml:space="preserve">
+    <value>Edit this note (F2). The journal keeps the original text: the report shows both.</value>
+  </data>
+  <data name="InterventionSaveNoteEdit" xml:space="preserve">
+    <value>_Save the change</value>
+  </data>
+  <data name="InterventionCancelNoteEdit" xml:space="preserve">
+    <value>Cance_l</value>
+  </data>
+  <data name="InterventionEditingNote" xml:space="preserve">
+    <value>Editing the note of {0}. Enter saves, Esc cancels.</value>
+  </data>
+  <data name="InterventionNoteSaved" xml:space="preserve">
+    <value>Note changed. The journal keeps the original text.</value>
+  </data>
+  <data name="InterventionNoteEditedAt" xml:space="preserve">
+    <value>edited at {0}</value>
+  </data>
+  <data name="InterventionReportNoteEdited" xml:space="preserve">
+    <value>Edited on {0}. Original text: {1}</value>
+  </data>
+  <data name="InterventionReportNoteMarker" xml:space="preserve">
+    <value>Note at {0}: {1}</value>
   </data>
 </root>

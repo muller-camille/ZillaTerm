@@ -52,16 +52,21 @@ internal static class InterventionScreenPlayer
     /// <summary>Empreinte du script pour la politique de sécurité de la page (« 'sha256-…' »).</summary>
     internal static string ScriptHash => "'sha256-" + Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(Script))) + "'";
 
-    /// <summary>Section des écrans enregistrés : un lecteur par session, puis les textes du lecteur et le script.</summary>
-    internal static void Append(StringBuilder html, List<Recording> recordings, InterventionReportText text, Func<DateTime, string> local,
-        TimeZoneInfo zone, CultureInfo culture)
+    /// <summary>
+    /// Section des écrans enregistrés : un lecteur par session, avec sous le curseur l'activité et les notes prises pendant
+    /// la session (repères qui y mènent), puis les textes du lecteur et le script.
+    /// </summary>
+    /// <param name="all">Tous les événements : la fin de chaque session (fermeture…) prolonge sa ligne de temps.</param>
+    /// <param name="notes">Notes de l'intervention, modifications appliquées.</param>
+    internal static void Append(StringBuilder html, List<Recording> recordings, IReadOnlyList<InterventionEntry> all,
+        IReadOnlyList<InterventionEntry> notes, InterventionReportText text, Func<DateTime, string> local, TimeZoneInfo zone, CultureInfo culture)
     {
         html.Append("<h2>").Append(Encode(text.Screens)).Append("</h2>\n<p class=\"help\">").Append(Encode(text.ScreenHelp)).Append("</p>\n");
         var prefix = new byte[8];
         foreach (var recording in recordings)
         {
             var first = recording.Frames[0].Time;
-            var last = recording.Frames[^1].Time;
+            var last = End(recording, all);
             long bytes = recording.Frames.Sum(f => (long)f.Image!.Length);
             var startLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(first, DateTimeKind.Utc), zone);
             ScreenFrameHeader.TryRead(recording.Frames.First(f => ScreenFrameHeader.TryRead(f.Image, out var h) && h.Key).Image, out var key);
@@ -77,8 +82,10 @@ internal static class InterventionScreenPlayer
                 container.Write(frame.Image);
             }
 
+            long duration = ((long)Math.Floor((last - first).TotalSeconds) * 1000) + 1000;
             html.Append("<section class=\"screen\" data-start=\"")
-                .Append(((int)startLocal.TimeOfDay.TotalSeconds).ToString(CultureInfo.InvariantCulture)).Append("\">\n<h3>")
+                .Append(((int)startLocal.TimeOfDay.TotalSeconds).ToString(CultureInfo.InvariantCulture)).Append("\" data-duration=\"")
+                .Append(duration.ToString(CultureInfo.InvariantCulture)).Append("\">\n<h3>")
                 .Append(Encode(string.Format(culture, text.ScreenHeading, recording.Source, local(first), local(last),
                     Ssh.RemotePath.FormatSize(bytes))))
                 .Append("</h3>\n<div class=\"stage\"><canvas class=\"screen-canvas\" width=\"")
@@ -92,8 +99,9 @@ internal static class InterventionScreenPlayer
                 .Append("<span class=\"clock\"></span></div>\n")
                 .Append("<div class=\"track\"><canvas class=\"activity\" height=\"40\"></canvas>")
                 .Append("<input type=\"range\" class=\"seek\" min=\"0\" max=\"0\" step=\"1000\" value=\"0\" aria-label=\"")
-                .Append(Encode(text.Activity)).Append("\" title=\"").Append(Encode(text.Activity)).Append("\"></div>\n")
-                .Append("<noscript><p class=\"note warn\">").Append(Encode(text.ScriptNeeded)).Append("</p></noscript>\n")
+                .Append(Encode(text.Activity)).Append("\" title=\"").Append(Encode(text.Activity)).Append("\"></div>\n");
+            AppendMarks(html, notes.Where(n => n.Time >= first && n.Time <= last), first, duration, text, zone, culture);
+            html.Append("<noscript><p class=\"note warn\">").Append(Encode(text.ScriptNeeded)).Append("</p></noscript>\n")
                 .Append("<script type=\"application/octet-stream\" class=\"frames\">")
                 .Append(Convert.ToBase64String(container.GetBuffer(), 0, (int)container.Length))
                 .Append("</script>\n</section>\n");
@@ -103,6 +111,46 @@ internal static class InterventionScreenPlayer
         html.Append("<script type=\"application/json\" id=\"zt-player\">")
             .Append(JsonSerializer.Serialize(new Dictionary<string, string> { ["play"] = text.Play, ["pause"] = text.Pause }))
             .Append("</script>\n<script>").Append(Script).Append("</script>\n");
+    }
+
+    /// <summary>
+    /// Fin de la ligne de temps d'une session : sa dernière trace après sa dernière image (fermeture de l'onglet,
+    /// capture…), sinon la fin de l'enregistrement. Un écran immobile n'envoie plus d'image : sa dernière image vaut
+    /// jusque-là, et une note prise en le regardant tombe dans sa ligne de temps.
+    /// </summary>
+    private static DateTime End(Recording recording, IReadOnlyList<InterventionEntry> all)
+    {
+        var last = recording.Frames[^1].Time;
+        var traces = all.Where(e => e.Kind != InterventionKind.Screen && e.Time > last).ToList();
+        var session = traces.Where(e => e.Source == recording.Source).Select(e => e.Time).DefaultIfEmpty(last).Max();
+        return session > last ? session : traces.Select(e => e.Time).DefaultIfEmpty(last).Max();
+    }
+
+    /// <summary>
+    /// Repères des notes sous le curseur, à leur heure : un clic y mène, le texte s'affiche au survol et est lu par les
+    /// lecteurs d'écran. Le texte est échappé (attribut).
+    /// </summary>
+    private static void AppendMarks(StringBuilder html, IEnumerable<InterventionEntry> notes, DateTime first, long duration,
+        InterventionReportText text, TimeZoneInfo zone, CultureInfo culture)
+    {
+        var marks = notes.ToList();
+        if (marks.Count == 0)
+        {
+            return;
+        }
+
+        html.Append("<div class=\"marks\">");
+        foreach (var note in marks)
+        {
+            long ms = (long)Math.Floor((note.Time - first).TotalSeconds) * 1000;
+            var time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(note.Time, DateTimeKind.Utc), zone).ToString("T", culture);
+            var label = Encode(string.Format(culture, text.NoteMarker, time, note.Text));
+            html.Append("<button type=\"button\" class=\"mark\" data-ms=\"").Append(ms.ToString(CultureInfo.InvariantCulture))
+                .Append("\" style=\"left:").Append((ms * 100.0 / duration).ToString("0.###", CultureInfo.InvariantCulture))
+                .Append("%\" title=\"").Append(label).Append("\" aria-label=\"").Append(label).Append("\"></button>");
+        }
+
+        html.Append("</div>\n");
     }
 
     /// <summary>Styles du lecteur : le curseur de position est un trait posé sur le graphique d'activité.</summary>
@@ -117,12 +165,16 @@ internal static class InterventionScreenPlayer
         + ".track input::-webkit-slider-thumb{-webkit-appearance:none;width:3px;height:40px;background:#c62828}"
         + ".track input::-moz-range-track{height:40px;background:transparent}"
         + ".track input::-moz-range-thumb{width:3px;height:40px;background:#c62828;border:0;border-radius:0}"
-        + ".track input:focus-visible{outline:2px solid #1565c0;outline-offset:2px}.help{color:#57606a}";
+        + ".track input:focus-visible{outline:2px solid #1565c0;outline-offset:2px}.help{color:#57606a}"
+        + ".marks{position:relative;height:16px;margin-top:2px}.mark{position:absolute;top:0;width:12px;height:14px;margin-left:-6px;"
+        + "padding:0;border:0;background:#e65100;cursor:pointer;clip-path:polygon(50% 0,100% 100%,0 100%)}"
+        + ".mark:hover,.mark:focus-visible{background:#1565c0;outline:none}";
 
     /// <summary>
     /// Lecteur : décode le conteneur d'images d'une session, rejoue depuis l'image clé précédente pour aller à une heure,
     /// lit à la vitesse choisie, et dessine sous le curseur l'activité (part de l'écran modifiée, en millièmes, par image).
-    /// Une image manquante ou illisible fige l'écran jusqu'à l'image clé suivante, avec un avis.
+    /// Une image manquante ou illisible fige l'écran jusqu'à l'image clé suivante, avec un avis. Un clic sur le repère
+    /// d'une note mène à son heure.
     /// </summary>
     internal const string Script = """
 (() => {
@@ -153,7 +205,7 @@ internal static class InterventionScreenPlayer
     const play = section.querySelector('button.play'), speed = section.querySelector('select.speed');
     const graph = section.querySelector('canvas.activity'), g = graph.getContext('2d'), gap = section.querySelector('.gap');
     const start = Number(section.dataset.start) || 0;
-    const duration = frames[frames.length - 1].t + 1000;
+    const duration = Math.max(frames[frames.length - 1].t + 1000, Number(section.dataset.duration) || 0);
     seek.max = String(duration);
     let tiles = new Map(), image = null, width = 0, height = 0, current = -1, wanted = -1, running = false;
     let playing = false, position = 0, last = 0;
@@ -271,6 +323,7 @@ internal static class InterventionScreenPlayer
       if (playing) { if (position >= duration) show(0); last = performance.now(); requestAnimationFrame(tick); }
     });
     seek.addEventListener('input', () => show(Number(seek.value)));
+    for (const mark of section.querySelectorAll('.mark')) mark.addEventListener('click', () => show(Number(mark.dataset.ms)));
     addEventListener('resize', drawGraph);
     drawGraph();
     show(0);

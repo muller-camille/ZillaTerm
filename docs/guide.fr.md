@@ -944,7 +944,10 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   - le **titre de l'intervention** (ticket, incident, serveur…), gardé par `Entrée` ou en quittant le champ : il est
     écrit dans le journal, repris dans la liste « Interventions enregistrées », en tête du rapport et dans le nom
     proposé pour son fichier. Une ligne, 200 caractères au plus ;
-  - la **note** : `Entrée` l'ajoute au journal, `Maj+Entrée` passe à la ligne ;
+  - la **note** : `Entrée` l'ajoute au journal, `Maj+Entrée` passe à la ligne. **« Modifier »** sur une note de
+    l'historique (ou `F2`) la reprend dans le champ : `Entrée` ou « Enregistrer la modification » la remplace à sa
+    place, `Échap` ou « Annuler » rend la saisie en cours. La note porte alors « modifiée à … » ; le journal garde le
+    texte d'origine et le rapport montre les deux. Seules les notes de l'enregistrement en cours se modifient ;
   - **« Capturer un Bureau à distance… »** ;
   - l'**historique** de l'intervention, au fil de l'eau : début, titre, notes, connexions, actions, transferts (avec
     leur SHA-256), captures et texte des terminaux. Une commande et son retour forment un bloc (un nouveau bloc commence
@@ -960,10 +963,12 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   l'arrêt, l'intervention reste sélectionnée : **« Exporter le rapport… »** (ou double-clic) en fait une page HTML :
   résumé, chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention. Les écrans
   enregistrés y ont chacun leur lecteur : « Lecture », « Vitesse » (1× à 60×) et un curseur de position, sous lequel un
-  graphique montre l'activité de l'écran (part modifiée à chaque instant) : un clic sur un pic y mène. Le lecteur est le
-  seul script de la page, autorisé par son empreinte ; il demande un navigateur récent (Edge, Chrome, Firefox). Une
-  image manquante (journal abîmé) fige l'écran jusqu'à la prochaine image complète, avec un avis. **« Supprimer… »**
-  efface un enregistrement terminé.
+  graphique montre l'activité de l'écran (part modifiée à chaque instant) : un clic sur un pic y mène. Les notes y sont
+  posées à leur heure (repères orange) : un clic y mène, le survol montre leur texte ; la ligne de temps va jusqu'à la
+  dernière trace de la session (fermeture de l'onglet…), si bien qu'une note prise devant un écran immobile y figure. Le
+  lecteur est le seul script de la page, autorisé par son empreinte ; il demande un navigateur récent (Edge, Chrome,
+  Firefox). Une image manquante (journal abîmé) fige l'écran jusqu'à la prochaine image complète, avec un avis.
+  **« Supprimer… »** efface un enregistrement terminé.
 
 Le journal est **chiffré pour votre compte Windows seul** (DPAPI) dans `%LOCALAPPDATA%\ZillaTerm\Interventions` (le
 titre aussi, dans un fichier `.title` à côté, pour la liste), bloc par bloc au fil de l'enregistrement, son texte
@@ -998,6 +1003,7 @@ puis « Arrêter l'enregistrement » et « Enregistrer l'intervention » pour re
 | Accueil | Retirer une session récente de la liste | `Suppr` |
 | Mes serveurs | Renommer / retirer ou supprimer | `F2` / `Suppr` |
 | Mes serveurs | Choisir plusieurs serveurs (puis clic droit pour les ouvrir ensemble) | `Ctrl+clic`, `Maj+clic`, `Ctrl+Espace`, `Maj+↑` / `Maj+↓` ; `Échap` annule |
+| Intervention | Modifier la note choisie dans l'historique | `F2`, puis `Entrée` ; `Échap` annule |
 | Terminal | Copier | Sélection à la souris, ou `Ctrl+Maj+C` |
 | Terminal | Coller | `Maj+Inser` ou `Ctrl+Maj+V` (clic droit avec l'option des Paramètres) |
 | Terminal | Menu : copier, coller, tout sélectionner, rechercher, enregistrer, effacer l'historique, police, actions de l'onglet | Clic droit ou touche Menu (Maj+clic droit avec l'option de collage) |

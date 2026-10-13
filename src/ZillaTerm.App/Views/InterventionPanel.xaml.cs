@@ -32,6 +32,21 @@ public partial class InterventionPanel : UserControl
     private bool _shownRecording;
     private bool _shownInterrupted;
 
+    // Note de l'historique en cours de modification dans le champ de la note ; null pour une nouvelle note. La note en
+    // cours de saisie, mise de côté pendant la modification, revient ensuite.
+    private InterventionHistoryItem? _editing;
+    private string _draft = "";
+
+    /// <summary>Les notes de l'historique se modifient : enregistrement en cours, journal accepté.</summary>
+    public static readonly DependencyProperty NotesEditableProperty =
+        DependencyProperty.Register(nameof(NotesEditable), typeof(bool), typeof(InterventionPanel), new PropertyMetadata(false));
+
+    public bool NotesEditable
+    {
+        get => (bool)GetValue(NotesEditableProperty);
+        set => SetValue(NotesEditableProperty, value);
+    }
+
     public InterventionPanel()
     {
         InitializeComponent();
@@ -112,6 +127,7 @@ public partial class InterventionPanel : UserControl
     /// <summary>Suit l'historique d'un enregistrement (depuis son début).</summary>
     private void Follow(InterventionHistory? history)
     {
+        EndEdit();
         _history = history;
         _read = 0;
         _blocks = new InterventionBlockBuilder();
@@ -139,6 +155,17 @@ public partial class InterventionPanel : UserControl
         var grown = new HashSet<InterventionHistoryItem>();
         foreach (var entry in entries)
         {
+            // Note modifiée : son bloc prend le nouveau texte, à sa place.
+            if (_blocks.Edit(entry) is { } edited)
+            {
+                if (_items.FirstOrDefault(i => i.Block == edited) is { } item)
+                {
+                    grown.Add(item);
+                }
+
+                continue;
+            }
+
             if (_blocks.Add(entry))
             {
                 grown.Add(_items[^1]);
@@ -196,6 +223,12 @@ public partial class InterventionPanel : UserControl
         NoteBox.IsEnabled = keeping;
         NoteButton.IsEnabled = keeping && NoteBox.Text.Trim().Length > 0;
         CaptureButton.IsEnabled = keeping;
+        NotesEditable = keeping;
+        if (!keeping)
+        {
+            EndEdit();
+        }
+
         RecordingDot.Visibility = keeping ? Visibility.Visible : Visibility.Collapsed;
         ScreenThrottledText.Visibility = active is { ScreenThrottled: true } ? Visibility.Visible : Visibility.Collapsed;
         CloseHistoryButton.Visibility = !recording && _history is not null ? Visibility.Visible : Visibility.Collapsed;
@@ -258,7 +291,7 @@ public partial class InterventionPanel : UserControl
     private void OnNoteChanged(object sender, TextChangedEventArgs e) =>
         NoteButton.IsEnabled = NoteBox.IsEnabled && NoteBox.Text.Trim().Length > 0;
 
-    /// <summary>Entrée ajoute la note ; Maj+Entrée passe à la ligne.</summary>
+    /// <summary>Entrée ajoute la note (ou enregistre la modification) ; Maj+Entrée passe à la ligne ; Échap annule une modification.</summary>
     private void OnNotePreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == 0)
@@ -266,6 +299,75 @@ public partial class InterventionPanel : UserControl
             e.Handled = true;
             AddNote();
         }
+        else if (e.Key == Key.Escape && _editing is not null)
+        {
+            e.Handled = true;
+            EndEdit();
+        }
+    }
+
+    /// <summary>F2 sur une note de l'historique : la modifier.</summary>
+    private void OnHistoryKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F2 && HistoryList.SelectedItem is InterventionHistoryItem { IsNote: true } item && NotesEditable)
+        {
+            e.Handled = true;
+            StartEdit(item);
+        }
+    }
+
+    private void OnEditNote(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: InterventionHistoryItem item })
+        {
+            StartEdit(item);
+        }
+    }
+
+    private void OnCancelEdit(object sender, RoutedEventArgs e)
+    {
+        EndEdit();
+        NoteBox.Focus();
+    }
+
+    /// <summary>Modification d'une note : son texte dans le champ de la note, qui l'enregistre au lieu d'en ajouter une.</summary>
+    internal void StartEdit(InterventionHistoryItem item)
+    {
+        if (!item.IsNote || !NotesEditable)
+        {
+            return;
+        }
+
+        if (_editing is null)
+        {
+            _draft = NoteBox.Text;
+        }
+
+        _editing = item;
+        NoteBox.Text = item.AllText;
+        NoteBox.SelectAll();
+        NoteButtonText.Text = Strings.InterventionSaveNoteEdit;
+        CancelEditButton.Visibility = Visibility.Visible;
+        EditingText.Text = Text.Format(Strings.InterventionEditingNote, item.Time);
+        EditingText.Visibility = Visibility.Visible;
+        NoteBox.Focus();
+    }
+
+    /// <summary>Fin de la modification (enregistrée ou annulée) : le champ redevient celui d'une nouvelle note.</summary>
+    private void EndEdit()
+    {
+        if (_editing is null)
+        {
+            return;
+        }
+
+        _editing = null;
+        NoteBox.Text = _draft;
+        NoteBox.CaretIndex = _draft.Length;
+        _draft = "";
+        NoteButtonText.Text = Strings.InterventionAddNote;
+        CancelEditButton.Visibility = Visibility.Collapsed;
+        EditingText.Visibility = Visibility.Collapsed;
     }
 
     private void OnAddNote(object sender, RoutedEventArgs e) => AddNote();
@@ -275,6 +377,19 @@ public partial class InterventionPanel : UserControl
         var note = NoteBox.Text.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
         if (note.Length == 0 || Active is not { } recorder)
         {
+            return;
+        }
+
+        if (_editing is { } editing)
+        {
+            // Texte inchangé : rien à garder.
+            if (note != editing.AllText && recorder.EditNote(editing.Block.Start, note))
+            {
+                ShowMessage(Strings.InterventionNoteSaved);
+            }
+
+            EndEdit();
+            ReadHistory();
             return;
         }
 
@@ -398,6 +513,13 @@ public sealed class InterventionHistoryItem : INotifyPropertyChanged
 
     public bool IsTerminal => _block.Kind == InterventionKind.Terminal;
 
+    public bool IsNote => _block.Kind == InterventionKind.Note;
+
+    /// <summary>Note modifiée : « modifiée à … » ; vide sinon.</summary>
+    public string Edited => _block.EditedAt is { } at
+        ? Text.Format(Strings.InterventionNoteEditedAt, at.ToLocalTime().ToString("T", CultureInfo.CurrentCulture))
+        : "";
+
     public int LineCount => _block.Lines.Count;
 
     public bool IsLong => LineCount > CollapseAbove;
@@ -431,7 +553,7 @@ public sealed class InterventionHistoryItem : INotifyPropertyChanged
         get
         {
             var first = _block.Lines.Count > 0 ? _block.Lines[0] : "";
-            var name = string.Join(", ", new[] { Time, Kind, Source, first }.Where(part => part.Length > 0));
+            var name = string.Join(", ", new[] { Time, Kind, Edited, Source, first }.Where(part => part.Length > 0));
             return IsLong ? $"{name}, {Text.Format(Strings.InterventionShowAll, LineCount)}" : name;
         }
     }

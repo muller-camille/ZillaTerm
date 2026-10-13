@@ -29,6 +29,9 @@
 
         <Label DockPanel.Dock="Top" Target="{Binding ElementName=NoteBox}" Padding="0,0,0,3" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"
                Content="{x:Static loc:Strings.InterventionNoteLabel}" />
+        <!-- Modification d'une note de l'historique : le champ de la note reprend son texte. -->
+        <views:AnnouncedText x:Name="EditingText" DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}"
+                             Margin="0,0,0,3" Visibility="Collapsed" />
         <Grid DockPanel.Dock="Top">
             <TextBox x:Name="NoteBox" MaxLength="2000" AcceptsReturn="True" TextWrapping="Wrap" Height="58"
                      VerticalScrollBarVisibility="Auto" PreviewKeyDown="OnNotePreviewKeyDown" TextChanged="OnNoteChanged"
@@ -40,7 +43,10 @@
                    TextWrapping="Wrap" Margin="0,3,0,6" />
         <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,10">
             <Button x:Name="NoteButton" Click="OnAddNote" Margin="0,0,8,4">
-                <AccessText Text="{x:Static loc:Strings.InterventionAddNote}" />
+                <AccessText x:Name="NoteButtonText" Text="{x:Static loc:Strings.InterventionAddNote}" />
+            </Button>
+            <Button x:Name="CancelEditButton" Click="OnCancelEdit" Margin="0,0,8,4" Visibility="Collapsed">
+                <AccessText Text="{x:Static loc:Strings.InterventionCancelNoteEdit}" />
             </Button>
             <Button x:Name="CaptureButton" Click="OnCapture" Margin="0,0,0,4" ToolTip="{x:Static loc:Strings.InterventionCaptureTip}"
                     AutomationProperties.HelpText="{x:Static loc:Strings.InterventionCaptureTip}">
@@ -56,7 +62,7 @@
         <TextBlock x:Name="ScreenThrottledText" DockPanel.Dock="Bottom" Text="{x:Static loc:Strings.InterventionScreenThrottled}" TextWrapping="Wrap"
                    Foreground="{DynamicResource WarningBrush}" Margin="0,4,0,0" Visibility="Collapsed" />
         <!-- Historique : un bloc par événement, ou par commande d'un terminal et son retour ; un long bloc se déplie. -->
-        <ListBox x:Name="HistoryList" AutomationProperties.LabeledBy="{Binding ElementName=HistoryTitle}"
+        <ListBox x:Name="HistoryList" AutomationProperties.LabeledBy="{Binding ElementName=HistoryTitle}" PreviewKeyDown="OnHistoryKeyDown"
                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.ScrollUnit="Pixel"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
             <ListBox.CommandBindings>
@@ -72,8 +78,14 @@
                 <DataTemplate DataType="{x:Type views:InterventionHistoryItem}">
                     <StackPanel Margin="0,3,0,5">
                         <DockPanel>
+                            <!-- Note de l'enregistrement en cours : modifiable (F2), le journal garde le texte d'origine. -->
+                            <Button x:Name="EditNote" DockPanel.Dock="Right" Content="{x:Static loc:Strings.InterventionEditNote}" Click="OnEditNote"
+                                    ToolTip="{x:Static loc:Strings.InterventionEditNoteTip}" AutomationProperties.HelpText="{x:Static loc:Strings.InterventionEditNoteTip}"
+                                    MinWidth="0" Padding="8,0" Margin="6,0,0,0" VerticalAlignment="Top" Visibility="Collapsed"
+                                    IsEnabled="{Binding NotesEditable, RelativeSource={RelativeSource AncestorType=views:InterventionPanel}}" />
                             <TextBlock Text="{Binding Time, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,8,0" />
                             <TextBlock Text="{Binding Kind, Mode=OneWay}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Edited, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}" FontStyle="Italic" Margin="0,0,8,0" />
                             <TextBlock Text="{Binding Source, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
                         </DockPanel>
                         <Border x:Name="Body" Margin="0,2,0,0">
@@ -92,6 +104,9 @@
                             <Setter TargetName="Body" Property="BorderThickness" Value="1" />
                             <Setter TargetName="Body" Property="Padding" Value="6,3" />
                             <Setter TargetName="Preview" Property="FontFamily" Value="Consolas, Courier New" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsNote, Mode=OneWay}" Value="True">
+                            <Setter TargetName="EditNote" Property="Visibility" Value="Visible" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsLong, Mode=OneWay}" Value="True">
                             <Setter TargetName="Toggle" Property="Visibility" Value="Visible" />

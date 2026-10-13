@@ -50,7 +50,11 @@ public enum InterventionKind
 /// <param name="Source">Session ou serveur concerné ; vide pour ZillaTerm lui-même.</param>
 /// <param name="Image">Capture d'écran (PNG), pour <see cref="InterventionKind.Screenshot"/> ; image d'écran en tuiles pour
 /// <see cref="InterventionKind.Screen"/>.</param>
-public sealed record InterventionEntry(DateTime Time, InterventionKind Kind, string Source, string Text, byte[]? Image = null);
+/// <param name="Edits">
+/// Note qui en modifie une autre : l'heure de la note modifiée (le journal n'est jamais réécrit, la modification s'y
+/// ajoute ; voir <see cref="InterventionNotes"/>). Une version sans cette notion la lit comme une note de plus.
+/// </param>
+public sealed record InterventionEntry(DateTime Time, InterventionKind Kind, string Source, string Text, byte[]? Image = null, DateTime? Edits = null);
 
 /// <summary>Intervention relue : ses événements ; un bloc illisible, d'un autre journal ou déplacé la marque abîmée.</summary>
 /// <param name="Unfinished">Pas d'événement de fin : ZillaTerm s'est arrêté pendant l'enregistrement.</param>
@@ -303,7 +307,7 @@ public sealed class InterventionJournal : IDisposable
     /// </summary>
     private void WriteChunk(List<InterventionEntry> entries)
     {
-        var stored = entries.Select(e => new StoredEntry(e.Time, e.Kind, e.Source, e.Text, null, e.Image?.Length)).ToList();
+        var stored = entries.Select(e => new StoredEntry(e.Time, e.Kind, e.Source, e.Text, null, e.Image?.Length, e.Edits)).ToList();
         byte[] json = JsonSerializer.SerializeToUtf8Bytes(new Chunk(_id, _sequence, stored), JsonOptions);
         var packed = new MemoryStream();
         using (var zlib = new ZLibStream(packed, CompressionLevel.Optimal, leaveOpen: true))
@@ -561,7 +565,7 @@ public sealed class InterventionJournal : IDisposable
     {
         var chunk = JsonSerializer.Deserialize<Chunk>(plain, JsonOptions);
         return (chunk, chunk?.Entries?.Where(e => e is not null && e.Text is not null && e.Source is not null)
-            .Select(e => new InterventionEntry(e.Time, e.Kind, e.Source, e.Text, e.Image)).ToList());
+            .Select(e => new InterventionEntry(e.Time, e.Kind, e.Source, e.Text, e.Image, e.Edits)).ToList());
     }
 
     /// <summary>
@@ -607,7 +611,7 @@ public sealed class InterventionJournal : IDisposable
             at += length;
             if (e is not null && e.Text is not null && e.Source is not null)
             {
-                entries.Add(new InterventionEntry(e.Time, e.Kind, e.Source, e.Text, image));
+                entries.Add(new InterventionEntry(e.Time, e.Kind, e.Source, e.Text, image, e.Edits));
             }
         }
 
@@ -647,5 +651,6 @@ public sealed class InterventionJournal : IDisposable
     private sealed record Chunk(string Id, long Sequence, List<StoredEntry> Entries);
 
     /// <summary>Événement tel qu'écrit : image en base64 (format 1) ou sa longueur, l'image suivant le JSON (format 2).</summary>
-    private sealed record StoredEntry(DateTime Time, InterventionKind Kind, string Source, string Text, byte[]? Image = null, int? ImageLength = null);
+    private sealed record StoredEntry(
+        DateTime Time, InterventionKind Kind, string Source, string Text, byte[]? Image = null, int? ImageLength = null, DateTime? Edits = null);
 }

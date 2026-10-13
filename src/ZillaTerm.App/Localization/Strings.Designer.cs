@@ -16976,5 +16976,86 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("InterventionReportScreenGap", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Edit.
+        /// </summary>
+        public static string InterventionEditNote {
+            get {
+                return ResourceManager.GetString("InterventionEditNote", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Edit this note (F2). The journal keeps the original text: the report shows both..
+        /// </summary>
+        public static string InterventionEditNoteTip {
+            get {
+                return ResourceManager.GetString("InterventionEditNoteTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Save the change.
+        /// </summary>
+        public static string InterventionSaveNoteEdit {
+            get {
+                return ResourceManager.GetString("InterventionSaveNoteEdit", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cance_l.
+        /// </summary>
+        public static string InterventionCancelNoteEdit {
+            get {
+                return ResourceManager.GetString("InterventionCancelNoteEdit", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Editing the note of {0}. Enter saves, Esc cancels..
+        /// </summary>
+        public static string InterventionEditingNote {
+            get {
+                return ResourceManager.GetString("InterventionEditingNote", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Note changed. The journal keeps the original text..
+        /// </summary>
+        public static string InterventionNoteSaved {
+            get {
+                return ResourceManager.GetString("InterventionNoteSaved", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to edited at {0}.
+        /// </summary>
+        public static string InterventionNoteEditedAt {
+            get {
+                return ResourceManager.GetString("InterventionNoteEditedAt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Edited on {0}. Original text: {1}.
+        /// </summary>
+        public static string InterventionReportNoteEdited {
+            get {
+                return ResourceManager.GetString("InterventionReportNoteEdited", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Note at {0}: {1}.
+        /// </summary>
+        public static string InterventionReportNoteMarker {
+            get {
+                return ResourceManager.GetString("InterventionReportNoteMarker", resourceCulture);
+            }
+        }
     }
 }

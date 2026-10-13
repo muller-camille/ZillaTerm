@@ -206,6 +206,8 @@ public partial class InterventionWindow : Window
         Activity = Strings.InterventionReportActivity,
         ScriptNeeded = Strings.InterventionReportScriptNeeded,
         ScreenGap = Strings.InterventionReportScreenGap,
+        NoteEdited = Strings.InterventionReportNoteEdited,
+        NoteMarker = Strings.InterventionReportNoteMarker,
     };
 
     private void OnRecorderChanged()

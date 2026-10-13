@@ -41,7 +41,8 @@ public sealed class InterventionReportText
 
     public string ScreenHelp { get; init; } =
         "Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. "
-        + "The graph under the cursor shows the share of the screen that changed: click a peak to go there.";
+        + "The graph under the cursor shows the share of the screen that changed: click a peak to go there. "
+        + "The orange marks below are the notes: click one to go to its time.";
 
     /// <summary>{0} = session, {1} = début, {2} = fin, {3} = taille.</summary>
     public string ScreenHeading { get; init; } = "{0}: {1} to {2} ({3})";
@@ -55,6 +56,12 @@ public sealed class InterventionReportText
     public string Activity { get; init; } = "Position and screen activity";
 
     public string ScriptNeeded { get; init; } = "The player needs JavaScript and a recent browser.";
+
+    /// <summary>Note modifiée : {0} = heure de la dernière modification, {1} = texte d'origine.</summary>
+    public string NoteEdited { get; init; } = "Edited on {0}. Original text: {1}";
+
+    /// <summary>Repère d'une note sous le lecteur d'écran : {0} = heure, {1} = texte.</summary>
+    public string NoteMarker { get; init; } = "Note at {0}: {1}";
 
     /// <summary>Images d'écran manquantes (bloc du journal abîmé) : l'écran reste figé jusqu'à l'image clé suivante.</summary>
     public string ScreenGap { get; init; } = "Images missing here (damaged journal): the screen resumes at the next full image.";
@@ -72,8 +79,9 @@ public static class InterventionReport
     /// <param name="zone">Fuseau des heures affichées (celui du poste).</param>
     public static string ToHtml(InterventionRecording recording, InterventionReportText text, TimeZoneInfo zone, CultureInfo culture)
     {
-        // Images d'écran en tuiles : rejouées par le lecteur, pas dans la chronologie.
-        var entries = recording.Entries.Where(e => e.Kind != InterventionKind.Screen).ToList();
+        // Images d'écran en tuiles : rejouées par le lecteur, pas dans la chronologie. Notes modifiées : leur dernier texte, à
+        // leur place.
+        var entries = InterventionNotes.Apply(recording.Entries.Where(e => e.Kind != InterventionKind.Screen), out var edits);
         var screens = InterventionScreenPlayer.Recordings(recording.Entries);
         var html = new StringBuilder();
         string Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), zone)
@@ -98,7 +106,7 @@ public static class InterventionReport
             .Append("table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #d0d7de;padding:6px 8px;text-align:left;vertical-align:top}")
             .Append("th{background:#f3f5f7}td.time{white-space:nowrap;color:#57606a}td.source{white-space:nowrap}")
             .Append("pre{margin:0;padding:6px 8px;background:#1e2227;color:#e6e6e6;white-space:pre-wrap;word-break:break-all;font:12px Consolas,monospace;border-radius:4px}")
-            .Append("img{max-width:100%;border:1px solid #d0d7de}.kind{font-weight:600}")
+            .Append("img{max-width:100%;border:1px solid #d0d7de}.kind{font-weight:600}.edited{color:#57606a;font-size:13px}")
             .Append("@media print{pre{background:#fff;color:#000;border:1px solid #999}}")
             .Append(screens.Count > 0 ? InterventionScreenPlayer.Styles : "")
             .Append("\n</style>\n</head>\n<body>\n");
@@ -134,7 +142,8 @@ public static class InterventionReport
         html.Append("</ul>\n");
         if (screens.Count > 0)
         {
-            InterventionScreenPlayer.Append(html, screens, text, Local, zone, culture);
+            InterventionScreenPlayer.Append(html, screens, recording.Entries, entries.Where(e => e.Kind == InterventionKind.Note).ToList(), text,
+                Local, zone, culture);
         }
 
         html.Append("<h2>").Append(Encode(text.Timeline)).Append("</h2>\n<table>\n<tr><th>")
@@ -163,6 +172,13 @@ public static class InterventionReport
             {
                 html.Append("<span class=\"kind\">").Append(Encode(text.Kind(entry.Kind))).Append("</span> ")
                     .Append(Encode(entry.Text).Replace("\n", "<br>", StringComparison.Ordinal));
+                if (entry.Kind == InterventionKind.Note && edits.TryGetValue(entry.Time, out var edit))
+                {
+                    // Le texte d'origine reste lisible : une note modifiée ne cache rien.
+                    html.Append("<br><span class=\"edited\">")
+                        .Append(Encode(string.Format(culture, text.NoteEdited, Local(edit.EditedAt), edit.OriginalText)).Replace("\n", "<br>", StringComparison.Ordinal))
+                        .Append("</span>");
+                }
                 if (entry.Kind == InterventionKind.Screenshot && entry.Image is { } image && IsPng(image))
                 {
                     html.Append("<br><img alt=\"").Append(Encode(entry.Text)).Append("\" src=\"data:image/png;base64,")

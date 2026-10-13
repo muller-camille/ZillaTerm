@@ -5669,7 +5669,7 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
     <value>Schermi registrati</value>
   </data>
   <data name="InterventionReportScreenHelp" xml:space="preserve">
-    <value>Sessioni desktop remoto in una scheda: sono conservate solo le zone modificate dello schermo, al massimo un'immagine al secondo. Il grafico sotto il cursore mostra la parte dello schermo modificata: un clic su un picco porta lì.</value>
+    <value>Sessioni desktop remoto in una scheda: sono conservate solo le zone modificate dello schermo, al massimo un'immagine al secondo. Il grafico sotto il cursore mostra la parte dello schermo modificata: un clic su un picco porta lì. I segni arancioni sotto sono le note: un clic porta al loro orario.</value>
   </data>
   <data name="InterventionReportScreenHeading" xml:space="preserve">
     <value>{0}: dal {1} al {2} ({3})</value>
@@ -5691,5 +5691,32 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   </data>
   <data name="InterventionReportScreenGap" xml:space="preserve">
     <value>Immagini mancanti qui (registro danneggiato): lo schermo riprende alla prossima immagine completa.</value>
+  </data>
+  <data name="InterventionEditNote" xml:space="preserve">
+    <value>Modifica</value>
+  </data>
+  <data name="InterventionEditNoteTip" xml:space="preserve">
+    <value>Modifica questa nota (F2). Il registro conserva il testo originale: il rapporto li mostra entrambi.</value>
+  </data>
+  <data name="InterventionSaveNoteEdit" xml:space="preserve">
+    <value>_Salva la modifica</value>
+  </data>
+  <data name="InterventionCancelNoteEdit" xml:space="preserve">
+    <value>Annu_lla</value>
+  </data>
+  <data name="InterventionEditingNote" xml:space="preserve">
+    <value>Modifica della nota delle {0}. Invio salva, Esc annulla.</value>
+  </data>
+  <data name="InterventionNoteSaved" xml:space="preserve">
+    <value>Nota modificata. Il registro conserva il testo originale.</value>
+  </data>
+  <data name="InterventionNoteEditedAt" xml:space="preserve">
+    <value>modificata alle {0}</value>
+  </data>
+  <data name="InterventionReportNoteEdited" xml:space="preserve">
+    <value>Modificata il {0}. Testo originale: {1}</value>
+  </data>
+  <data name="InterventionReportNoteMarker" xml:space="preserve">
+    <value>Nota alle {0}: {1}</value>
   </data>
 </root>

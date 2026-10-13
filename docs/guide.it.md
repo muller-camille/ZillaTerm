@@ -942,7 +942,10 @@ reperibilità o no:
   - il **titolo dell'intervento** (ticket, incidente, server…), conservato con `Invio` o lasciando il campo: viene
     scritto nel registro, ripreso nell'elenco «Interventi registrati», in testa al rapporto e nel nome proposto per il
     suo file. Una riga, al massimo 200 caratteri;
-  - la **nota**: `Invio` la aggiunge al registro, `Maiusc+Invio` va a capo;
+  - la **nota**: `Invio` la aggiunge al registro, `Maiusc+Invio` va a capo. **«Modifica»** su una nota della cronologia
+    (o `F2`) la riporta nel campo: `Invio` o «Salva la modifica» la sostituisce al suo posto, `Esc` o «Annulla»
+    restituisce ciò che si stava scrivendo. La nota mostra allora «modificata alle …»; il registro conserva il testo
+    originale e il rapporto mostra entrambi. Si modificano solo le note della registrazione in corso;
   - **«Cattura un desktop remoto…»**;
   - la **cronologia** dell'intervento, man mano: inizio, titolo, note, connessioni, azioni, trasferimenti (con il loro
     SHA-256), catture e testo dei terminali. Un comando e il suo output formano un blocco (un nuovo blocco inizia dopo 2
@@ -957,10 +960,12 @@ reperibilità o no:
   l'intervento resta selezionato: **«Esporta il rapporto…»** (o doppio clic) ne fa una pagina HTML: riepilogo,
   cronologia, blocchi di testo dei terminali e catture, da allegare al resoconto dell'intervento. Ogni schermo
   registrato vi ha il suo lettore: «Riproduci», «Velocità» (da 1× a 60×) e un cursore di posizione, sotto il quale un
-  grafico mostra l'attività dello schermo (parte modificata in ogni istante): un clic su un picco porta lì. Il lettore è
-  l'unico script della pagina, autorizzato dalla sua impronta; richiede un browser recente (Edge, Chrome, Firefox).
-  Un'immagine mancante (registro danneggiato) blocca lo schermo fino alla prossima immagine completa, con un avviso.
-  **«Elimina…»** cancella una registrazione terminata.
+  grafico mostra l'attività dello schermo (parte modificata in ogni istante): un clic su un picco porta lì. Le note vi
+  sono poste alla loro ora (segni arancioni): un clic porta lì, il passaggio del mouse ne mostra il testo; la linea del
+  tempo arriva fino all'ultima traccia della sessione (chiusura della scheda…), così una nota presa davanti a uno
+  schermo immobile vi figura. Il lettore è l'unico script della pagina, autorizzato dalla sua impronta; richiede un
+  browser recente (Edge, Chrome, Firefox). Un'immagine mancante (registro danneggiato) blocca lo schermo fino alla
+  prossima immagine completa, con un avviso. **«Elimina…»** cancella una registrazione terminata.
 
 Il registro è **cifrato solo per il vostro account Windows** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (anche
 il titolo, in un file `.title` accanto, per l'elenco), blocco per blocco durante la registrazione, con il testo
@@ -995,6 +1000,7 @@ conservato nulla, il titolo, la nota e la cattura sono in grigio nella scheda «
 | Home | Togliere una sessione recente dall'elenco | `Canc` |
 | I miei server | Rinominare / rimuovere o eliminare | `F2` / `Canc` |
 | I miei server | Scegliere più server (poi clic destro per aprirli insieme) | `Ctrl+clic`, `Maiusc+clic`, `Ctrl+Spazio`, `Maiusc+↑` / `Maiusc+↓`; `Esc` annulla |
+| Intervento | Modificare la nota scelta nella cronologia | `F2`, poi `Invio`; `Esc` annulla |
 | Terminale | Copiare | Selezione con il mouse, o `Ctrl+Maiusc+C` |
 | Terminale | Incollare | `Maiusc+Ins` o `Ctrl+Maiusc+V` (clic destro con l'opzione delle Impostazioni) |
 | Terminale | Menu: copia, incolla, seleziona tutto, cerca, salva, cancella la cronologia, carattere, azioni della scheda | Clic destro o tasto Menu (Maiusc+clic destro con l'opzione di incolla) |
