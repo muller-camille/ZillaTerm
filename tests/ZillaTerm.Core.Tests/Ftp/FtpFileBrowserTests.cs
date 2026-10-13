@@ -432,6 +432,52 @@ public sealed class FtpFileBrowserTests
         }
     }
 
+    /// <summary>
+    /// Serveur qui n'annonce pas UTF8 dans FEAT (le faux serveur lit pourtant ses commandes en UTF-8) : les noms restent
+    /// en UTF-8 (OPTS UTF8 ON), à la lecture comme à l'envoi, au lieu de devenir « ? » ; un nom que l'UTF-8 ne représente
+    /// pas, ou la racine d'un lecteur, sont refusés avant toute commande.
+    /// </summary>
+    [Fact]
+    public async Task NamesStayInUtf8WhenTheServerDoesNotAnnounceIt()
+    {
+        using var server = new FakeFtp();
+        server.Listings["/home/fake"] = ["-rw-r--r-- 1 alice users 3 Oct 10 08:00 Procédure.txt"];
+        server.Listings["/home/fake/Données"] = [];
+        var folder = Path.Combine(Path.GetTempPath(), "zt-ftp-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var local = Path.Combine(folder, "Procèdure.txt");
+            File.WriteAllText(local, "abc");
+            using var browser = await FtpFileBrowser.ConnectAsync(
+                Connection(server, FtpSecurity.Opportunistic, () => true), CancellationToken.None);
+
+            Assert.Equal("Procédure.txt", Assert.Single(await browser.ListAsync("/home/fake", true, CancellationToken.None)).Name);
+            await browser.ListAsync("/home/fake/Données", true, CancellationToken.None);
+            var checks = new List<TransferCheck>();
+            await browser.UploadAsync(local, "/home/fake", TransferProtocol.Ftp, checks, null, background: false, CancellationToken.None);
+
+            Assert.Contains("OPTS UTF8 ON", server.Commands);
+            Assert.Equal("abc"u8.ToArray(), server.Files["/home/fake/Procèdure.txt"]);
+            Assert.True(Assert.Single(checks).Matches);
+            Assert.DoesNotContain(server.Commands, c => c.Contains('?', StringComparison.Ordinal));
+
+            await Assert.ThrowsAsync<ArgumentException>(() => browser.CreateDirectoryAsync("/home/fake/a\uD800b", CancellationToken.None));
+            if (OperatingSystem.IsWindows())
+            {
+                await Assert.ThrowsAsync<ArgumentException>(() =>
+                    browser.UploadAsync(Path.GetPathRoot(folder)!, "/home/fake", TransferProtocol.Ftp, checks, null, background: false, CancellationToken.None));
+            }
+
+            Assert.False(server.Received("MKD"));
+            Assert.Single(server.Commands, c => c.StartsWith("STOR ", StringComparison.Ordinal));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task RenameNeverReplacesAnExistingFile()
     {

@@ -567,4 +567,7 @@
   <data name="TransferIncompleteLinkKept" xml:space="preserve">
     <value>symbolic link: its target {0} remains incomplete (neither the link nor its target was deleted)</value>
   </data>
+  <data name="FtpNameNotEncodable" xml:space="preserve">
+    <value>“{0}” contains an invalid character (incomplete Unicode character): it cannot be sent to the FTP server. Rename it first.</value>
+  </data>
 </root>

@@ -1720,5 +1720,14 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("TransferIncompleteLinkKept", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” contains an invalid character (incomplete Unicode character): it cannot be sent to the FTP server. Rename it first..
+        /// </summary>
+        public static string FtpNameNotEncodable {
+            get {
+                return ResourceManager.GetString("FtpNameNotEncodable", resourceCulture);
+            }
+        }
     }
 }

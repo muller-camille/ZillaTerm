@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using ZillaTerm.Core.Localization;
 using ZillaTerm.Core.Ssh;
 using FluentFTP;
@@ -135,7 +136,12 @@ public sealed class FtpFileBrowser : IRemoteFiles
             TimeConversion = FtpDate.LocalTime,
             ClientTimeZone = TimeZoneInfo.Local,
         };
-        var client = new AsyncFtpClient(connection.Host, connection.UserName, connection.Password() ?? "", connection.Port, config, null);
+        var client = new AsyncFtpClient(connection.Host, connection.UserName, connection.Password() ?? "", connection.Port, config, null)
+        {
+            // Noms en UTF-8 même quand FEAT n'annonce pas UTF8 (la bibliothèque restait alors en ASCII : « é » devenait
+            // « ? », à la lecture comme à l'envoi, qui créait un autre fichier). OPTS UTF8 ON est envoyé après la connexion.
+            Encoding = Encoding.UTF8,
+        };
         string? accepted = null;
         bool refused = false;
         client.ValidateCertificate += (_, e) =>
@@ -356,9 +362,30 @@ public sealed class FtpFileBrowser : IRemoteFiles
         }
     }
 
-    /// <summary>Un retour à la ligne dans un chemin ajouterait une commande FTP : refusé.</summary>
-    private static string Checked(string path) =>
-        path.Any(char.IsControl) ? throw new ArgumentException(CoreStrings.ControlCharacterInPath) : path;
+    private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
+    /// <summary>
+    /// Un retour à la ligne dans un chemin ajouterait une commande FTP : refusé. Un nom que l'UTF-8 ne représente pas
+    /// (caractère Unicode incomplet, possible dans un nom Windows) l'est aussi, au lieu d'être changé en un autre nom.
+    /// </summary>
+    private static string Checked(string path)
+    {
+        if (path.Any(char.IsControl))
+        {
+            throw new ArgumentException(CoreStrings.ControlCharacterInPath);
+        }
+
+        try
+        {
+            StrictUtf8.GetByteCount(path);
+        }
+        catch (EncoderFallbackException)
+        {
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, CoreStrings.FtpNameNotEncodable, RemoteEntry.Visible(path)));
+        }
+
+        return path;
+    }
 
     /// <summary>Chemin affiché dans un message : caractères de contrôle remplacés par « ? ».</summary>
     private static string Printable(string path) => string.Concat(path.Select(c => char.IsControl(c) ? '?' : c));
