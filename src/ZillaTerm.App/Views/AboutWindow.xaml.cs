@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services;
@@ -25,15 +26,7 @@ public partial class AboutWindow : Window
         InitializeComponent();
         _settings = settings;
         _saveSettings = saveSettings;
-        try
-        {
-            LogoImage.Source = BitmapFrame.Create(new Uri("pack://application:,,,/Assets/ZillaTerm.ico", UriKind.Absolute));
-        }
-        catch (Exception ex) when (ex is IOException or NotSupportedException)
-        {
-            LogoImage.Visibility = Visibility.Collapsed;
-        }
-
+        ShowLogo(VisualTreeHelper.GetDpi(this).PixelsPerDip);
         VersionText.Text = Text.Format(Strings.AboutVersion, UpdateChecker.CurrentVersion);
         LicenseText.Text = Strings.AboutLicense;
         SystemText.Text = Text.Format(Strings.AboutSystem, RuntimeInformation.FrameworkDescription, RuntimeInformation.OSDescription,
@@ -46,6 +39,33 @@ public partial class AboutWindow : Window
         }
 
         Closed += (_, _) => _download?.Cancel();
+    }
+
+    /// <summary>Taille du logo à l'écran : sur un écran à une autre échelle, une autre image du .ico.</summary>
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        ShowLogo(newDpi.PixelsPerDip);
+    }
+
+    /// <summary>
+    /// Logo : l'image du .ico la plus petite qui couvre la taille affichée (pixels réels, selon l'échelle de l'écran).
+    /// BitmapFrame.Create donnait la première image du fichier, de 16 px : agrandie à 56, elle était floue.
+    /// </summary>
+    private void ShowLogo(double pixelsPerDip)
+    {
+        try
+        {
+            var decoder = BitmapDecoder.Create(new Uri("pack://application:,,,/ZillaTerm;component/Assets/ZillaTerm.ico", UriKind.Absolute),
+                BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            double needed = LogoImage.Width * pixelsPerDip;
+            LogoImage.Source = decoder.Frames.Where(f => f.PixelWidth >= needed).MinBy(f => f.PixelWidth)
+                ?? decoder.Frames.MaxBy(f => f.PixelWidth);
+        }
+        catch (Exception ex) when (ex is IOException or NotSupportedException)
+        {
+            LogoImage.Visibility = Visibility.Collapsed;
+        }
     }
 
     private static string SettingsFolder => Path.GetDirectoryName(AppSettings.DefaultPath) ?? "";

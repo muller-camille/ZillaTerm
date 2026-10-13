@@ -6,7 +6,9 @@
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
     <StackPanel Margin="18">
         <DockPanel Margin="0,0,0,12">
-            <Image x:Name="LogoImage" DockPanel.Dock="Left" Width="56" Height="56" Margin="0,0,14,0" VerticalAlignment="Top" />
+            <!-- Source choisie selon l'échelle de l'écran (AboutWindow.ShowLogo) ; réduction lissée. -->
+            <Image x:Name="LogoImage" DockPanel.Dock="Left" Width="56" Height="56" Margin="0,0,14,0" VerticalAlignment="Top"
+                   RenderOptions.BitmapScalingMode="HighQuality" />
             <StackPanel>
                 <TextBlock Text="ZillaTerm" FontSize="20" FontWeight="SemiBold" />
                 <TextBlock x:Name="VersionText" Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,6" />

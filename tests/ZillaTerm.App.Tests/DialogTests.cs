@@ -1966,6 +1966,8 @@ public sealed class DialogTests
 
             var about = new AboutWindow(new AppSettings(), () => { });
             Assert.Contains(UpdateChecker.CurrentVersion.ToString(), about.VersionText.Text);
+            // Logo net : une image du .ico au moins aussi grande que l'affichage (pas celle de 16 px agrandie).
+            Assert.True(((System.Windows.Media.Imaging.BitmapSource)about.LogoImage.Source).PixelWidth >= about.LogoImage.Width);
             about.Close();
 
             s1.Dispose();

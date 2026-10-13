@@ -152,6 +152,19 @@ La clé ne serait jamais gardée sur le poste ni écrite dans le journal, comme 
 La copie du serveur ou de l'utilisateur de plusieurs comptes à la fois a disparu avec l'onglet « Tous les comptes ».
 Piste : une sélection multiple dans « Disponibles » (Ctrl+clic, comme dans « Courants »).
 
+### Se connecter à la console (sessions PSM Windows)
+
+La case « admin connect » de la fenêtre de connexion du PVWA : la session s'ouvre sur la console du serveur
+(l'équivalent de `mstsc /admin`). Utile quand toutes les sessions Bureau à distance du serveur sont prises, ou pour une
+application qui ne tourne que sur la console.
+
+- API du PVWA : paramètre `AllowConnectToConsole` (`Yes`) dans `ConnectionParams` de `PSMConnect`, à côté de
+  `PSMRemoteMachine` et `AllowMappingLocalDrives`.
+- Au cas par cas, jamais par défaut : la session peut prendre la place de celle déjà ouverte sur la console. Piste : un
+  clic droit « Se connecter à la console » sur un serveur Windows, avec une confirmation qui le dit.
+- Seulement si le composant de connexion déclare ce paramètre ; sinon, nouvelle demande sans lui (comme pour les
+  disques du poste), notée au journal de débogage.
+
 ## Connexion au coffre
 
 - **Plusieurs PVWA** : profils de connexion (production, recette…), choisis dans la fenêtre de connexion.
