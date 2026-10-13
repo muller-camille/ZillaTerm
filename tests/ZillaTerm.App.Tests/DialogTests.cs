@@ -3405,6 +3405,88 @@ public sealed partial class DialogTests
     }
 
     /// <summary>
+    /// Écran des Bureaux à distance : les images en tuiles vont au journal, pas dans l'historique affiché ; au-delà de la
+    /// taille de bridage, le journal le note une fois, l'interface en est prévenue et l'onglet « Intervention » le dit ; le
+    /// rapport rejoue l'écran avec les textes de l'interface.
+    /// </summary>
+    [Fact]
+    public void InterventionRecorderThrottlesTheScreenBeyondItsLimit()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new XorProtector(), screenThrottleBytes: 64 * 1024);
+                int changed = 0;
+                recorder.Changed += () => changed++;
+                recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
+                Assert.False(recorder.UpdateScreenThrottle());
+                var panel = new InterventionPanel();
+                panel.Attach(recorder);
+                Assert.Equal(Visibility.Collapsed, panel.ScreenThrottledText.Visibility);
+
+                // Bruit : chaque image est entièrement nouvelle et se compresse mal (plus de 64 Ko chacune).
+                var random = new Random(7);
+                var encoder = new ZillaTerm.Core.Interventions.ScreenTileEncoder(1);
+                var pixels = new byte[320 * 200 * 4];
+                var start = DateTime.UtcNow;
+                for (int i = 0; i < 3; i++)
+                {
+                    random.NextBytes(pixels);
+                    var frame = encoder.Encode(start.AddSeconds(i), pixels, 320, 200, 320 * 4);
+                    recorder.RecordScreen(recorder.JournalPath!, "admin-srv01@srv01.corp.local", frame!, start.AddSeconds(i));
+                }
+
+                // Image encodée pour un autre enregistrement : pas dans celui-ci.
+                recorder.RecordScreen(Path.Combine(dir, "autre.zij"), "admin-srv01@srv01.corp.local",
+                    encoder.Encode(start.AddSeconds(3), pixels, 320, 200, 320 * 4, key: true)!, start.AddSeconds(3));
+
+                recorder.Flush();
+                int before = changed;
+                Assert.True(recorder.UpdateScreenThrottle());
+                Assert.True(recorder.ScreenThrottled);
+                Assert.True(recorder.UpdateScreenThrottle());
+                PumpUntil(() => changed > before);
+                // Un seul avis, même regardé deux fois.
+                long until = Environment.TickCount64 + 100;
+                PumpUntil(() => Environment.TickCount64 >= until);
+                Assert.Equal(before + 1, changed);
+                Assert.Equal(Visibility.Visible, panel.ScreenThrottledText.Visibility);
+                var history = recorder.History!.Since(0);
+                Assert.DoesNotContain(history, e => e.Kind == ZillaTerm.Core.Interventions.InterventionKind.Screen);
+                Assert.Single(history, e => e.Kind == ZillaTerm.Core.Interventions.InterventionKind.Action && e.Text == Strings.InterventionScreenThrottled);
+
+                var path = recorder.JournalPath!;
+                recorder.Stop("fin");
+                Assert.False(recorder.ScreenThrottled);
+                Assert.Equal(Visibility.Collapsed, panel.ScreenThrottledText.Visibility);
+                panel.Detach();
+                var recording = ZillaTerm.Core.Interventions.InterventionJournal.Read(path, recorder.Protector);
+                Assert.Equal(3, recording.Entries.Count(e => e.Kind == ZillaTerm.Core.Interventions.InterventionKind.Screen));
+                var html = ZillaTerm.Core.Interventions.InterventionReport.ToHtml(recording, InterventionWindow.ReportText(), TimeZoneInfo.Local,
+                    System.Globalization.CultureInfo.CurrentUICulture);
+                Assert.Contains(WebUtility.HtmlEncode(Strings.InterventionReportScreens), html, StringComparison.Ordinal);
+                Assert.Contains(WebUtility.HtmlEncode(Strings.InterventionReportPlay), html, StringComparison.Ordinal);
+                Assert.Equal(Strings.InterventionKindScreen, InterventionWindow.KindName(ZillaTerm.Core.Interventions.InterventionKind.Screen));
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Onglet « Intervention » : le titre (Entrée) et la note (Entrée) vont au journal et dans l'historique ; un long retour
     /// de terminal est réduit, se déplie en entier et grandit avec la sortie ; à l'arrêt, la saisie est grisée et
     /// l'historique reste jusqu'à « Fermer l'historique » ; un nouvel enregistrement repart de zéro.

@@ -161,6 +161,7 @@ public partial class InterventionWindow : Window
         InterventionKind.Action => Strings.InterventionKindAction,
         InterventionKind.Transfer => Strings.InterventionKindTransfer,
         InterventionKind.Title => Strings.InterventionKindTitle,
+        InterventionKind.Screen => Strings.InterventionKindScreen,
         _ => Strings.InterventionKindScreenshot,
     };
 
@@ -196,6 +197,15 @@ public partial class InterventionWindow : Window
             _ => Strings.InterventionCountTerminal,
         }, count),
         Duration = Duration,
+        Screens = Strings.InterventionReportScreens,
+        ScreenHelp = Strings.InterventionReportScreenHelp,
+        ScreenHeading = Strings.InterventionReportScreenHeading,
+        Play = Strings.InterventionReportPlay,
+        Pause = Strings.InterventionReportPause,
+        Speed = Strings.InterventionReportSpeed,
+        Activity = Strings.InterventionReportActivity,
+        ScriptNeeded = Strings.InterventionReportScriptNeeded,
+        ScreenGap = Strings.InterventionReportScreenGap,
     };
 
     private void OnRecorderChanged()

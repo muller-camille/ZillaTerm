@@ -197,6 +197,7 @@ public partial class InterventionPanel : UserControl
         NoteButton.IsEnabled = keeping && NoteBox.Text.Trim().Length > 0;
         CaptureButton.IsEnabled = keeping;
         RecordingDot.Visibility = keeping ? Visibility.Visible : Visibility.Collapsed;
+        ScreenThrottledText.Visibility = active is { ScreenThrottled: true } ? Visibility.Visible : Visibility.Collapsed;
         CloseHistoryButton.Visibility = !recording && _history is not null ? Visibility.Visible : Visibility.Collapsed;
         var status = active is not null ? InterventionWindow.RecordingStatus(active) : Strings.InterventionNotRecording;
         bool interrupted = active is { FailedAt: not null };

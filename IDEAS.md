@@ -210,11 +210,6 @@ barre d'état de ZillaTerm.
 
 ## Intervention et consignes d'astreinte
 
-### Titre ou ticket de l'intervention
-
-Champ facultatif au lancement de l'enregistrement (« INC0012345 – disque plein prd-lnx01 »), qui nomme l'intervention
-dans la liste (aujourd'hui une simple date) et sert de titre au rapport.
-
 ### Serveurs touchés en tête du rapport
 
 Tableau récapitulatif : une ligne par serveur avec l'arrivée, le départ, la durée, le nombre de commandes et de
@@ -259,37 +254,37 @@ d'astreinte suivante.
 Les lignes des consignes commençant par `[ ]` deviennent des cases à cocher ; chaque case cochée est notée dans le
 journal (« Ticket ouvert ✓ »). Le texte reste du texte brut : rien d'autre n'est interprété.
 
-### Bureau à distance enregistré comme RDP l'envoie : tuiles modifiées
+### Lecteur des écrans enregistrés : repères
 
-Les sessions Bureau à distance dans un onglet (FreeRDP, contrôle de Windows) gardées dans le journal à la façon du
-protocole RDP, qui n'envoie que les zones modifiées et met en cache les morceaux d'image déjà vus :
+L'écran des Bureaux à distance dans un onglet est enregistré en tuiles modifiées, et le rapport a un lecteur avec la
+courbe d'activité sous le curseur. Restent à y ajouter :
 
-- **image clé** à l'ouverture, puis toutes les quelques minutes (pour se déplacer dans le temps) ;
-- entre deux, capture de la fenêtre chaque seconde (PrintWindow, même recouverte), découpée en **tuiles de 64×64** :
-  seules les tuiles modifiées sont gardées, avec l'heure, en PNG sans perte (texte lisible) ;
-- **cache de tuiles** : une tuile déjà vue (même menu, même boîte de dialogue) n'est gardée qu'une fois, par son
-  empreinte ;
-- **seuil de bruit** : horloge, curseur texte, petite animation ne comptent pas ; seul un changement significatif
-  (nouvelle fenêtre, défilement) est gardé. Ordre de grandeur visé : quelques Mo par heure de session.
+- un **cadre** autour de la zone modifiée à chaque image ;
+- les **clics** de l'opérateur (position connue de l'onglet, jamais les touches tapées) ;
+- les **notes** et la fin de session sur la même ligne de temps que la courbe ;
+- l'**enregistrement par mstsc** (sessions PSM ouvertes avec Connexion Bureau à distance), aujourd'hui gardées par les
+  seules captures à la demande.
 
-Dans le rapport HTML : un **lecteur** intégré (lecture, avance rapide, aller à une heure) qui recompose l'écran en
-posant les tuiles sur l'image clé, sans ressource externe ; une **courbe d'activité** par session (part de l'écran
-modifiée par minute) dont les pics mènent à l'instant correspondant ; un **cadre** autour de la zone modifiée ; les
-**clics** de l'opérateur (position connue de l'onglet, jamais les touches tapées) ; les notes et la fin de session sur
-la même ligne de temps.
+### Écran enregistré : encore moins de place
 
-Sans enregistrer le flux RDP lui-même (`/pcap` de FreeRDP : il contient les touches, donc les mots de passe tapés) et
-sans correctif propre à ZillaTerm dans FreeRDP : la comparaison des tuiles est faite par ZillaTerm. Limites : un
-onglet non affiché n'est pas capturé (reprise par une image clé à son retour) ; tout ce qu'affiche l'écran est dans le
-journal (chiffré), et dans le rapport exporté (non chiffré). En deux temps : enregistrement des tuiles dans le journal,
-puis lecteur, courbe et repères dans le rapport.
+Déjà en place : seules les tuiles modifiées, en différence pour un petit changement, rien pour un écran immobile.
+Pistes à mesurer sur de vraies sessions PSM (une ligne de statistiques par image dans le journal de débogage, sans
+pixels) :
+
+- **défilement détecté** : un journal ou l'Observateur d'événements qui défile renvoie aujourd'hui toutes les tuiles
+  de la zone ; « copier cette zone N lignes plus haut », comme RDP, ne garderait que les lignes apparues ;
+- **tuiles en palette** : une tuile d'interface a souvent 16 couleurs au plus, 4 bits par pixel au lieu de 16 ;
+- **zones qui bougent sans arrêt** (horloge avec les secondes, graphe du Gestionnaire des tâches, barre de progression
+  animée) gardées une fois toutes les 10 secondes ;
+- **budget par période** plutôt qu'un seuil unique à 100 Mo : un pic d'activité ralentit les captures un moment, sans
+  brider le reste de l'intervention.
 
 ### Bureau à distance : fin de session, pause, dernière image
 
 - **Fin de session précise** dans le journal : déconnectée par le serveur, inactivité, reprise depuis une autre
   connexion, fermeture de session, erreur (code FreeRDP déjà lu par ZillaTerm).
-- **Pastille « ● enregistré »** sur l'onglet Bureau à distance et bouton **« Pause des captures »** pour un écran
-  sensible, la pause et la reprise étant notées au journal.
+- Bouton **« Pause des captures »** pour un écran sensible (l'onglet affiche déjà « ● Écran enregistré »), la pause
+  et la reprise étant notées au journal.
 - **Dernière image avant une coupure** : les dernières images gardées en mémoire, écrites au journal seulement si la
   session se termine en erreur.
 - **Temps actif par session** (clavier et souris dans l'onglet, jamais les touches) pour le tableau « Serveurs

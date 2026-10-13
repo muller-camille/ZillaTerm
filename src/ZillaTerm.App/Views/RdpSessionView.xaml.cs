@@ -17,16 +17,25 @@ public partial class RdpSessionView : UserControl
         InitializeComponent();
         Session = session;
         Body.Children.Insert(0, session.Host);
+        // Écran de la session gardé pendant l'enregistrement d'une intervention, tant que l'onglet est affiché.
+        _screen = new RdpScreenRecorder(session, Services.InterventionRecorder.Current);
+        _ = session.Closed.ContinueWith(_ => _screen.Dispose(), TaskScheduler.Default);
+        IsVisibleChanged += (_, _) => ShowScreen();
         session.StateChanged += Update;
         Update();
     }
+
+    private readonly RdpScreenRecorder _screen;
 
     internal RdpSession Session { get; }
 
     /// <summary>Cadre de la couleur de l'étiquette du serveur (aucun sans étiquette).</summary>
     internal void ShowTag(Core.ServerTag? tag) => ServerTagView.Frame(TagFrame, tag);
 
-    /// <summary>Intervention en cours d'enregistrement : le bouton « Capture » est proposé.</summary>
+    /// <summary>
+    /// Intervention en cours d'enregistrement : le bouton « Capture » est proposé et l'indicateur dit que l'écran est
+    /// gardé (toutes les 10 s au-delà de 100 Mo de journal).
+    /// </summary>
     internal bool InterventionRecording
     {
         get => _interventionRecording;
@@ -56,6 +65,9 @@ public partial class RdpSessionView : UserControl
     {
         var session = Session;
         CaptureButton.Visibility = _interventionRecording && session.ShowsDesktop ? Visibility.Visible : Visibility.Collapsed;
+        ScreenRecorded.Visibility = CaptureButton.Visibility;
+        ScreenRecorded.Text = Services.InterventionRecorder.Current.ScreenThrottled ? Strings.RdpScreenThrottled : Strings.RdpScreenRecorded;
+        ShowScreen();
         Overlay.Visibility = session.ShowsDesktop ? Visibility.Collapsed : Visibility.Visible;
         FullScreenButton.IsEnabled = session.IsConnected && session.CanFullScreen;
         // Client FreeRDP : pas de plein écran ; le bouton grisé dit pourquoi, et quoi faire à la place.
@@ -120,6 +132,9 @@ public partial class RdpSessionView : UserControl
             StatusLine.ClearValue(TextBlock.FontWeightProperty);
         }
     }
+
+    /// <summary>Bureau affiché dans l'onglet visible : son écran est capturé (s'il y a un enregistrement en cours).</summary>
+    private void ShowScreen() => _screen.Show(IsVisible && Session.ShowsDesktop, Session.Host.SlotHandle);
 
     private void OnFullScreen(object sender, RoutedEventArgs e) => Session.EnterFullScreen();
 

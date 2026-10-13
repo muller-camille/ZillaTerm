@@ -36,12 +36,34 @@ public sealed class InterventionReportText
 
     /// <summary>Durée lisible.</summary>
     public Func<TimeSpan, string> Duration { get; init; } = d => d.ToString(@"h\:mm", CultureInfo.InvariantCulture);
+
+    public string Screens { get; init; } = "Recorded screens";
+
+    public string ScreenHelp { get; init; } =
+        "Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. "
+        + "The graph under the cursor shows the share of the screen that changed: click a peak to go there.";
+
+    /// <summary>{0} = session, {1} = début, {2} = fin, {3} = taille.</summary>
+    public string ScreenHeading { get; init; } = "{0}: {1} to {2} ({3})";
+
+    public string Play { get; init; } = "Play";
+
+    public string Pause { get; init; } = "Pause";
+
+    public string Speed { get; init; } = "Speed";
+
+    public string Activity { get; init; } = "Position and screen activity";
+
+    public string ScriptNeeded { get; init; } = "The player needs JavaScript and a recent browser.";
+
+    /// <summary>Images d'écran manquantes (bloc du journal abîmé) : l'écran reste figé jusqu'à l'image clé suivante.</summary>
+    public string ScreenGap { get; init; } = "Images missing here (damaged journal): the screen resumes at the next full image.";
 }
 
 /// <summary>
-/// Rapport d'une intervention : une page HTML autonome (chronologie, texte des terminaux, captures), à joindre au compte
-/// rendu. Tout le texte est échappé et la page interdit les scripts et les ressources externes (le texte des terminaux
-/// vient des serveurs).
+/// Rapport d'une intervention : une page HTML autonome (chronologie, texte des terminaux, captures, écrans enregistrés), à
+/// joindre au compte rendu. Tout le texte est échappé et la page interdit les ressources externes et tout script, sauf
+/// celui du lecteur des écrans enregistrés, autorisé par son empreinte (le texte des terminaux vient des serveurs).
 /// </summary>
 public static class InterventionReport
 {
@@ -50,14 +72,18 @@ public static class InterventionReport
     /// <param name="zone">Fuseau des heures affichées (celui du poste).</param>
     public static string ToHtml(InterventionRecording recording, InterventionReportText text, TimeZoneInfo zone, CultureInfo culture)
     {
-        var entries = recording.Entries;
+        // Images d'écran en tuiles : rejouées par le lecteur, pas dans la chronologie.
+        var entries = recording.Entries.Where(e => e.Kind != InterventionKind.Screen).ToList();
+        var screens = InterventionScreenPlayer.Recordings(recording.Entries);
         var html = new StringBuilder();
         string Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), zone)
             .ToString("g", culture);
 
+        string script = screens.Count > 0 ? "; script-src " + InterventionScreenPlayer.ScriptHash : "";
         html.Append("<!DOCTYPE html>\n<html lang=\"").Append(Encode(culture.TwoLetterISOLanguageName)).Append("\">\n<head>\n")
             .Append("<meta charset=\"utf-8\">\n")
-            .Append("<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'\">\n")
+            .Append("<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'")
+            .Append(script).Append("\">\n")
             .Append("<meta name=\"referrer\" content=\"no-referrer\">\n")
             .Append("<title>").Append(Encode(Heading(recording, text)));
         if (recording.Start is { } titleStart)
@@ -74,6 +100,7 @@ public static class InterventionReport
             .Append("pre{margin:0;padding:6px 8px;background:#1e2227;color:#e6e6e6;white-space:pre-wrap;word-break:break-all;font:12px Consolas,monospace;border-radius:4px}")
             .Append("img{max-width:100%;border:1px solid #d0d7de}.kind{font-weight:600}")
             .Append("@media print{pre{background:#fff;color:#000;border:1px solid #999}}")
+            .Append(screens.Count > 0 ? InterventionScreenPlayer.Styles : "")
             .Append("\n</style>\n</head>\n<body>\n");
 
         html.Append("<h1>").Append(Encode(Heading(recording, text))).Append("</h1>\n");
@@ -104,7 +131,13 @@ public static class InterventionReport
             }
         }
 
-        html.Append("</ul>\n<h2>").Append(Encode(text.Timeline)).Append("</h2>\n<table>\n<tr><th>")
+        html.Append("</ul>\n");
+        if (screens.Count > 0)
+        {
+            InterventionScreenPlayer.Append(html, screens, text, Local, zone, culture);
+        }
+
+        html.Append("<h2>").Append(Encode(text.Timeline)).Append("</h2>\n<table>\n<tr><th>")
             .Append(Encode(text.TimeHeader)).Append("</th><th>").Append(Encode(text.SourceHeader)).Append("</th><th>")
             .Append(Encode(text.EventHeader)).Append("</th></tr>\n");
 
@@ -182,7 +215,7 @@ public static class InterventionReport
     private static bool IsPng(byte[] image) => image.AsSpan().StartsWith(PngSignature);
 
     /// <summary>Texte échappé pour HTML, caractères de contrôle et invisibles remplacés (ils viennent des serveurs).</summary>
-    private static string Encode(string text)
+    internal static string Encode(string text)
     {
         var builder = new StringBuilder(text.Length);
         foreach (var rune in text.EnumerateRunes())

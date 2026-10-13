@@ -6,7 +6,10 @@
         <Border DockPanel.Dock="Top" Background="{DynamicResource MainTabBrush}" BorderBrush="{DynamicResource MainTabBorderBrush}" BorderThickness="0,0,0,1" Padding="8,3">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <!-- Intervention en cours d'enregistrement : image du bureau ajoutée au journal. -->
+                    <!-- Intervention en cours d'enregistrement : l'écran est gardé (zones modifiées) ; image du bureau ajoutée au journal. -->
+                    <TextBlock x:Name="ScreenRecorded" Text="{x:Static loc:Strings.RdpScreenRecorded}" ToolTip="{x:Static loc:Strings.RdpScreenRecordedTip}"
+                               AutomationProperties.HelpText="{x:Static loc:Strings.RdpScreenRecordedTip}" Foreground="{DynamicResource ErrorBrush}"
+                               VerticalAlignment="Center" Margin="0,0,10,0" Visibility="Collapsed" />
                     <Button x:Name="CaptureButton" Content="{x:Static loc:Strings.InterventionCaptureButton}" ToolTip="{x:Static loc:Strings.InterventionCaptureButtonTip}"
                             AutomationProperties.HelpText="{x:Static loc:Strings.InterventionCaptureButtonTip}"
                             Click="OnCapture" Padding="10,1" Margin="0,0,6,0" Visibility="Collapsed" />

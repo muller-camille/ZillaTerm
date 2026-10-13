@@ -4975,7 +4975,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Recording since {0} ({1}), {2:# event|# events}.</value>
   </data>
   <data name="InterventionRecordingHelp" xml:space="preserve">
-    <value>For any intervention, on call or not. Everything is kept until you stop: the text of the SSH terminals, connections, account actions, file transfers with their SHA-256, your notes and the captures. The journal is encrypted for your Windows account only. Passwords typed without echo are not in it, but whatever a terminal shows is. When recording starts, the "Intervention" tab of the left panel shows the title, notes, captures and history.</value>
+    <value>For any intervention, on call or not. Everything is kept until you stop: the text of the SSH terminals, connections, account actions, file transfers with their SHA-256, your notes, the captures and the screen of remote desktop sessions opened in a tab (changed areas). The journal is encrypted for your Windows account only. Passwords typed without echo are not in it, but whatever a terminal or a remote desktop in a tab shows is. When recording starts, the "Intervention" tab of the left panel shows the title, notes, captures and history.</value>
   </data>
   <data name="InterventionNotePlaceholder" xml:space="preserve">
     <value>What you found, decided, did…</value>
@@ -5152,7 +5152,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Part of the journal could not be read or was changed.</value>
   </data>
   <data name="InterventionReportConfidential" xml:space="preserve">
-    <value>Confidential: this report contains what the terminals showed. It is not encrypted.</value>
+    <value>Confidential: this report contains what the terminals and the remote desktop screens showed. It is not encrypted.</value>
   </data>
   <data name="InterventionReportSummary" xml:space="preserve">
     <value>Summary</value>
@@ -5649,5 +5649,47 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="InterventionCloseHistory" xml:space="preserve">
     <value>Close the _history</value>
+  </data>
+  <data name="InterventionKindScreen" xml:space="preserve">
+    <value>Screen</value>
+  </data>
+  <data name="InterventionScreenThrottled" xml:space="preserve">
+    <value>Journal over 100 MB: remote desktop screens are now kept only once every 10 s.</value>
+  </data>
+  <data name="RdpScreenRecorded" xml:space="preserve">
+    <value>● Screen recorded</value>
+  </data>
+  <data name="RdpScreenThrottled" xml:space="preserve">
+    <value>● Screen recorded (every 10 s)</value>
+  </data>
+  <data name="RdpScreenRecordedTip" xml:space="preserve">
+    <value>Intervention being recorded: this session's screen is kept in the journal (changed areas only, one image per second at most, one every 10 s beyond 100 MB of journal). Only the displayed tab is captured.</value>
+  </data>
+  <data name="InterventionReportScreens" xml:space="preserve">
+    <value>Recorded screens</value>
+  </data>
+  <data name="InterventionReportScreenHelp" xml:space="preserve">
+    <value>Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. The graph under the cursor shows the share of the screen that changed: click a peak to go there.</value>
+  </data>
+  <data name="InterventionReportScreenHeading" xml:space="preserve">
+    <value>{0}: {1} to {2} ({3})</value>
+  </data>
+  <data name="InterventionReportPlay" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="InterventionReportPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="InterventionReportSpeed" xml:space="preserve">
+    <value>Speed</value>
+  </data>
+  <data name="InterventionReportActivity" xml:space="preserve">
+    <value>Position and screen activity</value>
+  </data>
+  <data name="InterventionReportScriptNeeded" xml:space="preserve">
+    <value>The player needs JavaScript and a recent browser.</value>
+  </data>
+  <data name="InterventionReportScreenGap" xml:space="preserve">
+    <value>Images missing here (damaged journal): the screen resumes at the next full image.</value>
   </data>
 </root>

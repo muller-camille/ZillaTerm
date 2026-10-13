@@ -146,12 +146,13 @@ public sealed class InterventionJournalTests : IDisposable
         journal.Flush();
         journal.Write(new InterventionEntry(T0.AddSeconds(1), InterventionKind.Note, "", "after"));
         journal.Stop(new InterventionEntry(T0.AddSeconds(2), InterventionKind.Stopped, "", ""));
-        var blocks = Blocks(File.ReadAllBytes(journal.Path));
+        var original = File.ReadAllBytes(journal.Path);
+        var blocks = Blocks(original);
 
         const int huge = (64 * 1024 * 1024) + 1;
         using (var file = new FileStream(journal.Path, FileMode.Create))
         {
-            file.Write("ZTINTV1\n"u8);
+            file.Write(original.AsSpan(0, 8));
             file.Write(blocks[0]);
             file.Write(BitConverter.GetBytes(huge));
             file.SetLength(file.Position + huge);
