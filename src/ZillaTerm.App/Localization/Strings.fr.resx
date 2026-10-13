@@ -166,7 +166,7 @@
     <value>Ajouter</value>
   </data>
   <data name="ToolAddToMyServersTip" xml:space="preserve">
-    <value>Ajouter le compte sélectionné à Mes serveurs</value>
+    <value>Ajouter le compte sélectionné à « Mes serveurs »</value>
   </data>
   <data name="ToolRefresh" xml:space="preserve">
     <value>Actualiser</value>
@@ -220,7 +220,7 @@
     <value>Rechercher un serveur…</value>
   </data>
   <data name="SavedSearchTip" xml:space="preserve">
-    <value>Filtrer Mes serveurs par nom, serveur, utilisateur, dossier, composant… et les entrées des bases KeePass déverrouillées (Ctrl+F)</value>
+    <value>Filtrer « Mes serveurs » par nom, serveur, utilisateur, dossier, composant… et les entrées des bases KeePass déverrouillées (Ctrl+F)</value>
   </data>
   <data name="SavedSearchNoMatch" xml:space="preserve">
     <value>Aucun serveur ne correspond à « {0} ».</value>
@@ -378,10 +378,10 @@
     <value>{0} : compte introuvable dans CyberArk (supprimé ou droits retirés).</value>
   </data>
   <data name="AddedToMyServersFolder" xml:space="preserve">
-    <value>{0} ajouté à Mes serveurs (dossier {1})</value>
+    <value>{0} ajouté à « Mes serveurs » (dossier {1})</value>
   </data>
   <data name="AddedToMyServers" xml:space="preserve">
-    <value>{0} ajouté à Mes serveurs</value>
+    <value>{0} ajouté à « Mes serveurs »</value>
   </data>
   <data name="NewFolderIn" xml:space="preserve">
     <value>Nouveau dossier dans {0}</value>
@@ -2866,10 +2866,10 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour renvoyer
     <value>_Exporter les comptes affichés (CSV)…</value>
   </data>
   <data name="ImportServersTip" xml:space="preserve">
-    <value>Importer les serveurs d'un fichier exporté de Mes serveurs (sur ce poste ou par un collègue), ou d'une liste partagée</value>
+    <value>Importer les serveurs d'un fichier exporté de « Mes serveurs » (sur ce poste ou par un collègue), ou d'une liste partagée</value>
   </data>
   <data name="ExportServersTip" xml:space="preserve">
-    <value>Exporter Mes serveurs dans un fichier (dossiers, modes, composants, machines cibles ; aucun mot de passe)</value>
+    <value>Exporter « Mes serveurs » dans un fichier (dossiers, modes, composants, machines cibles ; aucun mot de passe)</value>
   </data>
   <data name="SharedListsTip" xml:space="preserve">
     <value>Listes partagées : listes de serveurs sur un partage réseau que chacun peut compléter, avec l'historique des modifications</value>
@@ -2884,7 +2884,7 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour renvoyer
     <value>mes-serveurs</value>
   </data>
   <data name="NoServersToExport" xml:space="preserve">
-    <value>Mes serveurs est vide : rien à exporter.</value>
+    <value>« Mes serveurs » est vide : rien à exporter.</value>
   </data>
   <data name="ServersExported" xml:space="preserve">
     <value>{0:# serveur exporté|# serveurs exportés} dans {1}</value>
@@ -2896,13 +2896,13 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour renvoyer
     <value>Import impossible : {0}</value>
   </data>
   <data name="ImportServersNothing" xml:space="preserve">
-    <value>Rien à importer : ce fichier n'a que des serveurs déjà dans Mes serveurs ({0:# serveur|# serveurs}).</value>
+    <value>Rien à importer : ce fichier n'a que des serveurs déjà dans « Mes serveurs » ({0:# serveur|# serveurs}).</value>
   </data>
   <data name="ImportServersConfirm" xml:space="preserve">
-    <value>Importer {0:# serveur|# serveurs} dans Mes serveurs depuis « {1} » ?</value>
+    <value>Importer {0:# serveur|# serveurs} dans « Mes serveurs » depuis « {1} » ?</value>
   </data>
   <data name="ImportServersDuplicates" xml:space="preserve">
-    <value>{0:# serveur déjà dans Mes serveurs sera ignoré.|# serveurs déjà dans Mes serveurs seront ignorés.}</value>
+    <value>{0:# serveur déjà dans « Mes serveurs » sera ignoré.|# serveurs déjà dans « Mes serveurs » seront ignorés.}</value>
   </data>
   <data name="ImportServersFolders" xml:space="preserve">
     <value>Nouveaux dossiers : {0}</value>
@@ -3031,10 +3031,10 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour renvoyer
     <value>{0:# serveur retiré|# serveurs retirés} de la liste partagée « {1} »</value>
   </data>
   <data name="CopiedToMyServers" xml:space="preserve">
-    <value>{0:# serveur copié|# serveurs copiés} dans Mes serveurs ({1:# déjà présent|# déjà présents})</value>
+    <value>{0:# serveur copié|# serveurs copiés} dans « Mes serveurs » ({1:# déjà présent|# déjà présents})</value>
   </data>
   <data name="CopiedToMyServersNone" xml:space="preserve">
-    <value>Déjà dans Mes serveurs ({0:# serveur|# serveurs}).</value>
+    <value>Déjà dans « Mes serveurs » ({0:# serveur|# serveurs}).</value>
   </data>
   <data name="MenuSharedHistory" xml:space="preserve">
     <value>_Historique des modifications…</value>
@@ -3263,7 +3263,7 @@ Révision actuelle : {1} · {2:# serveur|# serveurs}</value>
     <value>« {0} » vient d'une liste partagée créée pour le PVWA {1} : ses comptes ne sont pas ceux de {2}. Connectez-vous à {1} pour l'utiliser.</value>
   </data>
   <data name="SharedOtherPvwaChange" xml:space="preserve">
-    <value>La liste partagée « {0} » a été créée pour le PVWA {1} : on ne peut ni y ajouter des serveurs de {2}, ni copier ses serveurs dans Mes serveurs.</value>
+    <value>La liste partagée « {0} » a été créée pour le PVWA {1} : on ne peut ni y ajouter des serveurs de {2}, ni copier ses serveurs dans « Mes serveurs ».</value>
   </data>
   <data name="SettingsSetAsideRestored" xml:space="preserve">
     <value>Votre fichier de réglages était illisible (écriture interrompue, disque plein…). Il a été gardé tel quel sous :
@@ -3769,7 +3769,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Liste partagée « {0} »</value>
   </data>
   <data name="SharedCopyTargetsMessage" xml:space="preserve">
-    <value>Ces machines cibles viennent de la liste partagée, que peut modifier quiconque a le droit d'écrire sur le partage, et non de CyberArk. Une fois copiées dans Mes serveurs, elles ne seront plus signalées.</value>
+    <value>Ces machines cibles viennent de la liste partagée, que peut modifier quiconque a le droit d'écrire sur le partage, et non de CyberArk. Une fois copiées dans « Mes serveurs », elles ne seront plus signalées.</value>
   </data>
   <data name="SharedCopyAnyway" xml:space="preserve">
     <value>Copier quand même</value>
@@ -3787,7 +3787,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Se connecter quand même</value>
   </data>
   <data name="RemoveSavedHeading" xml:space="preserve">
-    <value>Retirer « {0} » de Mes serveurs ?</value>
+    <value>Retirer « {0} » de « Mes serveurs » ?</value>
   </data>
   <data name="RemoveSavedMessage" xml:space="preserve">
     <value>Le compte reste disponible dans l'onglet « Disponibles ».</value>
@@ -3796,7 +3796,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Supprimer le dossier « {0} » ?</value>
   </data>
   <data name="DeleteFolderMessage" xml:space="preserve">
-    <value>Il contient des serveurs ({0}) : ils sont retirés de Mes serveurs. Les comptes restent disponibles dans l'onglet « Disponibles ».</value>
+    <value>Il contient des serveurs ({0}) : ils sont retirés de « Mes serveurs ». Les comptes restent disponibles dans l'onglet « Disponibles ».</value>
   </data>
   <data name="DeleteFolderAction" xml:space="preserve">
     <value>Supprimer le dossier</value>
@@ -4063,10 +4063,10 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Oublier les _clés choisies</value>
   </data>
   <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Les mises à jour sont recherchées au démarrage (Paramètres &gt; Général).</value>
+    <value>Les mises à jour sont recherchées au démarrage (Paramètres › Général).</value>
   </data>
   <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>La recherche automatique des mises à jour est désactivée (Paramètres &gt; Général).</value>
+    <value>La recherche automatique des mises à jour est désactivée (Paramètres › Général).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Ne sert que pour une connexion par le PSM (pas en SSH ni en SFTP via le PSMP).</value>
@@ -4282,7 +4282,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Deux PSMP pour les serveurs de {0} : seul le premier servirait.</value>
   </data>
   <data name="PsmpNoRoute" xml:space="preserve">
-    <value>Aucun PSMP pour {0} : son domaine ne correspond à aucun PSMP configuré. Ajoutez son PSMP ou un PSMP par défaut dans Paramètres &gt; CyberArk.</value>
+    <value>Aucun PSMP pour {0} : son domaine ne correspond à aucun PSMP configuré. Ajoutez son PSMP ou un PSMP par défaut dans Paramètres › CyberArk.</value>
   </data>
   <data name="ServerPromptTitle" xml:space="preserve">
     <value>Choisir le serveur</value>
@@ -4561,7 +4561,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>_Dossier dans Mes serveurs :</value>
   </data>
   <data name="SessionImportFolderTip" xml:space="preserve">
-    <value>Les dossiers de l'autre logiciel sont recréés sous ce dossier. Vide : à la racine de Mes serveurs.</value>
+    <value>Les dossiers de l'autre logiciel sont recréés sous ce dossier. Vide : à la racine de « Mes serveurs ».</value>
   </data>
   <data name="SessionImportDefaultFolder" xml:space="preserve">
     <value>Importés</value>
@@ -4582,7 +4582,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Lecture de {0} impossible : {1}</value>
   </data>
   <data name="SessionImportSummary" xml:space="preserve">
-    <value>{0:# prêt|# prêts} · {1} à vérifier (non cochés : choisissez le compte) · {2} sans compte dans le PVWA · {3} non pris en charge · {4} déjà dans Mes serveurs</value>
+    <value>{0:# prêt|# prêts} · {1} à vérifier (non cochés : choisissez le compte) · {2} sans compte dans le PVWA · {3} non pris en charge · {4} déjà dans « Mes serveurs »</value>
   </data>
   <data name="SessionImportResult" xml:space="preserve">
     <value>{0:# importé|# importés} · {1:# non importé|# non importés}</value>
@@ -4630,7 +4630,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Importer les sessions d'un autre _logiciel…</value>
   </data>
   <data name="SessionImportDone" xml:space="preserve">
-    <value>{0:# serveur importé|# serveurs importés} dans Mes serveurs</value>
+    <value>{0:# serveur importé|# serveurs importés} dans « Mes serveurs »</value>
   </data>
   <data name="SourcePuttyRegistry" xml:space="preserve">
     <value>PuTTY (registre Windows)</value>
@@ -4861,13 +4861,13 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Importer</value>
   </data>
   <data name="MyServersImportTip" xml:space="preserve">
-    <value>Ajouter des serveurs à Mes serveurs : fichier ZillaTerm, sessions d'un autre logiciel, liste partagée ou base KeePass</value>
+    <value>Ajouter des serveurs à « Mes serveurs » : fichier ZillaTerm, sessions d'un autre logiciel, liste partagée ou base KeePass</value>
   </data>
   <data name="MyServersShare" xml:space="preserve">
     <value>Partager</value>
   </data>
   <data name="MyServersShareTip" xml:space="preserve">
-    <value>Exporter Mes serveurs dans un fichier, ou créer une liste partagée sur un partage réseau</value>
+    <value>Exporter « Mes serveurs » dans un fichier, ou créer une liste partagée sur un partage réseau</value>
   </data>
   <data name="MenuImportServerFile" xml:space="preserve">
     <value>Fichier _ZillaTerm (export de Mes serveurs)…</value>
@@ -4900,7 +4900,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Sombre</value>
   </data>
   <data name="AppThemeHelp" xml:space="preserve">
-    <value>Appliqué tout de suite. Le contraste élevé de Windows l'emporte toujours. Les couleurs des terminaux se règlent dans la page Terminal.</value>
+    <value>Appliqué à l'enregistrement, sans redémarrer. Le contraste élevé de Windows l'emporte toujours. Les couleurs des terminaux se règlent dans la page Terminal.</value>
   </data>
   <data name="ToolLeaveEmergency" xml:space="preserve">
     <value>Quitter l'accès d'urgence</value>
@@ -5543,5 +5543,8 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="X11ForwardingEffect" xml:space="preserve">
     <value>⚠ Effet : un serveur compromis pourrait voir les autres fenêtres X de ce poste et y envoyer des frappes.</value>
+  </data>
+  <data name="CompareRemoteLabel" xml:space="preserve">
+    <value>{0} : {1}</value>
   </data>
 </root>

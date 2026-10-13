@@ -226,7 +226,7 @@
     <value>Nessun server corrisponde a «{0}».</value>
   </data>
   <data name="NoSavedHelp" xml:space="preserve">
-    <value>Aggiungi qui i server che usi: clic destro su un account della scheda «Disponibili» e poi «Aggiungi ai miei server», oppure trascinalo sulla scheda «I miei server». Clic destro qui per creare cartelle.</value>
+    <value>Aggiungi qui i server che usi: clic destro su un account della scheda «Disponibili» e poi «Aggiungi a “I miei server”», oppure trascinalo sulla scheda «I miei server». Clic destro qui per creare cartelle.</value>
   </data>
   <data name="TabFiles" xml:space="preserve">
     <value>File</value>
@@ -1440,7 +1440,7 @@ Inviarli in un unico archivio {3}? Un solo file da trasferire e verificare invec
     <value>Scegli un file esistente di questo computer.</value>
   </data>
   <data name="CompareLocalLabel" xml:space="preserve">
-    <value>questo computer : {0}</value>
+    <value>questo computer: {0}</value>
   </data>
   <data name="CompareReading" xml:space="preserve">
     <value>Lettura di {0}…</value>
@@ -4063,10 +4063,10 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Dimentica le c_hiavi scelte</value>
   </data>
   <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Gli aggiornamenti vengono cercati all'avvio (Impostazioni &gt; Generale).</value>
+    <value>Gli aggiornamenti vengono cercati all'avvio (Impostazioni › Generale).</value>
   </data>
   <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>La ricerca automatica degli aggiornamenti è disattivata (Impostazioni &gt; Generale).</value>
+    <value>La ricerca automatica degli aggiornamenti è disattivata (Impostazioni › Generale).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Serve solo per una connessione tramite il PSM (non in SSH né in SFTP tramite il PSMP).</value>
@@ -4282,7 +4282,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Due PSMP per i server di {0}: verrebbe usato solo il primo.</value>
   </data>
   <data name="PsmpNoRoute" xml:space="preserve">
-    <value>Nessun PSMP per {0}: il suo dominio non corrisponde a nessun PSMP configurato. Aggiungi il suo PSMP o un PSMP predefinito in Impostazioni &gt; CyberArk.</value>
+    <value>Nessun PSMP per {0}: il suo dominio non corrisponde a nessun PSMP configurato. Aggiungi il suo PSMP o un PSMP predefinito in Impostazioni › CyberArk.</value>
   </data>
   <data name="ServerPromptTitle" xml:space="preserve">
     <value>Scegli il server</value>
@@ -4900,7 +4900,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Scuro</value>
   </data>
   <data name="AppThemeHelp" xml:space="preserve">
-    <value>Applicato subito. Il contrasto elevato di Windows ha sempre la precedenza. I colori dei terminali si impostano nella pagina Terminale.</value>
+    <value>Applicato al salvataggio, senza riavviare. Il contrasto elevato di Windows ha sempre la precedenza. I colori dei terminali si impostano nella pagina Terminale.</value>
   </data>
   <data name="ToolLeaveEmergency" xml:space="preserve">
     <value>Esci dall'accesso di emergenza</value>
@@ -4936,7 +4936,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Inoltro X11 attivo verso il server X {0} di questo computer.</value>
   </data>
   <data name="X11NoServer" xml:space="preserve">
-    <value>Inoltro X11 attivo, ma nessun server X è in ascolto su {0} (porta {1}): avviate VcXsrv, X410 o Xming consentendo le connessioni TCP locali.</value>
+    <value>Inoltro X11 attivo, ma nessun server X è in ascolto su {0} (porta {1}): avvia VcXsrv, X410 o Xming consentendo le connessioni TCP locali.</value>
   </data>
   <data name="X11Refused" xml:space="preserve">
     <value>Inoltro X11 rifiutato dal server o dal PSMP: le applicazioni grafiche non potranno essere visualizzate.</value>
@@ -4945,7 +4945,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Intervento</value>
   </data>
   <data name="ToolInterventionTip" xml:space="preserve">
-    <value>Intervento: registra ciò che fate (terminali, connessioni, trasferimenti, catture) per conservarne traccia; promemoria di reperibilità</value>
+    <value>Intervento: registra ciò che fai (terminali, connessioni, trasferimenti, catture) per conservarne traccia; promemoria di reperibilità</value>
   </data>
   <data name="InterventionRecordingIndicator" xml:space="preserve">
     <value>● Intervento registrato</value>
@@ -4975,7 +4975,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Registrazione dalle {0} ({1}), {2:# evento|# eventi}.</value>
   </data>
   <data name="InterventionRecordingHelp" xml:space="preserve">
-    <value>Per qualsiasi intervento, in reperibilità o no. Tutto viene conservato fino all'interruzione: il testo dei terminali SSH, le connessioni, le azioni sugli account, i trasferimenti di file con il loro SHA-256, le vostre note e le catture. Il registro è cifrato solo per il vostro account Windows. Le password digitate senza eco non ci sono, ma tutto ciò che mostra un terminale sì.</value>
+    <value>Per qualsiasi intervento, in reperibilità o no. Tutto viene conservato fino all'interruzione: il testo dei terminali SSH, le connessioni, le azioni sugli account, i trasferimenti di file con il loro SHA-256, le tue note e le catture. Il registro è cifrato solo per il tuo account Windows. Le password digitate senza eco non ci sono, ma tutto ciò che mostra un terminale sì.</value>
   </data>
   <data name="InterventionNotePlaceholder" xml:space="preserve">
     <value>Nota per il registro (numero di incidente, decisione…)</value>
@@ -5023,7 +5023,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>_Elimina…</value>
   </data>
   <data name="InterventionReportNotEncrypted" xml:space="preserve">
-    <value>Il rapporto esportato non è cifrato: conservatelo in un luogo sicuro.</value>
+    <value>Il rapporto esportato non è cifrato: conservalo in un luogo sicuro.</value>
   </data>
   <data name="InterventionReportSaved" xml:space="preserve">
     <value>Rapporto salvato: {0}</value>
@@ -5287,7 +5287,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Il suo colore contrassegna la scheda e il contorno della sessione: si vede a colpo d'occhio dove si lavora.</value>
   </data>
   <data name="TagPromptGuessed" xml:space="preserve">
-    <value>Proposta in base al nome, all'indirizzo, al safe o alla cartella: verificatela.</value>
+    <value>Proposta in base al nome, all'indirizzo, al safe o alla cartella: verificala.</value>
   </data>
   <data name="TagNone" xml:space="preserve">
     <value>_Nessuna etichetta</value>
@@ -5326,7 +5326,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>{0:# server etichettato|# server etichettati} in base al nome; {1:# senza proposta|# senza proposta}.</value>
   </data>
   <data name="SessionImportTagTip" xml:space="preserve">
-    <value>Etichetta del server importato, proposta in base al nome, al server, al safe e alle cartelle: verificatela.</value>
+    <value>Etichetta del server importato, proposta in base al nome, al server, al safe e alle cartelle: verificala.</value>
   </data>
   <data name="ServerTagsSection" xml:space="preserve">
     <value>Etichette dei server</value>
@@ -5543,5 +5543,8 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="X11ForwardingEffect" xml:space="preserve">
     <value>⚠ Effetto: un server compromesso potrebbe vedere le altre finestre X di questo computer e inviarvi dei tasti.</value>
+  </data>
+  <data name="CompareRemoteLabel" xml:space="preserve">
+    <value>{0}: {1}</value>
   </data>
 </root>

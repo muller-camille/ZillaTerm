@@ -16543,5 +16543,14 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("X11ForwardingEffect", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1}.
+        /// </summary>
+        public static string CompareRemoteLabel {
+            get {
+                return ResourceManager.GetString("CompareRemoteLabel", resourceCulture);
+            }
+        }
     }
 }

@@ -304,7 +304,7 @@
     <value>Cette liste de serveurs a été écrite par une version plus récente de ZillaTerm (format {0}) : mettez ZillaTerm à jour pour l'ouvrir.</value>
   </data>
   <data name="ServerListNotShared" xml:space="preserve">
-    <value>Ce fichier est un export de Mes serveurs, pas une liste partagée : importez-le plutôt.</value>
+    <value>Ce fichier est un export de « Mes serveurs », pas une liste partagée : importez-le plutôt.</value>
   </data>
   <data name="ServerListBusy" xml:space="preserve">
     <value>La liste partagée est en cours de modification par quelqu'un d'autre : réessayez dans un instant.</value>
@@ -409,10 +409,10 @@
     <value>Non importé : connexion {0} non prise en charge</value>
   </data>
   <data name="MigrationAlreadyPresent" xml:space="preserve">
-    <value>Déjà dans Mes serveurs, dossier {0}</value>
+    <value>Déjà dans « Mes serveurs », dossier {0}</value>
   </data>
   <data name="MigrationAlreadyPresentRoot" xml:space="preserve">
-    <value>Déjà dans Mes serveurs</value>
+    <value>Déjà dans « Mes serveurs »</value>
   </data>
   <data name="MigrationExcluded" xml:space="preserve">
     <value>Non importé : décoché</value>
