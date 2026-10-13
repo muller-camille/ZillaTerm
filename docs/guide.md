@@ -39,9 +39,10 @@ away in the chosen language, keeping the address and user name you typed.
   shows while an SSH or files session is open. Drag the splitter to change its width; `Ctrl+B` or a double-click on the splitter collapses it (the strip of tabs stays: a click on a
   tab opens it again). `F6` moves from the panel to the session. The window position and size, the panel width and
   whether it is collapsed are remembered.
-- **Session tabs**: a dot shows the state of the session by its colour and by its shape: orange ring while
-  connecting, green dot once connected, grey ring when the session has ended, red dot when it failed (the name is
-  then dimmed). The tooltip gives the full name, the state and the mode: "Through the PSMP …: session managed by
+- **Session tabs**: a dot shows the state of the session by its colour and by its shape, readable in high contrast
+  too: orange ring while connecting, solid green dot once connected, half-filled orange dot when the connection is
+  interrupted, grey square when the session has ended, red cross when it failed (the name is then dimmed). The
+  tooltip gives the full name, the state and the mode: "Through the PSMP …: session managed by
   CyberArk" or "Direct emergency access (KeePass): outside CyberArk, written to urgence.log". A name that is too long
   is truncated; a name already open is numbered ("srv01 (2)"). When the tabs no longer fit, the strip scrolls (mouse
   wheel, the selected tab stays visible) and "⌄" lists them all with their state. `Ctrl+Tab` / `Ctrl+Shift+Tab`:
@@ -254,7 +255,9 @@ as with `ssh -X`:
    allowed: display `:0` listens on port 6000. The X server is set in **Settings › Terminal › Local X server** (`:0`
    by default; this computer only, since the X protocol is not encrypted).
 2. Tick **"X11 forwarding (graphical applications)"** for the server: right-click → "Properties…" in "My servers", or
-   in "Advanced options…" for a single connection. SSH sessions only; unticked by default.
+   in "Advanced options…" for a single connection. SSH sessions only; unticked by default. Once ticked, the box
+   recalls its effect just below ("⚠ Effect: a compromised server could see the other X windows of this computer and
+   send keystrokes to them.").
 3. Open the session: a grey line tells whether forwarding is active, refused (by the server, whose `sshd_config` needs
    `X11Forwarding yes`, or by the PSMP) or whether no X server is listening on the computer.
 
@@ -387,7 +390,8 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
 - **Toolbar buttons**: Download, Edit, Rename, Permissions and Delete are greyed out, as in the menu, while the
   selection does not fit; their tooltip says what to select ("Select a single file (not a folder)."…).
 - **Upload files**: drag them from Explorer onto the list (or the "Upload" button). Sent over **SFTP** by default
-  (SCP can be chosen in Settings), folders included. Dropped on a folder row, they go into that folder: the row is
+  (SCP can be chosen in Settings), folders included; a whole drive (`E:\`) or the root of a share is refused, with a
+  message. Dropped on a folder row, they go into that folder: the row is
   highlighted and the status bar shows the destination ("Drop into server:/path"). If items already exist on the
   server (hidden ones included, even when they are not shown), a confirmation names the server and the items, and
   offers "Replace", "Skip existing" or "Cancel" (the default); a replaced file is rewritten in place and stays
@@ -422,7 +426,10 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   of N", or the failure in red; "Details" on a finished line shows the SHA-256 checksum of each file, and "Clear
   finished" removes the finished, failed and cancelled transfers from the list (the transfer history keeps them).
   A stopped transfer deletes the file being transferred, which is incomplete (on the
-  server for an upload, on this computer for a download); files already transferred stay. Beware: if the upload was
+  server for an upload, on this computer for a download); files already transferred stay. An upload stopped through a
+  symbolic link of the server keeps the link and the file it points to, and the summary says so. A download also
+  stops when the server sends far more than the announced size (double, or 64 MB more): the incomplete copy is
+  deleted. Beware: if the upload was
   replacing an existing file and had started writing it, its old content is lost; stopped before any content, the
   server file stays as it was. Over SCP, stopping ends only that transfer: the next items go
   on over the same connection; a transfer that no longer moves (server not reading) stops 2 s after "Cancel" and the next
@@ -436,13 +443,16 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   thousands, much faster through the PSMP. The archive is made on this computer (in the queue, can be cancelled),
   sent and checked (SHA-256), then deleted from this computer; each dropped item is at the root of the archive
   (permissions 0644 and 0755). Nothing is run on the server: an orange box shows up at the bottom of the Files tab
-  with the extraction command, for example `cd '/opt/app' && /usr/bin/gzip -dc './deploy.tar.gz' | tar xf - && rm -f
-  './deploy.tar.gz'` (the archive is deleted from the server once extracted). "Copy the command", or "Type it in the
-  terminal", which types it at the prompt of the session without running it: check it, then press Enter. The box
-  stays (for that session) until you close it. "Send the files one by one" keeps the usual upload; "Don't offer
-  again" turns the option off.
+  with the extraction command, for example `cd '/opt/app' && /usr/bin/gzip -dc './deploy.tar.gz' | tar xof - && rm -f
+  './deploy.tar.gz'` (the archive is deleted from the server once extracted). The extracted files belong to whoever
+  extracts them (`o`), and only empty folders have an entry in the archive: a folder that already exists keeps its
+  permissions and owner. The archive is not offered when the drop replaces items on the server: the one-by-one upload
+  rewrites them in place (permissions, owner and ACLs kept), and the replace question says so. "Copy the command", or
+  "Type it in the terminal", which types it at the prompt of the session without running it: check it, then press
+  Enter. The box stays (for that session) until you close it. "Send the files one by one" keeps the usual upload;
+  "Don't offer again" turns the option off.
   - **Every Unix** (Red Hat 5 to 9, HP-UX 11.11 and 11.31, Solaris, AIX…): the archive is in the standard POSIX tar
-    format (ustar), read by every tar, and the command uses `gzip` and `tar xf` separately, with no GNU tar specific
+    format (ustar), read by every tar, and the command uses `gzip` and `tar xof` separately, with no GNU tar specific
     option. It can be typed in any shell (sh, ksh, bash, zsh, csh, tcsh).
   - **gzip** is looked for on the server (through SFTP) where each system installs it: `/bin`, `/usr/bin`,
     `/usr/contrib/bin` (HP-UX), `/usr/local/bin`, `/opt/freeware/bin` (AIX), `/usr/sfw/bin` and `/opt/csw/bin`
@@ -499,7 +509,9 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   overwriting it. Opening a file that is already open downloads it again, every time: if its content changed on the
   server (edited in the terminal, by someone else, before a reconnection…), the copy opened in the editor is replaced
   by the current version; otherwise it is left as is. Only exception: if your copy has changes not sent back and the
-  file also changed on the server, ZillaTerm asks whether to "Reload the server version" or "Keep my copy".
+  file also changed on the server, ZillaTerm asks whether to "Reload the server version" or "Keep my copy". While an
+  edited file is being sent back, closing the tab, exiting or signing out waits for the send-back to finish (the
+  status bar says so), so as not to leave a half-written file on the server.
 - **Follow a file (tail -f)**: right-click one or several files → "Follow (tail -f)". A window shows the end of the
   file, then each new line as soon as it is written, like `tail -f`, reading the file over SFTP every second: no
   command runs on the server. A file truncated or replaced by a rotation is read again from the start; the last
@@ -775,7 +787,9 @@ servers, over SSH, remote desktop or VNC, or to their files only (SFTP, FTP, FTP
   entry's password is used directly; it is never shown or written to disk.
   - **SSH**: terminal + Files tabs. On the first connection, the fingerprint of the server key is to be compared
     with the one given by its administrator, in the same window as for the PSMP (see
-    [section 4](#4-open-an-ssh-session-through-the-psmp)).
+    [section 4](#4-open-an-ssh-session-through-the-psmp)). The entry's password is only sent once per connection: an
+    outdated password in the database does not count several failures on the server (risk of locking the account),
+    and "Cancel" cuts the connection without sending anything.
   - **Remote desktop**: tab with the FreeRDP client embedded in ZillaTerm (failing that, the Windows Remote Desktop
     control, which also offers "Full screen", `Ctrl+Alt+Break` to come back), with "Disconnect" and "Reconnect".
     Before each connection, ZillaTerm reads the server's certificate. If Windows does not trust it (self-signed…),
@@ -915,10 +929,13 @@ go to the remote session.
 window has its access keys (`Alt` + underlined letter, without duplicates, in English, French and Italian), and the
 menu of an item of "My servers" opens at the same place with a right-click, `Shift+F10` or the Menu key. Password
 boxes (sign-in, KeePass database, local vault) warn when Caps Lock is on. Screen readers announce the names of list
-and tree items, of icon or symbol buttons (✕, ↑, ↓), of fields (path, ticket number…), the status bar messages and
-connection errors. The toolbars of "My servers" and of the Files tab are a single `Tab` stop (the arrow keys move
-from one button to the other). In the Settings, every box has its access key, without duplicates in the page shown. In high contrast mode, the
-interface takes the Windows system colours and follows their changes.
+and tree items, of icon or symbol buttons (✕, ↑, ↓), of fields (path, ticket number…), each button and each box by
+its label, the status bar messages and connection errors; a refused password is announced with the attempt number
+("Attempt 2 of 3"), also read with the field, and a server that no longer responds or an ended session is announced
+only once. On the selected row of trees and tables, the secondary texts (counters, "matches: …", ⚠) stay readable,
+with or without the focus. The toolbars of "My servers" and of the Files tab are a single `Tab` stop (the arrow keys
+move from one button to the other). In the Settings, every box has its access key, without duplicates in the page
+shown. In high contrast mode, the interface takes the Windows system colours and follows their changes.
 
 **Dark theme**: Settings → General → Appearance → Theme: "Same as Windows" (default: the app mode chosen in Windows,
 Personalization → Colors, followed even when it changes), "Light" or "Dark". The change applies right away, to open

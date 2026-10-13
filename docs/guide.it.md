@@ -39,9 +39,10 @@ subito nella lingua scelta, conservando l'indirizzo e il nome utente inseriti.
   «File» compare solo quando è aperta una sessione SSH o di file. Trascina il separatore per cambiarne la larghezza; `Ctrl+B` o un doppio clic sul separatore lo chiude (la striscia delle
   schede resta: un clic su una scheda lo riapre). `F6` passa dal pannello alla sessione. Posizione e dimensione
   della finestra, larghezza del pannello e il suo stato chiuso vengono memorizzati.
-- **Schede di sessione**: un pallino indica lo stato della sessione con il colore e con la forma: anello arancione
-  durante la connessione, pallino verde una volta connessa, anello grigio quando la sessione è terminata, pallino
-  rosso in caso di errore (il nome è allora attenuato). La descrizione comandi riporta il nome completo, lo stato e
+- **Schede di sessione**: un pallino indica lo stato della sessione con il colore e con la forma, leggibile anche in
+  contrasto elevato: anello arancione durante la connessione, pallino verde pieno una volta connessa, pallino
+  arancione pieno a metà quando la connessione è interrotta, quadrato grigio quando la sessione è terminata, croce
+  rossa in caso di errore (il nome è allora attenuato). La descrizione comandi riporta il nome completo, lo stato e
   la modalità: «Tramite il PSMP …: sessione gestita da CyberArk» o «Accesso diretto di emergenza (KeePass): fuori
   da CyberArk, annotato in urgence.log». Un nome troppo lungo viene troncato; un nome già aperto viene numerato
   («srv01 (2)»). Quando le schede non ci stanno più, la striscia scorre (rotellina, la scheda scelta resta visibile)
@@ -269,7 +270,8 @@ aprirsi sul vostro computer, come con `ssh -X`:
    Server X locale** (`:0` per impostazione predefinita; solo questo computer, perché il protocollo X non è cifrato).
 2. Selezionate **«Inoltro X11 (applicazioni grafiche)»** per il server: clic destro → «Proprietà…» in «I miei
    server», oppure in «Opzioni avanzate…» per una sola connessione. Solo sessioni SSH; non selezionato per impostazione
-   predefinita.
+   predefinita. Una volta selezionata, la casella ricorda il suo effetto subito sotto («⚠ Effetto: un server
+   compromesso potrebbe vedere le altre finestre X di questo computer e inviarvi dei tasti.»).
 3. Aprite la sessione: una riga grigia indica se l'inoltro è attivo, se è stato rifiutato (dal server, il cui
    `sshd_config` deve contenere `X11Forwarding yes`, o dal PSMP) o se nessun server X è in ascolto sul computer.
 
@@ -414,7 +416,8 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
   la selezione non è adatta; la loro descrizione comandi dice cosa scegliere («Seleziona un solo file (non una
   cartella).»…).
 - **Inviare file**: trascinali da Esplora file sull'elenco (o il pulsante «Invia»). Invio in **SFTP** per
-  impostazione predefinita (SCP a scelta nelle Impostazioni), cartelle comprese. Rilasciati sulla riga di una
+  impostazione predefinita (SCP a scelta nelle Impostazioni), cartelle comprese; un'unità intera (`E:\`) o la radice
+  di una condivisione viene rifiutata, con un messaggio. Rilasciati sulla riga di una
   cartella, vanno in quella cartella: la riga viene evidenziata e la barra di stato indica la destinazione
   («Rilascia in server:/percorso»). Se degli elementi esistono già sul server (file nascosti compresi, anche se non
   mostrati), una conferma nomina il server e gli elementi, e propone «Sostituisci», «Salta gli esistenti» o
@@ -452,7 +455,10 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
   «Cancella i completati» toglie dall'elenco i trasferimenti completati, non riusciti o annullati (la cronologia dei
   trasferimenti li conserva). Un
   trasferimento interrotto elimina il file in corso, incompleto (sul server per un invio, sul computer per un
-  download); i file già trasferiti restano. Attenzione: se l'invio sostituiva un file esistente e aveva iniziato a
+  download); i file già trasferiti restano. Un invio interrotto attraverso un collegamento simbolico del server
+  mantiene il collegamento e il file a cui punta, e il riepilogo lo dice. Un download si interrompe anche quando il
+  server invia molto più della dimensione annunciata (il doppio, o 64 MB in più): la copia incompleta viene eliminata.
+  Attenzione: se l'invio sostituiva un file esistente e aveva iniziato a
   scriverlo, il vecchio contenuto è perso; interrotto prima di qualsiasi contenuto, il file del server resta com'era. In SCP, l'interruzione riguarda solo quel trasferimento: gli elementi successivi proseguono
   sulla stessa connessione; un trasferimento che non avanza più (server che non legge più) si ferma 2 s dopo
   «Annulla» e i successivi partono su una nuova connessione. Un file inviato via SCP prende sul server la data dell'invio (come `scp` senza `-p`, e come in
@@ -467,12 +473,15 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
   annullabile), inviato e verificato (SHA-256), poi eliminato dal computer; ogni elemento rilasciato è alla radice
   dell'archivio (permessi 0644 e 0755). Nulla viene eseguito sul server: un riquadro arancione compare in fondo alla
   scheda File con il comando di estrazione, per esempio `cd '/opt/app' && /usr/bin/gzip -dc './deploy.tar.gz' | tar
-  xf - && rm -f './deploy.tar.gz'` (l'archivio viene eliminato dal server dopo l'estrazione). «Copia il comando»,
-  oppure «Scrivi nel terminale», che lo digita al prompt della sessione senza eseguirlo: controllalo, poi premi
-  Invio. Il riquadro resta visibile (per quella sessione) finché non lo chiudi. «Invia i file uno per uno» mantiene
-  l'invio abituale; «Non proporre più» disattiva l'opzione.
+  xof - && rm -f './deploy.tar.gz'` (l'archivio viene eliminato dal server dopo l'estrazione). I file estratti
+  appartengono a chi estrae (`o`), e solo le cartelle vuote hanno una voce nell'archivio: una cartella che esiste già
+  mantiene i suoi permessi e il suo proprietario. L'archivio non viene proposto quando il rilascio sostituisce
+  elementi del server: l'invio uno per uno li riscrive sul posto (permessi, proprietario e ACL mantenuti), e la
+  domanda di sostituzione lo dice. «Copia il comando», oppure «Scrivi nel terminale», che lo digita al prompt della
+  sessione senza eseguirlo: controllalo, poi premi Invio. Il riquadro resta visibile (per quella sessione) finché non
+  lo chiudi. «Invia i file uno per uno» mantiene l'invio abituale; «Non proporre più» disattiva l'opzione.
   - **Tutti gli Unix** (Red Hat da 5 a 9, HP-UX 11.11 e 11.31, Solaris, AIX…): l'archivio è nel formato tar POSIX
-    standard (ustar), letto da tutti i tar, e il comando usa `gzip` e `tar xf` separatamente, senza opzioni proprie
+    standard (ustar), letto da tutti i tar, e il comando usa `gzip` e `tar xof` separatamente, senza opzioni proprie
     di GNU tar. Si digita in qualsiasi shell (sh, ksh, bash, zsh, csh, tcsh).
   - **gzip** viene cercato sul server (tramite SFTP) dove ogni sistema lo installa: `/bin`, `/usr/bin`,
     `/usr/contrib/bin` (HP-UX), `/usr/local/bin`, `/opt/freeware/bin` (AIX), `/usr/sfw/bin` e `/opt/csw/bin`
@@ -532,7 +541,9 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
   contenuto è cambiato sul server (modificato nel terminale, da qualcun altro, prima di una riconnessione…), la copia
   aperta nell'editor viene sostituita dalla versione attuale; altrimenti non viene toccata. Unica eccezione: se la tua
   copia ha modifiche non rimandate e il file è cambiato anche sul server, ZillaTerm chiede se «Ricarica la versione del
-  server» o «Tieni la mia copia».
+  server» o «Tieni la mia copia». Mentre un file modificato viene rimandato, chiudere la scheda, uscire o
+  disconnettersi attende la fine del rinvio (la barra di stato lo dice), per non lasciare un file scritto a metà sul
+  server.
 - **Seguire un file (tail -f)**: clic destro su uno o più file → «Segui (tail -f)». Una finestra mostra la fine del
   file, poi ogni nuova riga appena viene scritta, come `tail -f`, leggendo il file via SFTP ogni secondo: nessun
   comando viene eseguito sul server. Un file troncato o sostituito da una rotazione viene riletto dall'inizio;
@@ -823,7 +834,9 @@ contengono.
   disco.
   - **SSH**: schede terminale + File. Alla prima connessione, l'impronta della chiave del server va confrontata con
     quella fornita dal suo amministratore, nella stessa finestra usata per il PSMP (vedi
-    [sezione 4](#4-aprire-una-sessione-ssh-tramite-il-psmp)).
+    [sezione 4](#4-aprire-una-sessione-ssh-tramite-il-psmp)). La password della voce viene inviata una sola volta per
+    connessione: una password non più valida nel database non conta più errori sul server (rischio di blocco
+    dell'account), e «Annulla» interrompe la connessione senza inviare nulla.
   - **Desktop remoto**: scheda con il client FreeRDP incorporato in ZillaTerm (in mancanza, il controllo Desktop
     remoto di Windows, che propone anche «Schermo intero», `Ctrl+Alt+Pausa` per tornare), con «Disconnetti» e
     «Riconnetti». Prima di ogni connessione, ZillaTerm legge il certificato del server. Se Windows non lo approva
@@ -974,11 +987,14 @@ ogni finestra ha i suoi tasti di scelta (`Alt` + lettera sottolineata, senza dop
 inglese), e il menu di un elemento di «I miei server» si apre nello stesso punto con il clic destro, `Maiusc+F10` o
 il tasto Menu. I campi password (accesso, database KeePass, vault locale) avvisano quando Bloc Maiusc è attivo. Le
 utilità per la lettura dello schermo annunciano il nome degli elementi di elenchi e alberi, dei pulsanti con icona
-o simbolo (✕, ↑, ↓), dei campi (percorso, numero del ticket…), i messaggi della barra di stato e gli errori di
-connessione. Le barre degli strumenti di «I miei server» e della scheda File sono un solo passo di `Tab` (le frecce
-passano da un pulsante all'altro). Nelle Impostazioni, ogni casella ha il suo tasto di scelta, senza doppioni nella
-pagina mostrata. In contrasto elevato, l'interfaccia usa i colori
-di sistema di Windows e ne segue i cambiamenti.
+o simbolo (✕, ↑, ↓), dei campi (percorso, numero del ticket…), ogni pulsante e ogni casella con la sua etichetta, i
+messaggi della barra di stato e gli errori di connessione; una password rifiutata viene annunciata con il numero del
+tentativo («Tentativo 2 di 3»), letto anche con il campo, e un server che non risponde più o una sessione terminata
+vengono annunciati una sola volta. Sulla riga selezionata degli alberi e delle tabelle, i testi secondari (contatori,
+«corrisponde: …», ⚠) restano leggibili, con o senza il focus. Le barre degli strumenti di «I miei server» e della
+scheda File sono un solo passo di `Tab` (le frecce passano da un pulsante all'altro). Nelle Impostazioni, ogni
+casella ha il suo tasto di scelta, senza doppioni nella pagina mostrata. In contrasto elevato, l'interfaccia usa i
+colori di sistema di Windows e ne segue i cambiamenti.
 
 **Tema scuro**: Impostazioni → Generale → Aspetto → Tema: «Come Windows» (predefinito: la modalità delle app scelta in
 Windows, Personalizzazione → Colori, seguita anche quando cambia), «Chiaro» o «Scuro». La modifica si applica subito,
