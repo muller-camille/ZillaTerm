@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using ZillaTerm.Core.Localization;
+using ZillaTerm.Core.Rdp;
 
 namespace ZillaTerm.Core;
 
@@ -15,7 +16,14 @@ public static class RdpFile
     /// </summary>
     public static byte[] FromPsmConnectResponse(byte[] body, string? mediaType)
     {
-        var text = Decode(body).Trim();
+        // Même lecture que le fichier ouvert dans l'onglet (UTF-16 sans BOM compris).
+        var text = RdpConnectionSettings.Decode(body).Trim();
+        if (RdpConnectionSettings.IsUtf16WithoutBom(body))
+        {
+            // BOM ajouté pour Connexion Bureau à distance (mstsc) : le contenu ne change pas.
+            body = [.. Encoding.Unicode.GetPreamble(), .. body];
+        }
+
         if (text.StartsWith('"'))
         {
             try
@@ -43,11 +51,5 @@ public static class RdpFile
         }
 
         return body;
-    }
-
-    private static string Decode(byte[] body)
-    {
-        using var reader = new StreamReader(new MemoryStream(body), Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-        return reader.ReadToEnd();
     }
 }

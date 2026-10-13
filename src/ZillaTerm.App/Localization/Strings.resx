@@ -2274,7 +2274,7 @@ Your changes stay in the editor: save again to retry.</value>
     <value>{0} · KeePass</value>
   </data>
   <data name="KeePassRdpNoControl" xml:space="preserve">
-    <value>{0}: Remote Desktop control unavailable, Remote Desktop Connection opened without the password (take it from the KeePass database).</value>
+    <value>{0}: no Remote Desktop client in ZillaTerm, Remote Desktop Connection opened without the password (take it from the KeePass database).</value>
   </data>
   <data name="ConnectingDirect" xml:space="preserve">
     <value>Direct connection (emergency access, outside CyberArk)…</value>
@@ -4990,10 +4990,10 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Ca_pture a remote desktop…</value>
   </data>
   <data name="InterventionCaptureTip" xml:space="preserve">
-    <value>Image of a Remote Desktop Connection window (PSM sessions), added to the journal</value>
+    <value>Image of a Remote Desktop Connection window (PSM sessions), added to the journal. A session in a ZillaTerm tab: “Capture” button of its tab.</value>
   </data>
   <data name="InterventionNoRdpWindow" xml:space="preserve">
-    <value>No Remote Desktop Connection window is open (a minimized window cannot be captured).</value>
+    <value>No Remote Desktop Connection window is open (a minimized window cannot be captured). A session opened in a ZillaTerm tab is captured with the “Capture” button of its tab.</value>
   </data>
   <data name="InterventionCaptureFailed" xml:space="preserve">
     <value>The window could not be captured.</value>
@@ -5425,7 +5425,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Share this _computer's drives with PSM Windows sessions</value>
   </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>ZillaTerm asks the PVWA to map this computer's drives, like the “Map local drives” box of its connection window. When the connection component allows it, they appear in the session (File Explorer › This PC) to copy files; programs in the session can then read and write them. In the tab and in Remote Desktop Connection; applies to new sessions.</value>
+    <value>ZillaTerm asks the PVWA to map this computer's drives, like the “Map local drives” box of its connection window. When the connection component allows it, they appear in the session (File Explorer › This PC) to copy files; programs in the session can then read and write them (in the tab and in Remote Desktop Connection). Unchecked, no drive is shared in the tab, even if the PVWA asks for it; Remote Desktop Connection follows the PVWA's signed file. Applies to new sessions.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>PSM Windows sessions in a tab</value>
@@ -5546,5 +5546,20 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="InterventionInterruptedAt" xml:space="preserve">
     <value>Recording interrupted at {0}.</value>
+  </data>
+  <data name="ConnectBusyWait" xml:space="preserve">
+    <value>Connecting to {0}: wait until the session has started, then try again.</value>
+  </data>
+  <data name="RdpKeySize" xml:space="preserve">
+    <value>Key size</value>
+  </data>
+  <data name="RdpKeyBits" xml:space="preserve">
+    <value>{0} bits</value>
+  </data>
+  <data name="RdpKeyWeak" xml:space="preserve">
+    <value>Weak key: {0} bits, fewer than the recommended {1}. Such a key can be broken, and whoever breaks it can pose as this PSM without any warning. Ask the CyberArk administrator to enable TLS on the PSM.</value>
+  </data>
+  <data name="RdpFullScreenFreeRdpTip" xml:space="preserve">
+    <value>Full screen is not available in a tab with the built-in FreeRDP client: maximize the ZillaTerm window on the screen you want. For a full-screen PSM session, clear “Open PSM Windows sessions in a ZillaTerm tab” (Settings): it will open in Remote Desktop Connection.</value>
   </data>
 </root>

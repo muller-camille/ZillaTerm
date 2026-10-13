@@ -128,6 +128,25 @@ public class RdpConnectionSettingsTests
     }
 
     /// <summary>
+    /// Option « partager les disques » décochée : aucun disque partagé dans l'onglet, même si le fichier du PVWA le
+    /// demande ; cochée, le fichier décide.
+    /// </summary>
+    [Theory]
+    [InlineData("drivestoredirect:s:*\r\n", true, true)]
+    [InlineData("drivestoredirect:s:*\r\n", false, false)]
+    [InlineData("redirectdrives:i:1\r\n", false, false)]
+    [InlineData("", true, false)]
+    public void PsmTabSharesDrivesOnlyIfTheOptionAllowsIt(string lines, bool option, bool expected)
+    {
+        var file = RdpConnectionSettings.FromRdpFile(Encoding.UTF8.GetBytes($"full address:s:psm.corp.local\r\n{lines}"));
+
+        var tab = file.ForPsmTab(drives: option);
+
+        Assert.Equal(expected, tab.RedirectDrives);
+        Assert.Equal(file.ForPsmTab() with { RedirectDrives = expected }, tab);
+    }
+
+    /// <summary>
     /// Redimensionnement dynamique (option expérimentale) : la résolution suit l'onglet, sans image mise à l'échelle, même
     /// si le fichier en demande une ; le reste des règles de l'onglet ne change pas.
     /// </summary>

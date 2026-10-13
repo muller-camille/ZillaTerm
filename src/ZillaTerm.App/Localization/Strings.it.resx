@@ -2274,7 +2274,7 @@ Le modifiche restano nell'editor: salva di nuovo per riprovare.</value>
     <value>{0} · KeePass</value>
   </data>
   <data name="KeePassRdpNoControl" xml:space="preserve">
-    <value>{0}: controllo Desktop remoto non disponibile, Connessione Desktop remoto aperta senza la password (prendila dal database KeePass).</value>
+    <value>{0}: nessun client Desktop remoto in ZillaTerm, Connessione Desktop remoto aperta senza la password (prendila dal database KeePass).</value>
   </data>
   <data name="ConnectingDirect" xml:space="preserve">
     <value>Connessione diretta (accesso di emergenza, fuori da CyberArk)…</value>
@@ -4990,10 +4990,10 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Ca_ttura un desktop remoto…</value>
   </data>
   <data name="InterventionCaptureTip" xml:space="preserve">
-    <value>Immagine di una finestra Connessione Desktop remoto (sessioni PSM), aggiunta al registro</value>
+    <value>Immagine di una finestra Connessione Desktop remoto (sessioni PSM), aggiunta al registro. Sessione in una scheda di ZillaTerm: pulsante «Cattura» della sua scheda.</value>
   </data>
   <data name="InterventionNoRdpWindow" xml:space="preserve">
-    <value>Nessuna finestra Connessione Desktop remoto è aperta (una finestra ridotta a icona non può essere catturata).</value>
+    <value>Nessuna finestra Connessione Desktop remoto è aperta (una finestra ridotta a icona non può essere catturata). Una sessione aperta in una scheda di ZillaTerm si cattura con il pulsante «Cattura» della sua scheda.</value>
   </data>
   <data name="InterventionCaptureFailed" xml:space="preserve">
     <value>Non è stato possibile catturare la finestra.</value>
@@ -5425,7 +5425,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Condividi i _dischi di questo computer con le sessioni PSM Windows</value>
   </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>ZillaTerm chiede al PVWA di mappare i dischi di questo computer, come la casella «Map local drives» della sua finestra di connessione. Se il componente di connessione lo consente, compaiono nella sessione (Esplora file › Questo PC) per copiare file; i programmi della sessione possono allora leggerli e scriverci. Nella scheda come in Connessione Desktop remoto; si applica alle nuove sessioni.</value>
+    <value>ZillaTerm chiede al PVWA di mappare i dischi di questo computer, come la casella «Map local drives» della sua finestra di connessione. Se il componente di connessione lo consente, compaiono nella sessione (Esplora file › Questo PC) per copiare file; i programmi della sessione possono allora leggerli e scriverci (nella scheda come in Connessione Desktop remoto). Se deselezionata, nessun disco è condiviso nella scheda, anche se il PVWA lo chiede; Connessione Desktop remoto segue il file firmato del PVWA. Si applica alle nuove sessioni.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessioni PSM Windows in una scheda</value>
@@ -5546,5 +5546,20 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="InterventionInterruptedAt" xml:space="preserve">
     <value>Registrazione interrotta alle {0}.</value>
+  </data>
+  <data name="ConnectBusyWait" xml:space="preserve">
+    <value>Connessione a {0} in corso: attendi che la sessione sia avviata, poi riprova.</value>
+  </data>
+  <data name="RdpKeySize" xml:space="preserve">
+    <value>Dimensione della chiave</value>
+  </data>
+  <data name="RdpKeyBits" xml:space="preserve">
+    <value>{0} bit</value>
+  </data>
+  <data name="RdpKeyWeak" xml:space="preserve">
+    <value>Chiave debole: {0} bit, meno dei {1} raccomandati. Una chiave simile può essere violata, e chi la viola può spacciarsi per questo PSM senza alcun avviso. Chiedi all'amministratore CyberArk di attivare TLS sul PSM.</value>
+  </data>
+  <data name="RdpFullScreenFreeRdpTip" xml:space="preserve">
+    <value>Schermo intero non disponibile in una scheda con il client FreeRDP integrato: ingrandisci la finestra di ZillaTerm sullo schermo voluto. Per una sessione PSM a schermo intero, deseleziona «Apri le sessioni PSM Windows in una scheda di ZillaTerm» (Impostazioni): si aprirà in Connessione Desktop remoto.</value>
   </data>
 </root>

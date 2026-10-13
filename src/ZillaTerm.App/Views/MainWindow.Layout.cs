@@ -266,6 +266,9 @@ public partial class MainWindow
             case TabItem { Content: ParallelView parallel }:
                 parallel.FocusActive();
                 break;
+            case TabItem { Tag: Services.Rdp.RdpSession { IsConnected: true } rdp }:
+                rdp.Focus();
+                break;
             case TabItem tab when tab == HomeTab && !IsOffline:
                 QuickBox.Focus();
                 break;

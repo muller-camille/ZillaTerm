@@ -201,11 +201,16 @@ public sealed record RdpConnectionSettings
     /// Redimensionnement dynamique (expérimental) : la résolution du bureau distant suit la taille de l'onglet au lieu
     /// d'une image mise à l'échelle. La connexion du PSM vers la cible peut garder sa taille d'origine.
     /// </param>
-    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false) => this with
+    /// <param name="drives">
+    /// Option « partager les disques » de ZillaTerm : décochée, les disques de ce poste ne sont jamais partagés, même si
+    /// le fichier du PVWA le demande (choix gardé dans le PVWA, réglage du composant).
+    /// </param>
+    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false, bool drives = true) => this with
     {
         SmartSizing = !dynamicResolution,
         BitmapPersistence = false,
         AuthenticationLevel = AuthenticationLevel == 1 ? 1 : 2,
+        RedirectDrives = RedirectDrives && drives,
     };
 
     /// <summary>Réglages d'un fichier .rdp (voir <see cref="Parse"/>), quel que soit son encodage.</summary>
@@ -260,10 +265,11 @@ public sealed record RdpConnectionSettings
     private static int? ParsePort(string text) =>
         int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var port) && port is > 0 and <= 65535 ? port : null;
 
-    private static string Decode(byte[] content)
+    /// <summary>Texte d'un fichier .rdp (ou de la réponse du PVWA qui le porte), quel que soit son encodage.</summary>
+    internal static string Decode(byte[] content)
     {
         // Fichier du PVWA : en général UTF-16 avec BOM ; on accepte aussi l'UTF-8 et l'UTF-16 sans BOM.
-        if (content.Length >= 2 && content[0] != 0 && content[1] == 0 && !HasBom(content))
+        if (IsUtf16WithoutBom(content))
         {
             return Encoding.Unicode.GetString(content);
         }
@@ -271,6 +277,10 @@ public sealed record RdpConnectionSettings
         using var reader = new StreamReader(new MemoryStream(content), Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
         return reader.ReadToEnd();
     }
+
+    /// <summary>UTF-16 petit-boutiste sans BOM : premier caractère ASCII suivi d'un octet nul.</summary>
+    internal static bool IsUtf16WithoutBom(byte[] content) =>
+        content.Length >= 2 && content[0] != 0 && content[1] == 0 && !HasBom(content);
 
     private static bool HasBom(byte[] content) =>
         (content[0] == 0xFF && content[1] == 0xFE) || (content[0] == 0xFE && content[1] == 0xFF)
