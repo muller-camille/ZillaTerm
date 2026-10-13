@@ -291,6 +291,145 @@ public sealed class InterventionJournalTests : IDisposable
         Assert.Equal(1, html.Split("<img").Length - 1);
     }
 
+    /// <summary>
+    /// Titre de l'intervention : une ligne propre (sans retour à la ligne ni inverseur de sens de lecture), gardé chiffré à
+    /// côté du journal pour la liste, retiré avec lui ; le dernier titre du journal fait foi pour le rapport.
+    /// </summary>
+    [Fact]
+    public void TitleIsCleanedListedAndDeletedWithTheJournal()
+    {
+        var protector = new XorProtector();
+        string path;
+        using (var journal = InterventionJournal.Start(_dir, protector, T0))
+        {
+            path = journal.Path;
+            journal.Write(new InterventionEntry(T0, InterventionKind.Title, "", "INC0012345"));
+            journal.Write(new InterventionEntry(T0.AddMinutes(1), InterventionKind.Title, "", "INC0012345 disque plein srv01"));
+            journal.Stop(new InterventionEntry(T0.AddMinutes(2), InterventionKind.Stopped, "", ""));
+        }
+
+        Assert.Equal("INC0012345 disque plein srv01", InterventionJournal.CleanTitle("  INC0012345\r\n disque\tplein \u202Esrv01  "));
+        Assert.Equal(InterventionJournal.MaxTitleLength, InterventionJournal.CleanTitle(new string('a', 500)).Length);
+        Assert.Equal("", InterventionJournal.CleanTitle(" \u200B "));
+
+        InterventionJournal.WriteTitle(path, protector, "INC0012345 disque plein srv01");
+        Assert.DoesNotContain("INC0012345", File.ReadAllText(InterventionJournal.TitlePath(path)), StringComparison.Ordinal);
+        Assert.Equal("INC0012345 disque plein srv01", InterventionJournal.ReadTitle(path, protector));
+        Assert.Equal("INC0012345 disque plein srv01", Assert.Single(InterventionJournal.List(_dir, protector)).Title);
+        Assert.Null(Assert.Single(InterventionJournal.List(_dir)).Title);
+        Assert.Equal("INC0012345 disque plein srv01", InterventionJournal.Read(path, protector).Title);
+
+        // Fichier du titre illisible : la liste reste, sans titre.
+        File.WriteAllBytes(InterventionJournal.TitlePath(path), new byte[40]);
+        Assert.Null(InterventionJournal.ReadTitle(path, new ChecksumProtector()));
+
+        // Titre effacé : plus de fichier, et le rapport n'en a plus.
+        InterventionJournal.WriteTitle(path, protector, "  ");
+        Assert.False(File.Exists(InterventionJournal.TitlePath(path)));
+        var cleared = new InterventionRecording(path, [
+            new InterventionEntry(T0, InterventionKind.Title, "", "INC0012345"),
+            new InterventionEntry(T0.AddMinutes(1), InterventionKind.Title, "", ""),
+        ], Damaged: false, Unfinished: false);
+        Assert.Null(cleared.Title);
+
+        InterventionJournal.WriteTitle(path, protector, "INC0012345");
+        InterventionJournal.Delete(path);
+        Assert.False(File.Exists(path));
+        Assert.False(File.Exists(InterventionJournal.TitlePath(path)));
+        Assert.Empty(InterventionJournal.List(_dir, protector));
+    }
+
+    [Fact]
+    public void ReportShowsTheTitleAndSuggestsAFileName()
+    {
+        var recording = new InterventionRecording("x", [
+            new InterventionEntry(T0, InterventionKind.Started, "", "jdoe"),
+            new InterventionEntry(T0.AddSeconds(1), InterventionKind.Title, "", "INC0012345 <disque> plein"),
+            new InterventionEntry(T0.AddMinutes(5), InterventionKind.Stopped, "", ""),
+        ], Damaged: false, Unfinished: false);
+        var text = new InterventionReportText { Kind = k => k == InterventionKind.Title ? "Titre" : k.ToString() };
+
+        string html = InterventionReport.ToHtml(recording, text, TimeZoneInfo.Utc, CultureInfo.InvariantCulture);
+
+        Assert.Contains("<h1>On-call intervention — INC0012345 &lt;disque&gt; plein</h1>", html, StringComparison.Ordinal);
+        Assert.Contains("<title>On-call intervention — INC0012345 &lt;disque&gt; plein — ", html, StringComparison.Ordinal);
+        Assert.Contains("<span class=\"kind\">Titre</span>", html, StringComparison.Ordinal);
+
+        var start = new DateTime(2026, 10, 10, 23, 30, 0, DateTimeKind.Local);
+        Assert.Equal("intervention-20261010-2330.html", InterventionReport.FileName(start, null));
+        Assert.Equal("intervention-20261010-2330 INC0012345 disque plein srv01.html",
+            InterventionReport.FileName(start, "INC0012345 : disque/plein \\srv01?"));
+        Assert.Equal("intervention-20261010-2330 " + new string('a', 60) + ".html", InterventionReport.FileName(start, new string('a', 150)));
+        Assert.Equal("intervention-20261010-2330.html", InterventionReport.FileName(start, "../\u202E"));
+    }
+
+    /// <summary>
+    /// Historique affiché : les événements sans les images des captures, le texte des terminaux plafonné ; chaque lecture
+    /// rend ce qui est arrivé depuis la précédente.
+    /// </summary>
+    [Fact]
+    public void HistoryKeepsEventsWithoutImagesAndCapsTerminalText()
+    {
+        var history = new InterventionHistory(maxTerminalText: 10);
+        history.Add(new InterventionEntry(T0, InterventionKind.Started, "", "jdoe"));
+        history.Add(new InterventionEntry(T0, InterventionKind.Screenshot, "srv03", "Capture", [0x89, 0x50]));
+        history.Add(new InterventionEntry(T0, InterventionKind.Terminal, "s", "123456"));
+        Assert.Equal(3, history.Count);
+        Assert.Null(history.Since(0)[1].Image);
+
+        history.Add(new InterventionEntry(T0, InterventionKind.Terminal, "s", "7890123"));
+        Assert.True(history.TerminalCapped);
+        history.Add(new InterventionEntry(T0, InterventionKind.Terminal, "s", "1"));
+        history.Add(new InterventionEntry(T0, InterventionKind.Note, "", "les notes restent"));
+        Assert.Equal(["les notes restent"], history.Since(3).Select(e => e.Text));
+        Assert.Empty(history.Since(4));
+        Assert.Empty(history.Since(99));
+    }
+
+    /// <summary>
+    /// Blocs de l'historique : une commande et son retour forment un bloc ; une pause de la sortie en commence un autre,
+    /// sauf quand le bloc n'a encore que la commande (retour lent) ; une autre session ou un autre événement aussi.
+    /// </summary>
+    [Fact]
+    public void TerminalLinesAreGroupedByCommand()
+    {
+        var builder = new InterventionBlockBuilder();
+        InterventionEntry Line(double seconds, string text, string source = "root@srv01") =>
+            new(T0.AddSeconds(seconds), InterventionKind.Terminal, source, text);
+
+        Assert.False(builder.Add(Line(0, "[root@srv01 ~]# find / -name core")));
+        // Retour au bout de 30 s : il rejoint sa commande.
+        Assert.True(builder.Add(Line(30, "/var/core")));
+        Assert.True(builder.Add(Line(30.5, "/tmp/core")));
+        // Commande suivante après une pause : nouveau bloc.
+        Assert.False(builder.Add(Line(40, "[root@srv01 ~]# df -h")));
+        Assert.True(builder.Add(Line(40.1, "/dev/sda1  20G")));
+        // Autre session, puis un autre événement : nouveaux blocs.
+        Assert.False(builder.Add(Line(40.2, "[root@srv02 ~]#", "root@srv02")));
+        Assert.False(builder.Add(new InterventionEntry(T0.AddSeconds(41), InterventionKind.Transfer, "srv01", "Envoi de a.txt\na.txt  SHA-256 00")));
+        Assert.False(builder.Add(Line(41.5, "evil\u202Etxt\tok")));
+
+        var blocks = builder.Blocks;
+        Assert.Equal(5, blocks.Count);
+        Assert.Equal(["[root@srv01 ~]# find / -name core", "/var/core", "/tmp/core"], blocks[0].Lines);
+        Assert.Equal(T0, blocks[0].Start);
+        Assert.Equal(T0.AddSeconds(30.5), blocks[0].End);
+        Assert.Equal(2, blocks[1].Lines.Count);
+        Assert.Equal("root@srv02", blocks[2].Source);
+        Assert.Equal(["Envoi de a.txt", "a.txt  SHA-256 00"], blocks[3].Lines);
+        Assert.Equal(["evil\uFFFDtxt\tok"], blocks[4].Lines);
+
+        // Sortie sans fin : le bloc s'arrête à MaxTerminalLines lignes, la suite en commence un autre.
+        var endless = new InterventionBlockBuilder();
+        for (int i = 0; i <= InterventionBlockBuilder.MaxTerminalLines; i++)
+        {
+            endless.Add(Line(i * 0.001, "ligne " + i));
+        }
+
+        Assert.Equal(2, endless.Blocks.Count);
+        Assert.Equal(InterventionBlockBuilder.MaxTerminalLines, endless.Blocks[0].Lines.Count);
+    }
+
     private static List<byte[]> Blocks(byte[] file)
     {
         var blocks = new List<byte[]>();

@@ -3270,8 +3270,9 @@ public sealed partial class DialogTests
     }
 
     /// <summary>
-    /// Intervention : les consignes d'astreinte s'affichent telles quelles (texte brut, sans mise en forme) ; enregistrer, ajouter une
-    /// note, arrêter ; l'intervention en cours ne se supprime pas ; le journal se relit avec la note et sa fin.
+    /// Intervention : les consignes d'astreinte s'affichent telles quelles (texte brut, sans mise en forme) ; enregistrer, donner
+    /// un titre (repris dans la liste), arrêter ; l'intervention en cours ne se supprime pas ; le journal se relit avec la
+    /// note, le titre et sa fin.
     /// </summary>
     [Fact]
     public void InterventionWindowRecordsANoteAndListsTheIntervention()
@@ -3292,16 +3293,17 @@ public sealed partial class DialogTests
                 var window = new InterventionWindow(team, "", recorder, "jdoe", "session CyberArk (pvwa.corp.local)");
                 Assert.Equal(team, window.TeamText.Text);
                 Assert.Equal(Visibility.Collapsed, window.NoTeamText.Visibility);
-                Assert.False(window.NoteBox.IsEnabled);
-                Assert.False(window.CaptureButton.IsEnabled);
+                Assert.False(window.NotesButton.IsEnabled);
 
                 window.RecordButton.RaiseEvent(click);
                 Assert.True(recorder.IsRecording);
-                Assert.True(window.NoteBox.IsEnabled);
+                Assert.True(window.NotesButton.IsEnabled);
                 Assert.Equal(Strings.InterventionStopRecording, window.RecordLabel.Text);
-                window.NoteBox.Text = "INC0012345 : redémarrage de httpd";
-                window.NoteButton.RaiseEvent(click);
-                Assert.Equal("", window.NoteBox.Text);
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Note, "", "INC0012345 : redémarrage de httpd");
+                Assert.True(recorder.SetTitle("INC0012345 httpd srv01"));
+                Assert.False(recorder.SetTitle(" INC0012345  httpd srv01 "));
+                Assert.Contains("INC0012345 httpd srv01", (string)((System.Windows.Controls.ListBoxItem)window.JournalList.Items[0]).Content,
+                    StringComparison.Ordinal);
 
                 window.JournalList.SelectedIndex = 0;
                 Assert.True(window.ExportButton.IsEnabled);
@@ -3319,6 +3321,8 @@ public sealed partial class DialogTests
                 Assert.Equal(ZillaTerm.Core.Interventions.InterventionKind.Started, recording.Entries[0].Kind);
                 Assert.Contains(recording.Entries, e => e.Kind == ZillaTerm.Core.Interventions.InterventionKind.Note && e.Text == "INC0012345 : redémarrage de httpd");
                 Assert.Equal(ZillaTerm.Core.Interventions.InterventionKind.Stopped, recording.Entries[^1].Kind);
+                Assert.Equal("INC0012345 httpd srv01", recording.Title);
+                Assert.Equal("INC0012345 httpd srv01", file.Title);
                 Assert.False(recording.Unfinished);
 
                 Assert.True(window.ShowReminderAsync("", "").IsCompleted);
@@ -3377,12 +3381,148 @@ public sealed partial class DialogTests
                 Assert.Equal(recorder.FailureMessage, window.MessageText.Text);
                 Assert.Contains(since, window.MessageText.Text, StringComparison.Ordinal);
                 Assert.Same(window.FindResource("ErrorBrush"), window.MessageText.Foreground);
-                Assert.False(window.NoteBox.IsEnabled);
-                Assert.False(window.CaptureButton.IsEnabled);
+                var notes = new InterventionPanel();
+                notes.Attach(recorder);
+                Assert.False(notes.TitleBox.IsEnabled);
+                Assert.False(notes.NoteBox.IsEnabled);
+                Assert.False(notes.CaptureButton.IsEnabled);
+                Assert.Equal(recorder.FailureMessage, notes.MessageText.Text);
+                notes.Detach();
 
                 window.RecordButton.RaiseEvent(click);
                 Assert.False(recorder.IsRecording);
                 Assert.Null(recorder.FailureMessage);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Onglet « Intervention » : le titre (Entrée) et la note (Entrée) vont au journal et dans l'historique ; un long retour
+    /// de terminal est réduit, se déplie en entier et grandit avec la sortie ; à l'arrêt, la saisie est grisée et
+    /// l'historique reste jusqu'à « Fermer l'historique » ; un nouvel enregistrement repart de zéro.
+    /// </summary>
+    [Fact]
+    public void InterventionPanelKeepsTitleAndNotesAndShowsTheHistory()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var click = new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent);
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new XorProtector());
+                var panel = new InterventionPanel();
+                panel.Attach(recorder);
+                Assert.False(panel.HasHistory);
+                Assert.False(panel.TitleBox.IsEnabled);
+                Assert.Equal(Strings.InterventionNotRecording, panel.StatusText.Text);
+                var window = new Window { Content = panel, Width = 420, Height = 640, ShowActivated = false, ShowInTaskbar = false };
+                window.Show();
+
+                recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
+                Assert.True(panel.HasHistory);
+                Assert.True(panel.TitleBox.IsEnabled);
+                Assert.Equal(Visibility.Collapsed, panel.CloseHistoryButton.Visibility);
+                var started = Assert.IsType<InterventionHistoryItem>(Assert.Single(panel.HistoryList.Items));
+                Assert.Equal(Strings.InterventionKindStarted, started.Kind);
+
+                System.Windows.Input.KeyEventArgs Enter(System.Windows.RoutedEvent routed) =>
+                    new(System.Windows.Input.Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0, System.Windows.Input.Key.Enter)
+                    {
+                        RoutedEvent = routed,
+                    };
+
+                panel.TitleBox.Text = "  INC0012345\u202E disque plein  ";
+                panel.TitleBox.RaiseEvent(Enter(System.Windows.Input.Keyboard.KeyDownEvent));
+                Assert.Equal("INC0012345 disque plein", recorder.Title);
+                Assert.Equal("INC0012345 disque plein", panel.TitleBox.Text);
+                Assert.Equal(Strings.InterventionTitleSaved, panel.MessageText.Text);
+                Assert.Equal("INC0012345 disque plein", ZillaTerm.Core.Interventions.InterventionJournal.ReadTitle(recorder.JournalPath!, recorder.Protector));
+
+                Assert.False(panel.NoteButton.IsEnabled);
+                panel.NoteBox.Text = "redémarrage de httpd\r\nvalidé par l'astreinte N2";
+                Assert.True(panel.NoteButton.IsEnabled);
+                var noteEnter = Enter(System.Windows.Input.Keyboard.PreviewKeyDownEvent);
+                panel.NoteBox.RaiseEvent(noteEnter);
+                Assert.True(noteEnter.Handled);
+                Assert.Equal("", panel.NoteBox.Text);
+                Assert.Equal(Strings.InterventionNoteAdded, panel.MessageText.Text);
+
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Connection, "root@srv01", "Connecté : root@srv01");
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Terminal, "root@srv01", "[root@srv01 ~]# journalctl -u httpd");
+                for (int i = 1; i <= 20; i++)
+                {
+                    recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Terminal, "root@srv01", $"ligne {i}");
+                }
+
+                panel.ReadHistory();
+                var items = panel.HistoryList.Items.Cast<InterventionHistoryItem>().ToList();
+                Assert.Equal([ZillaTerm.Core.Interventions.InterventionKind.Started, ZillaTerm.Core.Interventions.InterventionKind.Title,
+                    ZillaTerm.Core.Interventions.InterventionKind.Note, ZillaTerm.Core.Interventions.InterventionKind.Connection,
+                    ZillaTerm.Core.Interventions.InterventionKind.Terminal], items.Select(item => item.Block.Kind));
+                Assert.Equal(Strings.InterventionKindTitle, items[1].Kind);
+                Assert.Equal("redémarrage de httpd\nvalidé par l'astreinte N2", items[2].AllText);
+                Assert.False(items[2].IsLong);
+
+                var output = items[^1];
+                Assert.True(output.IsTerminal);
+                Assert.True(output.IsLong);
+                Assert.Equal(21, output.LineCount);
+                Assert.Equal(InterventionHistoryItem.PreviewLines + 1, output.Preview.Split('\n').Length);
+                Assert.Equal("", output.FullText);
+                Assert.Equal(Text.Format(Strings.InterventionShowAll, 21), output.ToggleText);
+                output.IsExpanded = true;
+                Assert.Equal(21, output.FullText.Split('\n').Length);
+                Assert.Equal(Strings.InterventionCollapse, output.ToggleText);
+
+                // La sortie continue : le même bloc grandit.
+                recorder.Record(ZillaTerm.Core.Interventions.InterventionKind.Terminal, "root@srv01", "ligne 21");
+                panel.ReadHistory();
+                Assert.Equal(5, panel.HistoryList.Items.Count);
+                Assert.Equal(22, output.LineCount);
+                Assert.EndsWith("ligne 21", output.FullText, StringComparison.Ordinal);
+
+                // Arrêt : saisie grisée, historique gardé avec la fin, jusqu'à « Fermer l'historique ».
+                recorder.Stop(Strings.InterventionStoppedByUser);
+                Assert.False(panel.TitleBox.IsEnabled);
+                Assert.False(panel.NoteBox.IsEnabled);
+                Assert.False(panel.CaptureButton.IsEnabled);
+                Assert.Equal(Strings.InterventionNotesStopped, panel.MessageText.Text);
+                Assert.Equal(ZillaTerm.Core.Interventions.InterventionKind.Stopped,
+                    ((InterventionHistoryItem)panel.HistoryList.Items[^1]).Block.Kind);
+                Assert.True(panel.HasHistory);
+                Assert.Equal(Visibility.Visible, panel.CloseHistoryButton.Visibility);
+
+                // Nouvel enregistrement : l'onglet repart de zéro.
+                recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
+                Assert.Single(panel.HistoryList.Items);
+                Assert.True(panel.NoteBox.IsEnabled);
+                Assert.Equal("", panel.TitleBox.Text);
+                Assert.Equal(Visibility.Collapsed, panel.CloseHistoryButton.Visibility);
+                recorder.Stop(Strings.InterventionStoppedByUser);
+
+                int closed = 0;
+                panel.CloseRequested += (_, _) => closed++;
+                panel.CloseHistoryButton.RaiseEvent(click);
+                Assert.Equal(1, closed);
+                Assert.False(panel.HasHistory);
+                Assert.Empty(panel.HistoryList.Items);
+                Assert.Equal(Visibility.Collapsed, panel.CloseHistoryButton.Visibility);
+                panel.Detach();
                 window.Close();
             });
         }

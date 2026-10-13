@@ -1369,14 +1369,21 @@ public partial class MainWindow : Window
 
             e.Handled = true;
         }
-        else if (mods == ModifierKeys.Control && key is Key.D1 or Key.NumPad1 or Key.D2 or Key.NumPad2 or Key.D3 or Key.NumPad3)
+        else if (mods == ModifierKeys.Control && key is Key.D1 or Key.NumPad1 or Key.D2 or Key.NumPad2 or Key.D3 or Key.NumPad3 or Key.D4 or Key.NumPad4)
         {
-            if ((key is Key.D1 or Key.NumPad1 && IsOffline) || (key is Key.D3 or Key.NumPad3 && FilesTab.Visibility != Visibility.Visible))
+            if ((key is Key.D1 or Key.NumPad1 && IsOffline) || (key is Key.D3 or Key.NumPad3 && FilesTab.Visibility != Visibility.Visible)
+                || (key is Key.D4 or Key.NumPad4 && InterventionTab.Visibility != Visibility.Visible))
             {
                 return;
             }
 
-            ShowSideTab(key is Key.D1 or Key.NumPad1 ? AvailableTab : key is Key.D2 or Key.NumPad2 ? CurrentTab : FilesTab);
+            ShowSideTab(key switch
+            {
+                Key.D1 or Key.NumPad1 => AvailableTab,
+                Key.D2 or Key.NumPad2 => CurrentTab,
+                Key.D3 or Key.NumPad3 => FilesTab,
+                _ => InterventionTab,
+            });
             e.Handled = true;
         }
         else if ((key == Key.Apps || (shift && key == Key.F10)) && Keyboard.FocusedElement is TabItem { Header: FrameworkElement { ContextMenu: { } menu } header })
@@ -1470,6 +1477,10 @@ public partial class MainWindow : Window
             else if (tab == CurrentTab)
             {
                 SavedSearchBox.Focus();
+            }
+            else if (tab == InterventionTab)
+            {
+                InterventionView.FocusInput();
             }
             else
             {

@@ -35,10 +35,13 @@ aussitôt dans la langue choisie, sans perdre l'adresse ni l'identifiant saisis.
 
 ### Fenêtre principale
 
-- **Panneau de gauche** : onglets « Disponibles », « Mes serveurs » et « Fichiers » (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`) ;
-  l'onglet « Fichiers » n'apparaît que lorsqu'une session SSH ou de fichiers est ouverte. Glissez le séparateur pour changer sa largeur ; `Ctrl+B` ou un double-clic sur le séparateur le replie (la bande
-  des onglets reste : un clic sur un onglet le rouvre). `F6` passe du panneau à la session. La position et la
-  taille de la fenêtre, la largeur du panneau et son état replié sont mémorisés.
+- **Panneau de gauche** : onglets « Disponibles », « Mes serveurs », « Fichiers » et « Intervention » (`Ctrl+1` à
+  `Ctrl+4`) ; l'onglet « Fichiers » n'apparaît que lorsqu'une session SSH ou de fichiers est ouverte, l'onglet
+  « Intervention » pendant l'enregistrement d'une intervention
+  ([section 8](#8-intervention--enregistrement-et-consignes-dastreinte)). Glissez le séparateur pour changer sa
+  largeur ; `Ctrl+B` ou un double-clic sur le séparateur le replie (la bande des onglets reste : un clic sur un onglet
+  le rouvre). `F6` passe du panneau à la session. La position et la taille de la fenêtre, la largeur du panneau et son
+  état replié sont mémorisés.
 - **Onglets de session** : une pastille donne l'état de la session par sa couleur et par sa forme, lisible aussi en
   contraste élevé : anneau orange pendant la connexion, pastille verte pleine une fois connectée, pastille orange à
   moitié pleine quand la connexion est interrompue, carré gris quand la session est terminée, croix rouge en cas
@@ -920,27 +923,47 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   - les **actions** : mot de passe copié (jamais le mot de passe), demandes au CPM, comptes ajoutés, modifiés,
     supprimés ou importés, fenêtres X11, passage en accès d'urgence, déconnexion ;
   - les **transferts de fichiers**, avec le SHA-256 de chaque fichier ;
-  - vos **notes** (champ « Note pour le journal » : numéro d'incident, décision prise…) ;
-  - les **captures** : « Capturer un Bureau à distance… » prend une image d'une fenêtre Connexion Bureau à distance
-    (sessions PSM ; une fenêtre réduite ne peut pas l'être), et le bouton « Capture » des onglets Bureau à distance
-    de ZillaTerm prend celle du bureau affiché.
-- **« Interventions enregistrées »** : la liste des enregistrements, du plus récent au plus ancien. À l'arrêt,
-  l'intervention reste sélectionnée : **« Exporter le rapport… »** (ou double-clic) en fait une page HTML : résumé,
-  chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention. **« Supprimer… »**
-  efface un enregistrement terminé.
+  - le **titre** de l'intervention et vos **notes** (onglet « Intervention », ci-dessous) ;
+  - les **captures** : « Capturer un Bureau à distance… » (onglet « Intervention ») prend une image d'une fenêtre
+    Connexion Bureau à distance (sessions PSM ; une fenêtre réduite ne peut pas l'être), et le bouton « Capture » des
+    onglets Bureau à distance de ZillaTerm prend celle du bureau affiché.
+- **Onglet « Intervention » du panneau de gauche** (`Ctrl+4`) : il apparaît au début de l'enregistrement, avec une
+  pastille rouge tant que l'enregistrement dure : titre, notes et historique restent à côté de la session. Ouvrir une
+  session SSH ne le remplace pas par l'onglet « Fichiers ». Un clic sur « ● Intervention enregistrée » dans la barre
+  d'état ou sur **« Titre, notes et historique »** dans la fenêtre Intervention y ramène. On y trouve :
+  - le **titre de l'intervention** (ticket, incident, serveur…), gardé par `Entrée` ou en quittant le champ : il est
+    écrit dans le journal, repris dans la liste « Interventions enregistrées », en tête du rapport et dans le nom
+    proposé pour son fichier. Une ligne, 200 caractères au plus ;
+  - la **note** : `Entrée` l'ajoute au journal, `Maj+Entrée` passe à la ligne ;
+  - **« Capturer un Bureau à distance… »** ;
+  - l'**historique** de l'intervention, au fil de l'eau : début, titre, notes, connexions, actions, transferts (avec
+    leur SHA-256), captures et texte des terminaux. Une commande et son retour forment un bloc (un nouveau bloc commence
+    après 2 secondes sans sortie) ; un bloc de plus de 8 lignes est réduit à ses 6 premières, et **« Tout afficher
+    (N lignes) »** le déplie en entier (texte sélectionnable), « Réduire » le replie. `Ctrl+C` copie l'événement choisi.
+    La liste suit les nouveaux événements tant qu'elle est en bas. L'historique est gardé en mémoire seulement ; son
+    texte des terminaux est limité à 8 millions de caractères (au-delà, un message le dit, et le texte reste dans le
+    rapport).
 
-Le journal est **chiffré pour votre compte Windows seul** (DPAPI) dans `%LOCALAPPDATA%\ZillaTerm\Interventions`, bloc par
-bloc au fil de l'enregistrement (un arrêt brutal ne perd que les deux dernières secondes, et le rapport le signale).
-Un bloc retiré, déplacé ou modifié est signalé dans le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas,
-mais **tout ce qu'affiche un terminal y est** (contenu d'un fichier de configuration, par exemple) ; le rapport
-exporté n'est **pas chiffré** : rangez-le en lieu sûr. Le texte des terminaux est plafonné à 64 millions de
-caractères par intervention (les autres événements continuent d'être gardés au-delà) ; un très gros affichage est
-écrit en plusieurs blocs, sans perdre la suite du rapport. Une déconnexion annulée à la confirmation n'y figure pas.
+  À l'arrêt de l'enregistrement, la saisie est grisée et l'historique reste affiché jusqu'à **« Fermer l'historique »**
+  (l'onglet disparaît) ou au prochain enregistrement ; le rapport s'exporte depuis la fenêtre Intervention.
+- **« Interventions enregistrées »** : la liste des enregistrements, du plus récent au plus ancien, avec leur titre. À
+  l'arrêt, l'intervention reste sélectionnée : **« Exporter le rapport… »** (ou double-clic) en fait une page HTML :
+  résumé, chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention.
+  **« Supprimer… »** efface un enregistrement terminé.
+
+Le journal est **chiffré pour votre compte Windows seul** (DPAPI) dans `%LOCALAPPDATA%\ZillaTerm\Interventions` (le
+titre aussi, dans un fichier `.title` à côté, pour la liste), bloc par bloc au fil de l'enregistrement (un arrêt brutal
+ne perd que les deux dernières secondes, et le rapport le signale). Un bloc retiré, déplacé ou modifié est signalé dans
+le rapport. ⚠ Les mots de passe tapés sans écho n'y figurent pas, mais **tout ce qu'affiche un terminal y est** (contenu
+d'un fichier de configuration, par exemple) ; le rapport exporté n'est **pas chiffré** : rangez-le en lieu sûr. Le texte
+des terminaux est plafonné à 64 millions de caractères par intervention (les autres événements continuent d'être gardés
+au-delà) ; un très gros affichage est écrit en plusieurs blocs, sans perdre la suite du rapport. Une déconnexion annulée
+à la confirmation n'y figure pas.
 
 **Disque qui refuse le journal** (plein, quota, accès retiré) : la barre d'état affiche « ⚠ Intervention :
 enregistrement interrompu » en rouge, et la fenêtre « Enregistrement interrompu à 14:10. » : plus rien n'est gardé
-depuis cette heure-là, la note et la capture sont grisées. Libérez de la place, puis « Arrêter l'enregistrement » et
-« Enregistrer l'intervention » pour reprendre dans un nouvel enregistrement.
+depuis cette heure-là, le titre, la note et la capture sont grisés dans l'onglet « Intervention ». Libérez de la place,
+puis « Arrêter l'enregistrement » et « Enregistrer l'intervention » pour reprendre dans un nouvel enregistrement.
 
 ## Raccourcis
 
@@ -950,7 +973,7 @@ depuis cette heure-là, la note et la capture sont grisées. Libérez de la plac
 | Hors terminal | Filtrer les comptes (dans « Mes serveurs » : rechercher un serveur ; dans « Fichiers » : filtrer le dossier) | `Ctrl+F` |
 | Partout | Onglet de session suivant / précédent | `Ctrl+Tab` / `Ctrl+Maj+Tab` |
 | Partout | Fermer l'onglet de session | `Ctrl+F4` ou `Ctrl+Maj+W` |
-| Partout | Onglets « Disponibles », « Mes serveurs », « Fichiers » du panneau de gauche | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` |
+| Partout | Onglets « Disponibles », « Mes serveurs », « Fichiers », « Intervention » du panneau de gauche | `Ctrl+1`, `Ctrl+2`, `Ctrl+3`, `Ctrl+4` |
 | Partout | Paramètres | `Ctrl+,` |
 | Hors terminal | Connexion rapide (onglet Accueil) | `Ctrl+K` |
 | Hors terminal | Passer du panneau de gauche à la session et retour | `F6` |
@@ -980,7 +1003,7 @@ depuis cette heure-là, la note et la capture sont grisées. Libérez de la plac
 | Base KeePass | Se connecter / modifier / supprimer une entrée | Double-clic ou `Entrée` / `F2` / `Suppr` |
 
 Dans un terminal, `F5`, `Ctrl+F`, `Ctrl+K`, `Ctrl+B` et `F6` sont envoyés au serveur (`F6` aux applications comme
-mc) ; `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Maj+W` et `Ctrl+1/2/3` restent à ZillaTerm. Dans une session Bureau à distance, les
+mc) ; `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Maj+W` et `Ctrl+1/2/3/4` restent à ZillaTerm. Dans une session Bureau à distance, les
 touches vont à la session distante.
 
 **Clavier et accessibilité** : la barre d'outils s'atteint avec `Tab` (le focus est visible), chaque menu et chaque

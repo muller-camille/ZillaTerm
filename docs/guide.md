@@ -35,10 +35,12 @@ away in the chosen language, keeping the address and user name you typed.
 
 ### Main window
 
-- **Side panel**: "Available", "My servers" and "Files" tabs (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`); the "Files" tab only
-  shows while an SSH or files session is open. Drag the splitter to change its width; `Ctrl+B` or a double-click on the splitter collapses it (the strip of tabs stays: a click on a
-  tab opens it again). `F6` moves from the panel to the session. The window position and size, the panel width and
-  whether it is collapsed are remembered.
+- **Side panel**: "Available", "My servers", "Files" and "Intervention" tabs (`Ctrl+1` to `Ctrl+4`); the "Files" tab
+  only shows while an SSH or files session is open, the "Intervention" tab while an intervention is recorded
+  ([section 8](#8-intervention-recording-and-on-call-duty-reminder)). Drag the splitter to change its width; `Ctrl+B` or
+  a double-click on the splitter collapses it (the strip of tabs stays: a click on a tab opens it again). `F6` moves
+  from the panel to the session. The window position and size, the panel width and whether it is collapsed are
+  remembered.
 - **Session tabs**: a dot shows the state of the session by its colour and by its shape, readable in high contrast
   too: orange ring while connecting, solid green dot once connected, half-filled orange dot when the connection is
   interrupted, grey square when the session has ended, red cross when it failed (the name is then dimmed). The
@@ -864,26 +866,44 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   - **actions**: password copied (never the password), CPM requests, accounts added, changed, deleted or imported,
     X11 windows, switch to emergency access, sign-out;
   - **file transfers**, with the SHA-256 of each file;
-  - your **notes** ("Note for the journal" field: incident number, decision taken…);
-  - **captures**: "Capture a remote desktop…" takes an image of a Remote Desktop Connection window (PSM sessions; a
-    minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs takes the
-    desktop shown.
-- **"Recorded interventions"**: the list of recordings, newest first. When you stop, the intervention stays
-  selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
+  - the intervention **title** and your **notes** ("Intervention" tab, below);
+  - **captures**: "Capture a remote desktop…" ("Intervention" tab) takes an image of a Remote Desktop Connection window
+    (PSM sessions; a minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs
+    takes the desktop shown.
+- **"Intervention" tab of the side panel** (`Ctrl+4`): it appears when recording starts, with a red dot while recording
+  lasts: title, notes and history stay next to the session. Opening an SSH session does not replace it with the "Files"
+  tab. A click on "● Intervention recorded" in the status bar or on **"Title, notes and history"** in the Intervention
+  window brings it back. It holds:
+  - the **intervention title** (ticket, incident, server…), kept with `Enter` or when leaving the field: it is written
+    to the journal, shown in the "Recorded interventions" list, at the top of the report and in the file name suggested
+    for it. One line, 200 characters at most;
+  - the **note**: `Enter` adds it to the journal, `Shift+Enter` starts a new line;
+  - **"Capture a remote desktop…"**;
+  - the **history** of the intervention, as it happens: start, title, notes, connections, actions, transfers (with their
+    SHA-256), captures and terminal text. A command and its output form a block (a new block starts after 2 seconds
+    without output); a block of more than 8 lines is reduced to its first 6, and **"Show all (N lines)"** expands it in
+    full (selectable text), "Collapse" folds it back. `Ctrl+C` copies the selected event. The list follows new events
+    while it is at the bottom. The history is kept in memory only; its terminal text is limited to 8 million characters
+    (beyond that, a message says so, and the text is still in the report).
+
+  When recording stops, input is greyed out and the history stays shown until **"Close the history"** (the tab goes
+  away) or the next recording; the report is exported from the Intervention window.
+- **"Recorded interventions"**: the list of recordings, newest first, with their title. When you stop, the intervention
+  stays selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
   terminal text and captures, to attach to the intervention report. **"Delete…"** erases a finished recording.
 
-The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions`, block
-by block as recording goes (a crash only loses the last two seconds, and the report says so). A block removed, moved
-or changed is reported. ⚠ Passwords typed without echo are not in it, but **whatever a terminal shows is** (the
-contents of a configuration file, for example); the exported report is **not encrypted**: keep it in a safe place.
-Terminal text is capped at 64 million characters per intervention (the other events are still kept beyond that); a
-very large output is written in several blocks, without losing the rest of the report. A disconnection cancelled at
-the confirmation is not in it.
+The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (the
+title too, in a `.title` file next to it, for the list), block by block as recording goes (a crash only loses the last
+two seconds, and the report says so). A block removed, moved or changed is reported. ⚠ Passwords typed without echo are
+not in it, but **whatever a terminal shows is** (the contents of a configuration file, for example); the exported report
+is **not encrypted**: keep it in a safe place. Terminal text is capped at 64 million characters per intervention (the
+other events are still kept beyond that); a very large output is written in several blocks, without losing the rest of
+the report. A disconnection cancelled at the confirmation is not in it.
 
 **Disk refusing the journal** (full, quota, access removed): the status bar shows "⚠ Intervention: recording
 interrupted" in red, and the window "Recording interrupted at 14:10.": nothing more is kept from that time on, the
-note and the capture are greyed out. Free some space, then "Stop recording" and "Record the intervention" to start
-again in a new recording.
+title, the note and the capture are greyed out in the "Intervention" tab. Free some space, then "Stop recording" and
+"Record the intervention" to start again in a new recording.
 
 ## Shortcuts
 
@@ -893,7 +913,7 @@ again in a new recording.
 | Outside the terminal | Filter the accounts (in "My servers": search a server; in "Files": filter the folder) | `Ctrl+F` |
 | Everywhere | Next / previous session tab | `Ctrl+Tab` / `Ctrl+Shift+Tab` |
 | Everywhere | Close the session tab | `Ctrl+F4` or `Ctrl+Shift+W` |
-| Everywhere | "Available", "My servers", "Files" tabs of the side panel | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` |
+| Everywhere | "Available", "My servers", "Files", "Intervention" tabs of the side panel | `Ctrl+1`, `Ctrl+2`, `Ctrl+3`, `Ctrl+4` |
 | Everywhere | Settings | `Ctrl+,` |
 | Outside the terminal | Quick connect (Home tab) | `Ctrl+K` |
 | Outside the terminal | Move from the side panel to the session and back | `F6` |
@@ -923,7 +943,7 @@ again in a new recording.
 | KeePass database | Connect / edit / delete an entry | Double-click or `Enter` / `F2` / `Del` |
 
 In a terminal, `F5`, `Ctrl+F`, `Ctrl+K`, `Ctrl+B` and `F6` are sent to the server (`F6` to applications such as
-mc); `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Shift+W` and `Ctrl+1/2/3` stay with ZillaTerm. In a remote desktop session, the keys
+mc); `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Shift+W` and `Ctrl+1/2/3/4` stay with ZillaTerm. In a remote desktop session, the keys
 go to the remote session.
 
 **Keyboard and accessibility**: the toolbar can be reached with `Tab` (the focus is visible), every menu and every

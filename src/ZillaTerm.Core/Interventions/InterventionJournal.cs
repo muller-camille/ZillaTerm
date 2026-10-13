@@ -32,6 +32,9 @@ public enum InterventionKind
 
     /// <summary>Capture d'écran (image PNG).</summary>
     Screenshot,
+
+    /// <summary>Titre donné à l'intervention (ticket, incident…) ; le dernier compte.</summary>
+    Title,
 }
 
 /// <summary>Événement du journal d'intervention.</summary>
@@ -47,10 +50,14 @@ public sealed record InterventionRecording(string Path, IReadOnlyList<Interventi
     public DateTime? Start => Entries.Count > 0 ? Entries[0].Time : null;
 
     public DateTime? End => Entries.Count > 0 ? Entries[^1].Time : null;
+
+    /// <summary>Dernier titre donné à l'intervention ; null s'il n'y en a pas ou s'il a été effacé.</summary>
+    public string? Title => Entries.LastOrDefault(e => e.Kind == InterventionKind.Title) is { Text.Length: > 0 } title ? title.Text : null;
 }
 
 /// <summary>Intervention enregistrée (fichier), pour la liste des interventions précédentes.</summary>
-public sealed record InterventionFile(string Path, DateTime Start, long Length);
+/// <param name="Title">Titre de l'intervention (voir <see cref="InterventionJournal.ReadTitle"/>) ; null s'il n'y en a pas.</param>
+public sealed record InterventionFile(string Path, DateTime Start, long Length, string? Title = null);
 
 /// <summary>
 /// Journal d'une intervention : ce qui s'est passé pendant l'enregistrement (texte des terminaux, connexions, actions,
@@ -75,6 +82,9 @@ public sealed class InterventionJournal : IDisposable
 
     /// <summary>Texte des terminaux gardé au plus par intervention (caractères).</summary>
     public const long MaxTerminalText = 64L * 1024 * 1024;
+
+    /// <summary>Longueur au plus du titre d'une intervention (caractères).</summary>
+    public const int MaxTitleLength = 200;
 
     /// <summary>Plus grand bloc lu (une capture d'écran en 4K tient largement).</summary>
     private const int MaxChunk = 64 * 1024 * 1024;
@@ -164,20 +174,21 @@ public sealed class InterventionJournal : IDisposable
     }
 
     /// <summary>Ajoute un événement (depuis n'importe quel fil).</summary>
-    public void Write(InterventionEntry entry)
+    /// <returns>Faux si l'événement n'est pas gardé : journal fermé ou refusé par le disque, ou texte des terminaux plafonné.</returns>
+    public bool Write(InterventionEntry entry)
     {
         lock (_lock)
         {
             if (_file is null || Failure is not null)
             {
-                return;
+                return false;
             }
 
             if (entry.Kind == InterventionKind.Terminal)
             {
                 if (_terminalCapped)
                 {
-                    return;
+                    return false;
                 }
 
                 _terminalText += entry.Text.Length;
@@ -190,6 +201,7 @@ public sealed class InterventionJournal : IDisposable
 
             _pending.Add(entry);
             Count++;
+            return true;
         }
     }
 
@@ -284,8 +296,100 @@ public sealed class InterventionJournal : IDisposable
         }
     }
 
-    /// <summary>Interventions du dossier, la plus récente en tête.</summary>
-    public static IReadOnlyList<InterventionFile> List(string directory)
+    /// <summary>
+    /// Titre saisi pour une intervention : une ligne, sans caractère de contrôle ni de mise en forme invisible (inversion du
+    /// sens d'écriture…), espaces réunis, au plus <see cref="MaxTitleLength"/> caractères.
+    /// </summary>
+    public static string CleanTitle(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return "";
+        }
+
+        var clean = new StringBuilder(title.Length);
+        foreach (char c in title)
+        {
+            bool space = char.IsWhiteSpace(c) || Ssh.RemoteEntry.IsInvisible(c);
+            if (!space)
+            {
+                clean.Append(c);
+            }
+            else if (clean.Length > 0 && clean[^1] != ' ')
+            {
+                clean.Append(' ');
+            }
+        }
+
+        var text = clean.ToString().TrimEnd();
+        if (text.Length > MaxTitleLength)
+        {
+            // Pas de demi-paire de substitution en fin de titre.
+            int length = char.IsHighSurrogate(text[MaxTitleLength - 1]) ? MaxTitleLength - 1 : MaxTitleLength;
+            text = text[..length].TrimEnd();
+        }
+
+        return text;
+    }
+
+    /// <summary>
+    /// Fichier du titre d'une intervention, à côté de son journal : pour lister les interventions avec leur titre sans
+    /// relire chaque journal. Le journal garde le titre lui aussi (événement <see cref="InterventionKind.Title"/>), c'est
+    /// lui qui fait foi pour le rapport.
+    /// </summary>
+    public static string TitlePath(string journalPath) => System.IO.Path.ChangeExtension(journalPath, ".title");
+
+    /// <summary>Enregistre le titre d'une intervention, protégé comme le journal ; vide : fichier du titre retiré.</summary>
+    /// <exception cref="IOException">Écriture refusée.</exception>
+    public static void WriteTitle(string journalPath, ISecretProtector protector, string title)
+    {
+        var path = TitlePath(journalPath);
+        title = CleanTitle(title);
+        if (title.Length == 0)
+        {
+            File.Delete(path);
+            return;
+        }
+
+        byte[] plain = Encoding.UTF8.GetBytes(title);
+        byte[] protectedBytes = protector.Protect(plain);
+        Array.Clear(plain);
+        DurableFile.Write(path, protectedBytes);
+    }
+
+    /// <summary>Titre d'une intervention (<see cref="WriteTitle"/>) ; null s'il n'y en a pas ou s'il est illisible.</summary>
+    public static string? ReadTitle(string journalPath, ISecretProtector protector)
+    {
+        try
+        {
+            var path = TitlePath(journalPath);
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length > 64 * 1024)
+            {
+                return null;
+            }
+
+            byte[] plain = protector.Unprotect(File.ReadAllBytes(path));
+            var title = CleanTitle(Encoding.UTF8.GetString(plain));
+            Array.Clear(plain);
+            return title.Length > 0 ? title : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.Cryptography.CryptographicException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Supprime une intervention : son journal et le fichier de son titre.</summary>
+    /// <exception cref="IOException">Suppression refusée.</exception>
+    public static void Delete(string journalPath)
+    {
+        File.Delete(journalPath);
+        File.Delete(TitlePath(journalPath));
+    }
+
+    /// <summary>Interventions du dossier, la plus récente en tête ; avec leur titre si <paramref name="protector"/> est donné.</summary>
+    public static IReadOnlyList<InterventionFile> List(string directory, ISecretProtector? protector = null)
     {
         if (!Directory.Exists(directory))
         {
@@ -301,7 +405,7 @@ public sealed class InterventionJournal : IDisposable
                     System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal,
                     out var start))
             {
-                files.Add(new InterventionFile(info.FullName, start, info.Length));
+                files.Add(new InterventionFile(info.FullName, start, info.Length, protector is null ? null : ReadTitle(info.FullName, protector)));
             }
         }
 

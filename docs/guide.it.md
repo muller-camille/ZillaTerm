@@ -35,10 +35,12 @@ subito nella lingua scelta, conservando l'indirizzo e il nome utente inseriti.
 
 ### Finestra principale
 
-- **Pannello laterale**: schede «Disponibili», «I miei server» e «File» (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`); la scheda
-  «File» compare solo quando è aperta una sessione SSH o di file. Trascina il separatore per cambiarne la larghezza; `Ctrl+B` o un doppio clic sul separatore lo chiude (la striscia delle
-  schede resta: un clic su una scheda lo riapre). `F6` passa dal pannello alla sessione. Posizione e dimensione
-  della finestra, larghezza del pannello e il suo stato chiuso vengono memorizzati.
+- **Pannello laterale**: schede «Disponibili», «I miei server», «File» e «Intervento» (da `Ctrl+1` a `Ctrl+4`); la
+  scheda «File» compare solo quando è aperta una sessione SSH o di file, la scheda «Intervento» durante la registrazione
+  di un intervento ([sezione 8](#8-intervento-registrazione-e-promemoria-di-reperibilità)). Trascina il separatore per
+  cambiarne la larghezza; `Ctrl+B` o un doppio clic sul separatore lo chiude (la striscia delle schede resta: un clic su
+  una scheda lo riapre). `F6` passa dal pannello alla sessione. Posizione e dimensione della finestra, larghezza del
+  pannello e il suo stato chiuso vengono memorizzati.
 - **Schede di sessione**: un pallino indica lo stato della sessione con il colore e con la forma, leggibile anche in
   contrasto elevato: anello arancione durante la connessione, pallino verde pieno una volta connessa, pallino
   arancione pieno a metà quando la connessione è interrotta, quadrato grigio quando la sessione è terminata, croce
@@ -919,28 +921,46 @@ reperibilità o no:
   - le **azioni**: password copiata (mai la password), richieste al CPM, account aggiunti, modificati, eliminati o
     importati, finestre X11, passaggio all'accesso di emergenza, disconnessione;
   - i **trasferimenti di file**, con lo SHA-256 di ogni file;
-  - le vostre **note** (campo «Nota per il registro»: numero di incidente, decisione presa…);
-  - le **catture**: «Cattura un desktop remoto…» acquisisce l'immagine di una finestra Connessione Desktop remoto
-    (sessioni PSM; una finestra ridotta a icona non può essere catturata), e il pulsante «Cattura» delle schede
-    desktop remoto di ZillaTerm acquisisce il desktop visualizzato.
-- **«Interventi registrati»**: l'elenco delle registrazioni, dalla più recente. All'interruzione l'intervento resta
-  selezionato: **«Esporta il rapporto…»** (o doppio clic) ne fa una pagina HTML: riepilogo, cronologia, blocchi di
-  testo dei terminali e catture, da allegare al resoconto dell'intervento. **«Elimina…»** cancella una registrazione
-  terminata.
+  - il **titolo** dell'intervento e le vostre **note** (scheda «Intervento», qui sotto);
+  - le **catture**: «Cattura un desktop remoto…» (scheda «Intervento») acquisisce l'immagine di una finestra Connessione
+    Desktop remoto (sessioni PSM; una finestra ridotta a icona non può essere catturata), e il pulsante «Cattura» delle
+    schede desktop remoto di ZillaTerm acquisisce il desktop visualizzato.
+- **Scheda «Intervento» del pannello laterale** (`Ctrl+4`): compare all'inizio della registrazione, con un pallino rosso
+  finché la registrazione dura: titolo, note e cronologia restano accanto alla sessione. Aprire una sessione SSH non la
+  sostituisce con la scheda «File». Un clic su «● Intervento registrato» nella barra di stato o su **«Titolo, note e
+  cronologia»** nella finestra Intervento la riporta in primo piano. Contiene:
+  - il **titolo dell'intervento** (ticket, incidente, server…), conservato con `Invio` o lasciando il campo: viene
+    scritto nel registro, ripreso nell'elenco «Interventi registrati», in testa al rapporto e nel nome proposto per il
+    suo file. Una riga, al massimo 200 caratteri;
+  - la **nota**: `Invio` la aggiunge al registro, `Maiusc+Invio` va a capo;
+  - **«Cattura un desktop remoto…»**;
+  - la **cronologia** dell'intervento, man mano: inizio, titolo, note, connessioni, azioni, trasferimenti (con il loro
+    SHA-256), catture e testo dei terminali. Un comando e il suo output formano un blocco (un nuovo blocco inizia dopo 2
+    secondi senza output); un blocco di più di 8 righe è ridotto alle prime 6, e **«Mostra tutto (N righe)»** lo espande
+    per intero (testo selezionabile), «Riduci» lo richiude. `Ctrl+C` copia l'evento scelto. L'elenco segue i nuovi
+    eventi finché è in fondo. La cronologia è conservata solo in memoria; il suo testo dei terminali è limitato a 8
+    milioni di caratteri (oltre, un messaggio lo dice, e il testo resta nel rapporto).
 
-Il registro è **cifrato solo per il vostro account Windows** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions`, blocco
-per blocco durante la registrazione (un arresto improvviso perde solo gli ultimi due secondi, e il rapporto lo
-segnala). Un blocco rimosso, spostato o modificato viene segnalato. ⚠ Le password digitate senza eco non ci sono, ma
-**tutto ciò che mostra un terminale sì** (il contenuto di un file di configurazione, per esempio); il rapporto
-esportato **non è cifrato**: conservatelo in un luogo sicuro. Il testo dei terminali è limitato a 64 milioni di
-caratteri per intervento (gli altri eventi continuano a essere conservati oltre); un output molto grande viene
-scritto in più blocchi, senza perdere il seguito del rapporto. Una disconnessione annullata alla conferma non vi
-compare.
+  All'interruzione della registrazione l'inserimento è in grigio e la cronologia resta visibile fino a **«Chiudi la
+  cronologia»** (la scheda scompare) o alla registrazione successiva; il rapporto si esporta dalla finestra Intervento.
+- **«Interventi registrati»**: l'elenco delle registrazioni, dalla più recente, con il loro titolo. All'interruzione
+  l'intervento resta selezionato: **«Esporta il rapporto…»** (o doppio clic) ne fa una pagina HTML: riepilogo,
+  cronologia, blocchi di testo dei terminali e catture, da allegare al resoconto dell'intervento. **«Elimina…»**
+  cancella una registrazione terminata.
+
+Il registro è **cifrato solo per il vostro account Windows** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (anche
+il titolo, in un file `.title` accanto, per l'elenco), blocco per blocco durante la registrazione (un arresto improvviso
+perde solo gli ultimi due secondi, e il rapporto lo segnala). Un blocco rimosso, spostato o modificato viene segnalato.
+⚠ Le password digitate senza eco non ci sono, ma **tutto ciò che mostra un terminale sì** (il contenuto di un file di
+configurazione, per esempio); il rapporto esportato **non è cifrato**: conservatelo in un luogo sicuro. Il testo dei
+terminali è limitato a 64 milioni di caratteri per intervento (gli altri eventi continuano a essere conservati oltre);
+un output molto grande viene scritto in più blocchi, senza perdere il seguito del rapporto. Una disconnessione annullata
+alla conferma non vi compare.
 
 **Disco che rifiuta il registro** (pieno, quota, accesso revocato): la barra di stato mostra «⚠ Intervento:
 registrazione interrotta» in rosso, e la finestra «Registrazione interrotta alle 14:10.»: da quell'ora non viene più
-conservato nulla, la nota e la cattura sono in grigio. Liberate spazio, poi «Interrompi la registrazione» e «Registra
-l'intervento» per riprendere in una nuova registrazione.
+conservato nulla, il titolo, la nota e la cattura sono in grigio nella scheda «Intervento». Liberate spazio, poi
+«Interrompi la registrazione» e «Registra l'intervento» per riprendere in una nuova registrazione.
 
 ## Scorciatoie
 
@@ -950,7 +970,7 @@ l'intervento» per riprendere in una nuova registrazione.
 | Fuori dal terminale | Filtrare gli account (in «I miei server»: cercare un server; in «File»: filtrare la cartella) | `Ctrl+F` |
 | Ovunque | Scheda di sessione successiva / precedente | `Ctrl+Tab` / `Ctrl+Maiusc+Tab` |
 | Ovunque | Chiudere la scheda di sessione | `Ctrl+F4` o `Ctrl+Maiusc+W` |
-| Ovunque | Schede «Disponibili», «I miei server», «File» del pannello laterale | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` |
+| Ovunque | Schede «Disponibili», «I miei server», «File», «Intervento» del pannello laterale | `Ctrl+1`, `Ctrl+2`, `Ctrl+3`, `Ctrl+4` |
 | Ovunque | Impostazioni | `Ctrl+,` |
 | Fuori dal terminale | Connessione rapida (scheda Home) | `Ctrl+K` |
 | Fuori dal terminale | Passare dal pannello laterale alla sessione e ritorno | `F6` |
@@ -980,7 +1000,7 @@ l'intervento» per riprendere in una nuova registrazione.
 | Database KeePass | Connettere / modificare / eliminare una voce | Doppio clic o `Invio` / `F2` / `Canc` |
 
 In un terminale, `F5`, `Ctrl+F`, `Ctrl+K`, `Ctrl+B` e `F6` vengono inviati al server (`F6` alle applicazioni come
-mc); `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Maiusc+W` e `Ctrl+1/2/3` restano a ZillaTerm. In una sessione Desktop remoto, i
+mc); `Ctrl+Tab`, `Ctrl+F4`, `Ctrl+Maiusc+W` e `Ctrl+1/2/3/4` restano a ZillaTerm. In una sessione Desktop remoto, i
 tasti vanno alla sessione remota.
 
 **Tastiera e accessibilità**: la barra degli strumenti si raggiunge con `Tab` (il focus è visibile), ogni menu e
