@@ -1,5 +1,11 @@
 using System.IO;
 using System.Net;
+using System.Net.Security;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Security.Authentication;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -347,6 +353,193 @@ public class RdpSessionTests(ITestOutputHelper output)
             Assert.False(session.HasControl);
             Assert.Empty(Win32Input.Descendants(session.Host.SlotHandle));
         });
+    }
+
+    /// <summary>
+    /// « Reconnecter » pendant la préparation (demande au PVWA) : la préparation en cours est annulée, et seule la
+    /// dernière tentative crée une connexion ; la première, terminée ensuite, n'installe rien (ni deuxième session, ni
+    /// connexion orpheline dans l'onglet).
+    /// </summary>
+    [Fact]
+    public async Task ReconnectWhilePreparingKeepsASingleConnection()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var prepared = new List<(CancellationToken Token, TaskCompletionSource<RdpConnectionRequest> Request)>();
+        await RunOnStaAsync(ct =>
+        {
+            var request = new TaskCompletionSource<RdpConnectionRequest>(TaskCreationOptions.RunContinuationsAsynchronously);
+            prepared.Add((ct, request));
+            return request.Task;
+        }, async (session, _) =>
+        {
+            var steps = new List<string?>();
+            session.StateChanged += () => steps.Add(session.Step);
+            var first = session.ConnectAsync();
+            var second = session.ReconnectAsync();
+            Assert.Equal(2, prepared.Count);
+            Assert.True(prepared[0].Token.IsCancellationRequested);
+            Assert.False(prepared[1].Token.IsCancellationRequested);
+
+            // Préparation qui ne tient pas compte de l'annulation : sa demande arrive quand même, et ne sert à rien.
+            prepared[0].Request.SetResult(Unreachable("127.0.0.1"));
+            await first.WaitAsync(TimeSpan.FromSeconds(30));
+            Assert.False(session.HasControl);
+            Assert.Equal(RdpSessionState.Connecting, session.State);
+
+            prepared[1].Request.SetResult(Unreachable("127.0.0.2"));
+            await second.WaitAsync(TimeSpan.FromSeconds(60));
+            var state = await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
+            Assert.Equal(RdpSessionState.Failed, state);
+            Assert.Equal("127.0.0.2", session.Server);
+            // Une seule connexion : seule la seconde a lu l'identité de son serveur.
+            Assert.Contains(ZillaTerm.App.Localization.Text.Format(ZillaTerm.App.Localization.Strings.FreeRdpChecking, "127.0.0.2"), steps);
+            Assert.DoesNotContain(ZillaTerm.App.Localization.Text.Format(ZillaTerm.App.Localization.Strings.FreeRdpChecking, "127.0.0.1"), steps);
+        });
+    }
+
+    /// <summary>
+    /// Onglet fermé pendant la lecture du certificat (PSM lent à répondre) : la lecture est abandonnée, aucune question
+    /// n'est posée et rien n'est épinglé pour une session qui n'existe plus.
+    /// </summary>
+    [Fact]
+    public async Task ClosingWhileReadingTheCertificateAsksNothing()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var server = new FakeRdpServer(answerAtOnce: false);
+        int asked = 0;
+        var request = new RdpConnectionRequest(RdpConnectionSettings.Direct("127.0.0.1", server.Port, "jdoe").ForPsmTab(), null)
+        {
+            FreeRdp = true,
+            VerifyCertificate = (_, _, _) =>
+            {
+                asked++;
+                return Task.FromResult(RdpTrust.Trusted);
+            },
+        };
+        await RunOnStaAsync(request, async session =>
+        {
+            var connect = session.ConnectAsync();
+            await server.RequestReceived.WaitAsync(TimeSpan.FromSeconds(30));
+            session.Dispose();
+            // Le serveur répond après la fermeture : une lecture qui n'aurait pas été abandonnée poserait la question.
+            server.Answer();
+            await connect.WaitAsync(TimeSpan.FromSeconds(30));
+            await session.Closed.WaitAsync(TimeSpan.FromSeconds(30));
+            Assert.Equal(0, asked);
+        });
+    }
+
+    /// <summary>
+    /// Certificat refusé : la connexion terminée d'elle-même quitte l'emplacement (plus aucun abonnement, plus de clic
+    /// qui donne le focus), comme une connexion libérée.
+    /// </summary>
+    [Fact]
+    public async Task RefusedCertificateLeavesNothingOnTheSlot()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var server = new FakeRdpServer(answerAtOnce: true);
+        int asked = 0;
+        var request = new RdpConnectionRequest(RdpConnectionSettings.Direct("127.0.0.1", server.Port, "jdoe").ForPsmTab(), null)
+        {
+            FreeRdp = true,
+            VerifyCertificate = (_, _, _) =>
+            {
+                asked++;
+                return Task.FromResult(RdpTrust.Refused);
+            },
+        };
+        await RunOnStaAsync(request, async session =>
+        {
+            await session.ConnectAsync();
+            var state = await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(60));
+            Assert.Equal(RdpSessionState.Failed, state);
+            Assert.Equal(1, asked);
+            Assert.False(session.HasControl);
+            Assert.False(session.Host.FocusOnChildClick);
+            foreach (var name in new[] { "FocusChanged", "ChildMouseWheel", "ChildCreated", "ClipboardChanged" })
+            {
+                var handlers = typeof(RdpSlot).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(session.Host);
+                Assert.True(handlers is null, name);
+            }
+        });
+    }
+
+    /// <summary>Session réglée comme une session PSM, vers un port fermé de <paramref name="server"/> (client FreeRDP).</summary>
+    private static RdpConnectionRequest Unreachable(string server) =>
+        new(RdpConnectionSettings.Direct(server, 1, "jdoe").ForPsmTab(), null) { FreeRdp = true };
+
+    /// <summary>
+    /// Faux serveur Bureau à distance, une connexion : lit la demande X.224, répond TLS une fois <see cref="Answer"/>
+    /// appelé (tout de suite si demandé), puis présente un certificat auto-signé.
+    /// </summary>
+    private sealed class FakeRdpServer : IDisposable
+    {
+        private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
+        private readonly TaskCompletionSource _answer = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _request = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public FakeRdpServer(bool answerAtOnce)
+        {
+            if (answerAtOnce)
+            {
+                _answer.TrySetResult();
+            }
+
+            _listener.Start();
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using var certificate = SelfSigned();
+                    using var socket = await _listener.AcceptTcpClientAsync();
+                    var stream = socket.GetStream();
+                    await stream.ReadExactlyAsync(new byte[19]);
+                    _request.TrySetResult();
+                    await _answer.Task;
+                    // X.224 Connection Confirm : TLS choisi.
+                    await stream.WriteAsync(new byte[] { 0x03, 0x00, 0x00, 0x13, 0x0E, 0xD0, 0x00, 0x00, 0x12, 0x34, 0x00, 0x02, 0x00, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00 });
+                    await using var tls = new SslStream(stream);
+                    await tls.AuthenticateAsServerAsync(certificate);
+                }
+                catch (Exception e) when (e is IOException or SocketException or ObjectDisposedException or AuthenticationException)
+                {
+                    // Client parti, ou certificat refusé par la lecture (attendu).
+                }
+            });
+        }
+
+        public int Port => ((IPEndPoint)_listener.LocalEndpoint).Port;
+
+        /// <summary>Terminée quand la demande X.224 du client est reçue.</summary>
+        public Task RequestReceived => _request.Task;
+
+        public void Answer() => _answer.TrySetResult();
+
+        public void Dispose()
+        {
+            _answer.TrySetResult();
+            _listener.Stop();
+        }
+
+        private static X509Certificate2 SelfSigned()
+        {
+            using var rsa = RSA.Create(2048);
+            var request = new CertificateRequest("CN=psm.corp.local", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+            return X509CertificateLoader.LoadPkcs12(certificate.Export(X509ContentType.Pfx), null);
+        }
     }
 
     /// <summary>
@@ -931,13 +1124,18 @@ public class RdpSessionTests(ITestOutputHelper output)
     /// Comme ci-dessus, avec la fenêtre (placée en haut à gauche de l'écran principal) ; <paramref name="content"/> place
     /// l'emplacement de la session parmi d'autres éléments.
     /// </summary>
-    private static async Task RunOnStaAsync(RdpConnectionRequest request, Func<RdpSession, Window, Task> scenario,
-        Func<UIElement, UIElement>? content = null)
+    private static Task RunOnStaAsync(RdpConnectionRequest request, Func<RdpSession, Window, Task> scenario,
+        Func<UIElement, UIElement>? content = null) =>
+        RunOnStaAsync(_ => Task.FromResult(request), scenario, content);
+
+    /// <summary>Comme ci-dessus, chaque connexion préparée par <paramref name="prepare"/>.</summary>
+    private static async Task RunOnStaAsync(Func<CancellationToken, Task<RdpConnectionRequest>> prepare,
+        Func<RdpSession, Window, Task> scenario, Func<UIElement, UIElement>? content = null)
     {
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
-            var session = new RdpSession("test", _ => Task.FromResult(request));
+            var session = new RdpSession("test", prepare);
             var window = new Window
             {
                 Width = 900,

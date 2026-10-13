@@ -83,6 +83,11 @@ internal sealed class RdpSession : IDisposable
     // Connexions dont la fenêtre est peut-être encore dans l'onglet (en cours, ou en cours de libération).
     private readonly List<IRdpConnection> _attached = [];
     private IRdpConnection? _connection;
+
+    // Tentative de connexion en cours (chaque ConnectAsync) et annulation de sa préparation : une nouvelle tentative
+    // abandonne la précédente, qui n'installe alors aucune connexion.
+    private int _attempt;
+    private CancellationTokenSource? _preparing;
     private bool _starting;
     private bool _pingPending;
     private long _pingSentAt;
@@ -98,6 +103,7 @@ internal sealed class RdpSession : IDisposable
         // Masqué tant qu'aucune session n'est affichée : le message de l'onglet (WPF) reste alors visible.
         Host = new RdpSlot { Visibility = Visibility.Hidden };
         Host.PixelSizeChanged += () => _connection?.Resize(Host.PixelSize);
+        Lifetime = _lifetime.Token;
         _watchdog = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(1) };
         _watchdog.Tick += OnWatchdog;
     }
@@ -182,6 +188,18 @@ internal sealed class RdpSession : IDisposable
     /// <summary>Terminée quand la session est fermée et que sa fenêtre a quitté l'onglet (voir <see cref="Dispose"/>).</summary>
     public Task Closed => _closed.Task;
 
+    /// <summary>Vrai une fois la session fermée (onglet fermé, application quittée).</summary>
+    public bool IsDisposed => _disposed;
+
+    /// <summary>Numéro de la tentative de connexion en cours (augmenté par chaque <see cref="ConnectAsync"/>).</summary>
+    internal int Attempt => _attempt;
+
+    /// <summary>
+    /// Fin de session (thread de l'interface) : déclenchée une seule fois, à la fermeture (<see cref="Dispose"/>), pour
+    /// les lectures en cours d'une connexion terminée (identité du serveur relue après un refus).
+    /// </summary>
+    internal CancellationToken Lifetime { get; }
+
     /// <summary>
     /// Vrai tant qu'une session fermée garde la fenêtre de son contrôle (thread bloqué) : l'arrêt normal de
     /// l'application la détruirait en attendant ce thread.
@@ -190,7 +208,17 @@ internal sealed class RdpSession : IDisposable
 
     public async Task ConnectAsync()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         ReleaseConnection(disconnect: false);
+        // Préparation précédente (demande au PVWA, lecture du certificat) abandonnée : elle n'installera rien.
+        int attempt = ++_attempt;
+        var preparing = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+        _preparing?.Cancel();
+        _preparing = preparing;
         Error = null;
         ConnectedAt = null;
         ControlFailed = false;
@@ -203,7 +231,7 @@ internal sealed class RdpSession : IDisposable
         RdpConnectionRequest request;
         try
         {
-            request = await _prepare(_lifetime.Token);
+            request = await _prepare(preparing.Token);
         }
         catch (RdpHandedOffException ex)
         {
@@ -214,8 +242,9 @@ internal sealed class RdpSession : IDisposable
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             DebugLog.Write("rdp", $"{Label} : échec de la préparation de la connexion", ex);
-            // Onglet fermé pendant la préparation (appel au PVWA annulé) : plus rien à afficher.
-            if (!_disposed)
+            // Onglet fermé pendant la préparation (appel au PVWA annulé), ou tentative remplacée par une autre : plus
+            // rien à afficher pour celle-ci.
+            if (!_disposed && attempt == _attempt)
             {
                 Error = ErrorText.Describe(ex);
                 SetState(RdpSessionState.Failed);
@@ -223,12 +252,24 @@ internal sealed class RdpSession : IDisposable
 
             return;
         }
-
-        if (_disposed)
+        finally
         {
+            if (_preparing == preparing)
+            {
+                _preparing = null;
+            }
+
+            preparing.Dispose();
+        }
+
+        if (_disposed || attempt != _attempt)
+        {
+            DebugLog.Write("rdp", $"{Label} : tentative {attempt} remplacée par la tentative {_attempt} ; abandonnée");
             return;
         }
 
+        // Une seule connexion à la fois dans l'onglet : toute autre est libérée avant d'installer celle-ci.
+        ReleaseConnection(disconnect: true);
         Server = request.Settings.Server;
         IRdpConnection connection;
         try
@@ -418,9 +459,11 @@ internal sealed class RdpSession : IDisposable
         }
 
         OnReleased(connection);
+        int attempt = _attempt;
         _dispatcher.BeginInvoke(async () =>
         {
-            if (!_disposed && _connection is null)
+            // Rien si une autre tentative a commencé entre-temps (« Reconnecter »).
+            if (!_disposed && _connection is null && attempt == _attempt)
             {
                 await ConnectAsync();
             }
@@ -500,6 +543,13 @@ internal sealed class RdpSession : IDisposable
         IsFullScreen = false;
         SetState(normal ? RdpSessionState.Ended : RdpSessionState.Failed);
     }
+
+    /// <summary>
+    /// Vrai si une connexion terminée de la tentative <paramref name="attempt"/> peut encore relancer la session d'elle-même :
+    /// session ouverte, toujours en échec, sans connexion, et aucune autre tentative depuis.
+    /// </summary>
+    internal bool CanRetry(int attempt) =>
+        !_disposed && attempt == _attempt && _connection is null && State == RdpSessionState.Failed;
 
     /// <summary>Message de la session terminée, remplacé (réponse à une question posée après sa fin).</summary>
     internal void ShowError(string error)
@@ -629,6 +679,9 @@ internal sealed class RdpSession : IDisposable
         {
             IsNotResponding = false;
             DebugLog.Write("rdp", $"{Label} : le thread du contrôle répond de nouveau");
+            // Changements arrivés pendant l'attente (session reprise après une reconnexion automatique) : l'emplacement
+            // n'avait pas été touché, il suit maintenant l'état de la session.
+            UpdateHost();
             StateChanged?.Invoke();
         }
     }
