@@ -16,8 +16,9 @@ public partial class ConnectDialog : Window
     /// <param name="requireMachine">
     /// Compte de domaine ou limité à des machines : la machine cible est obligatoire (jamais de session vers le domaine).
     /// </param>
+    /// <param name="platformComponents">Composants de la plateforme lus sur le PVWA, proposés en premier ; null : inconnus.</param>
     public ConnectDialog(PvwaAccount account, ConnectRequest initial, AppSettings settings, string vaultUser, string? error,
-        bool componentError = false, bool requireMachine = false)
+        bool componentError = false, bool requireMachine = false, IReadOnlyList<string>? platformComponents = null)
     {
         InitializeComponent();
         _account = account;
@@ -29,7 +30,7 @@ public partial class ConnectDialog : Window
         TitleText.Text = $"{account.UserName}@{account.Address}";
         DetailsText.Text = Text.Format(Strings.PlatformAndSafe, account.PlatformId, account.SafeName);
 
-        ComponentBox.ItemsSource = settings.KnownComponents(account.PlatformId);
+        ComponentBox.ItemsSource = settings.KnownComponents(account.PlatformId, platformComponents);
         ComponentBox.Text = initial.Component;
         MachineBox.ItemsSource = AccountClassifier.RemoteMachineList(account);
         // Machine obligatoire : on propose la première machine autorisée, modifiable. Sinon, vide : la session s'ouvre

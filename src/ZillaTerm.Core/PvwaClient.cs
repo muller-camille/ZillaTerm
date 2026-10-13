@@ -534,6 +534,27 @@ public sealed class PvwaClient : IDisposable
     }
 
     /// <summary>
+    /// Composants de connexion PSM activés de la plateforme <paramref name="platformId"/> (l'ID de plateforme des comptes,
+    /// par ex. WinDomain), dans leur ordre : « Get platform details », lisible par un utilisateur ordinaire. Le format de
+    /// la réponse varie selon la version du PVWA (voir <see cref="PlatformComponents"/>) ; liste vide si elle n'en
+    /// contient pas.
+    /// </summary>
+    /// <exception cref="PvwaException">Refus du PVWA (droit manquant, plateforme inconnue, API absente de cette version).</exception>
+    /// <exception cref="JsonException">Réponse qui n'est pas du JSON.</exception>
+    public async Task<IReadOnlyList<string>> GetPlatformConnectionComponentsAsync(string platformId, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(platformId);
+        using var request = CreateAuthenticatedRequest(HttpMethod.Get, $"API/Platforms/{Uri.EscapeDataString(platformId.Trim())}/");
+        using var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await CreateErrorAsync(response, ct).ConfigureAwait(false);
+        }
+
+        return PlatformComponents.Parse(await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
+    }
+
+    /// <summary>
     /// Demande une clé SSH temporaire « MFA caching » pour s'authentifier au PSMP sans ressaisir
     /// mot de passe et MFA. Renvoie null si la fonctionnalité n'est pas activée sur le PVWA.
     /// </summary>

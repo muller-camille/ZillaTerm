@@ -1800,6 +1800,31 @@ public sealed partial class DialogTests
     }
 
     /// <summary>
+    /// « Connexion avancée » : les composants de la plateforme lus sur le PVWA sont proposés en premier, les autres
+    /// restent dans la liste, et le composant prévu n'est pas changé par le dialogue.
+    /// </summary>
+    [Fact]
+    public void AdvancedConnectionProposesThePlatformComponentsFirst()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var account = new PvwaAccount { Id = "5_3", UserName = "admin", Address = "srv01.corp.local", PlatformId = "WinServerLocal" };
+            var dialog = new ConnectDialog(account, new ConnectRequest(ConnectMode.Psm, "WIN-PSM"), new AppSettings(), "jdoe", null,
+                platformComponents: ["WIN-PSM", "PSM-WinSCP"]);
+            var components = dialog.ComponentBox.ItemsSource.Cast<string>().ToList();
+            Assert.Equal(["WIN-PSM", "PSM-WinSCP"], components.Take(2));
+            Assert.Contains("PSM-RDP", components);
+            Assert.Equal("WIN-PSM", dialog.ComponentBox.Text);
+            dialog.Close();
+        });
+    }
+
+    /// <summary>
     /// « Options avancées » : les deux champs du ticket ont chacun un nom pour les lecteurs d'écran, et la colonne des
     /// étiquettes suit la longueur des textes (italien) au lieu d'une largeur fixe.
     /// </summary>

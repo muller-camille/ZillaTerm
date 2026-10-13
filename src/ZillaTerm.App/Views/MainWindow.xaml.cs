@@ -973,6 +973,19 @@ public partial class MainWindow : Window
         UpdateActions();
         try
         {
+            // Composants de la plateforme lus sur le PVWA (voir MainWindow.PlatformComponents) : le composant prévu, s'il
+            // n'en fait pas partie, est remplacé avant la demande ; celui saisi dans « Connexion avancée » ne l'est jamais.
+            IReadOnlyList<string> platformComponents = [];
+            if (request.Mode == ConnectMode.Psm || showDialog)
+            {
+                // Pendant la lecture, une autre connexion attend (message « connexion en cours » avec ce libellé).
+                _connectingLabel = string.IsNullOrWhiteSpace(request.RemoteMachine)
+                    ? $"{account.UserName}@{account.Address}"
+                    : $"{account.UserName}@{request.RemoteMachine.Trim()}";
+                platformComponents = await PlatformComponentsAsync(account);
+                request = WithPlatformComponent(account, request, platformComponents);
+            }
+
             while (true)
             {
                 if (_loggedOff)
@@ -983,7 +996,8 @@ public partial class MainWindow : Window
 
                 if (showDialog)
                 {
-                    var dialog = new ConnectDialog(account, request, _settings, _vaultUser, error, componentError, needsMachine)
+                    var dialog = new ConnectDialog(account, request, _settings, _vaultUser, error, componentError, needsMachine,
+                        platformComponents)
                     {
                         Owner = this,
                     };
