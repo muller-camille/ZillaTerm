@@ -104,6 +104,101 @@ public sealed class InterventionJournalTests : IDisposable
         Assert.Throws<InvalidDataException>(() => InterventionJournal.Read(journal.Path, protector));
     }
 
+    /// <summary>
+    /// Une commande qui affiche des dizaines de milliers de lignes entre deux écritures : plusieurs blocs bornés, tout se
+    /// relit.
+    /// </summary>
+    [Fact]
+    public void LargeOutputIsWrittenInBoundedBlocks()
+    {
+        var protector = new XorProtector();
+        var line = new string('x', 100);
+        // De quoi remplir trois blocs (une écriture du minuteur au milieu n'en ferait que deux sans la limite).
+        int lines = (int)(3 * InterventionJournal.MaxWrittenChunk / InterventionJournal.EstimatedSize(new(T0, InterventionKind.Terminal, "s", line))) + 1000;
+        var journal = InterventionJournal.Start(_dir, protector, T0);
+        journal.Write(new InterventionEntry(T0, InterventionKind.Note, "", "before"));
+        for (int i = 0; i < lines; i++)
+        {
+            journal.Write(new InterventionEntry(T0, InterventionKind.Terminal, "s", line));
+        }
+
+        journal.Write(new InterventionEntry(T0, InterventionKind.Note, "", "after"));
+        journal.Stop(new InterventionEntry(T0, InterventionKind.Stopped, "", ""));
+
+        Assert.True(Blocks(File.ReadAllBytes(journal.Path)).Count >= 4);
+        var recording = InterventionJournal.Read(journal.Path, protector);
+        Assert.False(recording.Damaged);
+        Assert.False(recording.Unfinished);
+        Assert.Equal(lines + 3, recording.Entries.Count);
+        Assert.Equal("after", recording.Entries[^2].Text);
+    }
+
+    /// <summary>
+    /// Bloc trop gros pour être relu (écrit par une version précédente) : sauté, le journal est abîmé, mais la suite (note,
+    /// fin de l'enregistrement) se relit.
+    /// </summary>
+    [Fact]
+    public void OversizedBlockIsSkipped()
+    {
+        var protector = new XorProtector();
+        var journal = InterventionJournal.Start(_dir, protector, T0);
+        journal.Write(new InterventionEntry(T0, InterventionKind.Note, "", "before"));
+        journal.Flush();
+        journal.Write(new InterventionEntry(T0.AddSeconds(1), InterventionKind.Note, "", "after"));
+        journal.Stop(new InterventionEntry(T0.AddSeconds(2), InterventionKind.Stopped, "", ""));
+        var blocks = Blocks(File.ReadAllBytes(journal.Path));
+
+        const int huge = (64 * 1024 * 1024) + 1;
+        using (var file = new FileStream(journal.Path, FileMode.Create))
+        {
+            file.Write("ZTINTV1\n"u8);
+            file.Write(blocks[0]);
+            file.Write(BitConverter.GetBytes(huge));
+            file.SetLength(file.Position + huge);
+            file.Seek(0, SeekOrigin.End);
+            file.Write(blocks[1]);
+        }
+
+        var recording = InterventionJournal.Read(journal.Path, protector);
+        Assert.True(recording.Damaged);
+        Assert.False(recording.Unfinished);
+        Assert.Equal(["before", "after", ""], recording.Entries.Select(e => e.Text));
+    }
+
+    /// <summary>
+    /// Disque qui refuse une écriture : signalé une fois, avec l'heure depuis laquelle plus rien n'est gardé ; les
+    /// événements suivants ne sont plus ni comptés ni gardés en mémoire. Ce qui était écrit se relit.
+    /// </summary>
+    [Fact]
+    public void WriteFailureIsReportedOnceAndStopsTheJournal()
+    {
+        var protector = new FailingProtector(failFrom: 2);
+        var journal = InterventionJournal.Start(_dir, protector, T0);
+        int failed = 0;
+        journal.Failed += () => failed++;
+        journal.Write(new InterventionEntry(T0, InterventionKind.Started, "", ""));
+        journal.Flush();
+        Assert.Null(journal.Failure);
+
+        journal.Write(new InterventionEntry(T0.AddMinutes(2), InterventionKind.Note, "", "perdue"));
+        journal.Write(new InterventionEntry(T0.AddMinutes(1), InterventionKind.Note, "", "perdue aussi"));
+        journal.Flush();
+        Assert.IsType<System.Security.Cryptography.CryptographicException>(journal.Failure);
+        Assert.Equal(T0.AddMinutes(1), journal.FailedAt);
+        Assert.Equal(1, failed);
+        Assert.Equal(3, journal.Count);
+
+        journal.Write(new InterventionEntry(T0.AddMinutes(3), InterventionKind.Note, "", "ignorée"));
+        journal.Flush();
+        Assert.Equal(3, journal.Count);
+        Assert.Equal(1, failed);
+        journal.Dispose();
+
+        var recording = InterventionJournal.Read(journal.Path, protector);
+        Assert.Equal([InterventionKind.Started], recording.Entries.Select(e => e.Kind));
+        Assert.True(recording.Unfinished);
+    }
+
     [Fact]
     public void TerminalTextIsCapped()
     {
@@ -231,5 +326,18 @@ public sealed class InterventionJournalTests : IDisposable
         public byte[] Protect(byte[] data) => data.Select(b => (byte)(b ^ 0x5A)).ToArray();
 
         public byte[] Unprotect(byte[] data) => Protect(data);
+    }
+
+    /// <summary>Protecteur qui refuse à partir du bloc <c>failFrom</c> (comme un disque plein au moment d'écrire).</summary>
+    private sealed class FailingProtector(int failFrom) : ISecretProtector
+    {
+        private readonly XorProtector _inner = new();
+        private int _calls;
+
+        public byte[] Protect(byte[] data) => ++_calls >= failFrom
+            ? throw new System.Security.Cryptography.CryptographicException("refusé")
+            : _inner.Protect(data);
+
+        public byte[] Unprotect(byte[] data) => _inner.Unprotect(data);
     }
 }
