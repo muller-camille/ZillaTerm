@@ -5602,4 +5602,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="EditWaitingForWrite" xml:space="preserve">
     <value>Waiting for the edited file to be written on the server before closing…</value>
   </data>
+  <data name="ConnectManyLimitTip" xml:space="preserve">
+    <value>{0} sessions at most at once: select fewer servers.</value>
+  </data>
 </root>

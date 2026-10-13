@@ -158,6 +158,21 @@ public sealed partial class UxTextTests
         Assert.True(problems.Count == 0, string.Join("\n", problems));
     }
 
+    /// <summary>
+    /// « Mes serveurs » : un dossier n'ouvre jamais tous ses serveurs (un onglet chacun) ; seule une sélection le fait, dans
+    /// la limite de <see cref="Views.MainWindow.MaxSessionsAtOnce"/>.
+    /// </summary>
+    [Fact]
+    public void FolderMenu_NeverOpensEveryServer()
+    {
+        var root = XDocument.Load(Path.Combine(AccessKeysTests.RepositoryRoot(), "src", "ZillaTerm.App", "Views", "MainWindow.xaml")).Root!;
+        var menu = root.Descendants(Wpf + "ContextMenu").Single(m => (string?)m.Attribute(Xaml + "Key") == "SavedFolderMenu");
+        Assert.DoesNotContain(menu.Descendants(Wpf + "MenuItem"), i => (string?)i.Attribute("Tag") == "connectmany");
+        var selection = root.Descendants(Wpf + "ContextMenu").Single(m => (string?)m.Attribute(Xaml + "Key") == "SavedSessionMenu");
+        Assert.Contains(selection.Descendants(Wpf + "MenuItem"), i => (string?)i.Attribute("Tag") == "connectmany");
+        Assert.Equal(10, Views.MainWindow.MaxSessionsAtOnce);
+    }
+
     /// <summary>Paramètres : chaque case a une touche d'accès dans les trois langues.</summary>
     [Fact]
     public void SettingsCheckBoxes_HaveAnAccessKey()

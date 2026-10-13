@@ -136,7 +136,7 @@
                     <Image Source="{DynamicResource IconParallel}" Width="16" Height="16" />
                 </MenuItem.Icon>
             </MenuItem>
-            <MenuItem Tag="connectmany" Click="OnConnectMarkedSaved" />
+            <MenuItem Tag="connectmany" Click="OnConnectMarkedSaved" ToolTipService.ShowOnDisabled="True" />
             <Separator />
             <MenuItem Header="{x:Static loc:Strings.MenuPassword}">
                 <MenuItem Header="{x:Static loc:Strings.MenuCopyPassword}" Click="OnCopyPassword" />
@@ -179,7 +179,6 @@
                     <Image Source="{DynamicResource IconParallel}" Width="16" Height="16" />
                 </MenuItem.Icon>
             </MenuItem>
-            <MenuItem Tag="connectmany" Click="OnConnectFolder" />
             <Separator />
             <MenuItem Header="{x:Static loc:Strings.MenuNewSubfolder}" Click="OnNewFolder">
                 <MenuItem.Icon>

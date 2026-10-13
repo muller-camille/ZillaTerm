@@ -16703,5 +16703,14 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("EditWaitingForWrite", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} sessions at most at once: select fewer servers..
+        /// </summary>
+        public static string ConnectManyLimitTip {
+            get {
+                return ResourceManager.GetString("ConnectManyLimitTip", resourceCulture);
+            }
+        }
     }
 }
