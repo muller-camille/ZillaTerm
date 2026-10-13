@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ZillaTerm.App.Localization;
+using ZillaTerm.Core;
 using ZillaTerm.Core.Ssh;
 
 namespace ZillaTerm.App.Views;
@@ -15,6 +16,8 @@ public partial class RemoteFileDialog : Window
     private readonly Func<string, bool, CancellationToken, Task<List<RemoteEntry>>> _list;
     private readonly string _home;
     private CancellationTokenSource? _loading;
+    // Lettres tapées dans la liste (sélection par le début du nom), comme dans l'onglet Fichiers.
+    private readonly TypeAhead _typeAhead = new();
 
     /// <param name="server">Serveur parcouru (titre de la fenêtre).</param>
     /// <param name="path">Chemin proposé ; « ~ » et les chemins relatifs partent de <paramref name="home"/>.</param>
@@ -203,6 +206,45 @@ public partial class RemoteFileDialog : Window
             e.Handled = true;
             OnUp(sender, e);
         }
+        else if (e.Key == Key.Space && Keyboard.Modifiers == ModifierKeys.None && _typeAhead.IsTyping(DateTime.UtcNow))
+        {
+            // Espace pendant la saisie d'un nom (« rapport final ») : elle en fait partie. La liste la traiterait sinon
+            // avant TextInput, et la frappe suivante chercherait « rapportf ».
+            e.Handled = true;
+            TypeAheadSelect(" ");
+        }
+    }
+
+    /// <summary>
+    /// Lettres tapées dans la liste : sélection de l'élément dont le nom commence ainsi, comme dans l'onglet Fichiers (la
+    /// même lettre de nouveau passe au suivant).
+    /// </summary>
+    private void OnListTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (e.Text.Length == 0 || e.Text.Any(char.IsControl))
+        {
+            return;
+        }
+
+        TypeAheadSelect(e.Text);
+        e.Handled = true;
+    }
+
+    private void TypeAheadSelect(string text)
+    {
+        var items = FileList.Items.OfType<RemoteEntry>().ToList();
+        int current = items.FindIndex(i => ReferenceEquals(i, FileList.SelectedItem));
+        int index = _typeAhead.Find(items.ConvertAll(i => i.DisplayName), current, text, DateTime.UtcNow);
+        if (index < 0)
+        {
+            return;
+        }
+
+        var item = items[index];
+        FileList.SelectedItem = item;
+        FileList.ScrollIntoView(item);
+        FileList.UpdateLayout();
+        (FileList.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem)?.Focus();
     }
 
     /// <summary>Double-clic sur une ligne (pas sur l'en-tête ni la barre de défilement).</summary>

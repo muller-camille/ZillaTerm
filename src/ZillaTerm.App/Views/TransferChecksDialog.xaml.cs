@@ -88,7 +88,10 @@ public partial class TransferChecksDialog : Window
         });
         ChecksGrid.Columns.Add(new DataGridTextColumn
         {
-            Header = Strings.ChecksColFile, Binding = new Binding(nameof(TransferCheck.RemotePath)), Width = new DataGridLength(1, DataGridLengthUnitType.Star),
+            // Chemin du serveur : caractères invisibles remplacés par « � ».
+            Header = Strings.ChecksColFile,
+            Binding = new Binding(nameof(TransferCheck.RemotePath)) { Converter = new TransferHistoryDialog.VisibleConverter() },
+            Width = new DataGridLength(1, DataGridLengthUnitType.Star),
             MinWidth = 160,
         });
         ChecksGrid.Columns.Add(new DataGridTextColumn

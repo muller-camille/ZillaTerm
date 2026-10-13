@@ -23,7 +23,8 @@ public partial class CompareDialog : Window
         InitializeComponent();
         _current = current;
         _path = path;
-        IntroText.Text = Text.Format(Strings.CompareIntro, label);
+        // Chemin venant du serveur : caractères invisibles remplacés par « � ».
+        IntroText.Text = Text.Format(Strings.CompareIntro, RemoteEntry.Visible(label));
         var connected = sessions.Where(s => s.State == RemoteSessionState.Connected).ToList();
         SessionBox.ItemsSource = connected;
         var other = connected.FirstOrDefault(s => !ReferenceEquals(s, current));

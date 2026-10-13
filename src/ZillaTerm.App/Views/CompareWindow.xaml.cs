@@ -38,11 +38,15 @@ public partial class CompareWindow : Window
         _rightBytes = rightBytes;
         _left = DiffSide.FromBytes(leftLabel, leftBytes);
         _right = DiffSide.FromBytes(rightLabel, rightBytes);
-        Title = Text.Format(Strings.CompareWindowTitle, RemoteName(leftLabel), RemoteName(rightLabel));
-        LeftTitle.Text = $"− {leftLabel}  ({RemotePath.FormatSize(_left.Length)})";
-        RightTitle.Text = $"+ {rightLabel}  ({RemotePath.FormatSize(_right.Length)})";
-        LeftTitle.ToolTip = leftLabel;
-        RightTitle.ToolTip = rightLabel;
+        // Chemins venant du serveur : caractères invisibles remplacés par « � » à l'affichage (le diff enregistré garde
+        // les chemins bruts).
+        var leftShown = RemoteEntry.Visible(leftLabel);
+        var rightShown = RemoteEntry.Visible(rightLabel);
+        Title = Text.Format(Strings.CompareWindowTitle, RemoteName(leftShown), RemoteName(rightShown));
+        LeftTitle.Text = $"− {leftShown}  ({RemotePath.FormatSize(_left.Length)})";
+        RightTitle.Text = $"+ {rightShown}  ({RemotePath.FormatSize(_right.Length)})";
+        LeftTitle.ToolTip = leftShown;
+        RightTitle.ToolTip = rightShown;
         if (settings.CompareTool.Length > 0)
         {
             ToolButton.Content = Text.Format(Strings.CompareOpenTool, Path.GetFileNameWithoutExtension(settings.CompareTool));
@@ -68,7 +72,8 @@ public partial class CompareWindow : Window
             BinaryPanel.Visibility = Visibility.Visible;
             bool same = _left.Sha256 == _right.Sha256;
             BinaryText.Text = Text.Format(same ? Strings.CompareBinarySame : Strings.CompareBinaryDifferent,
-                _left.Name, RemotePath.FormatSize(_left.Length), _left.Sha256, _right.Name, RemotePath.FormatSize(_right.Length), _right.Sha256);
+                RemoteEntry.Visible(_left.Name), RemotePath.FormatSize(_left.Length), _left.Sha256,
+                RemoteEntry.Visible(_right.Name), RemotePath.FormatSize(_right.Length), _right.Sha256);
             SummaryText.Text = same ? Strings.CompareIdentical : Strings.CompareDifferent;
             SummaryText.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, same ? "SuccessBrush" : "ErrorBrush");
             WhitespaceBox.IsEnabled = false;

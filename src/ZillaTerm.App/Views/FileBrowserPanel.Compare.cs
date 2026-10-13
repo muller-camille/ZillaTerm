@@ -73,9 +73,9 @@ public partial class FileBrowserPanel
     {
         try
         {
-            SetStatus(Text.Format(Strings.CompareReading, left.Label));
+            SetStatus(Text.Format(Strings.CompareReading, RemoteEntry.Visible(left.Label)));
             var leftBytes = await left.Read();
-            SetStatus(Text.Format(Strings.CompareReading, right.Label));
+            SetStatus(Text.Format(Strings.CompareReading, RemoteEntry.Visible(right.Label)));
             var rightBytes = await right.Read();
             SetStatus("");
             var window = new CompareWindow(left.Label, leftBytes, right.Label, rightBytes, _settings);

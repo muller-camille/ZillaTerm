@@ -137,6 +137,122 @@ public sealed partial class DialogTests
         });
     }
 
+    /// <summary>
+    /// « Parcourir » de la comparaison : taper le début d'un nom sélectionne le fichier, comme dans l'onglet Fichiers
+    /// (l'espace d'un nom comprise) ; un nom avec un caractère d'inversion s'affiche avec « � ».
+    /// </summary>
+    [Fact]
+    public void RemoteFilePickerSelectsTheTypedNameAndShowsSafeNames()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            static RemoteEntry Entry(string name) => new(name, "/opt/app/" + name, false, false, 10, new DateTime(2026, 10, 6, 9, 0, 0), "");
+            var entries = new List<RemoteEntry>
+            {
+                Entry("app.log"), Entry("facture\u202Efdp.exe"), Entry("readme.md"), Entry("rapportfinal-old.txt"), Entry("rapport final.txt"),
+                Entry("zz.txt"),
+            };
+            var picker = new RemoteFileDialog("root@srv02", "/opt/app/none", "/root", (_, _, _) => Task.FromResult(entries.ToList()));
+            picker.Show();
+            picker.StartAsync().GetAwaiter().GetResult();
+            picker.UpdateLayout();
+
+            string Type(string text)
+            {
+                picker.FileList.RaiseEvent(new TextCompositionEventArgs(Keyboard.PrimaryDevice,
+                    new TextComposition(InputManager.Current, picker.FileList, text))
+                {
+                    RoutedEvent = TextCompositionManager.TextInputEvent,
+                });
+                return ((RemoteEntry?)picker.FileList.SelectedItem)?.Name ?? "";
+            }
+
+            // La recherche de WPF comparerait « RemoteEntry { Name = … » : « r » irait sur la ligne suivante.
+            Assert.Equal("readme.md", Type("r"));
+            Assert.Equal("readme.md", Type("e"));
+            Assert.True(picker.ChooseButton.IsEnabled);
+
+            // Espace d'un nom : la liste la prendrait (touche traitée avant TextInput), et « f » chercherait « rapportf ».
+            Thread.Sleep(TypeAhead.Pause + TimeSpan.FromMilliseconds(200));
+            Assert.Equal("rapportfinal-old.txt", Type("rapport"));
+            var space = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(picker)!, 0, Key.Space)
+            {
+                RoutedEvent = Keyboard.PreviewKeyDownEvent,
+            };
+            picker.FileList.RaiseEvent(space);
+            Assert.True(space.Handled);
+            Assert.Equal("rapport final.txt", Type("f"));
+
+            // Nom affiché avec « � » à la place du caractère d'inversion, et trouvé par ce nom.
+            Thread.Sleep(TypeAhead.Pause + TimeSpan.FromMilliseconds(200));
+            Assert.Equal("facture\u202Efdp.exe", Type("f"));
+            picker.UpdateLayout();
+            var texts = TextsIn(picker.FileList);
+            Assert.Contains("facture\uFFFDfdp.exe", texts);
+            Assert.DoesNotContain(texts, t => t.Contains('\u202E'));
+            picker.Close();
+        });
+    }
+
+    /// <summary>Comparaison, historique et détail des transferts : chemins du serveur affichés avec « � » à la place des invisibles.</summary>
+    [Fact]
+    public void CompareAndTransferHistoryShowSafeRemoteNames()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            const string Spoofed = "/srv/in/facture\u202Efdp.exe";
+            const string Safe = "facture\uFFFDfdp.exe";
+            var compare = new CompareWindow("root@srv01 : " + Spoofed, [1, 0, 2], "root@srv02 : " + Spoofed, [1, 0, 3], new AppSettings());
+            foreach (var text in new[] { compare.Title, compare.LeftTitle.Text, compare.RightTitle.Text, compare.BinaryText.Text })
+            {
+                Assert.Contains(Safe, text);
+                Assert.DoesNotContain('\u202E', text);
+            }
+
+            compare.Close();
+
+            var (s1, _) = NewSshView("root@srv01");
+            var choose = new CompareDialog("root@srv01 : " + Spoofed, Spoofed, [s1], s1);
+            Assert.Contains(Safe, choose.IntroText.Text);
+            Assert.DoesNotContain('\u202E', choose.IntroText.Text);
+            choose.Close();
+            s1.Dispose();
+
+            // Historique ancien (nom brut enregistré) compris.
+            var history = new TransferHistory();
+            history.Add(new TransferRecord
+            {
+                Upload = false, Server = "root@srv01", Label = "facture\u202Efdp.exe", Destination = Path.GetTempPath(), State = TransferState.Done,
+                FileCount = 1,
+            });
+            var dialog = new TransferHistoryDialog(history, () => { });
+            dialog.Show();
+            dialog.UpdateLayout();
+            var texts = TextsIn(dialog.RecordsGrid);
+            Assert.Contains(Safe, texts);
+            Assert.DoesNotContain(texts, t => t.Contains('\u202E'));
+            dialog.Close();
+
+            var checks = new TransferChecksDialog([new TransferCheck("facture\u202Efdp.exe", @"C:\Temp\facture.bin", Spoofed, 3, [1], 3, [1])]);
+            checks.Show();
+            checks.UpdateLayout();
+            texts = TextsIn(checks.ChecksGrid);
+            Assert.Contains("/srv/in/" + Safe, texts);
+            Assert.DoesNotContain(texts, t => t.Contains('\u202E'));
+            checks.Close();
+        });
+    }
+
     /// <summary>Session de fichiers seuls déjà connectée à <paramref name="files"/>.</summary>
     private static ZillaTerm.App.Services.FilesSession ConnectedFiles(string label, IRemoteFiles files)
     {
@@ -144,6 +260,24 @@ public sealed partial class DialogTests
             System.Windows.Threading.Dispatcher.CurrentDispatcher);
         session.ConnectAsync().GetAwaiter().GetResult();
         return session;
+    }
+
+    /// <summary>Textes des TextBlock affichés sous <paramref name="root"/>.</summary>
+    private static List<string> TextsIn(DependencyObject root)
+    {
+        var texts = new List<string>();
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is System.Windows.Controls.TextBlock block)
+            {
+                texts.Add(block.Text);
+            }
+
+            texts.AddRange(TextsIn(child));
+        }
+
+        return texts;
     }
 
     /// <summary>Fichiers d'un serveur en mémoire qui notent les envois, téléchargements et suppressions demandés.</summary>
