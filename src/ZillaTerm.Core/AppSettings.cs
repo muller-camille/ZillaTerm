@@ -278,12 +278,11 @@ public sealed class AppSettings
         (name ?? "").Trim() is { Length: > 0 and <= 100 } value && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.');
 
     /// <summary>
-    /// Composants proposés dans les listes : ceux de la plateforme lus sur le PVWA (<paramref name="platformComponents"/>,
-    /// s'ils sont connus), celui mémorisé pour la plateforme <paramref name="platformId"/>, puis ceux déjà utilisés
-    /// (mémorisés, serveurs de « Mes serveurs », connexions récentes), puis les composants usuels de CyberArk.
+    /// Composants proposés dans les listes : celui mémorisé pour la plateforme <paramref name="platformId"/>, puis ceux
+    /// déjà utilisés (mémorisés, serveurs de « Mes serveurs », connexions récentes), puis les composants usuels de CyberArk.
     /// Un PVWA peut nommer les siens autrement (par ex. WIN-PSM) : saisi une fois, un composant est ensuite proposé.
     /// </summary>
-    public IReadOnlyList<string> KnownComponents(string? platformId, IReadOnlyList<string>? platformComponents = null)
+    public IReadOnlyList<string> KnownComponents(string? platformId)
     {
         var list = new List<string>();
         void Add(string? component)
@@ -293,11 +292,6 @@ public sealed class AppSettings
             {
                 list.Add(name);
             }
-        }
-
-        foreach (var component in platformComponents ?? [])
-        {
-            Add(component);
         }
 
         foreach (var (platform, component) in ComponentByPlatform)

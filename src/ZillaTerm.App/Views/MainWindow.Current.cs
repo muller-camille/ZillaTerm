@@ -544,9 +544,8 @@ public partial class MainWindow
         switch (SavedTree.SelectedItem)
         {
             case SavedSessionNode node:
-                var platform = node.Account?.PlatformId ?? node.Session.PlatformId;
                 var dialog = new SessionPropertiesDialog(node.Session, node.Account, _settings.SessionFolderList, HasPsmp,
-                    _settings.KnownComponents(platform, KnownPlatformComponents(platform)),
+                    _settings.KnownComponents(node.Account?.PlatformId ?? node.Session.PlatformId),
                     _settings.X11Servers.Contains(node.Session.Id), _settings.ServerTags) { Owner = this };
                 if (dialog.ShowDialog() == true)
                 {
