@@ -40,6 +40,8 @@
     <SolidColorBrush x:Key="StateConnectingBrush" Color="#F0A43A" />
     <SolidColorBrush x:Key="StateEndedBrush" Color="#8E99A5" />
     <SolidColorBrush x:Key="StateFailedBrush" Color="#F26B63" />
+    <!-- Texte foncé sur le rouge clair de la pastille. -->
+    <SolidColorBrush x:Key="BadgeForeground" Color="#1E2227" />
 
     <SolidColorBrush x:Key="StatusForeground" Color="#FFFFFF" />
     <SolidColorBrush x:Key="StatusMutedForeground" Color="#C8D3DE" />

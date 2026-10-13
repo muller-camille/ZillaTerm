@@ -42,6 +42,8 @@
     <SolidColorBrush x:Key="StateConnectingBrush" Color="#B26A00" />
     <SolidColorBrush x:Key="StateEndedBrush" Color="#6B7785" />
     <SolidColorBrush x:Key="StateFailedBrush" Color="#C62828" />
+    <!-- « ! » sur la pastille rouge (onglet Fichiers, historique des transferts). -->
+    <SolidColorBrush x:Key="BadgeForeground" Color="#FFFFFF" />
 
     <!-- Barre d'état (fond sombre). -->
     <SolidColorBrush x:Key="StatusForeground" Color="#FFFFFF" />
@@ -1048,6 +1050,24 @@
                 <Setter Property="Background" Value="{DynamicResource AccentLightBrush}" />
             </Trigger>
         </Style.Triggers>
+    </Style>
+
+    <!-- Texte secondaire d'une ligne d'arbre (nombre, mode, « correspond : … », ⚠, ✓) : sur la ligne sélectionnée, avec ou
+         sans le focus, il prend la couleur du texte de la ligne, faite pour le fond de la sélection (couleur de Windows,
+         contraste élevé compris) ; sa couleur propre y serait illisible. Le texte ou le symbole garde le sens. -->
+    <Style x:Key="TreeNote" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True">
+                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="TreeWarning" TargetType="TextBlock" BasedOn="{StaticResource TreeNote}">
+        <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+    </Style>
+    <Style x:Key="TreeAccent" TargetType="TextBlock" BasedOn="{StaticResource TreeNote}">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
     </Style>
 
     <!-- ===== Kit des dialogues ===== -->

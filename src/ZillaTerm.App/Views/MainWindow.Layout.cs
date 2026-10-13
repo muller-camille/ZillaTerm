@@ -144,7 +144,7 @@ public partial class MainWindow
         {
             FilesBadgeText.Text = "!";
             FilesBadge.SetResourceReference(Border.BackgroundProperty, "StateFailedBrush");
-            FilesBadgeText.SetResourceReference(TextBlock.ForegroundProperty, "DangerForeground");
+            FilesBadgeText.SetResourceReference(TextBlock.ForegroundProperty, "BadgeForeground");
             tip = Text.Format(Strings.FilesBadgeProblem, problems);
         }
 

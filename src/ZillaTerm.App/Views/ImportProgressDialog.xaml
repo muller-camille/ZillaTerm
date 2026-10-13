@@ -24,6 +24,10 @@
                 <DataTrigger Binding="{Binding Outcome}" Value="Sending">
                     <Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
+                <!-- Ligne sélectionnée : couleur du texte de la sélection, la seule lisible sur son fond (le texte dit le résultat). -->
+                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridCell}}" Value="True">
+                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
+                </DataTrigger>
             </Style.Triggers>
         </Style>
     </Window.Resources>

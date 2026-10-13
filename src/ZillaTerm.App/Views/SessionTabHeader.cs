@@ -21,16 +21,34 @@ public enum SessionTabState
 
 /// <summary>
 /// En-tête d'un onglet de session : pastille d'état, icône, nom (tronqué, complet dans l'infobulle) et croix. La forme de la
-/// pastille porte aussi l'état (pleine : connectée ou en échec ; anneau : connexion ou terminée), pas seulement sa
-/// couleur ; le nom est atténué quand la session ne répond plus. L'infobulle donne le nom complet, l'état et le mode
-/// (via le PSMP ou accès direct hors CyberArk).
+/// pastille porte l'état, pas seulement sa couleur (contraste élevé, couleurs mal distinguées) : anneau pendant la
+/// connexion, pleine une fois connectée, à moitié pleine quand la connexion est interrompue, carré quand la session est
+/// terminée, croix en cas d'échec ; le nom est atténué quand la session ne répond plus. L'infobulle donne le nom complet,
+/// l'état et le mode (via le PSMP ou accès direct hors CyberArk).
 /// </summary>
 public sealed class SessionTabHeader : StackPanel
 {
     /// <summary>Largeur maximale du nom : au-delà, il est tronqué (« … ») et l'infobulle le donne en entier.</summary>
     public const double TitleMaxWidth = 200;
 
-    private readonly Ellipse _dot = new() { Width = 8, Height = 8, StrokeThickness = 1.5, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
+    // Formes de la pastille, dans 8 × 8 (trait de 1,5) : l'onglet garde sa largeur.
+    private static readonly Geometry Ring = Frozen(new EllipseGeometry(new Point(4, 4), 3.25, 3.25));
+
+    // Anneau et moitié droite : remplie en pair-impair, seule la moitié gauche est pleine.
+    private static readonly Geometry HalfDisc = Frozen(new GeometryGroup
+    {
+        Children = { new EllipseGeometry(new Point(4, 4), 3.25, 3.25), Geometry.Parse("M4,0.75 A3.25,3.25 0 0 1 4,7.25 Z") },
+    });
+
+    private static readonly Geometry Square = Frozen(new RectangleGeometry(new Rect(1.25, 1.25, 5.5, 5.5)));
+    private static readonly Geometry Cross = Frozen(Geometry.Parse("M1.5,1.5 L6.5,6.5 M6.5,1.5 L1.5,6.5"));
+
+    private readonly Path _dot = new()
+    {
+        Width = 8, Height = 8, StrokeThickness = 1.5, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round,
+        Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center,
+    };
+
     private string _mode;
     private readonly string? _hint;
 
@@ -80,6 +98,9 @@ public sealed class SessionTabHeader : StackPanel
 
     public SessionTabState State { get; private set; }
 
+    /// <summary>Pastille d'état (forme et couleur).</summary>
+    internal Path StateMark => _dot;
+
     /// <summary>Ligne du mode de l'infobulle, précisée après l'ouverture de l'onglet (adresse du PSM donnée par le PVWA).</summary>
     public void SetMode(string mode)
     {
@@ -98,7 +119,14 @@ public sealed class SessionTabHeader : StackPanel
             _ => "StateConnectingBrush",
         };
         _dot.SetResourceReference(Shape.StrokeProperty, key);
-        if (state is SessionTabState.Connected or SessionTabState.Interrupted or SessionTabState.Failed)
+        _dot.Data = state switch
+        {
+            SessionTabState.Interrupted => HalfDisc,
+            SessionTabState.Ended => Square,
+            SessionTabState.Failed => Cross,
+            _ => Ring,
+        };
+        if (state is SessionTabState.Connected or SessionTabState.Interrupted or SessionTabState.Ended)
         {
             _dot.SetResourceReference(Shape.FillProperty, key);
         }
@@ -130,6 +158,12 @@ public sealed class SessionTabHeader : StackPanel
         SessionTabState.Failed => Strings.TabStateFailed,
         _ => Strings.TabStateConnecting,
     };
+
+    private static Geometry Frozen(Geometry geometry)
+    {
+        geometry.Freeze();
+        return geometry;
+    }
 
     /// <summary>Nom unique parmi les onglets ouverts : « nom », puis « nom (2) », « nom (3) »…</summary>
     public static string UniqueLabel(string label, IEnumerable<string> existing)

@@ -2660,6 +2660,82 @@ public sealed class DialogTests
     }
 
     /// <summary>
+    /// Ligne sélectionnée d'un arbre : les textes secondaires (nombre, mode, ⚠, ✓) prennent la couleur du texte de la ligne,
+    /// faite pour le fond de la sélection ; hors sélection, ils gardent la leur.
+    /// </summary>
+    [Fact]
+    public void SelectedTreeRowKeepsSecondaryTextsReadable()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            System.Windows.Controls.TextBlock Note(string style) => new() { Text = "x", Style = (Style)Application.Current.FindResource(style) };
+            var (note, warning, mark, other) = (Note("TreeNote"), Note("TreeWarning"), Note("TreeAccent"), Note("TreeNote"));
+            var row = new System.Windows.Controls.TreeViewItem { Header = new System.Windows.Controls.StackPanel { Children = { note, warning, mark } } };
+            var tree = new System.Windows.Controls.TreeView();
+            tree.Items.Add(row);
+            tree.Items.Add(new System.Windows.Controls.TreeViewItem { Header = other });
+            var window = new Window { Content = tree, Width = 300, Height = 200, ShowInTaskbar = false, ShowActivated = false };
+            window.Show();
+            try
+            {
+                row.IsSelected = true;
+                window.UpdateLayout();
+
+                static System.Windows.Media.Color ColorOf(System.Windows.Media.Brush brush) => ((System.Windows.Media.SolidColorBrush)brush).Color;
+                var muted = ColorOf((System.Windows.Media.Brush)Application.Current.FindResource("MutedBrush"));
+                Assert.NotEqual(muted, ColorOf(row.Foreground));
+                Assert.All(new[] { note, warning, mark }, text => Assert.Equal(ColorOf(row.Foreground), ColorOf(text.Foreground)));
+                Assert.Equal(muted, ColorOf(other.Foreground));
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    /// <summary>
+    /// Contraste élevé : les couleurs d'état deviennent toutes celle du texte ; la forme de la pastille distingue encore les
+    /// cinq états, dans la même largeur (l'onglet ne s'allonge pas).
+    /// </summary>
+    [Fact]
+    public void TabStatesKeepDistinctShapesInHighContrast()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var merged = Application.Current.Resources.MergedDictionaries;
+            var contrast = Palette.HighContrast();
+            merged.Add(contrast);
+            try
+            {
+                var header = new SessionTabHeader("srv01.corp.local", "IconSsh", new System.Windows.Controls.Button(), "SSH", null);
+                var marks = Enum.GetValues<SessionTabState>().Select(state =>
+                {
+                    header.SetState(state);
+                    Assert.Equal(8, header.StateMark.Width);
+                    return (header.StateMark.Data, Filled: !ReferenceEquals(header.StateMark.Fill, System.Windows.Media.Brushes.Transparent));
+                }).ToList();
+
+                Assert.Equal(5, marks.Distinct().Count());
+            }
+            finally
+            {
+                merged.Remove(contrast);
+            }
+        });
+    }
+
+    /// <summary>
     /// Thème sombre : les fenêtres s'ouvrent avec ses modèles (listes déroulantes, onglets, tableaux, cases), le choix
     /// est relu des réglages, et les icônes foncées sont éclaircies (écran de terminal cerné d'un trait clair).
     /// </summary>
