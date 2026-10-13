@@ -1148,6 +1148,44 @@ public sealed partial class DialogTests
     }
 
     /// <summary>
+    /// Nom de fichier piégé (inversion du sens d'écriture) : affiché avec « � » dans le titre, la liste des fichiers
+    /// suivis et la notification ; le fichier est suivi quand même. Ligne géante : coupée, avec la mention.
+    /// </summary>
+    [Fact]
+    public void TailWindowShowsSafeNamesAndCutsGiantLines()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            SynchronizationContext.SetSynchronizationContext(null);
+            const string path = "/var/log/facture\u202Efdp.log";
+            var link = new MemoryLink("root@srv01");
+            var file = link.Add(path);
+            file.Append("un\n");
+            var notes = new List<string>();
+            var window = new TailWindow(new AppSettings { TailAlerts = "ERROR" }, () => { }) { Notifier = (_, text) => notes.Add(text) };
+            var feed = window.AddFeed(link, path);
+            window.PollAsync().GetAwaiter().GetResult();
+            Assert.Equal("un\n", window.Shown);
+            Assert.Contains("/var/log/facture\uFFFDfdp.log", window.Title);
+            Assert.DoesNotContain("\u202E", window.Title);
+            Assert.Equal("root@srv01 facture\uFFFDfdp.log", feed.Label);
+            Assert.Equal("root@srv01 : /var/log/facture\uFFFDfdp.log", feed.Tip);
+
+            file.Append("ERROR " + new string('x', 100_000) + "\nfin\n");
+            window.PollAsync().GetAwaiter().GetResult();
+            Assert.Contains("facture\uFFFDfdp.log", Assert.Single(notes));
+            var cut = "ERROR " + new string('x', TailLineSplitter.MaxLineLength - 6) + TailLineSplitter.CutMark;
+            Assert.Equal("un\n" + cut + "\nfin\n", window.Shown);
+            window.Close();
+        });
+    }
+
+    /// <summary>
     /// Dossier envoyé avec un lien vers un dossier : le lien, non suivi, est signalé à part dans le bilan, le détail et
     /// l'historique, sans compter comme un fichier non vérifié.
     /// </summary>
@@ -2534,6 +2572,61 @@ public sealed partial class DialogTests
                 .Single(i => i.Header as string == Strings.MenuTerminalSelectAll).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.MenuItem.ClickEvent));
             Assert.Equal("[root@srv01 ~]#", view.Terminal.SelectedText);
             session.Dispose();
+        });
+    }
+
+    /// <summary>
+    /// Pavé tactile de précision : les petits pas de la molette s'additionnent (le reste repart de zéro au changement de
+    /// sens). Capture de la souris perdue pendant une sélection : la sélection est terminée.
+    /// </summary>
+    [Fact]
+    public void TerminalAddsSmallWheelStepsAndEndsASelectionWhenTheMouseIsTaken()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var (session, view) = NewSshView("root@srv01");
+            var window = new Window { Width = 800, Height = 500, ShowInTaskbar = false, ShowActivated = false, Content = view };
+            window.Show();
+            PumpUntil(() => view.Terminal.IsLoaded);
+            try
+            {
+                var terminal = view.Terminal;
+                session.Emulator.Feed(string.Concat(Enumerable.Range(1, 100).Select(i => $"line {i}\r\n")));
+                void Wheel(int delta) => terminal.RaiseEvent(
+                    new System.Windows.Input.MouseWheelEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount, delta)
+                    {
+                        RoutedEvent = UIElement.MouseWheelEvent,
+                    });
+
+                for (int i = 0; i < 6; i++)
+                {
+                    Wheel(20);
+                }
+
+                Assert.Equal(3, terminal.ScrollState.Offset);
+                Wheel(30);
+                Wheel(-20);
+                Assert.Equal(3, terminal.ScrollState.Offset);
+                Wheel(-20);
+                Assert.Equal(2, terminal.ScrollState.Offset);
+
+                terminal.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, Environment.TickCount,
+                    System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonDownEvent });
+                Assert.True(terminal.IsSelecting);
+                Assert.True(terminal.IsMouseCaptured);
+                System.Windows.Input.Mouse.Capture(null);
+                Assert.False(terminal.IsSelecting);
+            }
+            finally
+            {
+                window.Close();
+                session.Dispose();
+            }
         });
     }
 

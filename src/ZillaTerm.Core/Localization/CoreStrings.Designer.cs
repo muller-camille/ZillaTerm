@@ -1702,5 +1702,14 @@ namespace ZillaTerm.Core.Localization {
                 return ResourceManager.GetString("RdpNoEncryption", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to  … [line cut after {0:N0} characters].
+        /// </summary>
+        public static string TailLineCut {
+            get {
+                return ResourceManager.GetString("TailLineCut", resourceCulture);
+            }
+        }
     }
 }

@@ -184,6 +184,50 @@ public sealed class TailViewTests
         Assert.Equal("", splitter.Partial);
     }
 
+    /// <summary>
+    /// Fichier qui grossit sans fin de ligne (barre de progression, fichier piégé) ou lignes géantes : chaque ligne est
+    /// coupée avec une mention, son reste ignoré jusqu'à sa fin ; la ligne en cours reste bornée.
+    /// </summary>
+    [Fact]
+    public void CutsLinesThatAreTooLong()
+    {
+        const int max = TailLineSplitter.MaxLineLength;
+        var splitter = new TailLineSplitter();
+        var megabyte = new string('x', 1024 * 1024);
+        var lines = new List<string>();
+        for (int i = 0; i < 60; i++)
+        {
+            lines.AddRange(splitter.Push(megabyte));
+            Assert.True(splitter.Partial.Length <= max);
+        }
+
+        Assert.Equal(new string('x', max) + TailLineSplitter.CutMark, Assert.Single(lines));
+
+        // Fin de la ligne coupée : les suivantes reprennent normalement.
+        Assert.Equal(["suite"], splitter.Push("xxx\nsuite\nen cours"));
+        Assert.Equal("en cours", splitter.Partial);
+        Assert.Equal("en cours", splitter.Flush());
+
+        // Ligne géante terminée dans le même relevé ; une ligne de la longueur permise reste entière ; un emoji n'est
+        // pas coupé en deux.
+        var exact = new string('e', max);
+        var emoji = new string('a', max - 1) + "😀b";
+        Assert.Equal([new string('y', max) + TailLineSplitter.CutMark, exact, new string('a', max - 1) + TailLineSplitter.CutMark, "ok"],
+            splitter.Push($"{new string('y', 3 * max)}\n{exact}\n{emoji}\nok\n"));
+
+        // Fichier relu (Flush) pendant une ligne coupée : la suite n'est plus ignorée.
+        Assert.Single(splitter.Push(new string('z', max + 1)));
+        Assert.Null(splitter.Flush());
+        Assert.Equal(["après"], splitter.Push("après\n"));
+    }
+
+    [Fact]
+    public void CutMarkTellsTheLength()
+    {
+        using var culture = UiCulture.Use("fr-FR");
+        Assert.Equal($" … [ligne coupée après {TailLineSplitter.MaxLineLength:N0} caractères]", TailLineSplitter.CutMark);
+    }
+
     [Fact]
     public async Task AFollowedFileResumesOnANewConnection()
     {

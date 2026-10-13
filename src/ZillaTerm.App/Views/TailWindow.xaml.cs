@@ -20,7 +20,7 @@ namespace ZillaTerm.App.Views;
 /// dans la même fenêtre : leurs lignes s'intercalent dans l'ordre d'arrivée, préfixées par le fichier d'origine.
 /// Couleurs par niveau, mots surlignés, alertes, filtre (texte ou expression régulière, exclusion, contexte),
 /// recherche, repères, enregistrement ; reprise après une reconnexion de l'onglet. Les 10 000 dernières lignes sont
-/// gardées.
+/// gardées, chacune jusqu'à <see cref="TailLineSplitter.MaxLineLength"/> caractères.
 /// </summary>
 public partial class TailWindow : Window
 {
@@ -242,7 +242,7 @@ public partial class TailWindow : Window
         var active = _feeds.Where(f => !f.Stopped).ToList();
         if (active.Count == 1)
         {
-            Title = Text.Format(Strings.TailTitle, active[0].Path, active[0].Link.Server);
+            Title = Text.Format(Strings.TailTitle, active[0].DisplayPath, active[0].Link.Server);
         }
         else if (active.Count > 1)
         {
@@ -695,7 +695,7 @@ public partial class TailWindow : Window
         if (NotifyBox.IsChecked == true && DateTime.UtcNow - _lastNotification >= NotifyInterval)
         {
             // Nombre de lignes et nom du fichier seulement : jamais le contenu du journal.
-            var text = Text.Format(Strings.TailNotificationText, _unnotified, RemotePath.Name(feed.Path));
+            var text = Text.Format(Strings.TailNotificationText, _unnotified, feed.DisplayName);
             _lastNotification = DateTime.UtcNow;
             _unnotified = 0;
             if (Notifier is { } notifier)
@@ -1053,10 +1053,10 @@ public partial class TailWindow : Window
     {
         var active = _feeds.Where(f => !f.Stopped).ToList();
         var name = active.Count == 1 ? Path.GetFileNameWithoutExtension(RemotePath.Name(active[0].Path)) : "tail";
-        foreach (var invalid in Path.GetInvalidFileNameChars())
-        {
-            name = name.Replace(invalid, '_');
-        }
+
+        // Caractères interdits dans un nom de fichier, ou invisibles (inversion du sens d'écriture…) : remplacés.
+        var invalid = Path.GetInvalidFileNameChars();
+        name = string.Concat(name.Select(c => invalid.Contains(c) || RemoteEntry.IsInvisible(c) ? '_' : c));
 
         return $"{(name.Length == 0 ? "tail" : name)}-{DateTime.Now:yyyyMMdd-HHmmss}.log";
     }
