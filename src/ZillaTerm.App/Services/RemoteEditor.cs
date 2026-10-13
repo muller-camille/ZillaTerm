@@ -68,7 +68,7 @@ public sealed class RemoteEditor : IDisposable
 
     /// <summary>Renvois en cours de ces sessions, sous la forme « serveur:chemin ».</summary>
     public static List<string> WritingFiles(IEnumerable<RemoteEditor> editors) =>
-        editors.SelectMany(e => e.Writing.Select(f => $"{e._session.Label}:{RemoteEntry.Visible(f.RemotePath)}")).ToList();
+        editors.SelectMany(e => e.Writing.Select(f => $"{e._session.Label}:{f.DisplayPath}")).ToList();
 
     public async Task EditAsync(RemoteEntry entry)
     {
@@ -134,7 +134,7 @@ public sealed class RemoteEditor : IDisposable
             return;
         }
 
-        _status(Text.Format(Strings.EditOpening, file.Name), false);
+        _status(Text.Format(Strings.EditOpening, file.DisplayName), false);
         string? fresh = null;
         try
         {
@@ -160,8 +160,8 @@ public sealed class RemoteEditor : IDisposable
             if (result == EditedFile.RefreshResult.Conflict && !_disposed && ConfirmDialog.Confirm(_owner, new ConfirmRequest
                 {
                     Title = Strings.FileEdit.Replace("_", ""),
-                    Heading = Text.Format(Strings.EditReloadHeading, file.Name),
-                    Subject = $"{_session.Label}:{file.RemotePath}",
+                    Heading = Text.Format(Strings.EditReloadHeading, file.DisplayName),
+                    Subject = $"{_session.Label}:{file.DisplayPath}",
                     Message = Strings.EditReloadMessage,
                     Kind = ConfirmKind.Warning,
                     Actions = [Strings.EditReloadAction],
@@ -172,12 +172,12 @@ public sealed class RemoteEditor : IDisposable
                 result = await Task.Run(() => file.Refresh(fresh, time, length, keepUnsent: false));
             }
 
-            _status(Text.Format(result == EditedFile.RefreshResult.Replaced ? Strings.EditRefreshed : Strings.EditOpened, file.Name), false);
+            _status(Text.Format(result == EditedFile.RefreshResult.Replaced ? Strings.EditRefreshed : Strings.EditOpened, file.DisplayName), false);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             // Serveur injoignable, fichier supprimé, copie verrouillée par l'éditeur : l'ancienne copie est rouverte.
-            _status(Text.Format(Strings.EditStaleCopy, file.Name, ErrorText.Describe(ex)), true);
+            _status(Text.Format(Strings.EditStaleCopy, file.DisplayName, ErrorText.Describe(ex)), true);
         }
         finally
         {
@@ -317,7 +317,7 @@ public sealed class RemoteEditor : IDisposable
 
     /// <summary>Fichiers modifiés et pas encore renvoyés, sous la forme « serveur:chemin ».</summary>
     public static List<string> UnsentFiles(IEnumerable<RemoteEditor> editors) =>
-        editors.SelectMany(e => e.Unsent.Select(f => $"{e._session.Label}:{f.RemotePath}")).ToList();
+        editors.SelectMany(e => e.Unsent.Select(f => $"{e._session.Label}:{f.DisplayPath}")).ToList();
 
     /// <summary>Supprime les copies laissées par une session qui n'a pas pu se fermer normalement (plus d'un jour).</summary>
     public static void CleanupStale()
@@ -415,8 +415,8 @@ public sealed class RemoteEditor : IDisposable
                 if (!ConfirmDialog.Confirm(_owner, new ConfirmRequest
                     {
                         Title = Strings.EditUploadTitle,
-                        Heading = Text.Format(Strings.EditUploadHeading, file.Name),
-                        Subject = $"{_session.Label}:{file.RemotePath}",
+                        Heading = Text.Format(Strings.EditUploadHeading, file.DisplayName),
+                        Subject = $"{_session.Label}:{file.DisplayPath}",
                         Message = Strings.EditUploadMessage,
                         Actions = [Strings.EditUploadAction],
                         DefaultAction = 0,
@@ -462,8 +462,8 @@ public sealed class RemoteEditor : IDisposable
             if (changed && !file.WriteInterrupted && !ConfirmDialog.Confirm(_owner, new ConfirmRequest
                 {
                     Title = Strings.EditUploadTitle,
-                    Heading = Text.Format(Strings.EditRemoteChangedHeading, file.Name),
-                    Subject = $"{_session.Label}:{file.RemotePath}",
+                    Heading = Text.Format(Strings.EditRemoteChangedHeading, file.DisplayName),
+                    Subject = $"{_session.Label}:{file.DisplayPath}",
                     Message = Strings.EditRemoteChangedMessage,
                     Kind = ConfirmKind.Warning,
                     Actions = [Strings.EditReplaceAnyway],
@@ -473,7 +473,7 @@ public sealed class RemoteEditor : IDisposable
                 return false;
             }
 
-            _status(Text.Format(Strings.EditUploading, file.Name), false);
+            _status(Text.Format(Strings.EditUploading, file.DisplayName), false);
             // Lecture et hachage de la copie hors du fil de l'interface.
             var content = await Task.Run(() => EditedFile.ReadAllBytesShared(file.LocalPath));
             // Fermer l'onglet, se déconnecter ou quitter attend la fin de l'écriture, et du message d'un échec (WritesDone) :
@@ -483,7 +483,7 @@ public sealed class RemoteEditor : IDisposable
             var (newTime, newLength) = await browser.WriteFileAsync(file.RemotePath, content, CancellationToken.None);
             writing = false;
             await Task.Run(() => file.MarkSent(content, newTime, newLength));
-            _status(Text.Format(Strings.EditUploaded, file.Name), false);
+            _status(Text.Format(Strings.EditUploaded, file.DisplayName), false);
             _remoteChanged(RemotePath.Parent(file.RemotePath));
             return true;
         }
@@ -502,10 +502,10 @@ public sealed class RemoteEditor : IDisposable
                 file.MarkWriteInterrupted();
             }
 
-            _status(Text.Format(Strings.UploadFailed, file.Name, message), true);
+            _status(Text.Format(Strings.UploadFailed, file.DisplayName, message), true);
             // Onglet fermé pendant l'écriture (la fermeture l'attendait) : plus de renvoi possible depuis cette session.
             var text = !writing ? Strings.EditUploadFailed : _disposed ? Strings.EditWriteInterruptedClosed : Strings.EditWriteInterrupted;
-            MessageBox.Show(_owner, Text.Format(text, file.Name, message), Strings.EditUploadTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(_owner, Text.Format(text, file.DisplayName, message), Strings.EditUploadTitle, MessageBoxButton.OK, MessageBoxImage.Error);
             return false;
         }
         finally
