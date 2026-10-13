@@ -39,9 +39,10 @@ aussitôt dans la langue choisie, sans perdre l'adresse ni l'identifiant saisis.
   l'onglet « Fichiers » n'apparaît que lorsqu'une session SSH ou de fichiers est ouverte. Glissez le séparateur pour changer sa largeur ; `Ctrl+B` ou un double-clic sur le séparateur le replie (la bande
   des onglets reste : un clic sur un onglet le rouvre). `F6` passe du panneau à la session. La position et la
   taille de la fenêtre, la largeur du panneau et son état replié sont mémorisés.
-- **Onglets de session** : une pastille donne l'état de la session par sa couleur et par sa forme : anneau orange
-  pendant la connexion, pastille verte une fois connectée, anneau gris quand la session est terminée, pastille
-  rouge en cas d'échec (le nom est alors atténué). L'infobulle donne le nom complet, l'état et le mode : « Via le
+- **Onglets de session** : une pastille donne l'état de la session par sa couleur et par sa forme, lisible aussi en
+  contraste élevé : anneau orange pendant la connexion, pastille verte pleine une fois connectée, pastille orange à
+  moitié pleine quand la connexion est interrompue, carré gris quand la session est terminée, croix rouge en cas
+  d'échec (le nom est alors atténué). L'infobulle donne le nom complet, l'état et le mode : « Via le
   PSMP … : session gérée par CyberArk » ou « Accès direct d'urgence (KeePass) : hors CyberArk, noté dans
   urgence.log ». Un nom trop long est tronqué ; un nom déjà ouvert est numéroté (« srv01 (2) »). Quand les onglets
   ne tiennent plus, la bande défile (molette, l'onglet choisi reste visible) et « ⌄ » les liste tous avec leur
@@ -264,6 +265,8 @@ sur votre poste, comme avec `ssh -X` :
    Serveur X local** (`:0` par défaut ; ce poste seulement, le protocole X n'étant pas chiffré).
 2. Cochez **« Transfert X11 (applications graphiques) »** pour le serveur : clic droit → « Propriétés… » dans « Mes
    serveurs », ou dans « Options avancées… » pour une seule connexion. Sessions SSH seulement ; décoché par défaut.
+   Cochée, la case rappelle son effet juste en dessous (« ⚠ Effet : un serveur compromis pourrait voir les autres
+   fenêtres X de ce poste et y envoyer des frappes. »).
 3. Ouvrez la session : une ligne grise dit si le transfert est actif, s'il a été refusé (par le serveur, dont
    `sshd_config` doit avoir `X11Forwarding yes`, ou par le PSMP) ou si aucun serveur X n'écoute sur le poste.
 
@@ -972,7 +975,11 @@ fenêtre a ses touches d'accès (`Alt` + lettre soulignée, sans doublon, en fra
 d'un élément de « Mes serveurs » s'ouvre au même endroit par clic droit, `Maj+F10` ou la touche Menu. Les champs de
 mot de passe (identification, base KeePass, coffre local) avertissent quand Verr. Maj est activé. Les lecteurs
 d'écran annoncent le nom des éléments des listes et des arbres, des boutons à icône ou à symbole (✕, ↑, ↓), des
-champs (chemin, numéro de ticket…), les messages de la barre d'état et les erreurs de connexion. Les barres d'outils
+champs (chemin, numéro de ticket…), chaque bouton et chaque case par son libellé, les messages de la barre d'état
+et les erreurs de connexion ; un mot de passe refusé est annoncé avec le numéro de l'essai (« Essai 2 sur 3 »), lu
+aussi avec le champ, et un serveur qui ne répond plus ou une session terminée ne le sont qu'une fois. Sur la ligne
+sélectionnée des arbres et des tableaux, les textes secondaires (compteurs, « correspond : … », ⚠) restent lisibles,
+avec ou sans le focus. Les barres d'outils
 de « Mes serveurs » et de l'onglet Fichiers sont un seul arrêt de `Tab` (les flèches passent d'un bouton à l'autre).
 Dans les Paramètres, chaque case a sa touche d'accès, sans doublon dans la page affichée. En contraste élevé, l'interface prend les couleurs système de Windows et suit leurs
 changements.
