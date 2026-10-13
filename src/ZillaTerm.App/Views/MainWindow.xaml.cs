@@ -1821,7 +1821,6 @@ public partial class MainWindow : Window
     private void OnLogout(object sender, RoutedEventArgs e)
     {
         LogoutRequested = true;
-        InterventionRecord(Core.Interventions.InterventionKind.Action, "", Strings.InterventionLoggedOut);
         Close();
     }
 
@@ -1856,6 +1855,12 @@ public partial class MainWindow : Window
             e.Cancel = true;
             LogoutRequested = false;
             return;
+        }
+
+        if (LogoutRequested)
+        {
+            // Noté une fois la déconnexion confirmée : annulée, elle n'a pas eu lieu.
+            InterventionRecord(Core.Interventions.InterventionKind.Action, "", Strings.InterventionLoggedOut);
         }
 
         RememberLayout();
