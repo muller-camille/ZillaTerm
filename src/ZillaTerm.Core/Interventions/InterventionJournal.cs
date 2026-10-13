@@ -264,7 +264,7 @@ public sealed class InterventionJournal : IDisposable
     /// Taille au plus d'un événement en JSON : chaque caractère peut s'écrire « \uXXXX » (6 octets), l'image en base64.
     /// </summary>
     internal static long EstimatedSize(InterventionEntry entry) =>
-        128 + (6L * (entry.Source.Length + entry.Text.Length)) + (((entry.Image?.LongLength ?? 0) + 2) / 3 * 4);
+        128 + (6L * ((entry.Source?.Length ?? 0) + (entry.Text?.Length ?? 0))) + (((entry.Image?.LongLength ?? 0) + 2) / 3 * 4);
 
     /// <summary>Termine l'intervention : dernier événement, écriture, fermeture du fichier.</summary>
     public void Stop(InterventionEntry last)
