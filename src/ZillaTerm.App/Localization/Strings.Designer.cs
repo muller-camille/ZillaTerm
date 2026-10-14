@@ -19210,5 +19210,59 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("InterventionEndCancel", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No keyring is available: ZillaTerm cannot protect its secrets on this computer. Start a keyring compatible with the Secret Service API (GNOME Keyring, KWallet, KeePassXC with Secret Service integration…), then try again..
+        /// </summary>
+        public static string KeyringUnavailable {
+            get {
+                return ResourceManager.GetString("KeyringUnavailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The keyring was not unlocked (refused, or no answer in time): ZillaTerm cannot use its protection key..
+        /// </summary>
+        public static string KeyringUnlockRefused {
+            get {
+                return ResourceManager.GetString("KeyringUnlockRefused", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The keyring did not respond in time..
+        /// </summary>
+        public static string KeyringNoResponse {
+            get {
+                return ResourceManager.GetString("KeyringNoResponse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The keyring returned an error: {0}.
+        /// </summary>
+        public static string KeyringFailed {
+            get {
+                return ResourceManager.GetString("KeyringFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ZillaTerm's protection key is no longer in the keyring: the data protected with it can no longer be read. The key may have been deleted, or the keyring replaced..
+        /// </summary>
+        public static string KeyringKeyLost {
+            get {
+                return ResourceManager.GetString("KeyringKeyLost", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Protecting secrets is not yet available on macOS: this feature is disabled..
+        /// </summary>
+        public static string KeyringMacUnsupported {
+            get {
+                return ResourceManager.GetString("KeyringMacUnsupported", resourceCulture);
+            }
+        }
     }
 }

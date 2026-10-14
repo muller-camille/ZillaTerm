@@ -6436,4 +6436,22 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="InterventionEndCancel" xml:space="preserve">
     <value>Keep recording</value>
   </data>
+  <data name="KeyringUnavailable" xml:space="preserve">
+    <value>No keyring is available: ZillaTerm cannot protect its secrets on this computer. Start a keyring compatible with the Secret Service API (GNOME Keyring, KWallet, KeePassXC with Secret Service integration…), then try again.</value>
+  </data>
+  <data name="KeyringUnlockRefused" xml:space="preserve">
+    <value>The keyring was not unlocked (refused, or no answer in time): ZillaTerm cannot use its protection key.</value>
+  </data>
+  <data name="KeyringNoResponse" xml:space="preserve">
+    <value>The keyring did not respond in time.</value>
+  </data>
+  <data name="KeyringFailed" xml:space="preserve">
+    <value>The keyring returned an error: {0}</value>
+  </data>
+  <data name="KeyringKeyLost" xml:space="preserve">
+    <value>ZillaTerm's protection key is no longer in the keyring: the data protected with it can no longer be read. The key may have been deleted, or the keyring replaced.</value>
+  </data>
+  <data name="KeyringMacUnsupported" xml:space="preserve">
+    <value>Protecting secrets is not yet available on macOS: this feature is disabled.</value>
+  </data>
 </root>

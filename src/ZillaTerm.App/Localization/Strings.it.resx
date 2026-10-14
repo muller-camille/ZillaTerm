@@ -6436,4 +6436,22 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="InterventionEndCancel" xml:space="preserve">
     <value>Continua l'intervento</value>
   </data>
+  <data name="KeyringUnavailable" xml:space="preserve">
+    <value>Nessun portachiavi disponibile: ZillaTerm non può proteggere i suoi segreti su questo computer. Avvia un portachiavi compatibile con l'API Secret Service (GNOME Keyring, KWallet, KeePassXC con l'integrazione Secret Service…), poi riprova.</value>
+  </data>
+  <data name="KeyringUnlockRefused" xml:space="preserve">
+    <value>Il portachiavi non è stato sbloccato (rifiuto, o nessuna risposta in tempo): ZillaTerm non può usare la sua chiave di protezione.</value>
+  </data>
+  <data name="KeyringNoResponse" xml:space="preserve">
+    <value>Il portachiavi non ha risposto in tempo.</value>
+  </data>
+  <data name="KeyringFailed" xml:space="preserve">
+    <value>Il portachiavi ha restituito un errore: {0}</value>
+  </data>
+  <data name="KeyringKeyLost" xml:space="preserve">
+    <value>La chiave di protezione di ZillaTerm non è più nel portachiavi: i dati protetti con essa non possono più essere letti. La chiave potrebbe essere stata eliminata, o il portachiavi sostituito.</value>
+  </data>
+  <data name="KeyringMacUnsupported" xml:space="preserve">
+    <value>La protezione dei segreti non è ancora disponibile su macOS: questa funzione è disattivata.</value>
+  </data>
 </root>

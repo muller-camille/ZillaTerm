@@ -6436,4 +6436,22 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="InterventionEndCancel" xml:space="preserve">
     <value>Continuer l'intervention</value>
   </data>
+  <data name="KeyringUnavailable" xml:space="preserve">
+    <value>Aucun trousseau n'est disponible : ZillaTerm ne peut pas protéger ses secrets sur cet ordinateur. Démarrez un trousseau compatible avec l'API Secret Service (GNOME Keyring, KWallet, KeePassXC avec l'intégration Secret Service…), puis réessayez.</value>
+  </data>
+  <data name="KeyringUnlockRefused" xml:space="preserve">
+    <value>Le trousseau n'a pas été déverrouillé (refus, ou pas de réponse à temps) : ZillaTerm ne peut pas utiliser sa clé de protection.</value>
+  </data>
+  <data name="KeyringNoResponse" xml:space="preserve">
+    <value>Le trousseau n'a pas répondu à temps.</value>
+  </data>
+  <data name="KeyringFailed" xml:space="preserve">
+    <value>Le trousseau a renvoyé une erreur : {0}</value>
+  </data>
+  <data name="KeyringKeyLost" xml:space="preserve">
+    <value>La clé de protection de ZillaTerm n'est plus dans le trousseau : les données protégées avec elle ne peuvent plus être lues. La clé a peut-être été supprimée, ou le trousseau remplacé.</value>
+  </data>
+  <data name="KeyringMacUnsupported" xml:space="preserve">
+    <value>La protection des secrets n'est pas encore disponible sous macOS : cette fonction est désactivée.</value>
+  </data>
 </root>
