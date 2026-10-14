@@ -337,6 +337,29 @@ vérification.
 - **FTPS avec reprise de session TLS** : certains serveurs (vsftpd avec `require_ssl_reuse`) refusent une connexion
   de données qui ne reprend pas la session TLS de la connexion de commande.
 
+## Linux et macOS
+
+Le cœur (`ZillaTerm.Core` : API du PVWA, SSH/SFTP/SCP/FTP, émulateur du terminal, KeePass, partage chiffré, journal
+d'intervention et rapport, imports) cible déjà `net10.0` et ses tests passent sous Linux. C'est l'interface qui ne
+tourne que sous Windows : WPF (environ 54 000 lignes, 50 fenêtres) et des appels directs à Windows.
+
+- **Interface** : porter WPF vers Avalonia (XAML, Windows, Linux et macOS), fenêtre par fenêtre ; le rendu du
+  terminal (`TerminalView`) se porte assez directement. Avalonia pourrait aussi remplacer WPF sous Windows, pour ne
+  garder qu'une interface.
+- **PSM dans un onglet** : `xfreerdp` intégré sous X11 ; sous Wayland et macOS, fenêtre séparée seulement. Le repli
+  vers la Connexion Bureau à distance de Windows devient `xfreerdp` ou Remmina avec le fichier `.rdp` du PVWA.
+- **Secrets** (coffre local, journal d'intervention, aujourd'hui DPAPI) : trousseau du système (libsecret/GNOME
+  Keyring, KWallet, Trousseau de macOS). Point de sécurité à concevoir avec soin.
+- **Verrouillage du poste** (arrêt du partage, secrets effacés) : signal de logind (D-Bus) sous Linux.
+- **Glisser vers le gestionnaire de fichiers** : par un fichier temporaire, moins direct que vers l'Explorateur.
+- **Imports** : les sessions PuTTY de Linux sont des fichiers (`~/.putty/sessions`), pas le registre.
+- Par étapes : connexion, « Disponibles », « Mes serveurs », terminal et onglet Fichiers d'abord ; puis PSM via
+  FreeRDP ; puis Intervention, partage (compatible entre Windows et Linux, le protocole est dans Core), KeePass.
+- **Version légère en ligne de commande**, plus rapide : connexion au PVWA, recherche des comptes, puis `ssh` du
+  système vers le PSMP et `xfreerdp` pour PSM. Sans onglet Fichiers, Intervention ni partage.
+- L'application tourne déjà sous Wine (captures des guides), mais pas pour un usage réel : la protection des secrets
+  par Wine n'est pas celle de Windows, et PSM dans un onglet n'y est pas testé.
+
 ## Distribution et projet
 
 - **Exécutable signé** : sans signature, SmartScreen, l'antivirus ou AppLocker peuvent bloquer l'application. Il
