@@ -2,6 +2,7 @@
   <!-- Terminal : la palette, la taille de police et le clic droit des Paramètres sont partagés tels quels avec ZillaTerm.App ;
        l'affichage (TerminalView) est porté dans Terminal/. -->
   <ItemGroup>
+    <Compile Remove="..\ZillaTerm.App\Terminal\TerminalAppearance.cs" />
     <Compile Include="..\ZillaTerm.App\Terminal\TerminalAppearance.cs" Link="Terminal\TerminalAppearance.cs" />
   </ItemGroup>
 </Project>
