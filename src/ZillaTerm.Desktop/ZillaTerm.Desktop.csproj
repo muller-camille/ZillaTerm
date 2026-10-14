@@ -54,4 +54,7 @@
     <InternalsVisibleTo Include="ZillaTerm.Desktop.Tests" />
   </ItemGroup>
 
+  <!-- Fichiers liés et paquets propres à une partie du portage (un fichier par partie, sans toucher à celui-ci). -->
+  <Import Project="Links\*.props" />
+
 </Project>
