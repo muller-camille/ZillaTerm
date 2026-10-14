@@ -1,0 +1,62 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.SharedHistoryDialog"
+                    Width="900" Height="540" MinWidth="560" MinHeight="300">
+    <views:DialogWindow.Styles>
+        <!-- Thème du DataGrid d'Avalonia et aspect des grilles de ZillaTerm : à déplacer dans App.axaml. -->
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <StyleInclude Source="avares://ZillaTerm/Themes/DataGridLook.axaml" />
+        <!-- Onglets d'un dialogue (comme les pages des Paramètres sous WPF) : en-têtes à la taille du texte, contenu encadré. -->
+        <Style Selector="TabControl#Tabs TabItem">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="Padding" Value="10,4" />
+        </Style>
+        <Style Selector="TabControl#Tabs">
+            <Setter Property="Padding" Value="0,4,0,0" />
+        </Style>
+    </views:DialogWindow.Styles>
+    <DockPanel Margin="16">
+        <TextBlock x:Name="HeaderText" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.CloseButton}" IsCancel="True" Margin="8,0,0,0" MinWidth="90"
+                    HorizontalContentAlignment="Center" />
+            <!-- Seulement sur l'onglet « Versions » : c'est là qu'on choisit la version à restaurer. -->
+            <Button x:Name="RestoreButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.SharedRestore}" Click="OnRestore" IsEnabled="False"
+                    MinWidth="90" HorizontalContentAlignment="Center" IsVisible="{Binding #VersionsTab.IsSelected}" />
+            <TextBlock x:Name="StatusText" TextWrapping="Wrap" VerticalAlignment="Center" Classes="Muted" />
+        </DockPanel>
+
+        <!-- Liaisons à sens unique : le DataGrid d'Avalonia lie ses colonnes dans les deux sens par défaut. -->
+        <TabControl x:Name="Tabs">
+            <TabItem Header="{x:Static loc:Strings.SharedHistoryChangesTab}">
+                <DataGrid x:Name="ChangesGrid" SelectionMode="Extended" x:CompileBindings="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="{x:Static loc:Strings.SharedColRevision}" Binding="{Binding Revision, Mode=OneWay}" Width="70" />
+                        <DataGridTextColumn Header="{x:Static loc:Strings.HistoryColTime}" Binding="{Binding Date, Mode=OneWay}" Width="130" />
+                        <DataGridTextColumn Header="{x:Static loc:Strings.SharedColBy}" Binding="{Binding By, Mode=OneWay}" Width="180" />
+                        <DataGridTextColumn Header="{x:Static loc:Strings.SharedColAction}" Binding="{Binding Action, Mode=OneWay}" Width="120" />
+                        <DataGridTextColumn Header="{x:Static loc:Strings.HistoryColServer}" Binding="{Binding Server, Mode=OneWay}" Width="*" />
+                        <DataGridTextColumn Header="{x:Static loc:Strings.SharedColFolder}" Binding="{Binding Folder, Mode=OneWay}" Width="140" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem x:Name="VersionsTab" Header="{x:Static loc:Strings.SharedHistoryVersionsTab}">
+                <DockPanel>
+                    <TextBlock x:Name="VersionsNote" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="2,6,2,6" Classes="Muted" />
+                    <DataGrid x:Name="VersionsGrid" SelectionMode="Single" SelectionChanged="OnVersionSelected" x:CompileBindings="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{x:Static loc:Strings.SharedColRevision}" Binding="{Binding Revision, Mode=OneWay}" Width="70" />
+                            <DataGridTextColumn Header="{x:Static loc:Strings.SharedColSaved}" Binding="{Binding Date, Mode=OneWay}" Width="130" />
+                            <DataGridTextColumn Header="{x:Static loc:Strings.SharedColBy}" Binding="{Binding By, Mode=OneWay}" Width="180" />
+                            <DataGridTextColumn Header="{x:Static loc:Strings.SharedColChanges}" Binding="{Binding Summary, Mode=OneWay}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</views:DialogWindow>

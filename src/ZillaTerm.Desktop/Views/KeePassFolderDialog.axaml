@@ -1,0 +1,42 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.KeePassFolderDialog"
+                    Title="{x:Static loc:Strings.KeePassFolderTitle}" Width="560" SizeToContent="Height" CanResize="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image Source="{DynamicResource IconKeePass}" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Top" />
+                <TextBlock x:Name="HeadingText" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </DockPanel>
+        </Border>
+        <!-- Accès d'urgence : l'avertissement en bandeau, sous le titre. -->
+        <Border DockPanel.Dock="Top" Classes="WarningBanner" Margin="16,12,16,0">
+            <TextBlock Text="{x:Static loc:Strings.KeePassEmergencyWarning}" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}" />
+        </Border>
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,4,16,16" Classes="DialogButtons">
+            <Button Content="{x:Static loc:Strings.Save}" IsDefault="True" Click="OnSave" />
+            <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Margin="8,0,0,0" />
+        </StackPanel>
+
+        <Grid Margin="16,12,16,8" ColumnDefinitions="140,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+            <Label Content="{x:Static loc:Strings.KeePassFileLabel}" Target="{Binding #FileBox}" Margin="0,0,8,8" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" x:Name="FileBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            <Button Grid.Column="2" x:Name="BrowseFileButton" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseFile" Margin="8,0,0,8" />
+            <Label Grid.Row="1" Content="{x:Static loc:Strings.NameLabel}" Target="{Binding #NameBox}" Margin="0,0,8,12" VerticalAlignment="Center" />
+            <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="NameBox" Margin="0,0,0,12" VerticalContentAlignment="Center" />
+            <CheckBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="UsesPasswordBox" Margin="0,0,0,10">
+                <AccessText Text="{x:Static loc:Strings.KeePassUsesPassword}" />
+            </CheckBox>
+            <Label Grid.Row="3" Content="{x:Static loc:Strings.KeePassKeyFileLabel}" Target="{Binding #KeyFileBox}" Margin="0,0,8,0" VerticalAlignment="Center" />
+            <TextBox Grid.Row="3" Grid.Column="1" x:Name="KeyFileBox" VerticalContentAlignment="Center" />
+            <Button Grid.Row="3" Grid.Column="2" Content="{x:Static loc:Strings.BrowseOther}" Click="OnBrowseKeyFile" Margin="8,0,0,0" />
+            <TextBlock Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Text="{x:Static loc:Strings.KeePassKeyFileHint}"
+                       Classes="Muted" TextWrapping="Wrap" Margin="0,4,0,8" />
+            <views:ErrorLine Grid.Row="5" Grid.ColumnSpan="3" x:Name="ErrorText" IsVisible="False" />
+        </Grid>
+    </DockPanel>
+</views:DialogWindow>

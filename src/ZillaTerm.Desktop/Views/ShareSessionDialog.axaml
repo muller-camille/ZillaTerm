@@ -1,0 +1,82 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.ShareSessionDialog"
+                    Title="{x:Static loc:Strings.ShareTitle}" Width="560" SizeToContent="Height" CanResize="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image Source="{DynamicResource IconScreenShare}" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="HeadingText" Text="{x:Static loc:Strings.ShareTitle}" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock x:Name="SessionText" Classes="Muted" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Classes="DialogFooter">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="StartButton" IsDefault="True" Click="OnStart">
+                        <AccessText Text="{x:Static loc:Strings.ShareStart}" />
+                    </Button>
+                    <Button x:Name="CopyButton" Click="OnCopy" IsVisible="False" ToolTip.Tip="{x:Static loc:Strings.ShareCopyInvitationTip}">
+                        <AccessText Text="{x:Static loc:Strings.ShareCopyInvitation}" />
+                    </Button>
+                    <Button x:Name="CancelButton" Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Margin="8,0,0,0" />
+                </StackPanel>
+                <views:ErrorLine x:Name="ErrorMessage" IsVisible="False" VerticalAlignment="Center" Margin="0,0,16,0" />
+            </DockPanel>
+        </Border>
+
+        <Panel Margin="16,12,16,12">
+            <!-- Avant : durée, main possible, ce que l'on accepte en partageant. -->
+            <StackPanel x:Name="OptionsPanel">
+                <TextBlock Text="{x:Static loc:Strings.ShareIntro}" TextWrapping="Wrap" Margin="0,0,0,12" />
+                <Grid Margin="0,0,0,10" ColumnDefinitions="Auto,160">
+                    <Label Content="{x:Static loc:Strings.ShareDurationLabel}" Target="{Binding #DurationBox}" MinWidth="140" Margin="0,0,8,0"
+                           VerticalAlignment="Center" />
+                    <ComboBox Grid.Column="1" x:Name="DurationBox" VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+                </Grid>
+                <CheckBox x:Name="ControlBox" Margin="0,0,0,2">
+                    <AccessText Text="{x:Static loc:Strings.ShareAllowControl}" TextWrapping="Wrap" />
+                </CheckBox>
+                <TextBlock x:Name="ControlHelp" Classes="OptionHelp" Text="{x:Static loc:Strings.ShareAllowControlHelp}" Margin="20,0,0,8" />
+                <TextBlock x:Name="ScreenHelp" Classes="OptionHelp" Text="{x:Static loc:Strings.ShareScreenHelp}" Margin="0,0,0,8" IsVisible="False" />
+                <Border Classes="WarningBanner" Margin="0,4,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{x:Static loc:Strings.ShareWarningTitle}" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}"
+                                   Margin="0,0,0,4" />
+                        <DockPanel Margin="0,0,0,3">
+                            <TextBlock Text="•" Margin="0,0,6,0" DockPanel.Dock="Left" />
+                            <TextBlock Text="{x:Static loc:Strings.ShareWarningVisible}" TextWrapping="Wrap" />
+                        </DockPanel>
+                        <DockPanel Margin="0,0,0,3">
+                            <TextBlock Text="•" Margin="0,0,6,0" DockPanel.Dock="Left" />
+                            <TextBlock Text="{x:Static loc:Strings.ShareWarningApproval}" TextWrapping="Wrap" />
+                        </DockPanel>
+                        <DockPanel>
+                            <TextBlock Text="•" Margin="0,0,6,0" DockPanel.Dock="Left" />
+                            <TextBlock Text="{x:Static loc:Strings.ShareWarningEnds}" TextWrapping="Wrap" />
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Après : l'invitation à envoyer, sa validité et par où passer. -->
+            <StackPanel x:Name="InvitationPanel" IsVisible="False">
+                <TextBlock Text="{x:Static loc:Strings.ShareInvitationIntro}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                <TextBox x:Name="InvitationBox" IsReadOnly="True" TextWrapping="Wrap" FontFamily="{StaticResource MonospaceFont}" Height="76"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto" Padding="6,4"
+                         AutomationProperties.Name="{x:Static loc:Strings.ShareInvitationName}" />
+                <TextBlock x:Name="ValidityText" TextWrapping="Wrap" Margin="0,8,0,0" />
+                <TextBlock x:Name="RouteText" TextWrapping="Wrap" Classes="Muted" Margin="0,4,0,0" />
+                <TextBlock Text="{x:Static loc:Strings.ShareInvitationSafety}" TextWrapping="Wrap" Classes="Muted" Margin="0,8,0,0" />
+                <views:AnnouncedText x:Name="CopiedText" Foreground="{DynamicResource SuccessBrush}" Margin="0,8,0,0" IsVisible="False"
+                                     Text="{x:Static loc:Strings.ShareInvitationCopied}" />
+            </StackPanel>
+        </Panel>
+    </DockPanel>
+</views:DialogWindow>

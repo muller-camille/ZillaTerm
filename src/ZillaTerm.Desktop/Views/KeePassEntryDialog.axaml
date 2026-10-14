@@ -1,0 +1,55 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.KeePassEntryDialog"
+                    Width="560" SizeToContent="Height" CanResize="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image Source="{DynamicResource IconKeePass}" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="VaultText" FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{x:Static loc:Strings.KeePassFolderTip}" Classes="Muted" Margin="0,2,0,0" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="16,4,16,16">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom" Classes="DialogButtons">
+                <Button x:Name="SaveButton" Content="{x:Static loc:Strings.Save}" IsDefault="True" Click="OnSave" />
+                <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Margin="8,0,0,0" />
+            </StackPanel>
+            <views:ErrorLine x:Name="ErrorText" IsVisible="False" VerticalAlignment="Center" Margin="0,0,12,0" />
+        </DockPanel>
+
+        <Grid Margin="16,12,16,8" ColumnDefinitions="130,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+            <Label Content="{x:Static loc:Strings.KeePassTitleLabel}" Target="{Binding #TitleBox}" Margin="0,0,8,8" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Grid.ColumnSpan="2" x:Name="TitleBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            <Label Grid.Row="1" Content="{x:Static loc:Strings.KeePassGroupLabel}" Target="{Binding #GroupBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="GroupBox" IsEditable="True" Margin="0,0,0,8" VerticalContentAlignment="Center"
+                      HorizontalAlignment="Stretch" />
+            <Label Grid.Row="2" Content="{x:Static loc:Strings.KeePassUrlLabel}" Target="{Binding #UrlBox}" Margin="0,0,8,0" VerticalAlignment="Center" />
+            <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="UrlBox" VerticalContentAlignment="Center"
+                     PlaceholderText="{x:Static loc:Strings.KeePassUrlHint}" TextChanged="OnUrlChanged" />
+            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="TargetText" Classes="Muted" Margin="0,3,0,8" />
+            <Label Grid.Row="4" Content="{x:Static loc:Strings.KeePassUserLabel}" Target="{Binding #UserBox}" Margin="0,0,8,8" VerticalAlignment="Center" />
+            <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" x:Name="UserBox" Margin="0,0,0,8" VerticalContentAlignment="Center"
+                     TextChanged="OnUrlChanged" />
+            <Label Grid.Row="5" x:Name="PasswordLabel" Content="{x:Static loc:Strings.KeePassPasswordLabel}" Target="{Binding #PasswordBox}"
+                   Margin="0,0,8,8" VerticalAlignment="Center" />
+            <!-- « Laisser vide pour garder le mot de passe actuel » (modification) : texte d'attente du champ, tant qu'il est vide. -->
+            <views:PasswordBox Grid.Row="5" Grid.Column="1" x:Name="PasswordBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            <CheckBox Grid.Row="5" Grid.Column="2" x:Name="ShowBox" Margin="8,0,0,8" VerticalAlignment="Center"
+                      IsCheckedChanged="OnShowChanged">
+                <AccessText Text="{x:Static loc:Strings.KeePassShowPassword}" />
+            </CheckBox>
+            <Label Grid.Row="6" Content="{x:Static loc:Strings.KeePassNotesLabel}" Target="{Binding #NotesBox}" VerticalAlignment="Top"
+                   Margin="0,0,8,0" />
+            <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" x:Name="NotesBox" Height="70" AcceptsReturn="True" TextWrapping="Wrap"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="0,0,0,8" />
+        </Grid>
+    </DockPanel>
+</views:DialogWindow>

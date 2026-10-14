@@ -1,0 +1,45 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.KeePassUnlockDialog"
+                    Title="{x:Static loc:Strings.KeePassUnlockTitle}" Width="520" SizeToContent="Height" CanResize="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image Source="{DynamicResource IconKeePass}" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="NameText" FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="PathText" Classes="Muted" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,4,16,16" Classes="DialogButtons">
+            <Button x:Name="UnlockButton" Content="{x:Static loc:Strings.KeePassUnlock}" IsDefault="True" Click="OnUnlock" />
+            <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Margin="8,0,0,0" Click="OnCancel" />
+        </StackPanel>
+
+        <Grid x:Name="Form" Margin="16,12,16,8" ColumnDefinitions="140,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+            <Label x:Name="PasswordLabel" Content="{x:Static loc:Strings.KeePassMasterPasswordLabel}" Target="{Binding #PasswordBox}"
+                   Margin="0,0,8,8" VerticalAlignment="Center" />
+            <views:PasswordBox Grid.Column="1" Grid.ColumnSpan="2" x:Name="PasswordBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            <Label Grid.Row="1" Content="{x:Static loc:Strings.KeePassKeyFileLabel}" Target="{Binding #KeyFileBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <TextBox Grid.Row="1" Grid.Column="1" x:Name="KeyFileBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            <Button Grid.Row="1" Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseKeyFile" Margin="8,0,0,8" />
+            <CheckBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="RememberBox" Margin="0,2,0,0">
+                <AccessText Text="{x:Static loc:Strings.KeePassRemember}" TextWrapping="Wrap" />
+            </CheckBox>
+            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="RememberHint" Text="{x:Static loc:Strings.KeePassRememberHint}"
+                       Classes="Muted" TextWrapping="Wrap" Margin="20,2,0,8" />
+            <ProgressBar Grid.Row="4" Grid.ColumnSpan="3" x:Name="Progress" Height="6" MinHeight="6" IsIndeterminate="True" Margin="0,4,0,4"
+                         IsVisible="False" />
+            <views:AnnouncedText Grid.Row="5" Grid.ColumnSpan="3" x:Name="MessageText" TextWrapping="Wrap" IsVisible="False"
+                                 AutomationProperties.LiveSetting="Assertive" />
+            <views:AnnouncedText Grid.Row="6" Grid.ColumnSpan="3" x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}"
+                                 Foreground="{DynamicResource WarningBrush}" Margin="0,4,0,0" IsVisible="False" />
+        </Grid>
+    </DockPanel>
+</views:DialogWindow>

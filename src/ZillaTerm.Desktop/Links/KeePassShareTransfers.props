@@ -1,0 +1,17 @@
+<Project>
+  <!-- KeePass (coffres, entrées, déverrouillage), partage de sessions, historique et vérification des transferts. -->
+
+  <ItemGroup>
+    <!-- Grilles des historiques (transferts, listes partagées) et des sommes de contrôle. Son thème
+         (avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml) est inclus par chaque fenêtre qui en a une : à déplacer
+         dans App.axaml. -->
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+    <!-- DPAPI (Windows) : protection du coffre local des mots de passe maîtres KeePass (Services/KeePass/DpapiProtector.cs). -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Coffres KeePass ouverts, coffre local et journal des accès d'urgence : sans WPF, partagé tel quel. -->
+    <Compile Include="..\ZillaTerm.App\Services\KeePass\KeePassManager.cs" Link="Shared\Services\KeePass\KeePassManager.cs" />
+  </ItemGroup>
+</Project>

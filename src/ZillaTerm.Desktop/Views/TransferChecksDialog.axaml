@@ -1,0 +1,41 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.TransferChecksDialog"
+                    Title="{x:Static loc:Strings.ChecksTitle}" Width="1240" Height="460" MinWidth="640" MinHeight="260">
+    <views:DialogWindow.Styles>
+        <!-- Thème du DataGrid d'Avalonia et aspect des grilles de ZillaTerm : à déplacer dans App.axaml. -->
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <StyleInclude Source="avares://ZillaTerm/Themes/DataGridLook.axaml" />
+        <!-- Vert si identique, rouge si différent, orange si non vérifié. -->
+        <Style Selector="TextBlock.ResultText">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="TextBlock.ResultText.Identical">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+        <Style Selector="TextBlock.ResultText.Different">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <!-- Ligne sélectionnée : couleur du texte de la sélection, la seule lisible sur son fond (le texte dit le résultat). -->
+        <Style Selector="DataGridRow:selected TextBlock.ResultText">
+            <Setter Property="Foreground" Value="{Binding $parent[DataGridRow].Foreground}" />
+        </Style>
+    </views:DialogWindow.Styles>
+    <DockPanel Margin="16">
+        <TextBlock x:Name="HeadingText" DockPanel.Dock="Top" FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,4" />
+        <TextBlock x:Name="IntroText" DockPanel.Dock="Top" Classes="Muted" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Classes="DialogButtons">
+                <Button Content="{x:Static loc:Strings.ChecksCopy}" ToolTip.Tip="{x:Static loc:Strings.ChecksCopyTip}" Click="OnCopy" />
+                <Button Content="{x:Static loc:Strings.CloseButton}" IsCancel="True" IsDefault="True" Margin="8,0,0,0" />
+            </StackPanel>
+            <TextBlock x:Name="CopiedText" Classes="Muted" VerticalAlignment="Center" Margin="0,0,12,0" />
+        </DockPanel>
+
+        <DataGrid x:Name="ChecksGrid" SelectionMode="Extended" />
+    </DockPanel>
+</views:DialogWindow>
