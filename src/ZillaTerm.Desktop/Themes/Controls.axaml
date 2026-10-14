@@ -195,7 +195,7 @@
                     <Border DockPanel.Dock="Left" Background="{DynamicResource SideStripBrush}">
                         <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Margin="0,4,0,0" />
                     </Border>
-                    <Border Background="{DynamicResource SidePanelBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                    <Border Name="SidePanelContent" Background="{DynamicResource SidePanelBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
                             BorderThickness="0,0,1,0">
                         <Panel>
                             <ContentPresenter Name="PART_SelectedContentHost2" IsVisible="False" />
@@ -254,16 +254,27 @@
                 <DockPanel>
                     <Border DockPanel.Dock="Top" Background="{DynamicResource TabStripBrush}" Padding="6,6,6,0"
                             BorderBrush="{DynamicResource MainTabBorderBrush}" BorderThickness="0,0,0,1">
-                        <!-- Trop d'onglets : la bande défile (molette, onglet choisi toujours visible). -->
-                        <ScrollViewer Name="TabScroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
-                                      Focusable="False" Margin="0,0,0,-1">
-                            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
-                        </ScrollViewer>
+                        <!-- Trop d'onglets : la bande défile (molette, onglet choisi toujours visible) et « ⌄ » les liste
+                             tous (MainWindow.Tabs.cs). -->
+                        <DockPanel>
+                            <Button Name="TabListButton" DockPanel.Dock="Right" Theme="{StaticResource SmallToolButton}"
+                                    Margin="4,0,0,3" VerticalAlignment="Center" IsVisible="False">
+                                <Path Data="M0,0 L5,5 L10,0" Stroke="{DynamicResource SidePanelForeground}" StrokeThickness="1.8"
+                                      Width="10" Height="6" Margin="3,4" />
+                            </Button>
+                            <ScrollViewer Name="TabScroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
+                                          Focusable="False" Margin="0,0,0,-1">
+                                <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+                            </ScrollViewer>
+                        </DockPanel>
                     </Border>
                     <Border Background="{DynamicResource ContentBrush}">
                         <Panel>
                             <ContentPresenter Name="PART_SelectedContentHost2" IsVisible="False" />
                             <ContentPresenter Name="PART_SelectedContentHost" />
+                            <!-- Onglets Bureau à distance : leur contenu reste ici en permanence (seulement masqué), pour que
+                                 la fenêtre du client Bureau à distance ne soit jamais retirée de la fenêtre pendant la session. -->
+                            <Grid Name="RdpLayer" />
                         </Panel>
                     </Border>
                 </DockPanel>

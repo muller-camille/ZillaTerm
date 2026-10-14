@@ -5,6 +5,9 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using ZillaTerm.App.Localization;
+using ZillaTerm.App.Services;
+using ZillaTerm.App.Services.KeePass;
+using ZillaTerm.App.Services.Rdp;
 using ZillaTerm.App.Views;
 using ZillaTerm.Core;
 using ZillaTerm.Core.Diagnostics;
@@ -16,6 +19,8 @@ public partial class App : Application
 {
     private AppSettings _settings = new();
     private CultureInfo _systemCulture = CultureInfo.CurrentUICulture;
+    private KeePassManager? _keePass;
+    private IClassicDesktopStyleApplicationLifetime? _desktop;
 
     // Une seule instance par session : deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et les
     // fichiers en cours de modification. Même nom que l'application WPF : elles ne tournent pas en même temps.
@@ -28,8 +33,11 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            _desktop = desktop;
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             desktop.Exit += (_, _) => Release();
+            // Fin de la session du poste (déconnexion, arrêt) : nettoyage immédiat, sans question (voir EndWithWindowsSession).
+            desktop.ShutdownRequested += (_, _) => EndWithSystemSession(desktop);
             Dispatcher.UIThread.UnhandledException += (_, e) =>
             {
                 DebugLog.Write("app", "Exception non gérée", e.Exception);
@@ -83,6 +91,12 @@ public partial class App : Application
             }
         };
         TaskScheduler.UnobservedTaskException += (_, args) => DebugLog.Write("app", "Exception d'une tâche non observée", args.Exception);
+        RemoteEditor.CleanupStale();
+        FileBrowserPanel.CleanupDragFolders();
+        PrivateTemp.CleanupLegacy();
+        _keePass = new KeePassManager();
+        // Verrouillage du poste : coffres verrouillés, maintien de la session PVWA suspendu, partage arrêté.
+        SessionLock.Start();
         UiLanguage.Apply(UiLanguage.Resolve(_settings.Language, _systemCulture));
         if (_settings.SetAsideFile is { } aside)
         {
@@ -117,12 +131,13 @@ public partial class App : Application
 
             if (!ok)
             {
-                desktop.Shutdown();
+                Quit(desktop);
                 return;
             }
 
             // Client null : accès d'urgence, sans CyberArk (coffres KeePass seulement).
-            var main = new MainWindow(login.EmergencyRequested ? null : login.Client, _settings, login.SessionUser, login.VaultUser, login.Method);
+            var main = new MainWindow(login.EmergencyRequested ? null : login.Client, _settings, login.SessionUser, login.VaultUser, _keePass!,
+                login.Method);
             desktop.MainWindow = main;
             var closed = new TaskCompletionSource();
             main.Closed += (_, _) => closed.TrySetResult();
@@ -130,17 +145,67 @@ public partial class App : Application
             await closed.Task;
             if (!main.LogoutRequested)
             {
-                desktop.Shutdown();
+                Quit(desktop);
                 return;
             }
         }
     }
 
+    /// <summary>
+    /// Fin de la session du poste : le système peut arrêter le processus sans attendre la fermeture ordonnée (questions,
+    /// suites asynchrones). Le nettoyage essentiel est donc fait ici, de façon synchrone, puis celui de la fermeture.
+    /// </summary>
+    private void EndWithSystemSession(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        DebugLog.Write("app", "Fin de la session du poste.");
+        foreach (var main in desktop.Windows.OfType<MainWindow>().ToList())
+        {
+            main.EndWithWindowsSession();
+        }
+
+        if (RdpSession.ControlWindowsLeft)
+        {
+            ExitNow();
+        }
+
+        Release();
+    }
+
+    /// <summary>
+    /// Fin immédiate, après le nettoyage : une session Bureau à distance bloquée garde une fenêtre de son client que
+    /// l'arrêt normal attendrait (l'application resterait figée).
+    /// </summary>
+    internal static void ExitNow()
+    {
+        DebugLog.Write("app", "Session Bureau à distance bloquée à la fermeture : arrêt immédiat de l'application.");
+        (Current as App)?.Release();
+        Environment.Exit(0);
+    }
+
+    /// <summary>Fin de l'application ; immédiate si une session Bureau à distance fermée est encore bloquée.</summary>
+    private static void Quit(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        if (RdpSession.ControlWindowsLeft)
+        {
+            ExitNow();
+        }
+
+        desktop.Shutdown();
+    }
+
     private void Release()
     {
         DebugLog.Write("app", "Fermeture de l'application.");
-        _instance?.ReleaseMutex();
-        _instance?.Dispose();
-        _instance = null;
+        // Intervention en cours d'enregistrement : sa fin est écrite avant que ZillaTerm s'arrête.
+        InterventionRecorder.Current.Stop(Strings.InterventionStoppedAtExit);
+        SessionLock.Stop();
+        _keePass?.Dispose();
+        _keePass = null;
+        if (_instance is not null)
+        {
+            _instance.ReleaseMutex();
+            _instance.Dispose();
+            _instance = null;
+        }
     }
 }

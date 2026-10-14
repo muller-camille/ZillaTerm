@@ -35,8 +35,9 @@ internal static class Pickers
     }
 
     /// <summary>Fichier à enregistrer ; null si annulé.</summary>
+    /// <param name="overwritePrompt">Faux : pas de question pour un fichier existant (l'appelant le traite lui-même).</param>
     public static async Task<string?> SaveFileAsync(Window owner, string? filter = null, string? suggestedName = null, string? title = null,
-        string? folder = null)
+        string? folder = null, bool overwritePrompt = true)
     {
         var types = Types(filter);
         var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -46,7 +47,7 @@ internal static class Pickers
             FileTypeChoices = types,
             DefaultExtension = types?.FirstOrDefault()?.Patterns?.FirstOrDefault() is { } pattern && pattern.StartsWith("*.", StringComparison.Ordinal)
                 && pattern.IndexOf('*', 2) < 0 ? pattern[2..] : null,
-            ShowOverwritePrompt = true,
+            ShowOverwritePrompt = overwritePrompt,
             SuggestedStartLocation = await Folder(owner, folder),
         });
         return file?.TryGetLocalPath();

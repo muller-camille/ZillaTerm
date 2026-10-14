@@ -39,8 +39,22 @@ depuis `ZillaTerm.App` (WPF), qui reste l'application publiée pour Windows tant
 | `SetResourceReference(prop, "X")` | `control[!prop] = control.GetResourceObservable("X").ToBinding()` |
 | `ListView` + `GridView` | `DataGrid` (`Avalonia.Controls.DataGrid`) ou `ListBox` à modèle en colonnes |
 | `x:Name` | `x:Name` (champ généré, comme en WPF) |
+| `Window.GetWindow(control)` | `TopLevel.GetTopLevel(control) as Window` |
+| `ActualWidth` / `ActualHeight` | `Bounds.Width` / `Bounds.Height` |
+| `window.Left/Top = …` | `ScreenPlacement.OpenBeside(window, owner)` ou `ScreenPlacement.OpenAt(window, point, dx, dy)` |
+| `IsLoaded` (fenêtre) | indicateur posé dans `Opened` (`_opened` de la fenêtre principale) |
+| `MouseDown` + `MouseButton.Middle` | `PointerReleased` + `e.InitialPressMouseButton == MouseButton.Middle` |
+| `MenuItem.InputGestureText = "Ctrl+Maj+F"` | `Header = MenuHeader.WithGesture(texte, raccourci)` (texte traduit gardé) |
+| `menu.PlacementTarget = x; menu.IsOpen = true` | `menu.Open(x)` |
+| Rappel synchrone d'une bibliothèque qui pose une question (`Dispatcher.Invoke(() => dialog.ShowDialog())`) | `UiWait.Run(() => QuestionAsync(…))` |
+| `InputManager.Current.MostRecentInputDevice` | indicateur tenu par la fenêtre (gestionnaires `KeyDown` / `PointerPressed` en tunnel) |
+| `Process.Start("explorer.exe", …)` (WindowsExplorer) | `FileManager.ShowFile` / `FileManager.OpenFolder` (Explorateur, Finder, gestionnaire du bureau) |
 
 Les modèles de données (`DataTemplate`) déclarent leur type (`x:DataType`) : les liaisons sont compilées.
+
+Les questions deviennent asynchrones : une méthode qui en posait une (`bool ConfirmX()`) devient `Task<bool>
+ConfirmXAsync()`, et ses appelants attendent la réponse. Après un `await`, l'état a pu changer (onglet fermé entre-temps,
+déconnexion) : il est revérifié avant d'agir.
 
 ## Règles
 

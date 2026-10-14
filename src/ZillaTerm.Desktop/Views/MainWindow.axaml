@@ -1,7 +1,973 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:app="clr-namespace:ZillaTerm.App"
+        xmlns:views="clr-namespace:ZillaTerm.App.Views"
+        xmlns:core="clr-namespace:ZillaTerm.Core;assembly=ZillaTerm.Core"
+        xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
         x:Class="ZillaTerm.App.Views.MainWindow"
         Title="ZillaTerm"
         Width="1280" Height="780" MinWidth="820" MinHeight="480"
         WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <app:KindIconConverter x:Key="KindIcon" />
+        <app:RecentDateConverter x:Key="RecentDate" />
+
+        <!-- Menu contextuel des comptes : arbre « Disponibles » et résultats de la connexion rapide de l'accueil. -->
+        <ContextMenu x:Key="AccountMenu" x:Shared="False" Opened="OnAccountMenuOpened">
+            <MenuItem Tag="psm" Header="{x:Static loc:Strings.MenuConnectPsm}" Click="OnConnectPsm" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnect}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="ssh" Header="{x:Static loc:Strings.MenuConnectSsh}" Click="OnConnectSsh">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconSsh}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="sftp" Header="{x:Static loc:Strings.MenuConnectSftp}" Click="OnConnectSftp" ToolTip.ShowOnDisabled="True">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconFiles}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuConnectAdvanced}" Click="OnConnectAdvanced">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnectAdvanced}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuPassword}">
+                <MenuItem Header="{x:Static loc:Strings.MenuCopyPassword}" Click="OnCopyPassword" />
+                <Separator />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmVerify}" Click="OnCpmVerify" />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmChange}" Click="OnCpmChange" />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmReconcile}" Click="OnCpmReconcile" />
+            </MenuItem>
+            <Separator />
+            <MenuItem Tag="addcurrent" Header="{x:Static loc:Strings.MenuAddToMyServers}" Click="OnAddAccountToCurrent">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconBookmark}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="safemembers" Click="OnShowSafeMembers">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconPermissions}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="addaccount" Click="OnAddAccount" />
+            <MenuItem Tag="importaccounts" Header="{x:Static loc:Strings.MenuImportAccounts}" Click="OnImportAccounts">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconImport}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="exportaccounts" Header="{x:Static loc:Strings.MenuExportAccounts}" Click="OnExport">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconExport}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuEditAccount}" Click="OnEditAccount">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconEdit}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuDeleteAccount}" Click="OnDeleteAccount">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDelete}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuCopyServer}" Click="OnCopyAddress" />
+            <MenuItem Header="{x:Static loc:Strings.MenuCopyUser}" Click="OnCopyUser" />
+            <MenuItem Header="{x:Static loc:Strings.MenuCopyDomainUser}" Click="OnCopyDomainUser" />
+        </ContextMenu>
+
+        <!-- Menu des connexions récentes de l'accueil. -->
+        <ContextMenu x:Key="RecentMenu" Opened="OnRecentMenuOpened">
+            <MenuItem Header="{x:Static loc:Strings.Connect}" Click="OnConnectRecent" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnect}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Tag="addcurrent" Header="{x:Static loc:Strings.MenuAddToMyServers}" ToolTip.ShowOnDisabled="True"
+                      Click="OnAddRecentToCurrent">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconBookmark}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuRemoveRecent}" Click="OnRemoveRecent" />
+        </ContextMenu>
+
+        <!-- Menus de « Mes serveurs ». -->
+        <ContextMenu x:Key="SavedSessionMenu" x:Shared="False" Opened="OnSavedSessionMenuOpened">
+            <MenuItem Tag="connect" Header="{x:Static loc:Strings.Connect}" Click="OnConnectSelectedSaved" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnect}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuConnectAdvanced}" Click="OnConnectSelectedSavedAdvanced">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnectAdvanced}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <!-- Plusieurs serveurs choisis (Ctrl+clic, Maj+clic) : les ouvrir ensemble. -->
+            <MenuItem Tag="parallel" Header="{x:Static loc:Strings.MenuOpenInParallel}" Click="OnOpenSavedInParallel">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconParallel}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="connectmany" Click="OnConnectMarkedSaved" ToolTip.ShowOnDisabled="True" />
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuPassword}">
+                <MenuItem Header="{x:Static loc:Strings.MenuCopyPassword}" Click="OnCopyPassword" />
+                <Separator />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmVerify}" Click="OnCpmVerify" />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmChange}" Click="OnCpmChange" />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmReconcile}" Click="OnCpmReconcile" />
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuProperties}" Click="OnEditSelectedSaved">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconEdit}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuRename}" Click="OnRenameSelectedSaved" />
+            <!-- Étiquette (PROD, QA…) du serveur, ou de tous les serveurs choisis. -->
+            <MenuItem Tag="tag" Header="{x:Static loc:Strings.MenuTag}" />
+            <MenuItem Tag="share" Header="{x:Static loc:Strings.MenuShareInList}" ToolTip.ShowOnDisabled="True">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconShared}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuRemoveFromMyServers}" Click="OnDeleteSelectedSaved">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDelete}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuSafeMembers}" Click="OnSafeMembersOfSelectedSaved">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconPermissions}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuCopyServer}" Click="OnCopyAddress" />
+            <MenuItem Header="{x:Static loc:Strings.MenuCopyUser}" Click="OnCopyUser" />
+        </ContextMenu>
+        <ContextMenu x:Key="SavedFolderMenu" x:Shared="False" Opened="OnSavedFolderMenuOpened">
+            <MenuItem Tag="parallel" Header="{x:Static loc:Strings.MenuOpenFolderInParallel}" Click="OnOpenFolderInParallel" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconParallel}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuNewSubfolder}" Click="OnNewFolder">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconNewFolder}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuRename}" Click="OnRenameSelectedSaved">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconEdit}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuDeleteFolder}" Click="OnDeleteSelectedSaved">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDelete}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <!-- Étiquette (PROD, QA…) de tous les serveurs du dossier et de ses sous-dossiers. -->
+            <MenuItem Tag="tag" Header="{x:Static loc:Strings.MenuTagFolder}" />
+            <Separator />
+            <MenuItem Tag="share" Header="{x:Static loc:Strings.MenuShareFolderInList}" ToolTip.ShowOnDisabled="True">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconShared}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+        <ContextMenu x:Key="SavedBackgroundMenu" x:Shared="False">
+            <MenuItem Header="{x:Static loc:Strings.NewFolderMenu}" Click="OnNewFolder">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconNewFolder}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassAdd}" Click="OnAddKeePass">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconKeePass}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+
+        <!-- Coffres KeePass de « Mes serveurs » (accès d'urgence hors CyberArk). -->
+        <ContextMenu x:Key="KeePassFolderMenu" x:Shared="False" Opened="OnKeePassFolderMenuOpened">
+            <MenuItem Tag="unlock" Header="{x:Static loc:Strings.MenuKeePassUnlock}" Click="OnKeePassUnlock" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconPermissions}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="lock" Header="{x:Static loc:Strings.MenuKeePassLock}" Click="OnKeePassLock" />
+            <MenuItem Tag="open" Header="{x:Static loc:Strings.MenuKeePassRefresh}" Click="OnKeePassReload">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconRefresh}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="open" Header="{x:Static loc:Strings.MenuKeePassNewEntry}" Click="OnKeePassNewEntry">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconEdit}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassProperties}" Click="OnKeePassProperties" />
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassRemove}" Click="OnKeePassRemove">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDelete}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+        <ContextMenu x:Key="KeePassGroupMenu" x:Shared="False">
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassNewEntry}" Click="OnKeePassNewEntry">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconEdit}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+        <ContextMenu x:Key="KeePassEntryMenu" x:Shared="False">
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassConnect}" Click="OnKeePassConnect" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnect}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassSsh}" Click="OnKeePassConnectSsh">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconSsh}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassRdp}" Click="OnKeePassConnectRdp">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconWindows}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassVnc}" Click="OnKeePassConnectVnc" ToolTip.Tip="{x:Static loc:Strings.MenuKeePassVncTip}">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnect}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassFiles}" Click="OnKeePassOpenFiles" ToolTip.Tip="{x:Static loc:Strings.MenuKeePassFilesTip}">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconFiles}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassEditEntry}" Click="OnKeePassEditEntry">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconEdit}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuKeePassDeleteEntry}" Click="OnKeePassDeleteEntry">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDelete}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+
+        <!-- Listes partagées de « Mes serveurs » (ouvrir et créer : menus « Importer » et « Partager » de l'en-tête). -->
+        <ContextMenu x:Key="SharedListMenu" x:Shared="False" Opened="OnSharedListMenuOpened">
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedHistory}" Click="OnSharedHistory" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconHistory}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedRefresh}" Click="OnRefreshSharedList">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconRefresh}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="readable" Header="{x:Static loc:Strings.MenuSharedCopyAll}" Click="OnCopySharedToMyServers">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconBookmark}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedShowFile}" Click="OnShowSharedListFile">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconFolder}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedClose}" Click="OnCloseSharedList" ToolTip.Tip="{x:Static loc:Strings.MenuSharedCloseTip}">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconClose}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+        <ContextMenu x:Key="SharedFolderMenu" x:Shared="False">
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedCopyFolder}" Click="OnCopySharedToMyServers" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconBookmark}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedRemoveFolder}" Click="OnRemoveFromSharedList">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDelete}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedHistory}" Click="OnSharedHistory">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconHistory}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+        <ContextMenu x:Key="SharedServerMenu" x:Shared="False">
+            <MenuItem Header="{x:Static loc:Strings.Connect}" Click="OnConnectSelectedSaved" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnect}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuConnectAdvanced}" Click="OnConnectSelectedSavedAdvanced">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconConnectAdvanced}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuPassword}">
+                <MenuItem Header="{x:Static loc:Strings.MenuCopyPassword}" Click="OnCopyPassword" />
+                <Separator />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmVerify}" Click="OnCpmVerify" />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmChange}" Click="OnCpmChange" />
+                <MenuItem Header="{x:Static loc:Strings.MenuCpmReconcile}" Click="OnCpmReconcile" />
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedCopyServer}" Click="OnCopySharedToMyServers">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconBookmark}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedRemoveServer}" Click="OnRemoveFromSharedList">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDelete}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuSafeMembers}" Click="OnSafeMembersOfSelectedSaved">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconPermissions}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.MenuSharedHistory}" Click="OnSharedHistory">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconHistory}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuCopyServer}" Click="OnCopyAddress" />
+            <MenuItem Header="{x:Static loc:Strings.MenuCopyUser}" Click="OnCopyUser" />
+        </ContextMenu>
+
+        <!-- Menu du bouton Paramètres : paramètres, journal de débogage (désactivé par défaut). -->
+        <ContextMenu x:Key="SettingsMenu" Opened="OnSettingsMenuOpened">
+            <MenuItem Header="{x:Static loc:Strings.MenuSettings}" Click="OnSettings" FontWeight="SemiBold">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconSettings}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Tag="debuglog" Header="{x:Static loc:Strings.MenuDebugLog}" ToggleType="CheckBox" Click="OnToggleDebugLog"
+                      ToolTip.Tip="{x:Static loc:Strings.MenuDebugLogTip}" />
+            <MenuItem Header="{x:Static loc:Strings.MenuDebugLogShow}" Click="OnShowDebugLog" />
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuEnvImport}" Click="OnImportEnvironment" ToolTip.Tip="{x:Static loc:Strings.MenuEnvImportTip}" />
+            <MenuItem Header="{x:Static loc:Strings.MenuEnvExport}" Click="OnExportEnvironment" ToolTip.Tip="{x:Static loc:Strings.MenuEnvExportTip}" />
+            <MenuItem Tag="sessionimport" Header="{x:Static loc:Strings.MenuSessionImport}" Click="OnImportSessions"
+                      ToolTip.Tip="{x:Static loc:Strings.SessionImportTip}">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconMigrate}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.MenuAbout}" Click="OnAbout" />
+        </ContextMenu>
+
+        <!-- Ligne « compte » réutilisée dans les listes (résultats de la connexion rapide). -->
+        <DataTemplate x:Key="AccountRow" x:DataType="core:PvwaAccount">
+            <DockPanel Margin="0,2">
+                <Image Source="{Binding Converter={StaticResource KindIcon}}" Width="18" Height="18" Margin="0,0,8,0" />
+                <StackPanel>
+                    <TextBlock TextTrimming="CharacterEllipsis">
+                        <Run Text="{Binding UserName, Mode=OneWay}" FontWeight="SemiBold" /><Run Text="@" Foreground="{DynamicResource MutedBrush}" /><Run Text="{Binding Address, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock FontSize="11" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis">
+                        <Run Text="{Binding PlatformId, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding SafeName, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </DockPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Window.Styles>
+        <!-- Serveur dont le compte est introuvable dans CyberArk : mention en clair, au contraste normal. -->
+        <Style Selector="TextBlock.MissingAccount">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="6,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <!-- Serveurs choisis avec Ctrl+clic ou Maj+clic : fond et coche ; sur la ligne sélectionnée, le fond de la sélection reste. -->
+        <Style Selector="StackPanel.Marked">
+            <Setter Property="Background" Value="{DynamicResource AccentLightBrush}" />
+        </Style>
+        <Style Selector="TreeViewItem:selected StackPanel.Marked">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="TreeView#SessionTree TreeViewItem, TreeView#SavedTree TreeViewItem">
+            <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
+        </Style>
+        <Style Selector="ListBox#QuickResults ListBoxItem">
+            <Setter Property="Padding" Value="6,3" />
+        </Style>
+    </Window.Styles>
+
+    <DockPanel>
+        <!-- ===== Barre d'outils ===== -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="6,4">
+            <!-- Un seul arrêt de tabulation pour la barre. -->
+            <DockPanel KeyboardNavigation.TabNavigation="Once" AutomationProperties.Name="{x:Static loc:Strings.A11yToolbar}">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="LogoutButton" Theme="{StaticResource ToolButton}" Click="OnLogout" ToolTip.Tip="{x:Static loc:Strings.ToolLogoutTip}"
+                            AutomationProperties.Name="{x:Static loc:Strings.ToolLogout}">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconLogout}" Classes="ToolIcon" />
+                            <TextBlock x:Name="LogoutLabel" Text="{x:Static loc:Strings.ToolLogout}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button Theme="{StaticResource ToolButton}" Click="OnExit" ToolTip.Tip="{x:Static loc:Strings.ToolExitTip}"
+                            AutomationProperties.Name="{x:Static loc:Strings.ToolExit}">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconExit}" Classes="ToolIcon" />
+                            <TextBlock Text="{x:Static loc:Strings.ToolExit}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <!-- Fenêtre étroite ou libellés longs : les boutons passent à la ligne au lieu d'être coupés. -->
+                <WrapPanel>
+                    <Button x:Name="ConnectButton" Theme="{StaticResource ToolButton}" Click="OnConnectDefault"
+                            ToolTip.Tip="{x:Static loc:Strings.ToolConnectTip}" AutomationProperties.Name="{x:Static loc:Strings.ToolConnect}">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconConnect}" Classes="ToolIcon" />
+                            <TextBlock Text="{x:Static loc:Strings.ToolConnect}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="SshButton" Theme="{StaticResource ToolButton}" Click="OnConnectSsh"
+                            ToolTip.Tip="{x:Static loc:Strings.ToolSshTip}" AutomationProperties.Name="SSH">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconSsh}" Classes="ToolIcon" />
+                            <TextBlock Text="SSH" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="AdvancedButton" Theme="{StaticResource ToolButton}" Click="OnConnectAdvanced"
+                            ToolTip.Tip="{x:Static loc:Strings.ToolAdvancedTip}" AutomationProperties.Name="{x:Static loc:Strings.ToolAdvanced}">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconConnectAdvanced}" Classes="ToolIcon" />
+                            <TextBlock Text="{x:Static loc:Strings.ToolAdvanced}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ParallelButton" Theme="{StaticResource ToolButton}" Click="OnParallel"
+                            ToolTip.Tip="{x:Static loc:Strings.ToolParallelTip}" AutomationProperties.Name="{x:Static loc:Strings.ToolParallel}">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconParallel}" Classes="ToolIcon" />
+                            <TextBlock Text="{x:Static loc:Strings.ToolParallel}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Rectangle Classes="ToolSeparator" />
+                    <Button x:Name="AddCurrentButton" Theme="{StaticResource ToolButton}" Click="OnAddToCurrent"
+                            ToolTip.Tip="{x:Static loc:Strings.ToolAddToMyServersTip}" AutomationProperties.Name="{x:Static loc:Strings.ToolAddToMyServers}">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconBookmark}" Classes="ToolIcon" />
+                            <TextBlock Text="{x:Static loc:Strings.ToolAddToMyServers}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="RefreshButton" Theme="{StaticResource ToolButton}" Click="OnRefresh" ToolTip.Tip="{x:Static loc:Strings.ToolRefreshTip}"
+                            AutomationProperties.Name="{x:Static loc:Strings.ToolRefresh}">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconRefresh}" Classes="ToolIcon" />
+                            <TextBlock Text="{x:Static loc:Strings.ToolRefresh}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Rectangle Classes="ToolSeparator" />
+                    <Button x:Name="HistoryButton" Theme="{StaticResource ToolButton}" Click="OnTransferHistory" ToolTip.Tip="{x:Static loc:Strings.HistoryTip}"
+                            AutomationProperties.Name="{x:Static loc:Strings.ToolHistory}">
+                        <StackPanel>
+                            <Panel>
+                                <Image Source="{DynamicResource IconTransferHistory}" Classes="ToolIcon" />
+                                <!-- Transfert en échec pas encore vu, quand l'onglet Fichiers (et son badge) est caché. -->
+                                <Border x:Name="HistoryBadge" IsVisible="False" CornerRadius="7" MinWidth="14" Height="14" Padding="3,0"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,-6,0"
+                                        Background="{DynamicResource StateFailedBrush}">
+                                    <TextBlock Text="!" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource BadgeForeground}" />
+                                </Border>
+                            </Panel>
+                            <TextBlock Text="{x:Static loc:Strings.ToolHistory}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="InterventionButton" Theme="{StaticResource ToolButton}" Click="OnIntervention" ToolTip.Tip="{x:Static loc:Strings.ToolInterventionTip}"
+                            AutomationProperties.Name="{x:Static loc:Strings.ToolIntervention}">
+                        <StackPanel>
+                            <Panel>
+                                <Image Source="{DynamicResource IconIntervention}" Classes="ToolIcon" />
+                                <!-- Intervention en cours d'enregistrement. -->
+                                <Ellipse x:Name="InterventionBadge" IsVisible="False" Width="11" Height="11" HorizontalAlignment="Right"
+                                         VerticalAlignment="Top" Margin="0,-3,-5,0" Fill="{DynamicResource StateFailedBrush}"
+                                         Stroke="{DynamicResource ToolbarBrush}" StrokeThickness="1.5" />
+                            </Panel>
+                            <TextBlock Text="{x:Static loc:Strings.ToolIntervention}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ShareButton" Theme="{StaticResource ToolButton}" Click="OnSharing" ToolTip.Tip="{x:Static loc:Strings.ToolSharingTip}"
+                            AutomationProperties.Name="{x:Static loc:Strings.ToolSharing}">
+                        <StackPanel>
+                            <Panel>
+                                <Image Source="{DynamicResource IconScreenShare}" Classes="ToolIcon" />
+                                <!-- Demande en attente : regarder une session, ou avoir la main. -->
+                                <Ellipse x:Name="ShareBadge" IsVisible="False" Width="11" Height="11" HorizontalAlignment="Right"
+                                         VerticalAlignment="Top" Margin="0,-3,-5,0" Fill="{DynamicResource BroadcastBrush}"
+                                         Stroke="{DynamicResource ToolbarBrush}" StrokeThickness="1.5" />
+                            </Panel>
+                            <TextBlock Text="{x:Static loc:Strings.ToolSharing}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="SettingsButton" Theme="{StaticResource ToolButton}" Click="OnSettingsMenu" ToolTip.Tip="{x:Static loc:Strings.ToolSettingsTip}"
+                            AutomationProperties.Name="{x:Static loc:Strings.ToolSettings}">
+                        <StackPanel>
+                            <Image Source="{DynamicResource IconSettings}" Classes="ToolIcon" />
+                            <TextBlock Text="{x:Static loc:Strings.ToolSettings}" Classes="ToolLabel" />
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ===== Barre d'état ===== -->
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource StatusBrush}" Padding="10,3">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" x:Name="SessionText" Foreground="{DynamicResource StatusMutedForeground}" VerticalAlignment="Center" />
+                <!-- Nouvelle version disponible (option des Paramètres, ou recherche depuis « À propos »). -->
+                <HyperlinkButton DockPanel.Dock="Right" x:Name="UpdateLink" IsVisible="False" Margin="0,0,16,0" Padding="0" Click="OnUpdateLink"
+                                 Foreground="{DynamicResource StatusWarningForeground}" VerticalAlignment="Center">
+                    <TextBlock x:Name="UpdateLinkText" TextDecorations="Underline" />
+                </HyperlinkButton>
+                <TextBlock DockPanel.Dock="Right" x:Name="InterventionIndicator" Foreground="{DynamicResource StatusWarningForeground}" Margin="0,0,16,0"
+                           IsVisible="False" Text="{x:Static loc:Strings.InterventionRecordingIndicator}" Cursor="Hand" VerticalAlignment="Center"
+                           PointerReleased="OnInterventionIndicatorClick" ToolTip.Tip="{x:Static loc:Strings.InterventionIndicatorTip}" />
+                <!-- Sessions partagées ou regardées, demandes en attente : un clic ouvre « Partage de sessions ». -->
+                <TextBlock DockPanel.Dock="Right" x:Name="ShareIndicator" Foreground="{DynamicResource StatusWarningForeground}" Margin="0,0,16,0"
+                           IsVisible="False" Cursor="Hand" PointerReleased="OnShareIndicatorClick" ToolTip.Tip="{x:Static loc:Strings.ShareIndicatorTip}"
+                           VerticalAlignment="Center" />
+                <TextBlock DockPanel.Dock="Right" x:Name="DebugLogText" Foreground="{DynamicResource StatusWarningForeground}" Margin="0,0,16,0" IsVisible="False"
+                           Text="{x:Static loc:Strings.DebugLogActive}" VerticalAlignment="Center" />
+                <TextBlock x:Name="CountText" Foreground="{DynamicResource StatusForeground}" Margin="0,0,16,0" VerticalAlignment="Center" />
+                <ProgressBar x:Name="LoadProgress" Width="140" MinWidth="140" Height="8" MinHeight="8" Margin="0,0,16,0" IsVisible="False"
+                             VerticalAlignment="Center" />
+                <views:AnnouncedText x:Name="StatusText" Foreground="{DynamicResource StatusOkForeground}" TextTrimming="CharacterEllipsis"
+                                     ToolTip.Tip="{Binding Text, RelativeSource={RelativeSource Self}}" VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <Grid x:Name="BodyGrid" ColumnDefinitions="400,5,*">
+            <!-- ===== Bandeau latéral : comptes disponibles / serveurs courants / fichiers ===== -->
+            <TabControl x:Name="SideTabs" Theme="{StaticResource SideTabControl}" SelectionChanged="OnSideTabChanged">
+                <TabItem x:Name="AvailableTab" ToolTip.Tip="{x:Static loc:Strings.TabAvailableTip}">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <LayoutTransformControl Margin="0,0,6,0">
+                                <LayoutTransformControl.LayoutTransform>
+                                    <RotateTransform Angle="90" />
+                                </LayoutTransformControl.LayoutTransform>
+                                <Image Source="{DynamicResource IconFolder}" Width="14" Height="14" />
+                            </LayoutTransformControl>
+                            <TextBlock Text="{x:Static loc:Strings.TabAvailable}" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <DockPanel TextElement.Foreground="{DynamicResource SidePanelForeground}">
+                        <StackPanel DockPanel.Dock="Top" Margin="8,8,8,6">
+                            <Panel>
+                                <TextBox x:Name="SearchBox" TextChanged="OnSearchChanged" Padding="24,4,22,4"
+                                         PlaceholderText="{x:Static loc:Strings.SearchPlaceholder}"
+                                         AutomationProperties.Name="{x:Static loc:Strings.SearchPlaceholder}"
+                                         ToolTip.Tip="{x:Static loc:Strings.SearchTip}" />
+                                <Image Source="{DynamicResource IconSearch}" Width="14" Height="14" HorizontalAlignment="Left"
+                                       Margin="6,0,0,0" IsHitTestVisible="False" />
+                                <views:ClearFieldButton Target="{Binding #SearchBox}" />
+                            </Panel>
+                            <DockPanel Margin="0,6,0,0">
+                                <Label Content="{x:Static loc:Strings.GroupBy}" Target="{Binding #GroupByBox}" Foreground="{DynamicResource MutedBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0" Padding="0" />
+                                <ComboBox x:Name="GroupByBox" SelectionChanged="OnGroupByChanged" HorizontalAlignment="Stretch" />
+                            </DockPanel>
+                        </StackPanel>
+                        <!-- État de la liste : chargement, échec (Réessayer), aucun compte, aucun résultat (Effacer le filtre). -->
+                        <StackPanel DockPanel.Dock="Top" x:Name="AvailableState" Margin="10,4,10,0" IsVisible="False">
+                            <views:AnnouncedText x:Name="AvailableStateText" TextWrapping="Wrap" Classes="Muted" />
+                            <Button x:Name="AvailableStateButton" HorizontalAlignment="Left" Margin="0,8,0,0" Click="OnAvailableStateAction" />
+                        </StackPanel>
+                        <TreeView x:Name="SessionTree" BorderThickness="0" Background="Transparent" Padding="2,0,0,0"
+                                  SelectionChanged="OnTreeSelectionChanged" KeyDown="OnTreeKeyDown" GotFocus="OnSelectorGotFocus"
+                                  DoubleTapped="OnTreeItemDoubleClick" ContextRequested="OnSessionTreeContextRequested">
+                            <TreeView.DataTemplates>
+                                <TreeDataTemplate DataType="app:FolderNode" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                                        <Image Source="{DynamicResource IconFolder}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Count, StringFormat=' ({0})'}" Classes="TreeNote" />
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                                <DataTemplate DataType="app:AccountNode">
+                                    <StackPanel Orientation="Horizontal" Margin="0,1" Background="Transparent" ToolTip.Tip="{Binding Details}">
+                                        <Image Source="{Binding Converter={StaticResource KindIcon}}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding Title}" />
+                                        <!-- Ce qui distingue les comptes du même nom, et le champ caché qui correspond à la recherche. -->
+                                        <TextBlock Text="{Binding Hint}" Classes="TreeNote" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                        <!-- Dernière opération du CPM en échec (détail dans l'info-bulle). -->
+                                        <TextBlock Text="⚠" Classes="TreeWarning" FontWeight="Bold" Margin="6,0,0,0" IsVisible="{Binding CpmFailed}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </TreeView.DataTemplates>
+                        </TreeView>
+                    </DockPanel>
+                </TabItem>
+                <TabItem x:Name="CurrentTab" DragDrop.AllowDrop="True" ToolTip.Tip="{x:Static loc:Strings.TabMyServersTip}">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <LayoutTransformControl Margin="0,0,6,0">
+                                <LayoutTransformControl.LayoutTransform>
+                                    <RotateTransform Angle="90" />
+                                </LayoutTransformControl.LayoutTransform>
+                                <Image Source="{DynamicResource IconBookmark}" Width="14" Height="14" />
+                            </LayoutTransformControl>
+                            <TextBlock Text="{x:Static loc:Strings.TabMyServers}" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <DockPanel TextElement.Foreground="{DynamicResource SidePanelForeground}">
+                        <DockPanel DockPanel.Dock="Top" Margin="8,8,6,4">
+                            <!-- Importer et partager : deux menus nommés ; actions sur l'élément choisi en icônes. -->
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" KeyboardNavigation.TabNavigation="Once">
+                                <Button x:Name="ImportMenuButton" Theme="{StaticResource SmallToolButton}" Click="OnHeaderMenu"
+                                        ToolTip.Tip="{x:Static loc:Strings.MyServersImportTip}" AutomationProperties.Name="{x:Static loc:Strings.MyServersImport}">
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="{x:Static loc:Strings.MenuImportServerFile}" Click="OnImportMyServers"
+                                                      ToolTip.Tip="{x:Static loc:Strings.ImportServersTip}">
+                                                <MenuItem.Icon>
+                                                    <Image Source="{DynamicResource IconImport}" Width="16" Height="16" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="{x:Static loc:Strings.MenuImportOtherTool}" Click="OnImportSessions"
+                                                      ToolTip.Tip="{x:Static loc:Strings.SessionImportTip}">
+                                                <MenuItem.Icon>
+                                                    <Image Source="{DynamicResource IconMigrate}" Width="16" Height="16" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="{x:Static loc:Strings.MenuOpenSharedList}" Click="OnOpenSharedList"
+                                                      ToolTip.Tip="{x:Static loc:Strings.SharedListsTip}">
+                                                <MenuItem.Icon>
+                                                    <Image Source="{DynamicResource IconShared}" Width="16" Height="16" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator />
+                                            <MenuItem Header="{x:Static loc:Strings.MenuKeePassAdd}" Click="OnAddKeePass" ToolTip.Tip="{x:Static loc:Strings.ToolKeePassTip}">
+                                                <MenuItem.Icon>
+                                                    <Image Source="{DynamicResource IconKeePass}" Width="16" Height="16" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{x:Static loc:Strings.MyServersImport}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                                        <Path Data="M0,0 L7,0 L3.5,4 Z" Fill="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" Margin="5,1,1,0" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="ShareMenuButton" Theme="{StaticResource SmallToolButton}" Click="OnHeaderMenu"
+                                        ToolTip.Tip="{x:Static loc:Strings.MyServersShareTip}" AutomationProperties.Name="{x:Static loc:Strings.MyServersShare}">
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="{x:Static loc:Strings.MenuExportMyServers}" Click="OnExportMyServers"
+                                                      ToolTip.Tip="{x:Static loc:Strings.ExportServersTip}">
+                                                <MenuItem.Icon>
+                                                    <Image Source="{DynamicResource IconExport}" Width="16" Height="16" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="{x:Static loc:Strings.MenuCreateSharedList}" Click="OnCreateSharedList"
+                                                      ToolTip.Tip="{x:Static loc:Strings.SharedListsTip}">
+                                                <MenuItem.Icon>
+                                                    <Image Source="{DynamicResource IconShared}" Width="16" Height="16" />
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{x:Static loc:Strings.MyServersShare}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                                        <Path Data="M0,0 L7,0 L3.5,4 Z" Fill="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" Margin="5,1,1,0" />
+                                    </StackPanel>
+                                </Button>
+                                <Rectangle x:Name="SharedSeparator" Width="1" Margin="2,4" Fill="{DynamicResource ToolbarBorderBrush}" />
+                                <!-- Accès d'urgence : sans les menus, la base KeePass s'ajoute par ce bouton. -->
+                                <Button x:Name="AddKeePassButton" Theme="{StaticResource SmallToolButton}" Click="OnAddKeePass" ToolTip.Tip="{x:Static loc:Strings.ToolKeePassTip}"
+                                        AutomationProperties.Name="{x:Static loc:Strings.ToolKeePassTip}" IsVisible="False">
+                                    <Image Source="{DynamicResource IconKeePass}" Classes="SmallIcon" />
+                                </Button>
+                                <Button x:Name="NewFolderButton" Theme="{StaticResource SmallToolButton}" Click="OnNewFolder" ToolTip.Tip="{x:Static loc:Strings.NewFolder}"
+                                        AutomationProperties.Name="{x:Static loc:Strings.NewFolder}">
+                                    <Image Source="{DynamicResource IconNewFolder}" Classes="SmallIcon" />
+                                </Button>
+                                <Button x:Name="EditSavedButton" Theme="{StaticResource SmallToolButton}" Click="OnEditSelectedSaved" ToolTip.Tip="{x:Static loc:Strings.EditSavedTip}"
+                                        AutomationProperties.Name="{x:Static loc:Strings.EditSavedTip}" IsEnabled="False">
+                                    <Image Source="{DynamicResource IconEdit}" Classes="SmallIcon" />
+                                </Button>
+                                <Button x:Name="DeleteSavedButton" Theme="{StaticResource SmallToolButton}" Click="OnDeleteSelectedSaved" ToolTip.Tip="{x:Static loc:Strings.DeleteSavedTip}"
+                                        AutomationProperties.Name="{x:Static loc:Strings.DeleteSavedTip}" IsEnabled="False">
+                                    <Image Source="{DynamicResource IconDelete}" Classes="SmallIcon" />
+                                </Button>
+                            </StackPanel>
+                            <TextBlock Text="{x:Static loc:Strings.MyServersHeading}" Classes="SectionTitle" Margin="0" VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
+                        </DockPanel>
+                        <Panel DockPanel.Dock="Top" Margin="8,2,8,6">
+                            <TextBox x:Name="SavedSearchBox" TextChanged="OnSavedSearchChanged" Padding="24,4,22,4"
+                                     PlaceholderText="{x:Static loc:Strings.SavedSearchPlaceholder}"
+                                     AutomationProperties.Name="{x:Static loc:Strings.SavedSearchPlaceholder}"
+                                     ToolTip.Tip="{x:Static loc:Strings.SavedSearchTip}" />
+                            <Image Source="{DynamicResource IconSearch}" Width="14" Height="14" HorizontalAlignment="Left"
+                                   Margin="6,0,0,0" IsHitTestVisible="False" />
+                            <views:ClearFieldButton Target="{Binding #SavedSearchBox}" />
+                        </Panel>
+                        <TextBlock DockPanel.Dock="Top" x:Name="NoSavedText" Margin="10,4,10,0" TextWrapping="Wrap" Classes="Muted"
+                                   Text="{x:Static loc:Strings.NoSavedHelp}" />
+                        <TreeView x:Name="SavedTree" BorderThickness="0" Background="Transparent" Padding="2,0,0,0" DragDrop.AllowDrop="True"
+                                  SelectionChanged="OnSavedSelectionChanged" KeyDown="OnSavedKeyDown" GotFocus="OnSelectorGotFocus"
+                                  DoubleTapped="OnSavedItemDoubleClick" ContextRequested="OnSavedTreeContextRequested">
+                            <TreeView.DataTemplates>
+                                <TreeDataTemplate DataType="app:KeePassFolderNode" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,2" Background="Transparent" ToolTip.Tip="{Binding Details}">
+                                        <Image Source="{DynamicResource IconKeePass}" Width="16" Height="16" Margin="0,0,6,0" Opacity="{Binding Opacity}" />
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding StateText}" Classes="TreeNote" />
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                                <TreeDataTemplate DataType="app:KeePassGroupNode" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,2" Background="Transparent">
+                                        <Image Source="{DynamicResource IconFolder}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding Name}" />
+                                        <TextBlock Text="{Binding Count, StringFormat=' ({0})'}" Classes="TreeNote" />
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                                <DataTemplate DataType="app:KeePassEntryNode">
+                                    <StackPanel Orientation="Horizontal" Margin="0,1" ToolTip.Tip="{Binding Details}" Background="Transparent">
+                                        <Image Source="{Binding Converter={StaticResource KindIcon}}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding Title}" />
+                                        <TextBlock Text="{Binding ModeText}" Classes="TreeNote" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                                <DataTemplate DataType="app:KeePassHintNode">
+                                    <StackPanel Orientation="Horizontal" Margin="0,1" Background="Transparent">
+                                        <Image Source="{DynamicResource IconPermissions}" Width="14" Height="14" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding Text}" FontStyle="Italic" Classes="TreeNote" />
+                                    </StackPanel>
+                                </DataTemplate>
+                                <TreeDataTemplate DataType="app:SharedListNode" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,2" Background="Transparent" ToolTip.Tip="{Binding Details}">
+                                        <Image Source="{DynamicResource IconShared}" Width="16" Height="16" Margin="0,0,6,0" Opacity="{Binding Opacity}" />
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding StateText}" Classes="TreeNote" />
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                                <TreeDataTemplate DataType="app:SharedFolderNode" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,2" Background="Transparent">
+                                        <Image Source="{DynamicResource IconFolder}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding Name}" />
+                                        <TextBlock Text="{Binding Count, StringFormat=' ({0})'}" Classes="TreeNote" />
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                                <DataTemplate DataType="app:SharedServerNode">
+                                    <StackPanel Orientation="Horizontal" Margin="0,1" ToolTip.Tip="{Binding Details}" Background="Transparent">
+                                        <Image Source="{Binding Converter={StaticResource KindIcon}}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <Border Background="{Binding TagBackground}" CornerRadius="3" Padding="5,0,5,1" Margin="0,0,6,0"
+                                                VerticalAlignment="Center" IsVisible="{Binding HasTag}">
+                                            <TextBlock Text="{Binding Tag.Name}" Foreground="{Binding TagForeground}" FontSize="10" FontWeight="SemiBold" />
+                                        </Border>
+                                        <TextBlock Text="{Binding Title}" />
+                                        <TextBlock Text="{Binding ModeText}" Classes="TreeNote" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                        <TextBlock Classes="TreeWarning MissingAccount" IsVisible="{Binding IsMissing}"
+                                                   Text="{Binding Source={x:Static loc:Strings.MissingInCyberArk}, StringFormat='⚠ {0}'}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                                <TreeDataTemplate DataType="app:SavedFolderNode" ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,2" Background="Transparent">
+                                        <Image Source="{DynamicResource IconFolder}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Count, StringFormat=' ({0})'}" Classes="TreeNote" />
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                                <DataTemplate DataType="app:SavedSessionNode">
+                                    <StackPanel Orientation="Horizontal" Margin="0,1" ToolTip.Tip="{Binding Details}" Background="Transparent"
+                                                Classes.Marked="{Binding IsMarked}">
+                                        <TextBlock Text="✓" Classes="TreeAccent" FontWeight="Bold" Margin="0,0,4,0" IsVisible="{Binding IsMarked}" />
+                                        <Image Source="{Binding Converter={StaticResource KindIcon}}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <Border Background="{Binding TagBackground}" CornerRadius="3" Padding="5,0,5,1" Margin="0,0,6,0"
+                                                VerticalAlignment="Center" IsVisible="{Binding HasTag}">
+                                            <TextBlock Text="{Binding Tag.Name}" Foreground="{Binding TagForeground}" FontSize="10" FontWeight="SemiBold" />
+                                        </Border>
+                                        <TextBlock Text="{Binding Title}" />
+                                        <TextBlock Text="{Binding ModeText}" Classes="TreeNote" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                        <TextBlock Classes="TreeWarning MissingAccount" IsVisible="{Binding IsMissing}"
+                                                   Text="{Binding Source={x:Static loc:Strings.MissingInCyberArk}, StringFormat='⚠ {0}'}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </TreeView.DataTemplates>
+                        </TreeView>
+                    </DockPanel>
+                </TabItem>
+                <TabItem x:Name="FilesTab" ToolTip.Tip="{x:Static loc:Strings.TabFilesTip}" IsVisible="False">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <LayoutTransformControl Margin="0,0,6,0">
+                                <LayoutTransformControl.LayoutTransform>
+                                    <RotateTransform Angle="90" />
+                                </LayoutTransformControl.LayoutTransform>
+                                <Image Source="{DynamicResource IconFiles}" Width="14" Height="14" />
+                            </LayoutTransformControl>
+                            <TextBlock Text="{x:Static loc:Strings.TabFiles}" FontWeight="SemiBold" />
+                            <!-- Pastille : transferts en cours (nombre), ou « ! » pour un échec pas encore vu. -->
+                            <Border x:Name="FilesBadge" IsVisible="False" CornerRadius="7" MinWidth="16" Height="14" Padding="4,0"
+                                    Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="FilesBadgeText" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Border>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <ContentControl x:Name="FilesHost" Foreground="{DynamicResource SidePanelForeground}" />
+                </TabItem>
+                <!-- Intervention enregistrée : titre, notes et historique à côté de la session, le temps de l'enregistrement. -->
+                <TabItem x:Name="InterventionTab" ToolTip.Tip="{x:Static loc:Strings.TabInterventionTip}" IsVisible="False">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <LayoutTransformControl Margin="0,0,6,0">
+                                <LayoutTransformControl.LayoutTransform>
+                                    <RotateTransform Angle="90" />
+                                </LayoutTransformControl.LayoutTransform>
+                                <Image Source="{DynamicResource IconIntervention}" Width="14" Height="14" />
+                            </LayoutTransformControl>
+                            <TextBlock Text="{x:Static loc:Strings.ToolIntervention}" FontWeight="SemiBold" />
+                            <!-- Pastille rouge : enregistrement en cours. -->
+                            <Ellipse x:Name="InterventionTabDot" Width="7" Height="7" Fill="#D32F2F" Margin="6,0,0,0" VerticalAlignment="Center"
+                                     IsVisible="False" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <ContentControl x:Name="InterventionHost" Foreground="{DynamicResource SidePanelForeground}" />
+                </TabItem>
+            </TabControl>
+
+            <!-- Largeur mémorisée ; double-clic (ou Ctrl+B) : replier ou déplier le panneau. -->
+            <GridSplitter Grid.Column="1" x:Name="SideSplitter" ResizeDirection="Columns" Background="{DynamicResource TabStripBrush}"
+                          DragCompleted="OnSideSplitterDragged" DoubleTapped="OnSideSplitterDoubleClick"
+                          ToolTip.Tip="{x:Static loc:Strings.SideSplitterTip}" />
+
+            <!-- ===== Zone principale : onglets ===== -->
+            <TabControl Grid.Column="2" x:Name="MainTabs" Theme="{StaticResource MainTabControl}" SelectionChanged="OnMainTabChanged">
+                <TabItem x:Name="HomeTab">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{DynamicResource IconHome}" Width="16" Height="16" Margin="0,0,6,0" />
+                            <TextBlock Text="{x:Static loc:Strings.TabHome}" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid MaxWidth="980" Margin="36,28,36,24" HorizontalAlignment="Stretch" RowDefinitions="Auto,Auto,Auto,Auto">
+                            <DockPanel Grid.Row="0" Margin="0,0,0,20">
+                                <Image Source="{DynamicResource IconConnect}" Width="54" Height="54" Margin="0,0,14,0" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="ZillaTerm" FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource HeadingBrush}" />
+                                    <TextBlock x:Name="WelcomeText" Classes="Muted" FontSize="13" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <!-- Connexion rapide -->
+                            <Border Grid.Row="1" x:Name="QuickPanel" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" CornerRadius="4"
+                                    Background="{DynamicResource ContentBrush}" Margin="0,0,0,4">
+                                <Panel>
+                                    <TextBox x:Name="QuickBox" BorderThickness="0" FontSize="15" Padding="36,8,30,8" Background="Transparent"
+                                             PlaceholderText="{x:Static loc:Strings.QuickPlaceholder}"
+                                             AutomationProperties.Name="{x:Static loc:Strings.QuickPlaceholder}"
+                                             TextChanged="OnQuickChanged" />
+                                    <Image Source="{DynamicResource IconSearch}" Width="18" Height="18" HorizontalAlignment="Left"
+                                           Margin="10,0,0,0" IsHitTestVisible="False" />
+                                    <views:ClearFieldButton Target="{Binding #QuickBox}" Margin="0,0,8,0" />
+                                </Panel>
+                            </Border>
+                            <Border Grid.Row="2" x:Name="QuickResultsPanel" BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="1"
+                                    CornerRadius="0,0,4,4" IsVisible="False" Margin="0,0,0,8">
+                                <DockPanel>
+                                    <!-- Aucun résultat, liste limitée, chargement en cours : dit plutôt que de masquer la liste. -->
+                                    <views:AnnouncedText DockPanel.Dock="Bottom" x:Name="QuickInfo" Margin="10,6" TextWrapping="Wrap" Classes="Muted" />
+                                    <ListBox x:Name="QuickResults" BorderThickness="0" MaxHeight="320" Background="Transparent"
+                                             ItemTemplate="{StaticResource AccountRow}" ContextMenu="{StaticResource AccountMenu}"
+                                             SelectionChanged="OnListSelectionChanged" KeyDown="OnListKeyDown" GotFocus="OnSelectorGotFocus"
+                                             DoubleTapped="OnAccountItemDoubleClick" />
+                                </DockPanel>
+                            </Border>
+
+                            <Grid Grid.Row="3" x:Name="HomeLists" Margin="0,18,0,0" ColumnDefinitions="3*,24,2*">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <Image Source="{DynamicResource IconHistory}" Width="16" Height="16" Margin="0,0,6,0" />
+                                        <!-- Tant que les comptes du PVWA ne sont pas chargés, les connexions récentes sont grisées. -->
+                                        <TextBlock x:Name="RecentLoadingText" DockPanel.Dock="Right" Classes="Muted"
+                                                   VerticalAlignment="Center" Margin="12,0,0,0" FontStyle="Italic" IsVisible="False"
+                                                   Text="{x:Static loc:Strings.RecentWaitingAccounts}" />
+                                        <TextBlock Text="{x:Static loc:Strings.RecentSessions}" Classes="SectionTitle" Margin="0" />
+                                    </DockPanel>
+                                    <Border BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="1" CornerRadius="4">
+                                        <Panel>
+                                            <TextBlock x:Name="NoRecentText" Margin="12" Classes="Muted" TextWrapping="Wrap"
+                                                       Text="{x:Static loc:Strings.NoRecent}" />
+                                            <ListBox x:Name="RecentList" BorderThickness="0" Background="Transparent" MaxHeight="360"
+                                                     DoubleTapped="OnRecentDoubleClick" KeyDown="OnRecentKeyDown"
+                                                     ContextMenu="{StaticResource RecentMenu}" ContextRequested="OnRecentMenuOpening">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate x:DataType="core:RecentSession">
+                                                        <DockPanel Margin="2,3">
+                                                            <TextBlock DockPanel.Dock="Right" Classes="Muted" Margin="12,0,0,0"
+                                                                       Text="{Binding When, Converter={StaticResource RecentDate}}" VerticalAlignment="Center" />
+                                                            <Image Source="{Binding Converter={StaticResource KindIcon}}" Width="18" Height="18" Margin="0,0,8,0" />
+                                                            <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                                <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" />
+                                                                <Run Text="{Binding Mode, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}" />
+                                                            </TextBlock>
+                                                        </DockPanel>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </Panel>
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{x:Static loc:Strings.Shortcuts}" Classes="SectionTitle" />
+                                    <Border Background="{DynamicResource AccentLightBrush}" CornerRadius="4" Padding="12,10">
+                                        <StackPanel>
+                                            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"><Run FontWeight="SemiBold" Text="{x:Static loc:Strings.ShortcutOpenKey}" /><Run Text="{x:Static loc:Strings.ShortcutOpen}" /></TextBlock>
+                                            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"><Run FontWeight="SemiBold" Text="{x:Static loc:Strings.ShortcutMenuKey}" /><Run Text="{x:Static loc:Strings.ShortcutMenu}" /></TextBlock>
+                                            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"><Run FontWeight="SemiBold" Text="{x:Static loc:Strings.ShortcutSshKey}" /><Run Text="{x:Static loc:Strings.ShortcutSsh}" /></TextBlock>
+                                            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"><Run FontWeight="SemiBold" Text="{x:Static loc:Strings.ShortcutQuickKey}" /><Run Text="{x:Static loc:Strings.ShortcutQuick}" /></TextBlock>
+                                            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"><Run FontWeight="SemiBold" Text="{x:Static loc:Strings.ShortcutTabsKey}" /><Run Text="{x:Static loc:Strings.ShortcutTabs}" /></TextBlock>
+                                            <TextBlock TextWrapping="Wrap" Margin="0,0,0,6"><Run FontWeight="SemiBold" Text="Ctrl+F" /><Run Text="{x:Static loc:Strings.ShortcutFilter}" /></TextBlock>
+                                            <TextBlock TextWrapping="Wrap"><Run FontWeight="SemiBold" Text="F5" /><Run Text="{x:Static loc:Strings.ShortcutReload}" /></TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </DockPanel>
 </Window>
