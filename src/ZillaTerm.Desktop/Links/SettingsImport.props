@@ -1,0 +1,19 @@
+<Project>
+  <!--
+    Paramètres et import de sessions : SettingsDialog, SessionImportWindow, RemoteFileDialog.
+    Chaque élément est d'abord retiré puis ajouté : s'il est aussi déclaré par le fichier d'une autre partie importé avant
+    celui-ci, il ne compte qu'une fois (pas d'avertissement de doublon, compilé en erreur).
+  -->
+  <ItemGroup>
+    <!-- Listes à colonnes (étiquettes, PSMP, composants, clés de serveur, sessions à importer) ; thème
+         avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml inclus dans les Window.Styles des fenêtres qui l'utilisent. -->
+    <PackageReference Remove="Avalonia.Controls.DataGrid" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bornes de la taille de police des terminaux (Paramètres) : sans WPF, partagé tel quel. -->
+    <Compile Remove="..\ZillaTerm.App\Terminal\TerminalAppearance.cs" />
+    <Compile Include="..\ZillaTerm.App\Terminal\TerminalAppearance.cs" Link="Shared\Terminal\TerminalAppearance.cs" />
+  </ItemGroup>
+</Project>

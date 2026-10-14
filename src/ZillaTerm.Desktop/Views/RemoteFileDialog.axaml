@@ -1,0 +1,79 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    xmlns:corel="clr-namespace:ZillaTerm.Core.Localization;assembly=ZillaTerm.Core"
+                    xmlns:ssh="clr-namespace:ZillaTerm.Core.Ssh;assembly=ZillaTerm.Core"
+                    x:Class="ZillaTerm.App.Views.RemoteFileDialog"
+                    Width="680" Height="500" MinWidth="420" MinHeight="300">
+    <views:DialogWindow.Styles>
+        <!-- Lignes de la liste des fichiers : compactes, comme dans l'onglet Fichiers. -->
+        <Style Selector="ListBox#FileList ListBoxItem">
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+        <Style Selector="TextBlock.ColumnHeader">
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+    </views:DialogWindow.Styles>
+
+    <DockPanel Margin="12">
+        <!-- Dossier affiché : remonter, ou saisir un chemin (dossier, ou fichier à sélectionner) -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <Button x:Name="UpButton" DockPanel.Dock="Left" ToolTip.Tip="{x:Static loc:Strings.RemotePickUp}" Click="OnUp"
+                    Padding="4,2" Margin="0,0,6,0" VerticalAlignment="Stretch" AutomationProperties.Name="{x:Static loc:Strings.RemotePickUp}">
+                <Image Source="{DynamicResource IconParentFolder}" Width="16" Height="16" />
+            </Button>
+            <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.RemotePickGo}" Click="OnGo" Margin="6,0,0,0" />
+            <TextBox x:Name="PathBox" FontFamily="{StaticResource MonospaceFont}" VerticalContentAlignment="Center"
+                     ToolTip.Tip="{x:Static loc:Strings.RemotePickPathTip}"
+                     AutomationProperties.Name="{x:Static loc:Strings.A11yRemotePath}" />
+        </DockPanel>
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="ChooseButton" Content="{x:Static loc:Strings.RemotePickChoose}" IsDefault="True" IsEnabled="False"
+                        MinWidth="90" HorizontalContentAlignment="Center" Click="OnChoose" />
+                <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" MinWidth="90" HorizontalContentAlignment="Center" />
+            </StackPanel>
+            <CheckBox x:Name="HiddenBox" VerticalAlignment="Center" IsCheckedChanged="OnHiddenChanged">
+                <AccessText Text="{x:Static loc:Strings.RemotePickHidden}" />
+            </CheckBox>
+        </DockPanel>
+        <TextBlock x:Name="StatusText" DockPanel.Dock="Bottom" TextWrapping="Wrap" Margin="0,6,0,0" Classes="Muted" />
+
+        <!-- Liste à colonnes (nom, taille, date) : un en-tête, puis une ligne par fichier aux mêmes largeurs. -->
+        <Border BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="1">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="0,0,0,1" Padding="4,4">
+                    <Grid ColumnDefinitions="*,90,140">
+                        <TextBlock Classes="ColumnHeader" Text="{x:Static corel:CoreStrings.ColumnName}" Margin="25,0,4,0" />
+                        <TextBlock Grid.Column="1" Classes="ColumnHeader" Text="{x:Static loc:Strings.ColumnSize}" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Column="2" Classes="ColumnHeader" Text="{x:Static loc:Strings.ColumnModified}" Margin="12,0,4,0" />
+                    </Grid>
+                </Border>
+                <!-- Lettres tapées : OnListTextInput, comme dans l'onglet Fichiers (l'espace d'un nom : OnListKeyDown). La recherche
+                     de la liste (sur le texte de l'objet, jamais le nom) prendrait la frappe : désactivée. -->
+                <ListBox x:Name="FileList" SelectionMode="Single" SelectionChanged="OnSelectionChanged" IsTextSearchEnabled="False"
+                         TextInput="OnListTextInput" DoubleTapped="OnItemDoubleClick" BorderThickness="0" Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="ssh:RemoteEntry">
+                            <Grid ColumnDefinitions="*,90,140">
+                                <StackPanel Orientation="Horizontal">
+                                    <ContentControl Content="{Binding Converter={x:Static views:RemoteFileDialog.FileIcon}}" Margin="0,0,5,0"
+                                                    Focusable="False" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="{Binding SizeText}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="{Binding ModifiedText}" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+    </DockPanel>
+</views:DialogWindow>

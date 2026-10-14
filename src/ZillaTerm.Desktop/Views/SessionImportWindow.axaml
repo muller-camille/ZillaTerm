@@ -1,0 +1,203 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    xmlns:coreloc="clr-namespace:ZillaTerm.Core.Localization;assembly=ZillaTerm.Core"
+                    xmlns:migration="clr-namespace:ZillaTerm.Core.Migration;assembly=ZillaTerm.Core"
+                    x:Class="ZillaTerm.App.Views.SessionImportWindow"
+                    Title="{x:Static loc:Strings.SessionImportTitle}" Width="1120" Height="700" MinWidth="720" MinHeight="460">
+    <views:DialogWindow.Styles>
+        <!-- Tableau : thème du paquet Avalonia.Controls.DataGrid (Fluent), resserré. -->
+        <StyleInclude Source="avares://ZillaTerm/Themes/CompactDataGrid.axaml" />
+        <Style Selector="Label">
+            <Setter Property="Padding" Value="0,3,8,3" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <!-- Une ligne sur deux sur un fond à peine différent. -->
+        <Style Selector="DataGrid#RowsGrid DataGridRow:nth-child(2n)">
+            <Setter Property="Background" Value="{DynamicResource AlternateRowBrush}" />
+        </Style>
+        <Style Selector="TextBlock.Cell">
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="6,0" />
+        </Style>
+        <!-- Résultat : vert si importé, orange si à vérifier, rouge si non importé (pas de compte, non pris en charge), gris sinon. -->
+        <Style Selector="TextBlock.Cell.Imported">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="TextBlock.Cell.Check">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="TextBlock.Cell.Failed">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+        </Style>
+        <Style Selector="TextBlock.Cell.Skipped">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        </Style>
+        <!-- Ligne sélectionnée : couleur du texte de la ligne, la seule lisible sur son fond (le texte dit le résultat). -->
+        <Style Selector="DataGridRow:selected TextBlock.Cell.Result">
+            <Setter Property="Foreground" Value="{Binding $parent[DataGridRow].Foreground}" />
+        </Style>
+    </views:DialogWindow.Styles>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="DialogFooter">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8">
+                    <Button x:Name="ImportButton" Content="{x:Static loc:Strings.SessionImportButton}" IsDefault="True" IsEnabled="False" Click="OnImport" />
+                    <Button x:Name="ExportButton" Content="{x:Static loc:Strings.SessionImportExport}" IsEnabled="False" Click="OnExport" />
+                    <Button x:Name="MissingAccountsButton" Content="{x:Static loc:Strings.SessionImportMissingAccounts}" IsEnabled="False"
+                            Click="OnMissingAccounts" ToolTip.Tip="{x:Static loc:Strings.SessionImportMissingAccountsTip}" ToolTip.ShowOnDisabled="True" />
+                    <Button Content="{x:Static loc:Strings.CloseButton}" IsCancel="True" />
+                </StackPanel>
+                <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                    <views:ErrorLine x:Name="ErrorMessage" IsVisible="False" />
+                    <TextBlock x:Name="StatusText" Classes="Muted" TextWrapping="Wrap" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <DockPanel Margin="16,16,16,8">
+            <TextBlock DockPanel.Dock="Top" Text="{x:Static loc:Strings.SessionImportIntro}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,8" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
+                <Label Content="{x:Static loc:Strings.SessionImportSource}" Target="{Binding #SourceBox}" />
+                <ComboBox Grid.Column="1" x:Name="SourceBox" HorizontalAlignment="Stretch" Margin="0,0,8,0" SelectionChanged="OnSourceChanged">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="views:SessionImportWindow+SourceChoice">
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Grid.Column="2" x:Name="ReadButton" Content="{x:Static loc:Strings.SessionImportRead}" MinWidth="110"
+                        HorizontalContentAlignment="Center" Click="OnRead" />
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="SourceHint" Classes="Muted" FontSize="11" TextWrapping="Wrap" Margin="2,2,0,6" />
+                <Label Grid.Row="2" Content="{x:Static loc:Strings.SessionImportFolder}" Target="{Binding #FolderBox}" />
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="FolderBox" VerticalContentAlignment="Center" Margin="0,0,8,0"
+                         ToolTip.Tip="{x:Static loc:Strings.SessionImportFolderTip}" TextChanged="OnFolderChanged" />
+            </Grid>
+
+            <!-- Rappel de sécurité : aucun mot de passe lu, connexion toujours via CyberArk. -->
+            <Border DockPanel.Dock="Top" Background="{DynamicResource AccentLightBrush}" BorderBrush="{DynamicResource ToolHoverBorderBrush}"
+                    BorderThickness="1" CornerRadius="3" Padding="10,6">
+                <DockPanel>
+                    <Image Source="{DynamicResource IconInfo}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,8,0" />
+                    <TextBlock Text="{x:Static loc:Strings.SessionImportSecurity}" TextWrapping="Wrap" />
+                </DockPanel>
+            </Border>
+
+            <DockPanel DockPanel.Dock="Top" Margin="0,10,0,6">
+                <CheckBox x:Name="ProblemsBox" DockPanel.Dock="Right" VerticalAlignment="Center" IsEnabled="False" Click="OnOnlyProblems">
+                    <AccessText Text="{x:Static loc:Strings.SessionImportOnlyProblems}" />
+                </CheckBox>
+                <TextBlock x:Name="SummaryText" Text="{x:Static loc:Strings.SessionImportNothingRead}" FontWeight="SemiBold" TextWrapping="Wrap"
+                           VerticalAlignment="Center" Margin="0,0,12,0" />
+            </DockPanel>
+
+            <DataGrid x:Name="RowsGrid" AutoGenerateColumns="False" SelectionMode="Extended" HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
+                      ClipboardCopyMode="IncludeHeader" AutomationProperties.Name="{x:Static loc:Strings.SessionImportTitle}">
+                <DataGrid.Columns>
+                    <!-- En-tête : case « tout cocher » (_allBox, créée dans le code). -->
+                    <DataGridTemplateColumn Width="Auto" CanUserSort="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="views:SessionImportWindow+SessionImportRow">
+                                <CheckBox IsChecked="{Binding Include}" IsEnabled="{Binding CanInclude}" MinWidth="0" Padding="0"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="{x:Static coreloc:CoreStrings.MigrationColFolder}" Width="1.2*" SortMemberPath="Folder">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="views:SessionImportWindow+SessionImportRow">
+                                <TextBlock Classes="Cell" Text="{Binding Folder}" ToolTip.Tip="{Binding Folder}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="{x:Static coreloc:CoreStrings.ColumnName}" Width="1.2*" SortMemberPath="Name">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="views:SessionImportWindow+SessionImportRow">
+                                <TextBlock Classes="Cell" Text="{Binding Name}" ToolTip.Tip="{Binding Name}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="{x:Static coreloc:CoreStrings.MigrationColProtocol}" Width="Auto" IsReadOnly="True"
+                                        x:DataType="views:SessionImportWindow+SessionImportRow" Binding="{Binding Protocol}" />
+                    <DataGridTemplateColumn Header="{x:Static coreloc:CoreStrings.ColumnServer}" Width="1.3*" SortMemberPath="Server">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="views:SessionImportWindow+SessionImportRow">
+                                <TextBlock Classes="Cell" Text="{Binding Server}" ToolTip.Tip="{Binding Server}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="{x:Static coreloc:CoreStrings.ColumnUser}" Width="*" SortMemberPath="User">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="views:SessionImportWindow+SessionImportRow">
+                                <TextBlock Classes="Cell" Text="{Binding User}" ToolTip.Tip="{Binding User}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="{x:Static coreloc:CoreStrings.MigrationColAccount}" Width="1.8*" SortMemberPath="Account">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="views:SessionImportWindow+SessionImportRow">
+                                <Panel>
+                                    <!-- Plusieurs comptes possibles : le plus probable est choisi, un autre peut l'être. -->
+                                    <ComboBox ItemsSource="{Binding Candidates}" SelectedItem="{Binding Chosen, Mode=TwoWay}" IsVisible="{Binding CanChoose}"
+                                              HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="2,1"
+                                              ToolTip.Tip="{x:Static loc:Strings.SessionImportChooseTip}" AutomationProperties.Name="{Binding Name}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="migration:ImportCandidate">
+                                                <TextBlock TextTrimming="CharacterEllipsis">
+                                                    <Run Text="{Binding Display, Mode=OneWay}" /><Run Text="  " /><Run Text="{Binding Details, Mode=OneWay}"
+                                                         Foreground="{DynamicResource MutedBrush}" />
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <TextBlock Classes="Cell" Text="{Binding Account}" ToolTip.Tip="{Binding Account}" IsVisible="{Binding ShowsAccountText}" />
+                                </Panel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="{x:Static coreloc:CoreStrings.MigrationColConnection}" Width="Auto" IsReadOnly="True"
+                                        x:DataType="views:SessionImportWindow+SessionImportRow" Binding="{Binding Connection}" />
+                    <!-- Étiquette devinée d'après le nom, le serveur, le safe et les dossiers ; une autre peut être choisie. -->
+                    <DataGridTemplateColumn Header="{x:Static coreloc:CoreStrings.MigrationColTag}" Width="Auto" SortMemberPath="Tag">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="views:SessionImportWindow+SessionImportRow">
+                                <ComboBox ItemsSource="{Binding TagChoices}" SelectedItem="{Binding TagChoice, Mode=TwoWay}" IsEnabled="{Binding CanTag}"
+                                          MinWidth="90" VerticalAlignment="Center" Margin="2,1" ToolTip.Tip="{x:Static loc:Strings.SessionImportTagTip}"
+                                          AutomationProperties.Name="{Binding TagName}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="views:SessionImportWindow+TagChoice">
+                                            <Panel>
+                                                <Border Background="{Binding Background}" CornerRadius="3" Padding="5,0,5,1" HorizontalAlignment="Left"
+                                                        IsVisible="{Binding Background, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                    <TextBlock Text="{Binding Text}" Foreground="{Binding Foreground}" FontSize="11" />
+                                                </Border>
+                                                <!-- « Aucune » : sans pastille, dans la couleur du texte. -->
+                                                <TextBlock Text="{Binding Text}" FontSize="11" Padding="5,0,5,1"
+                                                           IsVisible="{Binding Background, Converter={x:Static ObjectConverters.IsNull}}" />
+                                            </Panel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="{x:Static coreloc:CoreStrings.MigrationColResult}" Width="2*" SortMemberPath="Result">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="views:SessionImportWindow+SessionImportRow">
+                                <TextBlock Classes="Cell Result" Text="{Binding Result}" ToolTip.Tip="{Binding Result}"
+                                           Classes.Imported="{Binding IsImported}" Classes.Check="{Binding IsCheck}"
+                                           Classes.Failed="{Binding IsFailed}" Classes.Skipped="{Binding IsSkipped}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </DockPanel>
+</views:DialogWindow>
