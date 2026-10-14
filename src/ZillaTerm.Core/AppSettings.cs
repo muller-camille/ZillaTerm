@@ -187,6 +187,25 @@ public sealed class AppSettings
     /// </summary>
     public List<Interventions.InterventionReminder> InterventionReminders { get; set; } = [];
 
+    /// <summary>
+    /// Partager ses sessions avec un autre ZillaTerm (clic droit sur un onglet › Partager la session…) : désactivé par
+    /// défaut, une session à privilèges y est montrée à quelqu'un d'autre. Regarder la session d'un autre est toujours
+    /// possible.
+    /// </summary>
+    public bool SessionSharing { get; set; }
+
+    /// <summary>Partages : accepter les connexions directes (un port s'ouvre sur le poste pendant les partages).</summary>
+    public bool ShareDirect { get; set; } = true;
+
+    /// <summary>Port des connexions directes ; 0 : tiré au hasard (une règle de pare-feu peut demander un port fixe).</summary>
+    public int SharePort { get; set; }
+
+    /// <summary>
+    /// Dossier relais des partages (partage réseau de l'équipe) : utilisé quand le poste qui partage ne peut pas être joint
+    /// directement ; vide : pas de relais.
+    /// </summary>
+    public string ShareRelayFolder { get; set; } = "";
+
     /// <summary>Serveur X de ce poste pour le transfert X11 (voir <see cref="Ssh.X11Display"/>), « :0 » par défaut.</summary>
     public string X11Display { get; set; } = Ssh.X11Display.Default;
 
@@ -556,6 +575,8 @@ public sealed class AppSettings
         settings.DutyText ??= "";
         settings.DutyTextFile = DutyReminderFile.IsValidPath(settings.DutyTextFile) ? settings.DutyTextFile.Trim() : "";
         settings.InterventionReminders = Interventions.InterventionReminder.Sanitize(settings.InterventionReminders);
+        settings.SharePort = IsSharePort(settings.SharePort) ? settings.SharePort : 0;
+        settings.ShareRelayFolder = Sharing.ShareInvitation.IsRelayFolder(settings.ShareRelayFolder) ? settings.ShareRelayFolder.Trim() : "";
         settings.X11Servers ??= [];
         settings.X11Servers.RemoveAll(string.IsNullOrWhiteSpace);
         settings.ServerTags = ServerTagRules.Sanitize(settings.ServerTags);
@@ -578,6 +599,9 @@ public sealed class AppSettings
     /// Écrit dans un fichier temporaire puis le met à la place de l'ancien (gardé en <c>.bak</c>) : une écriture interrompue
     /// ne laisse jamais un fichier de réglages à moitié écrit.
     /// </summary>
+    /// <summary>Port des partages acceptable : 0 (au hasard) ou de 1024 à 65535.</summary>
+    public static bool IsSharePort(int port) => port == 0 || port is >= 1024 and <= 65535;
+
     public void Save(string path)
     {
         var temp = DurableFile.WriteTemp(path, JsonSerializer.SerializeToUtf8Bytes(this, JsonOptions));

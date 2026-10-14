@@ -45,6 +45,7 @@ e apre le sessioni con un doppio clic: desktop remoto tramite **PSM**, oppure un
 | **Sessioni SSH (PSMP)** | Terminale integrato in una scheda (compatibile xterm: colori, vim, less, top…), MFA, menu del clic destro, ricerca, finestre separate, «Riconnetti» alla fine della sessione, un PSMP per dominio dei server. Solo file (SFTP, senza terminale) per le piattaforme «SFTP» o su richiesta. |
 | **Scheda File** | Browser SFTP del server: invio (SFTP, o SCP, con l'altro che subentra se il server rifiuta) e download con il trascinamento, verifica SHA-256 di ogni file, coda (risultati conservati) e cronologia dei trasferimenti, ordinamento per colonna, rinomina, modifica nel tuo editor di testo, permessi, monitoraggio in tempo reale (`tail -f`), confronto, invio a più server. |
 | **Vista parallela** | Fino a 8 sessioni SSH affiancate (una cartella di «I miei server» si apre con un clic), digitazione simultanea opzionale. |
+| **Condivisione delle sessioni** | Mostrare una sessione in diretta (terminale, Desktop remoto, VNC) a un collega che ha ZillaTerm, e guardare le sue, anche più alla volta: invito, consenso dopo il confronto di un codice, sola lettura e controllo dato su richiesta (terminale), cifratura end-to-end, connessione diretta o cartella di inoltro. |
 | **Accesso di emergenza (KeePass)** | Senza CyberArk: database KeePass (.kdbx) in «I miei server», connessioni SSH, desktop remoto e VNC dirette, file in SFTP, FTP o FTPS nella scheda File, registro locale. |
 | **Tastiera e accessibilità** | Scorciatoie per le schede, il pannello laterale e la connessione rapida, conferme con pulsanti espliciti, utilità per la lettura dello schermo, contrasto elevato. |
 | **Lingue** | Italiano, francese e inglese: lingua di Windows per impostazione predefinita, modificabile in qualsiasi momento. |
@@ -161,6 +162,9 @@ La **[guida all'uso](docs/guide.it.md)** descrive ogni scheda in dettaglio, le
 - **Nessuna richiesta verso Internet** senza una tua azione o l'opzione di aggiornamento (disattivata per
   impostazione predefinita); un aggiornamento scaricato viene conservato solo se il suo SHA-256 corrisponde a
   `SHA256SUMS.txt`, e nulla viene installato automaticamente.
+- **Condivisione delle sessioni** disattivata per impostazione predefinita: ogni persona è accettata dopo il confronto
+  di un codice di 6 cifre, gli scambi sono cifrati end-to-end, nessuno digita se non gli dai il controllo, e tutto si
+  interrompe al blocco di Windows.
 - **Registro di debug** disattivato per impostazione predefinita; non contiene mai password, token né il contenuto
   delle sessioni.
 

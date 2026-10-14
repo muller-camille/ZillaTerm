@@ -1948,6 +1948,126 @@ public sealed partial class DialogTests
             EnvironmentImport.Line(new EnvironmentChange(EnvironmentSetting.SshInApp, null, "true", "false", false)));
     }
 
+    /// <summary>
+    /// Session regardée : l'écran envoyé à l'accord puis le flux s'affichent ; sans la main, rien de ce qui est tapé ne
+    /// part ; la main donnée, la frappe part et le rappel s'affiche ; à la fin du partage, l'onglet le dit.
+    /// </summary>
+    [Fact]
+    public void SharedSessionViewIsReadOnlyUntilControlIsGiven()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var info = new ZillaTerm.Core.Sharing.ShareInfo(ZillaTerm.Core.Sharing.ShareKind.Terminal, "root@srv01", "jdoe (CORP\\jdoe)", "PC-JDOE",
+                ControlAllowed: true, DateTime.UtcNow.AddHours(1));
+            var source = new TerminalEmulator(40, 6);
+            source.Feed("$ uptime\r\n 10:12:01 up 3 days\r\n$ ");
+            var connection = new FakeShareConnection();
+            // Écran envoyé à l'accord, avant que l'onglet n'existe : remis à son abonnement.
+            connection.Push(ZillaTerm.Core.Sharing.ShareMessage.TerminalReset(source.Columns, source.Rows, source.Snapshot()));
+            var watched = new ZillaTerm.App.Services.Sharing.WatchedShare(connection, info,
+                ZillaTerm.Core.Sharing.ShareInvitation.Create([new IPEndPoint(IPAddress.Loopback, 50000)], null, info.EndsAt));
+            var view = new SharedSessionView(watched);
+            var window = new Window { Content = view, Width = 600, Height = 300, ShowActivated = false };
+            window.Show();
+            PumpUntil(() => view.Terminal.Emulator is not null);
+            Assert.Equal(" 10:12:01 up 3 days", view.Terminal.Emulator!.GetText(1, 0, 1, 39).TrimEnd());
+
+            connection.Push(ZillaTerm.Core.Sharing.ShareMessage.TerminalData("ls\r\n"));
+            PumpUntil(() => view.Terminal.Emulator!.CursorRow == 3);
+            Assert.Equal(3, view.Terminal.Emulator.CursorRow);
+
+            // Lecture seule : la frappe ne part pas, un avis le dit.
+            view.Terminal.RaiseEvent(new System.Windows.Input.TextCompositionEventArgs(System.Windows.Input.Keyboard.PrimaryDevice,
+                new System.Windows.Input.TextComposition(System.Windows.Input.InputManager.Current, view.Terminal, "x"))
+            { RoutedEvent = UIElement.TextInputEvent });
+            Assert.Empty(connection.Inputs);
+            Assert.Equal(Visibility.Visible, view.NoticeBanner.Visibility);
+
+            // Main demandée, donnée : la frappe part et le rappel s'affiche ; rendue : plus rien ne part.
+            view.ControlButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            PumpUntil(() => connection.ControlRequests.Count == 1);
+            Assert.Equal([true], connection.ControlRequests);
+            connection.Push(ZillaTerm.Core.Sharing.ShareMessage.Control(true));
+            PumpUntil(() => view.ControlBanner.Visibility == Visibility.Visible);
+            view.Terminal.RaiseEvent(new System.Windows.Input.TextCompositionEventArgs(System.Windows.Input.Keyboard.PrimaryDevice,
+                new System.Windows.Input.TextComposition(System.Windows.Input.InputManager.Current, view.Terminal, "y"))
+            { RoutedEvent = UIElement.TextInputEvent });
+            Assert.Equal([TerminalInput.Typed("y")], connection.Inputs);
+            connection.Push(ZillaTerm.Core.Sharing.ShareMessage.Control(false));
+            PumpUntil(() => view.ControlBanner.Visibility == Visibility.Collapsed);
+
+            connection.End(ZillaTerm.Core.Sharing.ShareEndReason.Locked);
+            PumpUntil(() => view.EndReason is not null);
+            Assert.Equal(Visibility.Visible, view.Overlay.Visibility);
+            Assert.Contains("jdoe", view.OverlayText.Text, StringComparison.Ordinal);
+            window.Close();
+        });
+    }
+
+    /// <summary>Session regardée simulée : messages poussés par le test, saisie et demandes de main gardées.</summary>
+    private sealed class FakeShareConnection : ZillaTerm.Core.Sharing.IShareConnection
+    {
+        private readonly List<ZillaTerm.Core.Sharing.ShareMessage> _early = [];
+        private Action<ZillaTerm.Core.Sharing.ShareMessage>? _received;
+
+        public string VerificationCode => "482 913";
+
+        public string Route => "127.0.0.1";
+
+        public bool IsRelay => false;
+
+        public List<TerminalInput> Inputs { get; } = [];
+
+        public List<bool> ControlRequests { get; } = [];
+
+        public event Action<ZillaTerm.Core.Sharing.ShareMessage>? MessageReceived
+        {
+            add
+            {
+                _received += value;
+                _early.ForEach(m => value?.Invoke(m));
+                _early.Clear();
+            }
+
+            remove => _received -= value;
+        }
+
+        public event Action<ZillaTerm.Core.Sharing.ShareEndReason>? Ended;
+
+        public void Push(ZillaTerm.Core.Sharing.ShareMessage message)
+        {
+            if (_received is { } received)
+            {
+                received(message);
+            }
+            else
+            {
+                _early.Add(message);
+            }
+        }
+
+        public void End(ZillaTerm.Core.Sharing.ShareEndReason reason) => Ended?.Invoke(reason);
+
+        public Task SendInputAsync(TerminalInput input)
+        {
+            Inputs.Add(input);
+            return Task.CompletedTask;
+        }
+
+        public Task RequestControlAsync(bool want)
+        {
+            ControlRequests.Add(want);
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
     /// <summary>Onglet détaché : le terminal passe dans la fenêtre séparée, puis en ressort pour revenir dans l'onglet.</summary>
     [Fact]
     public void DetachedWindowHoldsTheTerminal()

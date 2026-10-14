@@ -1,0 +1,54 @@
+<Window x:Class="ZillaTerm.App.Views.JoinShareDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:ZillaTerm.App.Views"
+        xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+        Title="{x:Static loc:Strings.JoinTitle}" Width="540" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image Source="{DynamicResource IconScreenShare}" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static loc:Strings.JoinTitle}" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock Text="{x:Static loc:Strings.JoinSubtitle}" Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooter}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="JoinButton" IsDefault="True" Click="OnJoin">
+                        <AccessText Text="{x:Static loc:Strings.JoinButton}" />
+                    </Button>
+                    <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Margin="8,0,0,0" />
+                </StackPanel>
+                <views:ErrorLine x:Name="ErrorMessage" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,16,0" />
+            </DockPanel>
+        </Border>
+
+        <Grid Margin="16,12,16,12">
+            <StackPanel x:Name="InputPanel">
+                <Label Content="{x:Static loc:Strings.JoinInvitationLabel}" Target="{Binding ElementName=InvitationBox}" Padding="0,0,0,4" />
+                <TextBox x:Name="InvitationBox" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="Consolas, Courier New" Height="76"
+                         VerticalScrollBarVisibility="Auto" Padding="6,4" MaxLength="4000" />
+                <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.JoinInvitationHelp}" Margin="0,4,0,0" />
+            </StackPanel>
+
+            <!-- Demande envoyée : le code que la personne qui partage doit voir aussi, puis l'attente de son accord. -->
+            <StackPanel x:Name="WaitingPanel" Visibility="Collapsed">
+                <views:AnnouncedText x:Name="WaitingText" TextWrapping="Wrap" Margin="0,0,0,10" AutomationProperties.LiveSetting="Polite" />
+                <StackPanel x:Name="CodePanel" Visibility="Collapsed">
+                    <TextBlock x:Name="CodeLabel" Text="{x:Static loc:Strings.JoinCodeLabel}" Foreground="{DynamicResource MutedBrush}" />
+                    <TextBlock x:Name="CodeText" FontFamily="Consolas, Courier New" FontSize="30" FontWeight="SemiBold" Margin="0,2,0,6"
+                               AutomationProperties.LabeledBy="{Binding ElementName=CodeLabel}" />
+                    <TextBlock Text="{x:Static loc:Strings.JoinCodeHelp}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                    <TextBlock x:Name="RouteText" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <ProgressBar IsIndeterminate="True" Height="4" Margin="0,12,0,0" AutomationProperties.LabeledBy="{Binding ElementName=WaitingText}" />
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>

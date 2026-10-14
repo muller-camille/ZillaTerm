@@ -175,7 +175,14 @@ internal static class InterventionScreenPlayer
     /// Une image manquante ou illisible fige l'écran jusqu'à l'image clé suivante, avec un avis. Un clic sur le repère
     /// d'une note mène à son heure.
     /// </summary>
-    internal const string Script = """
+    /// <remarks>
+    /// Fins de ligne ramenées à LF : le navigateur fait de même avant de calculer l'empreinte d'un script de la page
+    /// (<see cref="ScriptHash"/>). Compilé sous Windows, le texte du fichier source est en CRLF : sans cela, l'empreinte
+    /// ne correspondait plus et le lecteur était bloqué par la politique de sécurité du rapport.
+    /// </remarks>
+    internal static readonly string Script = ScriptSource.ReplaceLineEndings("\n");
+
+    private const string ScriptSource = """
 (() => {
   const words = JSON.parse(document.getElementById('zt-player').textContent);
   const inflate = async bytes => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());

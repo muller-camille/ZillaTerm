@@ -300,6 +300,33 @@ pixels) :
   et à quelle heure.
 - **Rapport protégé par mot de passe** : un seul fichier HTML déchiffré par le navigateur à l'ouverture.
 
+## Partage de sessions
+
+Le partage est fait (terminal SSH, Bureau à distance dans un onglet, VNC ; accord avec code de vérification, main
+donnée et reprise pour un terminal). Suites possibles :
+
+### Pointer et annoter
+
+Un pointeur ou un cadre que la personne qui regarde pose sur l'écran partagé (« là, cette ligne »), vu des deux côtés,
+sans jamais agir sur la session.
+
+### Discussion dans l'onglet
+
+Quelques lignes de discussion à côté de la session partagée, notées au journal de l'intervention, pour ne pas passer
+par une autre messagerie pendant une astreinte.
+
+### Main sur un Bureau à distance partagé
+
+Donner la main (clavier et souris) sur une session Bureau à distance ou VNC partagée, comme pour un terminal.
+
+- Même accord explicite, reprise à tout moment, rappel permanent chez la personne qui a la main.
+- Plus délicat qu'un terminal : la souris et les raccourcis de Windows doivent rester dans la session.
+
+### Invitation pour une personne précise
+
+Limiter une invitation au compte Windows ou CyberArk attendu (refus automatique d'un autre nom), en plus du code de
+vérification.
+
 ## KeePass (accès d'urgence)
 
 - Coffres chiffrés en Twofish.

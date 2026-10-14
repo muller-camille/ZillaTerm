@@ -65,6 +65,10 @@ public partial class SettingsDialog : Window
         PsmRedirectDrivesBox.IsChecked = settings.PsmRedirectDrives;
         FollowBox.IsChecked = settings.FollowTerminalFolder;
         X11DisplayBox.Text = settings.X11Display;
+        SessionSharingBox.IsChecked = settings.SessionSharing;
+        ShareDirectBox.IsChecked = settings.ShareDirect;
+        SharePortBox.Text = settings.SharePort.ToString(CultureInfo.InvariantCulture);
+        ShareRelayBox.Text = settings.ShareRelayFolder;
         DutyTextBox.Text = settings.DutyText;
         DutyFileBox.Text = settings.DutyTextFile;
         RemindersBox.Text = InterventionReminder.Format(settings.InterventionReminders).Replace("\n", Environment.NewLine, StringComparison.Ordinal);
@@ -98,8 +102,11 @@ public partial class SettingsDialog : Window
         TagGrid.ItemsSource = _tagRows;
         _tagRows.CollectionChanged += (_, _) => UpdateAddTagButton();
         UpdateAddTagButton();
-        Loaded += (_, _) => LanguageBox.Focus();
+        Loaded += (_, _) => (Pages.SelectedItem == SharingPage ? (Control)SessionSharingBox : LanguageBox).Focus();
     }
+
+    /// <summary>Ouvre la page « Partage » (partage demandé alors qu'il est désactivé).</summary>
+    internal void ShowSharingPage() => Pages.SelectedItem = SharingPage;
 
     /// <summary>
     /// Clé d'hôte acceptée : « hôte:port », type de clé (ou X.509 pour un certificat), empreinte SHA-256, et sa clé
@@ -261,6 +268,28 @@ public partial class SettingsDialog : Window
             return;
         }
 
+        var sharePortText = SharePortBox.Text.Trim();
+        int sharePort = 0;
+        if (sharePortText.Length > 0
+            && (!int.TryParse(sharePortText, NumberStyles.None, CultureInfo.InvariantCulture, out sharePort) || !AppSettings.IsSharePort(sharePort)))
+        {
+            ShowError(Strings.InvalidSharePort, SharePortBox);
+            return;
+        }
+
+        var shareRelay = ShareRelayBox.Text.Trim().Trim('"');
+        if (shareRelay.Length > 0 && !Core.Sharing.ShareInvitation.IsRelayFolder(shareRelay))
+        {
+            ShowError(Strings.InvalidShareRelay, ShareRelayBox);
+            return;
+        }
+
+        if (SessionSharingBox.IsChecked == true && ShareDirectBox.IsChecked != true && shareRelay.Length == 0)
+        {
+            ShowError(Strings.ShareNoRoute, ShareDirectBox);
+            return;
+        }
+
         var compareArgs = CompareArgsBox.Text.Trim();
         if (compareArgs.Length == 0)
         {
@@ -287,6 +316,10 @@ public partial class SettingsDialog : Window
         _settings.PsmRedirectDrives = PsmRedirectDrivesBox.IsChecked == true;
         _settings.FollowTerminalFolder = FollowBox.IsChecked == true;
         _settings.X11Display = x11Display;
+        _settings.SessionSharing = SessionSharingBox.IsChecked == true;
+        _settings.ShareDirect = ShareDirectBox.IsChecked == true;
+        _settings.SharePort = sharePort;
+        _settings.ShareRelayFolder = shareRelay;
         _settings.DutyText = EnvironmentProfile.NormalizeDutyText(DutyTextBox.Text);
         _settings.DutyTextFile = dutyFile;
         _settings.InterventionReminders = reminders;
@@ -350,6 +383,15 @@ public partial class SettingsDialog : Window
         if (dialog.ShowDialog(this) == true)
         {
             CentralFileBox.Text = dialog.FileName;
+        }
+    }
+
+    private void OnBrowseShareRelay(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = Strings.SettingsShareRelayPick };
+        if (dialog.ShowDialog(this) == true)
+        {
+            ShareRelayBox.Text = dialog.FolderName;
         }
     }
 

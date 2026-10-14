@@ -266,6 +266,9 @@ public partial class MainWindow
             case TabItem { Content: ParallelView parallel }:
                 parallel.FocusActive();
                 break;
+            case TabItem { Content: SharedSessionView watched }:
+                watched.FocusContent();
+                break;
             case TabItem { Tag: Services.Rdp.RdpSession { IsConnected: true } rdp }:
                 rdp.Focus();
                 break;

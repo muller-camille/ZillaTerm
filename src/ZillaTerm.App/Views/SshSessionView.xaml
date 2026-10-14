@@ -16,15 +16,19 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <!-- Fin de session : bandeau au-dessus du terminal, qui reste lisible, sélectionnable et copiable. -->
-            <Border x:Name="EndBanner" Grid.ColumnSpan="2" Background="{DynamicResource StatusBrush}" Padding="10,6" Visibility="Collapsed">
-                <DockPanel>
-                    <Button x:Name="BannerReconnectButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.Reconnect}" Click="OnReconnect"
-                            VerticalAlignment="Center" Margin="12,0,0,0" />
-                    <views:AnnouncedText x:Name="EndText" Foreground="{DynamicResource StatusForeground}" TextWrapping="Wrap" VerticalAlignment="Center"
-                                         AutomationProperties.LiveSetting="Assertive" />
-                </DockPanel>
-            </Border>
+            <StackPanel Grid.ColumnSpan="2">
+                <!-- Session partagée : qui regarde, qui a la main, demandes en attente (voir ShareBanner). -->
+                <views:ShareBanner x:Name="ShareBar" />
+                <!-- Fin de session : bandeau au-dessus du terminal, qui reste lisible, sélectionnable et copiable. -->
+                <Border x:Name="EndBanner" Background="{DynamicResource StatusBrush}" Padding="10,6" Visibility="Collapsed">
+                    <DockPanel>
+                        <Button x:Name="BannerReconnectButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.Reconnect}" Click="OnReconnect"
+                                VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <views:AnnouncedText x:Name="EndText" Foreground="{DynamicResource StatusForeground}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                             AutomationProperties.LiveSetting="Assertive" />
+                    </DockPanel>
+                </Border>
+            </StackPanel>
             <term:TerminalView Grid.Row="1" x:Name="Terminal" />
             <!-- Historique : la barre montre où l'on est et permet d'y aller ; masquée sans historique. -->
             <ScrollBar Grid.Row="1" Grid.Column="1" x:Name="HistoryBar" Orientation="Vertical" Width="14" Visibility="Collapsed"

@@ -17363,5 +17363,1787 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("EnvInvalidReminder", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing.
+        /// </summary>
+        public static string EnvSessionSharing {
+            get {
+                return ResourceManager.GetString("EnvSessionSharing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing: direct connections.
+        /// </summary>
+        public static string EnvShareDirect {
+            get {
+                return ResourceManager.GetString("EnvShareDirect", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing: port.
+        /// </summary>
+        public static string EnvSharePort {
+            get {
+                return ResourceManager.GetString("EnvSharePort", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing: relay folder.
+        /// </summary>
+        public static string EnvShareRelay {
+            get {
+                return ResourceManager.GetString("EnvShareRelay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing: relay folder on the network server {0}.
+        /// </summary>
+        public static string EnvShareRelayNetwork {
+            get {
+                return ResourceManager.GetString("EnvShareRelayNetwork", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session shared ({0}, {1}). {2}.
+        /// </summary>
+        public static string InterventionShareStarted {
+            get {
+                return ResourceManager.GetString("InterventionShareStarted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to control can be given.
+        /// </summary>
+        public static string InterventionShareControlAllowed {
+            get {
+                return ResourceManager.GetString("InterventionShareControlAllowed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to read-only.
+        /// </summary>
+        public static string InterventionShareReadOnly {
+            get {
+                return ResourceManager.GetString("InterventionShareReadOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ({1}, computer {2}) asks to watch, from {3}..
+        /// </summary>
+        public static string InterventionShareRequest {
+            get {
+                return ResourceManager.GetString("InterventionShareRequest", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is watching the session (verification code {1} checked)..
+        /// </summary>
+        public static string InterventionShareAccepted {
+            get {
+                return ResourceManager.GetString("InterventionShareAccepted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Request from {0} refused..
+        /// </summary>
+        public static string InterventionShareRefused {
+            get {
+                return ResourceManager.GetString("InterventionShareRefused", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} removed from the share..
+        /// </summary>
+        public static string InterventionShareExcluded {
+            get {
+                return ResourceManager.GetString("InterventionShareExcluded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Request from {0} refused: too many people are already watching..
+        /// </summary>
+        public static string InterventionShareFull {
+            get {
+                return ResourceManager.GetString("InterventionShareFull", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} left the share..
+        /// </summary>
+        public static string InterventionShareLeft {
+            get {
+                return ResourceManager.GetString("InterventionShareLeft", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sharing ended ({0})..
+        /// </summary>
+        public static string InterventionShareStopped {
+            get {
+                return ResourceManager.GetString("InterventionShareStopped", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Control given to {0}: what they type goes into the session under your identity..
+        /// </summary>
+        public static string InterventionShareControlGiven {
+            get {
+                return ResourceManager.GetString("InterventionShareControlGiven", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Control taken back from {0}..
+        /// </summary>
+        public static string InterventionShareControlTaken {
+            get {
+                return ResourceManager.GetString("InterventionShareControlTaken", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Watching the session of {0} (computer {1}), verification code {2}..
+        /// </summary>
+        public static string InterventionWatchStarted {
+            get {
+                return ResourceManager.GetString("InterventionWatchStarted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} gave you control: what you type goes into their session..
+        /// </summary>
+        public static string InterventionWatchControlGiven {
+            get {
+                return ResourceManager.GetString("InterventionWatchControlGiven", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No longer in control of the session of {0}..
+        /// </summary>
+        public static string InterventionWatchControlEnded {
+            get {
+                return ResourceManager.GetString("InterventionWatchControlEnded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Watching ended: {0}.
+        /// </summary>
+        public static string InterventionWatchEnded {
+            get {
+                return ResourceManager.GetString("InterventionWatchEnded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid sharing port (0 for any free port, or 1024 to 65535)..
+        /// </summary>
+        public static string InvalidSharePort {
+            get {
+                return ResourceManager.GetString("InvalidSharePort", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid relay folder: give the full path of a folder (network share \\server\share\folder, or local)..
+        /// </summary>
+        public static string InvalidShareRelay {
+            get {
+                return ResourceManager.GetString("InvalidShareRelay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Choose direct connections, a relay folder, or both: otherwise nobody can join your shares..
+        /// </summary>
+        public static string ShareNoRoute {
+            get {
+                return ResourceManager.GetString("ShareNoRoute", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sharing.
+        /// </summary>
+        public static string SettingsPageSharing {
+            get {
+                return ResourceManager.GetString("SettingsPageSharing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Allow sharing my sessions with another ZillaTerm.
+        /// </summary>
+        public static string SettingsSessionSharing {
+            get {
+                return ResourceManager.GetString("SettingsSessionSharing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to You start each share yourself, from the menu of the session tab; each person must be accepted after comparing a 6-digit code. Shares stop when Windows locks. Watching another person's session works without this option..
+        /// </summary>
+        public static string SettingsSessionSharingHelp {
+            get {
+                return ResourceManager.GetString("SettingsSessionSharingHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Direct connections to this computer.
+        /// </summary>
+        public static string SettingsShareDirect {
+            get {
+                return ResourceManager.GetString("SettingsShareDirect", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to P_ort:.
+        /// </summary>
+        public static string SettingsSharePort {
+            get {
+                return ResourceManager.GetString("SettingsSharePort", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 0: a free port chosen at random. A fixed port helps when the firewall must allow it..
+        /// </summary>
+        public static string SettingsSharePortTip {
+            get {
+                return ResourceManager.GetString("SettingsSharePortTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The other ZillaTerm connects to this computer (end-to-end encrypted connection). The first time, Windows Firewall may ask to allow ZillaTerm: allow it on private or domain networks only..
+        /// </summary>
+        public static string SettingsShareDirectHelp {
+            get {
+                return ResourceManager.GetString("SettingsShareDirectHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Relay folder:.
+        /// </summary>
+        public static string SettingsShareRelay {
+            get {
+                return ResourceManager.GetString("SettingsShareRelay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to When the direct connection is not possible (firewall), the exchange goes through this folder of a network share that both computers can reach. Everything written there is end-to-end encrypted, and deleted at the end of the share..
+        /// </summary>
+        public static string SettingsShareRelayHelp {
+            get {
+                return ResourceManager.GetString("SettingsShareRelayHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Relay folder for session sharing.
+        /// </summary>
+        public static string SettingsShareRelayPick {
+            get {
+                return ResourceManager.GetString("SettingsShareRelayPick", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Join a shared session.
+        /// </summary>
+        public static string JoinTitle {
+            get {
+                return ResourceManager.GetString("JoinTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Watch the session of another person who has ZillaTerm, with their agreement..
+        /// </summary>
+        public static string JoinSubtitle {
+            get {
+                return ResourceManager.GetString("JoinSubtitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Join.
+        /// </summary>
+        public static string JoinButton {
+            get {
+                return ResourceManager.GetString("JoinButton", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Invitation received:.
+        /// </summary>
+        public static string JoinInvitationLabel {
+            get {
+                return ResourceManager.GetString("JoinInvitationLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Paste the whole invitation (it starts with zillaterm-share:). The text around it in the message does not matter..
+        /// </summary>
+        public static string JoinInvitationHelp {
+            get {
+                return ResourceManager.GetString("JoinInvitationHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unreadable invitation: copy it in full from the message (it starts with zillaterm-share:)..
+        /// </summary>
+        public static string JoinInvitationInvalid {
+            get {
+                return ResourceManager.GetString("JoinInvitationInvalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connecting to the computer that shares….
+        /// </summary>
+        public static string JoinConnecting {
+            get {
+                return ResourceManager.GetString("JoinConnecting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Request sent. Waiting for the person sharing to accept….
+        /// </summary>
+        public static string JoinWaiting {
+            get {
+                return ResourceManager.GetString("JoinWaiting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Verification code.
+        /// </summary>
+        public static string JoinCodeLabel {
+            get {
+                return ResourceManager.GetString("JoinCodeLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Give this code to the person sharing (phone, chat): they must see the same one before accepting. A different code means someone else is in between: they must refuse..
+        /// </summary>
+        public static string JoinCodeHelp {
+            get {
+                return ResourceManager.GetString("JoinCodeHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Direct connection to {0}..
+        /// </summary>
+        public static string JoinRouteDirect {
+            get {
+                return ResourceManager.GetString("JoinRouteDirect", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Through the relay folder (network share)..
+        /// </summary>
+        public static string JoinRouteRelay {
+            get {
+                return ResourceManager.GetString("JoinRouteRelay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot reach the computer that shares: neither directly (firewall, network, VPN) nor through the relay folder. Check that the person is still sharing..
+        /// </summary>
+        public static string JoinUnreachable {
+            get {
+                return ResourceManager.GetString("JoinUnreachable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invitation refused: it no longer matches a share in progress (sharing stopped, or incomplete invitation)..
+        /// </summary>
+        public static string JoinRejected {
+            get {
+                return ResourceManager.GetString("JoinRejected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This invitation has expired or the share is over: ask for a new one..
+        /// </summary>
+        public static string JoinExpired {
+            get {
+                return ResourceManager.GetString("JoinExpired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The share no longer exists in the relay folder (stopped, or ZillaTerm closed on the sharing computer)..
+        /// </summary>
+        public static string JoinNotFound {
+            get {
+                return ResourceManager.GetString("JoinNotFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Too many people are already watching this session..
+        /// </summary>
+        public static string JoinFull {
+            get {
+                return ResourceManager.GetString("JoinFull", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The person sharing refused your request, or did not answer in time (3 minutes)..
+        /// </summary>
+        public static string JoinRefused {
+            get {
+                return ResourceManager.GetString("JoinRefused", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to S_hare the session….
+        /// </summary>
+        public static string MenuTabShare {
+            get {
+                return ResourceManager.GetString("MenuTabShare", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Manage s_haring….
+        /// </summary>
+        public static string MenuTabShareManage {
+            get {
+                return ResourceManager.GetString("MenuTabShareManage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The session must be open (Remote Desktop: shown in the tab)..
+        /// </summary>
+        public static string MenuTabShareNotConnected {
+            get {
+                return ResourceManager.GetString("MenuTabShareNotConnected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Share the session.
+        /// </summary>
+        public static string ShareTitle {
+            get {
+                return ResourceManager.GetString("ShareTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Another person with ZillaTerm will be able to watch this session live, after you accept them..
+        /// </summary>
+        public static string ShareIntro {
+            get {
+                return ResourceManager.GetString("ShareIntro", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Duration:.
+        /// </summary>
+        public static string ShareDurationLabel {
+            get {
+                return ResourceManager.GetString("ShareDurationLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} minutes.
+        /// </summary>
+        public static string ShareMinutes {
+            get {
+                return ResourceManager.GetString("ShareMinutes", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0:# hour|# hours}.
+        /// </summary>
+        public static string ShareHours {
+            get {
+                return ResourceManager.GetString("ShareHours", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Allow giving _control (typing in the session).
+        /// </summary>
+        public static string ShareAllowControl {
+            get {
+                return ResourceManager.GetString("ShareAllowControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Read-only until you give control to someone, and you take it back whenever you want. What they type goes out under your identity..
+        /// </summary>
+        public static string ShareAllowControlHelp {
+            get {
+                return ResourceManager.GetString("ShareAllowControlHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Remote Desktop and VNC: read-only. The screen is shown only while the tab is displayed (not in full screen)..
+        /// </summary>
+        public static string ShareScreenHelp {
+            get {
+                return ResourceManager.GetString("ShareScreenHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Before sharing.
+        /// </summary>
+        public static string ShareWarningTitle {
+            get {
+                return ResourceManager.GetString("ShareWarningTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Everything displayed in the session is visible: do not display passwords or secrets while sharing..
+        /// </summary>
+        public static string ShareWarningVisible {
+            get {
+                return ResourceManager.GetString("ShareWarningVisible", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to You accept each person yourself, after checking a 6-digit code with them..
+        /// </summary>
+        public static string ShareWarningApproval {
+            get {
+                return ResourceManager.GetString("ShareWarningApproval", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sharing stops at the end of the duration, when Windows locks, when the session or ZillaTerm closes..
+        /// </summary>
+        public static string ShareWarningEnds {
+            get {
+                return ResourceManager.GetString("ShareWarningEnds", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Start sharing.
+        /// </summary>
+        public static string ShareStart {
+            get {
+                return ResourceManager.GetString("ShareStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Copy the invitation.
+        /// </summary>
+        public static string ShareCopyInvitation {
+            get {
+                return ResourceManager.GetString("ShareCopyInvitation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Copies the invitation, to paste into a message to the person..
+        /// </summary>
+        public static string ShareCopyInvitationTip {
+            get {
+                return ResourceManager.GetString("ShareCopyInvitationTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session shared.
+        /// </summary>
+        public static string ShareStartedTitle {
+            get {
+                return ResourceManager.GetString("ShareStartedTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Send this invitation to the person (company chat or e-mail). They paste it into ZillaTerm: Sharing button, then « Join a shared session »..
+        /// </summary>
+        public static string ShareInvitationIntro {
+            get {
+                return ResourceManager.GetString("ShareInvitationIntro", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invitation.
+        /// </summary>
+        public static string ShareInvitationName {
+            get {
+                return ResourceManager.GetString("ShareInvitationName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Valid until {0}..
+        /// </summary>
+        public static string ShareValidUntil {
+            get {
+                return ResourceManager.GetString("ShareValidUntil", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Direct connection: {0} (port {1})..
+        /// </summary>
+        public static string ShareRouteDirect {
+            get {
+                return ResourceManager.GetString("ShareRouteDirect", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Otherwise through the relay folder {0}..
+        /// </summary>
+        public static string ShareRouteRelayToo {
+            get {
+                return ResourceManager.GetString("ShareRouteRelayToo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Through the relay folder {0} only..
+        /// </summary>
+        public static string ShareRouteRelayOnly {
+            get {
+                return ResourceManager.GetString("ShareRouteRelayOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The invitation only lets someone ask: you will see each request, with a code to compare, and decide..
+        /// </summary>
+        public static string ShareInvitationSafety {
+            get {
+                return ResourceManager.GetString("ShareInvitationSafety", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invitation copied..
+        /// </summary>
+        public static string ShareInvitationCopied {
+            get {
+                return ResourceManager.GetString("ShareInvitationCopied", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot share: neither direct connections (port in use or refused) nor the relay folder (unreachable). See Settings &gt; Sharing..
+        /// </summary>
+        public static string ShareUnreachable {
+            get {
+                return ResourceManager.GetString("ShareUnreachable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Too many sessions shared at once ({0} at most): stop one first..
+        /// </summary>
+        public static string ShareTooMany {
+            get {
+                return ResourceManager.GetString("ShareTooMany", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Take back control.
+        /// </summary>
+        public static string ShareTakeBack {
+            get {
+                return ResourceManager.GetString("ShareTakeBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Read-only again for everyone..
+        /// </summary>
+        public static string ShareTakeBackTip {
+            get {
+                return ResourceManager.GetString("ShareTakeBackTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Manage….
+        /// </summary>
+        public static string ShareManage {
+            get {
+                return ResourceManager.GetString("ShareManage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to People watching, invitation, control.
+        /// </summary>
+        public static string ShareManageTip {
+            get {
+                return ResourceManager.GetString("ShareManageTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Stop sharing.
+        /// </summary>
+        public static string ShareStop {
+            get {
+                return ResourceManager.GetString("ShareStop", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Nobody sees the session any more, straight away..
+        /// </summary>
+        public static string ShareStopTip {
+            get {
+                return ResourceManager.GetString("ShareStopTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shared session: nobody is watching yet · until {0}.
+        /// </summary>
+        public static string ShareBannerNobody {
+            get {
+                return ResourceManager.GetString("ShareBannerNobody", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shared session: {0:# person watching|# people watching} ({1}) · until {2}.
+        /// </summary>
+        public static string ShareBannerWatching {
+            get {
+                return ResourceManager.GetString("ShareBannerWatching", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to · {0} has control.
+        /// </summary>
+        public static string ShareBannerController {
+            get {
+                return ResourceManager.GetString("ShareBannerController", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ({1}, computer {2}) asks to watch..
+        /// </summary>
+        public static string ShareBannerJoinRequest {
+            get {
+                return ResourceManager.GetString("ShareBannerJoinRequest", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} asks for control..
+        /// </summary>
+        public static string ShareBannerControlRequest {
+            get {
+                return ResourceManager.GetString("ShareBannerControlRequest", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Answer….
+        /// </summary>
+        public static string ShareAnswer {
+            get {
+                return ResourceManager.GetString("ShareAnswer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Compare the verification code with the person, then accept or refuse..
+        /// </summary>
+        public static string ShareAnswerTip {
+            get {
+                return ResourceManager.GetString("ShareAnswerTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Refuse.
+        /// </summary>
+        public static string ShareRefuse {
+            get {
+                return ResourceManager.GetString("ShareRefuse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Give control….
+        /// </summary>
+        public static string ShareGiveControl {
+            get {
+                return ResourceManager.GetString("ShareGiveControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to What this person types will go into the session, under your identity..
+        /// </summary>
+        public static string ShareGiveControlTip {
+            get {
+                return ResourceManager.GetString("ShareGiveControlTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Ignore.
+        /// </summary>
+        public static string ShareIgnore {
+            get {
+                return ResourceManager.GetString("ShareIgnore", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Request to watch.
+        /// </summary>
+        public static string ShareAnswerTitle {
+            get {
+                return ResourceManager.GetString("ShareAnswerTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Let {0} watch the session?.
+        /// </summary>
+        public static string ShareAnswerHeading {
+            get {
+                return ResourceManager.GetString("ShareAnswerHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ({1}, computer {2}) asks to watch, {3}. Compare the code below with the one this person sees (phone, chat): if it differs, refuse — someone else is in between..
+        /// </summary>
+        public static string ShareAnswerMessage {
+            get {
+                return ResourceManager.GetString("ShareAnswerMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to from {0}.
+        /// </summary>
+        public static string ShareFromAddress {
+            get {
+                return ResourceManager.GetString("ShareFromAddress", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to through the relay folder.
+        /// </summary>
+        public static string ShareFromRelay {
+            get {
+                return ResourceManager.GetString("ShareFromRelay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Verification code.
+        /// </summary>
+        public static string ShareAnswerCode {
+            get {
+                return ResourceManager.GetString("ShareAnswerCode", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to They will see everything displayed in the session, until the end of sharing or until you remove them..
+        /// </summary>
+        public static string ShareAnswerSees {
+            get {
+                return ResourceManager.GetString("ShareAnswerSees", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to They cannot type in the session unless you give them control..
+        /// </summary>
+        public static string ShareAnswerNoControl {
+            get {
+                return ResourceManager.GetString("ShareAnswerNoControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Read-only: they cannot act on the session..
+        /// </summary>
+        public static string ShareAnswerReadOnly {
+            get {
+                return ResourceManager.GetString("ShareAnswerReadOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to I checked the code with this person.
+        /// </summary>
+        public static string ShareAnswerChecked {
+            get {
+                return ResourceManager.GetString("ShareAnswerChecked", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Accept.
+        /// </summary>
+        public static string ShareAccept {
+            get {
+                return ResourceManager.GetString("ShareAccept", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Give control.
+        /// </summary>
+        public static string ShareGiveTitle {
+            get {
+                return ResourceManager.GetString("ShareGiveTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Give control of the session to {0}?.
+        /// </summary>
+        public static string ShareGiveHeading {
+            get {
+                return ResourceManager.GetString("ShareGiveHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to What this person types goes into the session under your identity: the PSMP and the server record it in your name..
+        /// </summary>
+        public static string ShareGiveMessage {
+            get {
+                return ResourceManager.GetString("ShareGiveMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to You take control back at any time: « Take back control » in the session banner..
+        /// </summary>
+        public static string ShareGiveTakeBack {
+            get {
+                return ResourceManager.GetString("ShareGiveTakeBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Stay in front of the session while they have control..
+        /// </summary>
+        public static string ShareGiveStay {
+            get {
+                return ResourceManager.GetString("ShareGiveStay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Give control.
+        /// </summary>
+        public static string ShareGiveAction {
+            get {
+                return ResourceManager.GetString("ShareGiveAction", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing is turned off.
+        /// </summary>
+        public static string ShareDisabledHeading {
+            get {
+                return ResourceManager.GetString("ShareDisabledHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Turn it on in Settings &gt; Sharing, with direct connections or a relay folder. Watching another person's session works without it..
+        /// </summary>
+        public static string ShareDisabledMessage {
+            get {
+                return ResourceManager.GetString("ShareDisabledMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open Settings.
+        /// </summary>
+        public static string ShareOpenSettings {
+            get {
+                return ResourceManager.GetString("ShareOpenSettings", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The session must be open to be shared..
+        /// </summary>
+        public static string ShareNotConnected {
+            get {
+                return ResourceManager.GetString("ShareNotConnected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session {0} shared: send the invitation..
+        /// </summary>
+        public static string ShareStartedStatus {
+            get {
+                return ResourceManager.GetString("ShareStartedStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} asks to watch {1}..
+        /// </summary>
+        public static string ShareRequestStatus {
+            get {
+                return ResourceManager.GetString("ShareRequestStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} asks for control of {1}..
+        /// </summary>
+        public static string ShareControlRequestStatus {
+            get {
+                return ResourceManager.GetString("ShareControlRequestStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is watching {1}..
+        /// </summary>
+        public static string ShareAcceptedStatus {
+            get {
+                return ResourceManager.GetString("ShareAcceptedStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The request from {0} was withdrawn..
+        /// </summary>
+        public static string ShareRequestWithdrawn {
+            get {
+                return ResourceManager.GetString("ShareRequestWithdrawn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Control of {0} taken back: read-only for everyone..
+        /// </summary>
+        public static string ShareControlTakenStatus {
+            get {
+                return ResourceManager.GetString("ShareControlTakenStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sharing of {0} ended ({1})..
+        /// </summary>
+        public static string ShareStoppedStatus {
+            get {
+                return ResourceManager.GetString("ShareStoppedStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to stopped.
+        /// </summary>
+        public static string ShareEndStopped {
+            get {
+                return ResourceManager.GetString("ShareEndStopped", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to time is up.
+        /// </summary>
+        public static string ShareEndExpired {
+            get {
+                return ResourceManager.GetString("ShareEndExpired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to session closed.
+        /// </summary>
+        public static string ShareEndSessionClosed {
+            get {
+                return ResourceManager.GetString("ShareEndSessionClosed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Windows locked.
+        /// </summary>
+        public static string ShareEndLocked {
+            get {
+                return ResourceManager.GetString("ShareEndLocked", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to too many wrong invitations.
+        /// </summary>
+        public static string ShareEndTooMany {
+            get {
+                return ResourceManager.GetString("ShareEndTooMany", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ZillaTerm closed.
+        /// </summary>
+        public static string ShareEndClosed {
+            get {
+                return ResourceManager.GetString("ShareEndClosed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0:# session shared|# sessions shared} ({1:# person|# people}).
+        /// </summary>
+        public static string ShareIndicatorShared {
+            get {
+                return ResourceManager.GetString("ShareIndicatorShared", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0:# session watched|# sessions watched}.
+        /// </summary>
+        public static string ShareIndicatorWatched {
+            get {
+                return ResourceManager.GetString("ShareIndicatorWatched", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0:# request|# requests} waiting.
+        /// </summary>
+        public static string ShareIndicatorPending {
+            get {
+                return ResourceManager.GetString("ShareIndicatorPending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing: click to manage..
+        /// </summary>
+        public static string ShareIndicatorTip {
+            get {
+                return ResourceManager.GetString("ShareIndicatorTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sharing.
+        /// </summary>
+        public static string ToolSharing {
+            get {
+                return ResourceManager.GetString("ToolSharing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing: your shared sessions, those you watch, join a shared session.
+        /// </summary>
+        public static string ToolSharingTip {
+            get {
+                return ResourceManager.GetString("ToolSharingTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session sharing.
+        /// </summary>
+        public static string SharesTitle {
+            get {
+                return ResourceManager.GetString("SharesTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to My shared sessions.
+        /// </summary>
+        public static string SharesMine {
+            get {
+                return ResourceManager.GetString("SharesMine", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sharing your sessions is turned off (Settings &gt; Sharing). You can still watch other people's sessions..
+        /// </summary>
+        public static string SharesDisabled {
+            get {
+                return ResourceManager.GetString("SharesDisabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No session shared. To share one: right-click its tab, « Share the session… »..
+        /// </summary>
+        public static string SharesNone {
+            get {
+                return ResourceManager.GetString("SharesNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Invitation….
+        /// </summary>
+        public static string SharesInvitation {
+            get {
+                return ResourceManager.GetString("SharesInvitation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shows the invitation again, to send it to someone else..
+        /// </summary>
+        public static string SharesInvitationTip {
+            get {
+                return ResourceManager.GetString("SharesInvitationTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Stop sharing.
+        /// </summary>
+        public static string SharesStop {
+            get {
+                return ResourceManager.GetString("SharesStop", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to People of the selected share.
+        /// </summary>
+        public static string SharesPeople {
+            get {
+                return ResourceManager.GetString("SharesPeople", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Answer….
+        /// </summary>
+        public static string SharesAnswer {
+            get {
+                return ResourceManager.GetString("SharesAnswer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Give control….
+        /// </summary>
+        public static string SharesGive {
+            get {
+                return ResourceManager.GetString("SharesGive", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Take back control.
+        /// </summary>
+        public static string SharesTake {
+            get {
+                return ResourceManager.GetString("SharesTake", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Remove.
+        /// </summary>
+        public static string SharesExclude {
+            get {
+                return ResourceManager.GetString("SharesExclude", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This person stops seeing the session; they can only come back with your agreement..
+        /// </summary>
+        public static string SharesExcludeTip {
+            get {
+                return ResourceManager.GetString("SharesExcludeTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sessions I watch.
+        /// </summary>
+        public static string SharesWatched {
+            get {
+                return ResourceManager.GetString("SharesWatched", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to S_how.
+        /// </summary>
+        public static string SharesShow {
+            get {
+                return ResourceManager.GetString("SharesShow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Leave.
+        /// </summary>
+        public static string SharesLeave {
+            get {
+                return ResourceManager.GetString("SharesLeave", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to None. To watch someone's session: « Join a shared session… » with the invitation they sent you..
+        /// </summary>
+        public static string SharesNoneWatched {
+            get {
+                return ResourceManager.GetString("SharesNoneWatched", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Join a shared session….
+        /// </summary>
+        public static string SharesJoin {
+            get {
+                return ResourceManager.GetString("SharesJoin", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} · {1:# person watching|# people watching} · until {2}.
+        /// </summary>
+        public static string SharesShareLine {
+            get {
+                return ResourceManager.GetString("SharesShareLine", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0:# request|# requests} waiting.
+        /// </summary>
+        public static string SharesPendingCount {
+            get {
+                return ResourceManager.GetString("SharesPendingCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ({1}, computer {2}).
+        /// </summary>
+        public static string SharesPerson {
+            get {
+                return ResourceManager.GetString("SharesPerson", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to waiting for your answer, code {0}.
+        /// </summary>
+        public static string SharesPersonPending {
+            get {
+                return ResourceManager.GetString("SharesPersonPending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to watching since {0}.
+        /// </summary>
+        public static string SharesPersonWatching {
+            get {
+                return ResourceManager.GetString("SharesPersonWatching", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to has control.
+        /// </summary>
+        public static string SharesPersonHasControl {
+            get {
+                return ResourceManager.GetString("SharesPersonHasControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to asks for control.
+        /// </summary>
+        public static string SharesPersonAsksControl {
+            get {
+                return ResourceManager.GetString("SharesPersonAsksControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} · shared by {1} (computer {2}) · until {3}.
+        /// </summary>
+        public static string SharesWatchedLine {
+            get {
+                return ResourceManager.GetString("SharesWatchedLine", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Leave.
+        /// </summary>
+        public static string WatchLeave {
+            get {
+                return ResourceManager.GetString("WatchLeave", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Stop watching (the person sharing sees you leave)..
+        /// </summary>
+        public static string WatchLeaveTip {
+            get {
+                return ResourceManager.GetString("WatchLeaveTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Close the tab.
+        /// </summary>
+        public static string WatchCloseTab {
+            get {
+                return ResourceManager.GetString("WatchCloseTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Ask for control.
+        /// </summary>
+        public static string WatchAskControl {
+            get {
+                return ResourceManager.GetString("WatchAskControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The person sharing decides; until then, read-only..
+        /// </summary>
+        public static string WatchAskControlTip {
+            get {
+                return ResourceManager.GetString("WatchAskControlTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cancel the request.
+        /// </summary>
+        public static string WatchCancelRequest {
+            get {
+                return ResourceManager.GetString("WatchCancelRequest", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Give control back.
+        /// </summary>
+        public static string WatchGiveBack {
+            get {
+                return ResourceManager.GetString("WatchGiveBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Back to read-only..
+        /// </summary>
+        public static string WatchGiveBackTip {
+            get {
+                return ResourceManager.GetString("WatchGiveBackTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to You have control: what you type goes into the session of {0}, under their identity..
+        /// </summary>
+        public static string WatchHasControl {
+            get {
+                return ResourceManager.GetString("WatchHasControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The screen of {0} is not visible at the moment (tab in the background, full screen or minimized window): the image is frozen..
+        /// </summary>
+        public static string WatchScreenPaused {
+            get {
+                return ResourceManager.GetString("WatchScreenPaused", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Read-only: nothing you type is sent. « Ask for control » to type in the session..
+        /// </summary>
+        public static string WatchReadOnlyAsk {
+            get {
+                return ResourceManager.GetString("WatchReadOnlyAsk", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Read-only: nothing you type is sent..
+        /// </summary>
+        public static string WatchReadOnly {
+            get {
+                return ResourceManager.GetString("WatchReadOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shared by {0} (computer {1}).
+        /// </summary>
+        public static string WatchSharedBy {
+            get {
+                return ResourceManager.GetString("WatchSharedBy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to you have control.
+        /// </summary>
+        public static string WatchModeControl {
+            get {
+                return ResourceManager.GetString("WatchModeControl", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to read-only.
+        /// </summary>
+        public static string WatchModeReadOnly {
+            get {
+                return ResourceManager.GetString("WatchModeReadOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to until {0}.
+        /// </summary>
+        public static string WatchUntil {
+            get {
+                return ResourceManager.GetString("WatchUntil", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to code {0}.
+        /// </summary>
+        public static string WatchCode {
+            get {
+                return ResourceManager.GetString("WatchCode", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to direct connection.
+        /// </summary>
+        public static string WatchRouteDirect {
+            get {
+                return ResourceManager.GetString("WatchRouteDirect", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to relay folder.
+        /// </summary>
+        public static string WatchRouteRelay {
+            get {
+                return ResourceManager.GetString("WatchRouteRelay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The last image stays visible; nothing is received any more..
+        /// </summary>
+        public static string WatchEndedDetail {
+            get {
+                return ResourceManager.GetString("WatchEndedDetail", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} stopped sharing..
+        /// </summary>
+        public static string WatchEndStopped {
+            get {
+                return ResourceManager.GetString("WatchEndStopped", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} removed you from the share..
+        /// </summary>
+        public static string WatchEndExcluded {
+            get {
+                return ResourceManager.GetString("WatchEndExcluded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The sharing time is up..
+        /// </summary>
+        public static string WatchEndExpired {
+            get {
+                return ResourceManager.GetString("WatchEndExpired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The shared session is closed..
+        /// </summary>
+        public static string WatchEndSessionClosed {
+            get {
+                return ResourceManager.GetString("WatchEndSessionClosed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The computer of {0} was locked: sharing stopped..
+        /// </summary>
+        public static string WatchEndLocked {
+            get {
+                return ResourceManager.GetString("WatchEndLocked", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ZillaTerm was closed on the computer of {0}..
+        /// </summary>
+        public static string WatchEndClosed {
+            get {
+                return ResourceManager.GetString("WatchEndClosed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connection lost with the computer that shares..
+        /// </summary>
+        public static string WatchEndLost {
+            get {
+                return ResourceManager.GetString("WatchEndLost", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to You left the session..
+        /// </summary>
+        public static string WatchEndLeft {
+            get {
+                return ResourceManager.GetString("WatchEndLeft", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sharing is over..
+        /// </summary>
+        public static string WatchEndOther {
+            get {
+                return ResourceManager.GetString("WatchEndOther", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} gave you control..
+        /// </summary>
+        public static string WatchControlGivenStatus {
+            get {
+                return ResourceManager.GetString("WatchControlGivenStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to You no longer have control ({0})..
+        /// </summary>
+        public static string WatchControlEndedStatus {
+            get {
+                return ResourceManager.GetString("WatchControlEndedStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Watching {0}, shared by {1}..
+        /// </summary>
+        public static string WatchStartedStatus {
+            get {
+                return ResourceManager.GetString("WatchStartedStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} (session of {1}).
+        /// </summary>
+        public static string WatchPasteSubject {
+            get {
+                return ResourceManager.GetString("WatchPasteSubject", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session of {0} (computer {1}), watched through session sharing.
+        /// </summary>
+        public static string TabModeWatched {
+            get {
+                return ResourceManager.GetString("TabModeWatched", resourceCulture);
+            }
+        }
     }
 }

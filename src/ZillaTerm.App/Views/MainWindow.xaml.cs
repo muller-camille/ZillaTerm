@@ -89,6 +89,7 @@ public partial class MainWindow : Window
 
         UpdateDebugLogIndicator();
         InitIntervention();
+        InitSharing();
 
         _searchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
         _searchDebounce.Tick += (_, _) =>
@@ -1662,11 +1663,20 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnSettings(object sender, RoutedEventArgs e)
+    private void OnSettings(object sender, RoutedEventArgs e) => OpenSettings();
+
+    /// <param name="sharing">Ouvre la page « Partage » (partage désactivé, depuis « Partager la session »).</param>
+    private void OpenSettings(bool sharing = false)
     {
         var language = _settings.Language;
         var centralFile = _settings.EnvironmentFile;
-        var accepted = new SettingsDialog(_settings, _keePass.Store) { Owner = this }.ShowDialog() == true;
+        var dialog = new SettingsDialog(_settings, _keePass.Store) { Owner = this };
+        if (sharing)
+        {
+            dialog.ShowSharingPage();
+        }
+
+        var accepted = dialog.ShowDialog() == true;
         // Coffre local supprimé ou créé depuis les paramètres : l'arbre « Mes serveurs » peut changer.
         RefreshSaved();
         if (accepted)
@@ -1676,6 +1686,7 @@ public partial class MainWindow : Window
             Palette.Choose(Application.Current, _settings.Theme);
             UpdateActions();
             StartKeepAlive();
+            ApplySharingSettings();
             SetStatus(_settings.Language == language ? Strings.SettingsSaved : Strings.SettingsSavedLanguage);
             // Nouveau fichier central : proposé tout de suite plutôt qu'au prochain démarrage.
             if (_settings.EnvironmentFile.Length > 0 && !string.Equals(_settings.EnvironmentFile, centralFile, StringComparison.OrdinalIgnoreCase))
@@ -1931,6 +1942,7 @@ public partial class MainWindow : Window
         _passwordClipboard?.Dispose();
         _mfaKey = null;
         SshAnswerCache.ForgetAll();
+        EndSharing(logout: false);
         CloseAllSshSessions();
         _keePass.LockAll(localStore: true);
         _launcher.Cleanup();
@@ -2016,6 +2028,8 @@ public partial class MainWindow : Window
         _loggedOff = true;
         // Dernier essai, plus insistant : aucun minuteur ne réessaiera après la fermeture.
         _passwordClipboard?.Dispose();
+        // Plus rien de ce poste n'est montré, plus rien d'un autre n'est regardé.
+        EndSharing(LogoutRequested);
         IsEnabled = false;
         // Transferts annulés d'abord : le fichier interrompu est supprimé tant que la connexion est ouverte.
         await FilesPanel.CancelTransfersAsync(null);

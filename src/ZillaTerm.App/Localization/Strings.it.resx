@@ -5821,4 +5821,598 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="EnvInvalidReminder" xml:space="preserve">
     <value>Avviso a tempo non valido (minuti da 1 a 1440, testo da 1 a 200 caratteri visibili, al massimo 10): {0}</value>
   </data>
+  <data name="EnvSessionSharing" xml:space="preserve">
+    <value>Condivisione delle sessioni</value>
+  </data>
+  <data name="EnvShareDirect" xml:space="preserve">
+    <value>Condivisione delle sessioni: connessioni dirette</value>
+  </data>
+  <data name="EnvSharePort" xml:space="preserve">
+    <value>Condivisione delle sessioni: porta</value>
+  </data>
+  <data name="EnvShareRelay" xml:space="preserve">
+    <value>Condivisione delle sessioni: cartella di inoltro</value>
+  </data>
+  <data name="EnvShareRelayNetwork" xml:space="preserve">
+    <value>Condivisione delle sessioni: cartella di inoltro sul server di rete {0}</value>
+  </data>
+  <data name="InterventionShareStarted" xml:space="preserve">
+    <value>Sessione condivisa ({0}, {1}). {2}</value>
+  </data>
+  <data name="InterventionShareControlAllowed" xml:space="preserve">
+    <value>controllo concedibile</value>
+  </data>
+  <data name="InterventionShareReadOnly" xml:space="preserve">
+    <value>sola lettura</value>
+  </data>
+  <data name="InterventionShareRequest" xml:space="preserve">
+    <value>{0} ({1}, computer {2}) chiede di guardare, da {3}.</value>
+  </data>
+  <data name="InterventionShareAccepted" xml:space="preserve">
+    <value>{0} guarda la sessione (codice di verifica {1} controllato).</value>
+  </data>
+  <data name="InterventionShareRefused" xml:space="preserve">
+    <value>Richiesta di {0} rifiutata.</value>
+  </data>
+  <data name="InterventionShareExcluded" xml:space="preserve">
+    <value>{0} escluso dalla condivisione.</value>
+  </data>
+  <data name="InterventionShareFull" xml:space="preserve">
+    <value>Richiesta di {0} rifiutata: troppe persone stanno già guardando.</value>
+  </data>
+  <data name="InterventionShareLeft" xml:space="preserve">
+    <value>{0} ha lasciato la condivisione.</value>
+  </data>
+  <data name="InterventionShareStopped" xml:space="preserve">
+    <value>Fine della condivisione ({0}).</value>
+  </data>
+  <data name="InterventionShareControlGiven" xml:space="preserve">
+    <value>Controllo dato a {0}: ciò che digita va nella sessione con la tua identità.</value>
+  </data>
+  <data name="InterventionShareControlTaken" xml:space="preserve">
+    <value>Controllo ripreso a {0}.</value>
+  </data>
+  <data name="InterventionWatchStarted" xml:space="preserve">
+    <value>Sessione di {0} (computer {1}) guardata, codice di verifica {2}.</value>
+  </data>
+  <data name="InterventionWatchControlGiven" xml:space="preserve">
+    <value>{0} ti ha dato il controllo: ciò che digiti va nella sua sessione.</value>
+  </data>
+  <data name="InterventionWatchControlEnded" xml:space="preserve">
+    <value>Non hai più il controllo della sessione di {0}.</value>
+  </data>
+  <data name="InterventionWatchEnded" xml:space="preserve">
+    <value>Fine della sessione guardata: {0}</value>
+  </data>
+  <data name="InvalidSharePort" xml:space="preserve">
+    <value>Porta di condivisione non valida (0 per una porta libera qualsiasi, oppure da 1024 a 65535).</value>
+  </data>
+  <data name="InvalidShareRelay" xml:space="preserve">
+    <value>Cartella di inoltro non valida: indica il percorso completo di una cartella (condivisione di rete \\server\condivisione\cartella, o locale).</value>
+  </data>
+  <data name="ShareNoRoute" xml:space="preserve">
+    <value>Scegli le connessioni dirette, una cartella di inoltro o entrambe: altrimenti nessuno potrà partecipare alle tue condivisioni.</value>
+  </data>
+  <data name="SettingsPageSharing" xml:space="preserve">
+    <value>Condivisione</value>
+  </data>
+  <data name="SettingsSessionSharing" xml:space="preserve">
+    <value>_Consenti di condividere le mie sessioni con un altro ZillaTerm</value>
+  </data>
+  <data name="SettingsSessionSharingHelp" xml:space="preserve">
+    <value>Ogni condivisione la avvii tu, dal menu della scheda della sessione; ogni persona deve essere accettata dopo il confronto di un codice di 6 cifre. Le condivisioni si interrompono al blocco di Windows. Guardare la sessione di un'altra persona funziona anche senza questa opzione.</value>
+  </data>
+  <data name="SettingsShareDirect" xml:space="preserve">
+    <value>Connessioni _dirette a questo computer</value>
+  </data>
+  <data name="SettingsSharePort" xml:space="preserve">
+    <value>P_orta:</value>
+  </data>
+  <data name="SettingsSharePortTip" xml:space="preserve">
+    <value>0: una porta libera scelta a caso. Una porta fissa aiuta quando il firewall deve consentirla.</value>
+  </data>
+  <data name="SettingsShareDirectHelp" xml:space="preserve">
+    <value>L'altro ZillaTerm si connette a questo computer (connessione cifrata end-to-end). La prima volta, Windows Firewall può chiedere di consentire ZillaTerm: consentilo solo sulle reti private o di dominio.</value>
+  </data>
+  <data name="SettingsShareRelay" xml:space="preserve">
+    <value>Cartella di _inoltro:</value>
+  </data>
+  <data name="SettingsShareRelayHelp" xml:space="preserve">
+    <value>Quando la connessione diretta non è possibile (firewall), lo scambio passa per questa cartella di una condivisione di rete raggiungibile da entrambi i computer. Tutto ciò che vi viene scritto è cifrato end-to-end e cancellato alla fine della condivisione.</value>
+  </data>
+  <data name="SettingsShareRelayPick" xml:space="preserve">
+    <value>Cartella di inoltro per la condivisione delle sessioni</value>
+  </data>
+  <data name="JoinTitle" xml:space="preserve">
+    <value>Partecipa a una sessione condivisa</value>
+  </data>
+  <data name="JoinSubtitle" xml:space="preserve">
+    <value>Guarda la sessione di un'altra persona che ha ZillaTerm, con il suo consenso.</value>
+  </data>
+  <data name="JoinButton" xml:space="preserve">
+    <value>_Partecipa</value>
+  </data>
+  <data name="JoinInvitationLabel" xml:space="preserve">
+    <value>_Invito ricevuto:</value>
+  </data>
+  <data name="JoinInvitationHelp" xml:space="preserve">
+    <value>Incolla l'invito completo (inizia con zillaterm-share:). Il testo intorno, nel messaggio, non dà fastidio.</value>
+  </data>
+  <data name="JoinInvitationInvalid" xml:space="preserve">
+    <value>Invito illeggibile: copialo per intero dal messaggio (inizia con zillaterm-share:).</value>
+  </data>
+  <data name="JoinConnecting" xml:space="preserve">
+    <value>Connessione al computer che condivide…</value>
+  </data>
+  <data name="JoinWaiting" xml:space="preserve">
+    <value>Richiesta inviata. In attesa del consenso della persona che condivide…</value>
+  </data>
+  <data name="JoinCodeLabel" xml:space="preserve">
+    <value>Codice di verifica</value>
+  </data>
+  <data name="JoinCodeHelp" xml:space="preserve">
+    <value>Comunica questo codice alla persona che condivide (telefono, chat): deve vedere lo stesso prima di accettare. Un codice diverso significa che qualcun altro si è interposto: deve rifiutare.</value>
+  </data>
+  <data name="JoinRouteDirect" xml:space="preserve">
+    <value>Connessione diretta a {0}.</value>
+  </data>
+  <data name="JoinRouteRelay" xml:space="preserve">
+    <value>Tramite la cartella di inoltro (condivisione di rete).</value>
+  </data>
+  <data name="JoinUnreachable" xml:space="preserve">
+    <value>Impossibile raggiungere il computer che condivide: né direttamente (firewall, rete, VPN) né tramite la cartella di inoltro. Verifica che la persona stia ancora condividendo.</value>
+  </data>
+  <data name="JoinRejected" xml:space="preserve">
+    <value>Invito rifiutato: non corrisponde più a una condivisione in corso (condivisione interrotta o invito incompleto).</value>
+  </data>
+  <data name="JoinExpired" xml:space="preserve">
+    <value>Questo invito è scaduto o la condivisione è terminata: chiedine uno nuovo.</value>
+  </data>
+  <data name="JoinNotFound" xml:space="preserve">
+    <value>La condivisione non esiste più nella cartella di inoltro (interrotta, o ZillaTerm chiuso sul computer che condivide).</value>
+  </data>
+  <data name="JoinFull" xml:space="preserve">
+    <value>Troppe persone stanno già guardando questa sessione.</value>
+  </data>
+  <data name="JoinRefused" xml:space="preserve">
+    <value>La persona che condivide ha rifiutato la tua richiesta o non ha risposto in tempo (3 minuti).</value>
+  </data>
+  <data name="MenuTabShare" xml:space="preserve">
+    <value>Condividi la sessi_one…</value>
+  </data>
+  <data name="MenuTabShareManage" xml:space="preserve">
+    <value>Gestisci la c_ondivisione…</value>
+  </data>
+  <data name="MenuTabShareNotConnected" xml:space="preserve">
+    <value>La sessione deve essere aperta (Desktop remoto: visualizzato nella scheda).</value>
+  </data>
+  <data name="ShareTitle" xml:space="preserve">
+    <value>Condividi la sessione</value>
+  </data>
+  <data name="ShareIntro" xml:space="preserve">
+    <value>Un'altra persona con ZillaTerm potrà guardare questa sessione in diretta, dopo il tuo consenso.</value>
+  </data>
+  <data name="ShareDurationLabel" xml:space="preserve">
+    <value>_Durata:</value>
+  </data>
+  <data name="ShareMinutes" xml:space="preserve">
+    <value>{0} minuti</value>
+  </data>
+  <data name="ShareHours" xml:space="preserve">
+    <value>{0:# ora|# ore}</value>
+  </data>
+  <data name="ShareAllowControl" xml:space="preserve">
+    <value>Consenti di dare il _controllo (digitare nella sessione)</value>
+  </data>
+  <data name="ShareAllowControlHelp" xml:space="preserve">
+    <value>Sola lettura finché non dai il controllo a qualcuno, e lo riprendi quando vuoi. Ciò che la persona digita parte con la tua identità.</value>
+  </data>
+  <data name="ShareScreenHelp" xml:space="preserve">
+    <value>Desktop remoto e VNC: sola lettura. Lo schermo è mostrato solo quando la scheda è visualizzata (non a schermo intero).</value>
+  </data>
+  <data name="ShareWarningTitle" xml:space="preserve">
+    <value>Prima di condividere</value>
+  </data>
+  <data name="ShareWarningVisible" xml:space="preserve">
+    <value>Tutto ciò che appare nella sessione è visibile: non mostrare password né segreti durante la condivisione.</value>
+  </data>
+  <data name="ShareWarningApproval" xml:space="preserve">
+    <value>Accetti tu ogni persona, dopo aver verificato con lei un codice di 6 cifre.</value>
+  </data>
+  <data name="ShareWarningEnds" xml:space="preserve">
+    <value>La condivisione si interrompe alla fine della durata, al blocco di Windows, alla chiusura della sessione o di ZillaTerm.</value>
+  </data>
+  <data name="ShareStart" xml:space="preserve">
+    <value>_Avvia la condivisione</value>
+  </data>
+  <data name="ShareCopyInvitation" xml:space="preserve">
+    <value>Co_pia l'invito</value>
+  </data>
+  <data name="ShareCopyInvitationTip" xml:space="preserve">
+    <value>Copia l'invito, da incollare in un messaggio alla persona.</value>
+  </data>
+  <data name="ShareStartedTitle" xml:space="preserve">
+    <value>Sessione condivisa</value>
+  </data>
+  <data name="ShareInvitationIntro" xml:space="preserve">
+    <value>Invia questo invito alla persona (chat aziendale o e-mail). Lo incolla in ZillaTerm: pulsante Condivisione, poi «Partecipa a una sessione condivisa».</value>
+  </data>
+  <data name="ShareInvitationName" xml:space="preserve">
+    <value>Invito</value>
+  </data>
+  <data name="ShareValidUntil" xml:space="preserve">
+    <value>Valido fino alle {0}.</value>
+  </data>
+  <data name="ShareRouteDirect" xml:space="preserve">
+    <value>Connessione diretta: {0} (porta {1}).</value>
+  </data>
+  <data name="ShareRouteRelayToo" xml:space="preserve">
+    <value>Altrimenti tramite la cartella di inoltro {0}.</value>
+  </data>
+  <data name="ShareRouteRelayOnly" xml:space="preserve">
+    <value>Solo tramite la cartella di inoltro {0}.</value>
+  </data>
+  <data name="ShareInvitationSafety" xml:space="preserve">
+    <value>L'invito permette solo di chiedere: vedrai ogni richiesta, con un codice da confrontare, e deciderai tu.</value>
+  </data>
+  <data name="ShareInvitationCopied" xml:space="preserve">
+    <value>Invito copiato.</value>
+  </data>
+  <data name="ShareUnreachable" xml:space="preserve">
+    <value>Condivisione impossibile: né connessione diretta (porta occupata o rifiutata) né cartella di inoltro (irraggiungibile). Vedi Impostazioni &gt; Condivisione.</value>
+  </data>
+  <data name="ShareTooMany" xml:space="preserve">
+    <value>Troppe sessioni condivise contemporaneamente ({0} al massimo): interrompine prima una.</value>
+  </data>
+  <data name="ShareTakeBack" xml:space="preserve">
+    <value>Riprendi il controllo</value>
+  </data>
+  <data name="ShareTakeBackTip" xml:space="preserve">
+    <value>Di nuovo sola lettura per tutti.</value>
+  </data>
+  <data name="ShareManage" xml:space="preserve">
+    <value>Gestisci…</value>
+  </data>
+  <data name="ShareManageTip" xml:space="preserve">
+    <value>Persone che guardano, invito, controllo</value>
+  </data>
+  <data name="ShareStop" xml:space="preserve">
+    <value>Interrompi la condivisione</value>
+  </data>
+  <data name="ShareStopTip" xml:space="preserve">
+    <value>Nessuno vede più la sessione, subito.</value>
+  </data>
+  <data name="ShareBannerNobody" xml:space="preserve">
+    <value>Sessione condivisa: nessuno sta ancora guardando · fino alle {0}</value>
+  </data>
+  <data name="ShareBannerWatching" xml:space="preserve">
+    <value>Sessione condivisa: {0:# persona guarda|# persone guardano} ({1}) · fino alle {2}</value>
+  </data>
+  <data name="ShareBannerController" xml:space="preserve">
+    <value>· {0} ha il controllo</value>
+  </data>
+  <data name="ShareBannerJoinRequest" xml:space="preserve">
+    <value>{0} ({1}, computer {2}) chiede di guardare.</value>
+  </data>
+  <data name="ShareBannerControlRequest" xml:space="preserve">
+    <value>{0} chiede il controllo.</value>
+  </data>
+  <data name="ShareAnswer" xml:space="preserve">
+    <value>Rispondi…</value>
+  </data>
+  <data name="ShareAnswerTip" xml:space="preserve">
+    <value>Confronta il codice di verifica con la persona, poi accetta o rifiuta.</value>
+  </data>
+  <data name="ShareRefuse" xml:space="preserve">
+    <value>Rifiuta</value>
+  </data>
+  <data name="ShareGiveControl" xml:space="preserve">
+    <value>Dai il controllo…</value>
+  </data>
+  <data name="ShareGiveControlTip" xml:space="preserve">
+    <value>Ciò che questa persona digiterà andrà nella sessione, con la tua identità.</value>
+  </data>
+  <data name="ShareIgnore" xml:space="preserve">
+    <value>Ignora</value>
+  </data>
+  <data name="ShareAnswerTitle" xml:space="preserve">
+    <value>Richiesta di guardare</value>
+  </data>
+  <data name="ShareAnswerHeading" xml:space="preserve">
+    <value>Consentire a {0} di guardare la sessione?</value>
+  </data>
+  <data name="ShareAnswerMessage" xml:space="preserve">
+    <value>{0} ({1}, computer {2}) chiede di guardare, {3}. Confronta il codice qui sotto con quello che vede questa persona (telefono, chat): se è diverso, rifiuta — qualcun altro si è interposto.</value>
+  </data>
+  <data name="ShareFromAddress" xml:space="preserve">
+    <value>da {0}</value>
+  </data>
+  <data name="ShareFromRelay" xml:space="preserve">
+    <value>tramite la cartella di inoltro</value>
+  </data>
+  <data name="ShareAnswerCode" xml:space="preserve">
+    <value>Codice di verifica</value>
+  </data>
+  <data name="ShareAnswerSees" xml:space="preserve">
+    <value>Vedrà tutto ciò che appare nella sessione, fino alla fine della condivisione o finché non la escludi.</value>
+  </data>
+  <data name="ShareAnswerNoControl" xml:space="preserve">
+    <value>Non potrà digitare nella sessione, a meno che tu non le dia il controllo.</value>
+  </data>
+  <data name="ShareAnswerReadOnly" xml:space="preserve">
+    <value>Sola lettura: non può agire sulla sessione.</value>
+  </data>
+  <data name="ShareAnswerChecked" xml:space="preserve">
+    <value>Ho verificato il codice con questa persona</value>
+  </data>
+  <data name="ShareAccept" xml:space="preserve">
+    <value>Accetta</value>
+  </data>
+  <data name="ShareGiveTitle" xml:space="preserve">
+    <value>Dai il controllo</value>
+  </data>
+  <data name="ShareGiveHeading" xml:space="preserve">
+    <value>Dare il controllo della sessione a {0}?</value>
+  </data>
+  <data name="ShareGiveMessage" xml:space="preserve">
+    <value>Ciò che questa persona digita va nella sessione con la tua identità: il PSMP e il server lo registrano a tuo nome.</value>
+  </data>
+  <data name="ShareGiveTakeBack" xml:space="preserve">
+    <value>Riprendi il controllo in qualsiasi momento: «Riprendi il controllo» nel banner della sessione.</value>
+  </data>
+  <data name="ShareGiveStay" xml:space="preserve">
+    <value>Resta davanti alla sessione finché ha il controllo.</value>
+  </data>
+  <data name="ShareGiveAction" xml:space="preserve">
+    <value>Dai il controllo</value>
+  </data>
+  <data name="ShareDisabledHeading" xml:space="preserve">
+    <value>La condivisione delle sessioni è disattivata</value>
+  </data>
+  <data name="ShareDisabledMessage" xml:space="preserve">
+    <value>Attivala in Impostazioni &gt; Condivisione, con le connessioni dirette o una cartella di inoltro. Guardare la sessione di un'altra persona funziona anche senza.</value>
+  </data>
+  <data name="ShareOpenSettings" xml:space="preserve">
+    <value>Apri le Impostazioni</value>
+  </data>
+  <data name="ShareNotConnected" xml:space="preserve">
+    <value>La sessione deve essere aperta per essere condivisa.</value>
+  </data>
+  <data name="ShareStartedStatus" xml:space="preserve">
+    <value>Sessione {0} condivisa: invia l'invito.</value>
+  </data>
+  <data name="ShareRequestStatus" xml:space="preserve">
+    <value>{0} chiede di guardare {1}.</value>
+  </data>
+  <data name="ShareControlRequestStatus" xml:space="preserve">
+    <value>{0} chiede il controllo di {1}.</value>
+  </data>
+  <data name="ShareAcceptedStatus" xml:space="preserve">
+    <value>{0} guarda {1}.</value>
+  </data>
+  <data name="ShareRequestWithdrawn" xml:space="preserve">
+    <value>La richiesta di {0} è stata ritirata.</value>
+  </data>
+  <data name="ShareControlTakenStatus" xml:space="preserve">
+    <value>Controllo di {0} ripreso: sola lettura per tutti.</value>
+  </data>
+  <data name="ShareStoppedStatus" xml:space="preserve">
+    <value>Condivisione di {0} terminata ({1}).</value>
+  </data>
+  <data name="ShareEndStopped" xml:space="preserve">
+    <value>interrotta</value>
+  </data>
+  <data name="ShareEndExpired" xml:space="preserve">
+    <value>durata scaduta</value>
+  </data>
+  <data name="ShareEndSessionClosed" xml:space="preserve">
+    <value>sessione chiusa</value>
+  </data>
+  <data name="ShareEndLocked" xml:space="preserve">
+    <value>Windows bloccato</value>
+  </data>
+  <data name="ShareEndTooMany" xml:space="preserve">
+    <value>troppi inviti errati</value>
+  </data>
+  <data name="ShareEndClosed" xml:space="preserve">
+    <value>ZillaTerm chiuso</value>
+  </data>
+  <data name="ShareIndicatorShared" xml:space="preserve">
+    <value>{0:# sessione condivisa|# sessioni condivise} ({1:# persona|# persone})</value>
+  </data>
+  <data name="ShareIndicatorWatched" xml:space="preserve">
+    <value>{0:# sessione guardata|# sessioni guardate}</value>
+  </data>
+  <data name="ShareIndicatorPending" xml:space="preserve">
+    <value>{0:# richiesta|# richieste} in attesa</value>
+  </data>
+  <data name="ShareIndicatorTip" xml:space="preserve">
+    <value>Condivisione delle sessioni: fai clic per gestire.</value>
+  </data>
+  <data name="ToolSharing" xml:space="preserve">
+    <value>Condivisione</value>
+  </data>
+  <data name="ToolSharingTip" xml:space="preserve">
+    <value>Condivisione delle sessioni: le tue sessioni condivise, quelle che guardi, partecipare a una sessione condivisa</value>
+  </data>
+  <data name="SharesTitle" xml:space="preserve">
+    <value>Condivisione delle sessioni</value>
+  </data>
+  <data name="SharesMine" xml:space="preserve">
+    <value>Le mie sessioni condivise</value>
+  </data>
+  <data name="SharesDisabled" xml:space="preserve">
+    <value>La condivisione delle tue sessioni è disattivata (Impostazioni &gt; Condivisione). Puoi comunque guardare le sessioni degli altri.</value>
+  </data>
+  <data name="SharesNone" xml:space="preserve">
+    <value>Nessuna sessione condivisa. Per condividerne una: clic destro sulla sua scheda, «Condividi la sessione…».</value>
+  </data>
+  <data name="SharesInvitation" xml:space="preserve">
+    <value>_Invito…</value>
+  </data>
+  <data name="SharesInvitationTip" xml:space="preserve">
+    <value>Mostra di nuovo l'invito, per inviarlo a un'altra persona.</value>
+  </data>
+  <data name="SharesStop" xml:space="preserve">
+    <value>Inte_rrompi</value>
+  </data>
+  <data name="SharesPeople" xml:space="preserve">
+    <value>Persone della condivisione selezionata</value>
+  </data>
+  <data name="SharesAnswer" xml:space="preserve">
+    <value>Ri_spondi…</value>
+  </data>
+  <data name="SharesGive" xml:space="preserve">
+    <value>_Dai il controllo…</value>
+  </data>
+  <data name="SharesTake" xml:space="preserve">
+    <value>Ri_prendi il controllo</value>
+  </data>
+  <data name="SharesExclude" xml:space="preserve">
+    <value>_Escludi</value>
+  </data>
+  <data name="SharesExcludeTip" xml:space="preserve">
+    <value>Questa persona non vede più la sessione; potrà tornare solo con il tuo consenso.</value>
+  </data>
+  <data name="SharesWatched" xml:space="preserve">
+    <value>Sessioni che guardo</value>
+  </data>
+  <data name="SharesShow" xml:space="preserve">
+    <value>_Mostra</value>
+  </data>
+  <data name="SharesLeave" xml:space="preserve">
+    <value>_Lascia</value>
+  </data>
+  <data name="SharesNoneWatched" xml:space="preserve">
+    <value>Nessuna. Per guardare la sessione di qualcuno: «Partecipa a una sessione condivisa…» con l'invito ricevuto.</value>
+  </data>
+  <data name="SharesJoin" xml:space="preserve">
+    <value>Partecipa a una sessione condi_visa…</value>
+  </data>
+  <data name="SharesShareLine" xml:space="preserve">
+    <value>{0} · {1:# persona guarda|# persone guardano} · fino alle {2}</value>
+  </data>
+  <data name="SharesPendingCount" xml:space="preserve">
+    <value>{0:# richiesta|# richieste} in attesa</value>
+  </data>
+  <data name="SharesPerson" xml:space="preserve">
+    <value>{0} ({1}, computer {2})</value>
+  </data>
+  <data name="SharesPersonPending" xml:space="preserve">
+    <value>in attesa della tua risposta, codice {0}</value>
+  </data>
+  <data name="SharesPersonWatching" xml:space="preserve">
+    <value>guarda dalle {0}</value>
+  </data>
+  <data name="SharesPersonHasControl" xml:space="preserve">
+    <value>ha il controllo</value>
+  </data>
+  <data name="SharesPersonAsksControl" xml:space="preserve">
+    <value>chiede il controllo</value>
+  </data>
+  <data name="SharesWatchedLine" xml:space="preserve">
+    <value>{0} · condivisa da {1} (computer {2}) · fino alle {3}</value>
+  </data>
+  <data name="WatchLeave" xml:space="preserve">
+    <value>Lascia</value>
+  </data>
+  <data name="WatchLeaveTip" xml:space="preserve">
+    <value>Smetti di guardare (la persona che condivide vede la tua uscita).</value>
+  </data>
+  <data name="WatchCloseTab" xml:space="preserve">
+    <value>Chiudi la scheda</value>
+  </data>
+  <data name="WatchAskControl" xml:space="preserve">
+    <value>Chiedi il controllo</value>
+  </data>
+  <data name="WatchAskControlTip" xml:space="preserve">
+    <value>Decide la persona che condivide; nel frattempo, sola lettura.</value>
+  </data>
+  <data name="WatchCancelRequest" xml:space="preserve">
+    <value>Annulla la richiesta</value>
+  </data>
+  <data name="WatchGiveBack" xml:space="preserve">
+    <value>Restituisci il controllo</value>
+  </data>
+  <data name="WatchGiveBackTip" xml:space="preserve">
+    <value>Torna alla sola lettura.</value>
+  </data>
+  <data name="WatchHasControl" xml:space="preserve">
+    <value>Hai il controllo: ciò che digiti va nella sessione di {0}, con la sua identità.</value>
+  </data>
+  <data name="WatchScreenPaused" xml:space="preserve">
+    <value>Lo schermo di {0} non è visibile al momento (scheda in background, schermo intero o finestra ridotta a icona): l'immagine è bloccata.</value>
+  </data>
+  <data name="WatchReadOnlyAsk" xml:space="preserve">
+    <value>Sola lettura: nulla di ciò che digiti viene inviato. «Chiedi il controllo» per digitare nella sessione.</value>
+  </data>
+  <data name="WatchReadOnly" xml:space="preserve">
+    <value>Sola lettura: nulla di ciò che digiti viene inviato.</value>
+  </data>
+  <data name="WatchSharedBy" xml:space="preserve">
+    <value>Condivisa da {0} (computer {1})</value>
+  </data>
+  <data name="WatchModeControl" xml:space="preserve">
+    <value>hai il controllo</value>
+  </data>
+  <data name="WatchModeReadOnly" xml:space="preserve">
+    <value>sola lettura</value>
+  </data>
+  <data name="WatchUntil" xml:space="preserve">
+    <value>fino alle {0}</value>
+  </data>
+  <data name="WatchCode" xml:space="preserve">
+    <value>codice {0}</value>
+  </data>
+  <data name="WatchRouteDirect" xml:space="preserve">
+    <value>connessione diretta</value>
+  </data>
+  <data name="WatchRouteRelay" xml:space="preserve">
+    <value>cartella di inoltro</value>
+  </data>
+  <data name="WatchEndedDetail" xml:space="preserve">
+    <value>L'ultima immagine resta visibile; non si riceve più nulla.</value>
+  </data>
+  <data name="WatchEndStopped" xml:space="preserve">
+    <value>{0} ha interrotto la condivisione.</value>
+  </data>
+  <data name="WatchEndExcluded" xml:space="preserve">
+    <value>{0} ti ha escluso dalla condivisione.</value>
+  </data>
+  <data name="WatchEndExpired" xml:space="preserve">
+    <value>La durata della condivisione è scaduta.</value>
+  </data>
+  <data name="WatchEndSessionClosed" xml:space="preserve">
+    <value>La sessione condivisa è chiusa.</value>
+  </data>
+  <data name="WatchEndLocked" xml:space="preserve">
+    <value>Il computer di {0} è stato bloccato: la condivisione si è interrotta.</value>
+  </data>
+  <data name="WatchEndClosed" xml:space="preserve">
+    <value>ZillaTerm è stato chiuso sul computer di {0}.</value>
+  </data>
+  <data name="WatchEndLost" xml:space="preserve">
+    <value>Connessione persa con il computer che condivide.</value>
+  </data>
+  <data name="WatchEndLeft" xml:space="preserve">
+    <value>Hai lasciato la sessione.</value>
+  </data>
+  <data name="WatchEndOther" xml:space="preserve">
+    <value>La condivisione è terminata.</value>
+  </data>
+  <data name="WatchControlGivenStatus" xml:space="preserve">
+    <value>{0} ti ha dato il controllo.</value>
+  </data>
+  <data name="WatchControlEndedStatus" xml:space="preserve">
+    <value>Non hai più il controllo ({0}).</value>
+  </data>
+  <data name="WatchStartedStatus" xml:space="preserve">
+    <value>Stai guardando {0}, condivisa da {1}.</value>
+  </data>
+  <data name="WatchPasteSubject" xml:space="preserve">
+    <value>{0} (sessione di {1})</value>
+  </data>
+  <data name="TabModeWatched" xml:space="preserve">
+    <value>Sessione di {0} (computer {1}), guardata tramite la condivisione delle sessioni</value>
+  </data>
 </root>

@@ -12,6 +12,7 @@
 - [6. Organiser ses serveurs : onglet « Mes serveurs »](#6-organiser-ses-serveurs--onglet--mes-serveurs-)
 - [7. Accès d'urgence hors CyberArk : bases KeePass](#7-accès-durgence-hors-cyberark--bases-keepass)
 - [8. Intervention : enregistrement et consignes d'astreinte](#8-intervention--enregistrement-et-consignes-dastreinte)
+- [9. Partager une session avec un collègue](#9-partager-une-session-avec-un-collègue)
 - [Raccourcis](#raccourcis)
 - [Paramètres et fichier de configuration](#paramètres-et-fichier-de-configuration)
 - [Sécurité](#sécurité)
@@ -1005,6 +1006,68 @@ enregistrement interrompu » en rouge, et la fenêtre « Enregistrement interrom
 depuis cette heure-là, le titre, la note et la capture sont grisés dans l'onglet « Intervention ». Libérez de la place,
 puis « Arrêter l'enregistrement » et « Enregistrer l'intervention » pour reprendre dans un nouvel enregistrement.
 
+## 9. Partager une session avec un collègue
+
+Montrer en direct une session (terminal SSH, Bureau à distance dans un onglet, VNC) à une autre personne qui a
+ZillaTerm, et regarder les siennes : pour se faire aider, former quelqu'un ou travailler à deux pendant une
+intervention. Plusieurs sessions peuvent être partagées en même temps, plusieurs personnes peuvent regarder la même, et
+un même ZillaTerm peut partager et regarder plusieurs sessions à la fois.
+
+**Activer** : Paramètres › Partage › « Permettre de partager mes sessions avec un autre ZillaTerm » (désactivé par
+défaut ; regarder la session d'une autre personne fonctionne sans). Puis, par où les autres vous rejoignent :
+
+- **Connexions directes à ce poste** : l'autre ZillaTerm se connecte à votre poste (port libre choisi au hasard, ou
+  port fixe). La première fois, le pare-feu Windows peut demander d'autoriser ZillaTerm : autorisez-le sur les réseaux
+  privés ou de domaine seulement.
+- **Dossier relais** : un dossier d'un partage réseau accessible aux deux postes (`\\serveur\partage\dossier`), utilisé
+  quand la connexion directe n'aboutit pas (pare-feu, VPN). La personne qui rejoint essaie d'abord la connexion
+  directe, puis le dossier.
+
+**Partager une session**
+
+1. Clic droit sur l'onglet de la session (ou dans le terminal) → « Partager la session… ».
+2. Choisissez la durée (de 15 minutes à 4 heures) et, pour un terminal, « Permettre de donner la main ». Puis
+   « Commencer le partage ».
+3. Envoyez l'invitation (`zillaterm-share:1:…`, bouton « Copier l'invitation ») à la personne, par la messagerie de
+   l'entreprise. L'invitation permet seulement de **demander** : rien n'est montré sans votre accord.
+4. Quand la personne l'utilise, un bandeau au-dessus de la session dit « Paul Martin (CORP\pmartin, poste PC-PMARTIN)
+   demande à regarder », et la fenêtre clignote dans la barre des tâches. « Répondre… » affiche un **code de
+   vérification à 6 chiffres** : la personne voit le même chez elle. Comparez-le avec elle (téléphone, messagerie),
+   cochez « J'ai vérifié le code avec cette personne », puis « Accepter ». Un code différent veut dire que quelqu'un
+   d'autre s'interpose : refusez. Sans réponse, la demande expire au bout de 3 minutes.
+
+Tant que la session est partagée, son bandeau dit qui regarde, qui a la main et jusqu'à quand, avec « Gérer… » et
+« Arrêter le partage » ; la barre d'état compte les sessions partagées et regardées, et les demandes en attente.
+
+**Donner la main** (terminal seulement, si le partage le permet) : la personne clique « Demander la main » ; dans le
+bandeau, « Donner la main… » puis confirmez. Ce qu'elle tape part dans votre session **sous votre identité** (le PSMP
+et le serveur l'enregistrent à votre nom) : restez devant la session. « Reprendre la main » remet tout le monde en
+lecture seule. Une seule personne a la main à la fois. Bureau à distance et VNC restent toujours en lecture seule.
+
+**Regarder la session d'une autre personne** : bouton « Partage » de la barre d'outils → « Rejoindre une session
+partagée… », collez l'invitation (le texte autour, dans le message, n'est pas gênant), puis « Rejoindre ». Donnez à la
+personne le code affiché et attendez son accord : la session s'ouvre dans un onglet. Le terminal garde la taille de
+celui de la personne qui partage, agrandi ou réduit pour tenir dans l'onglet ; rien de ce que vous tapez n'est envoyé
+tant que vous n'avez pas la main. Avec la main, un bandeau orange le rappelle ; « Rendre la main » revient à la lecture
+seule. À la fin du partage, l'onglet dit pourquoi (arrêté, durée écoulée, poste verrouillé, connexion perdue…) et
+garde la dernière image.
+
+**Gérer** : bouton « Partage » de la barre d'outils (ou clic sur l'indicateur de la barre d'état) : vos sessions
+partagées et leurs personnes (répondre, donner ou reprendre la main, exclure, réafficher l'invitation pour une autre
+personne, arrêter), et les sessions que vous regardez (afficher, quitter).
+
+**Le partage s'arrête** à la fin de sa durée, quand vous l'arrêtez, à la fermeture de la session ou de son onglet, au
+**verrouillage de Windows**, à la déconnexion de CyberArk et à la fermeture de ZillaTerm. Une session Bureau à distance
+n'est montrée que lorsque son onglet est affiché (ni en plein écran, ni fenêtre réduite) : sinon l'image reste figée
+chez la personne qui regarde, qui en est avertie.
+
+Pendant l'enregistrement d'une [intervention](#8-intervention--enregistrement-et-consignes-dastreinte), le journal note
+le début et la fin de chaque partage, chaque demande (poste et adresse), chaque accord (avec le code vérifié), refus,
+départ ou exclusion, la main donnée et reprise ; côté invité, la session regardée et la main reçue.
+
+⚠ Tout ce qui s'affiche dans la session partagée est visible des personnes acceptées : n'affichez ni mot de passe ni
+secret pendant le partage.
+
 ## Raccourcis
 
 | Où | Action | Raccourci |
@@ -1070,10 +1133,10 @@ toujours. Les couleurs des terminaux SSH se règlent à part (page Terminal).
 
 <img src="captures/fr/settings.png" alt="Paramètres" width="480">
 
-Bouton « Paramètres » de la barre d'outils → « Paramètres… » (ou `Ctrl+,`). La fenêtre, redimensionnable, est
-organisée en pages : Général, CyberArk, Terminal, Fichiers, Sécurité. « Enregistrer » applique les réglages ; une
-valeur incorrecte affiche la page du champ concerné, curseur dans ce champ. Les options qui ont un effet de bord le
-disent sous leur case (« ⚠ Effet : … »).
+Bouton « Paramètres » de la barre d'outils → « Paramètres… » (ou `Ctrl+,`). La fenêtre, redimensionnable, est organisée
+en pages : Général, CyberArk, Terminal, Fichiers, Partage, Sécurité. « Enregistrer » applique les réglages ; une valeur
+incorrecte affiche la page du champ concerné, curseur dans ce champ. Les options qui ont un effet de bord le disent sous
+leur case (« ⚠ Effet : … »).
 
 | Page | Paramètre | Rôle | Défaut |
 | --- | --- | --- | --- |
@@ -1105,6 +1168,9 @@ disent sous leur case (« ⚠ Effet : … »).
 | Fichiers | Suivi dans une session indépendante | Le suivi d'un fichier (tail -f) ouvre sa propre connexion SFTP (une session PSMP de plus) | non |
 | Fichiers | Éditeur de texte | Programme ouvert par « Modifier » dans l'onglet Fichiers | Bloc-notes |
 | Fichiers | Outil de comparaison | Programme proposé dans la fenêtre de comparaison, avec ses arguments (`{0}` = fichier de gauche, `{1}` = de droite) | aucun |
+| Partage | Permettre de partager mes sessions avec un autre ZillaTerm | Partager une session depuis le menu de son onglet ; regarder celle d'une autre personne fonctionne sans (voir [Partager une session](#9-partager-une-session-avec-un-collègue)) ; diffusé par le fichier d'environnement | non |
+| Partage | Connexions directes à ce poste, port | L'autre ZillaTerm se connecte à ce poste ; port 0 = un port libre au hasard, de 1024 à 65535 pour un port fixe (utile si le pare-feu doit l'autoriser) ; diffusés par le fichier d'environnement | oui, 0 |
+| Partage | Dossier relais | Dossier d'un partage réseau accessible aux deux postes, utilisé quand la connexion directe n'aboutit pas ; échanges chiffrés, effacés à la fin du partage ; diffusé par le fichier d'environnement (un dossier sur un serveur réseau demande de cocher « J'ai vérifié… ») | vide |
 | Sécurité | Coffre local | Mots de passe maîtres KeePass mémorisés : « Créer le coffre… », « Déverrouiller… », « Changer le mot de passe… », « Supprimer maintenant… » ; ces actions s'appliquent tout de suite, sans « Enregistrer » | — |
 | Sécurité | Clés de serveurs acceptées | Tableau des empreintes vérifiées et acceptées (serveur, type, empreinte) : PSMP, SSH direct, certificats FTPS et Bureau à distance des entrées KeePass (une ligne par type de clé). « Oublier les clés choisies » retire les lignes sélectionnées à l'enregistrement ; la clé sera redemandée à la prochaine connexion | — |
 | Menu du bouton Paramètres | Journal de débogage | Déroulement des connexions dans un fichier, sans secret (voir [Sécurité](#sécurité)) ; « Afficher le fichier du journal » l'ouvre dans l'Explorateur | non |
@@ -1113,8 +1179,8 @@ disent sous leur case (« ⚠ Effet : … »).
 
 Pour donner ZillaTerm à un collègue avec la configuration de l'équipe (adresse du PVWA, méthode de connexion, PSMP par
 défaut et par domaine, composant des comptes Windows et composants par plateforme, listes partagées, clés des PSMP,
-consignes d'astreinte (texte ou fichier), rappels pendant l'intervention, étiquettes des serveurs, quelques options),
-sans rien de personnel ni aucun mot de passe :
+consignes d'astreinte (texte ou fichier), rappels pendant l'intervention, étiquettes des serveurs, partage de sessions,
+quelques options), sans rien de personnel ni aucun mot de passe :
 
 1. **Exporter** : bouton « Paramètres » → « Exporter l'environnement… » enregistre `ZillaTerm.env.json`.
 2. **À côté de l'exécutable** : posez ce fichier à côté de `ZillaTerm.exe` (par exemple dans le même zip). Au
@@ -1190,6 +1256,17 @@ renommé) : téléchargez-la une fois depuis la page des versions.
   mémoire, le temps de la session. Mots de passe PSMP gardés et clé MFA oubliés au verrouillage de Windows ; la clé
   MFA est effacée après chaque connexion et retirée du PVWA à la déconnexion (`Logoff`), faite à la fermeture.
 - Session PVWA ouverte avec `concurrentSession` : votre session web PVWA éventuelle n'est pas fermée.
+- **Partage de sessions** (désactivé par défaut) : chaque partage est lancé par vous, chaque personne acceptée par
+  vous après comparaison d'un code à 6 chiffres ; rien n'écoute sur le réseau tant qu'aucune session n'est partagée.
+  L'invitation contient un secret aléatoire de 256 bits, valable pour la durée du partage, et permet seulement de
+  demander. Les échanges sont chiffrés de bout en bout : échange de clés ECDH P-256 authentifié par le secret de
+  l'invitation, puis AES-256-GCM, une clé par sens, messages numérotés (un message altéré, rejoué ou déplacé coupe la
+  connexion). Le code de vérification est tiré des clés de la connexion : quelqu'un qui s'interposerait, même avec
+  l'invitation, obtiendrait un autre code. Après 5 tentatives avec une invitation fausse, le partage s'arrête. Le
+  dossier relais ne voit passer que des messages chiffrés, effacés à la fin du partage. Personne ne tape dans une
+  session sans que vous lui ayez donné la main (terminal seulement), et vous la reprenez quand vous voulez ; le partage
+  s'arrête au verrouillage de Windows. Le nom, le compte et le poste d'une personne qui demande sont déclaratifs :
+  seul le code fait foi.
 - **Fin de la session Windows** (déconnexion, arrêt) : ZillaTerm se ferme sans question ; ses sessions sont fermées
   (copies des fichiers modifiés effacées), les bases KeePass et le coffre local verrouillés, le presse-papiers du mot
   de passe vidé et la session PVWA fermée (2 secondes au plus).
@@ -1464,6 +1541,25 @@ encore retenir un clic dans sa zone ou un changement de focus. À la déconnexio
 plus 3 s la fin des sessions Bureau à distance ; une session dont le contrôle reste bloqué est alors retirée de la
 fenêtre (son emplacement est mis de côté), et l'application se déconnecte quand même, ou se ferme directement.
 
+### Partage de sessions
+
+Invitation : `zillaterm-share:1:` suivi, en base64url, de l'identifiant du partage (128 bits), du secret (256 bits), de
+la fin de validité, des adresses de ce poste avec le port d'écoute, et du dossier relais. Ouverture : chacun envoie une
+clé publique ECDH P-256 éphémère authentifiée (HMAC-SHA256) par une clé tirée du secret ; les clés de session (une par
+sens) et le code de vérification sont dérivés (HKDF-SHA256) du secret partagé ECDH, du secret de l'invitation et de
+l'échange complet. Messages : AES-256-GCM, nonce = numéro du message dans son sens. Connexion directe : TCP, chaque
+message précédé de sa longueur ; toutes les adresses de l'invitation sont essayées ensemble (4 secondes au plus).
+Dossier relais : un sous-dossier `zts-<identifiant>` par partage, deux fichiers par personne (un par sens), lus toutes
+les 200 ms ; les sous-dossiers abandonnés depuis plus de deux jours sont effacés.
+
+Terminal : à l'accord, l'écran actuel (sans l'historique : contenu, couleurs, modes, curseur) puis le flux tel que le
+terminal le reçoit ; un changement de taille renvoie l'écran entier. Écran (Bureau à distance, VNC) : capturé quatre
+fois par seconde tant que quelqu'un regarde, en tuiles de 64 × 64 pixels (couleurs 16 bits), seules les tuiles
+modifiées partent, compressées ; une image complète à chaque arrivée. La saisie de la personne qui a la main est
+encodée chez celui qui partage, selon les modes de son terminal. Limites : 10 partages à la fois, 5 personnes par
+partage, 3 minutes pour répondre, connexion coupée après 60 secondes sans nouvelles ; une personne en retard de plus
+de 48 Mo reçoit l'écran entier au lieu du retard.
+
 ### Sessions PSMP
 
 Chaque onglet SSH ouvre jusqu'à trois connexions au PSMP, avec le même identifiant
@@ -1502,6 +1598,8 @@ l'écran.
 
 | Symptôme | Cause probable et solution |
 | --- | --- |
+| « Impossible de joindre le poste qui partage » (Rejoindre une session partagée) | Le pare-feu ou le réseau (VPN) bloque la connexion directe : demandez à la personne qui partage d'autoriser ZillaTerm dans le pare-feu Windows (réseaux privés ou de domaine), ou de régler un dossier relais accessible aux deux postes (Paramètres › Partage). |
+| « Partage impossible : ni connexion directe, ni dossier relais » | Le port choisi est déjà pris (port 0 pour un port au hasard), ou le dossier relais est injoignable : vérifiez Paramètres › Partage. |
 | « Connexion TLS refusée : le certificat du PVWA n'est pas approuvé » | Le certificat (ou l'autorité qui l'a émis) n'est pas dans le magasin Windows du poste. |
 | « Le PVWA doit être joint en HTTPS » | Saisissez l'adresse sans `http://` (ou avec `https://`). |
 | « Le PVWA n'a pas de composant de connexion « PSM-RDP » pour ce compte » (`EPVWA093E Failed to get the relevant connection component`) | La plateforme du compte utilise un composant d'un autre nom (par exemple `WIN-PSM`) : celui que propose le bouton « Connect » du PVWA, ou le nom après `/c` dans une commande `psm /u … /a … /c …`. Saisissez-le dans « Composant » et cochez « Mémoriser ce composant pour la plateforme » : il est retenu une fois la connexion acceptée par le PVWA. |

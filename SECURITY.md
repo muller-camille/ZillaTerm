@@ -32,7 +32,8 @@ an explanation.
 In scope: the ZillaTerm code in this repository (PVWA client, PSM / PSMP connections, SSH terminal,
 SFTP / SCP and FTP / FTPS file transfers, embedded remote desktop and VNC tabs, KeePass vault reading and writing, the
 local encrypted vault, the emergency access log, the intervention journal and its exported report, the on-call duty
-reminder file, settings storage, release executables).
+reminder file, session sharing (invitation, encrypted channel, direct connections and relay folder), settings storage,
+release executables).
 
 Out of scope, to be reported to their maintainers:
 

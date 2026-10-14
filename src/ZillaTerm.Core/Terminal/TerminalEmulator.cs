@@ -245,6 +245,150 @@ public sealed class TerminalEmulator
         }
 
         Version++;
+        Fed?.Invoke(text);
+    }
+
+    /// <summary>Texte reçu et traité (<see cref="Feed"/>), pour le transmettre tel quel (session partagée).</summary>
+    public event Action<string>? Fed;
+
+    /// <summary>Taille changée (<see cref="Resize"/>).</summary>
+    public event Action? Resized;
+
+    /// <summary>
+    /// Séquence qui reproduit l'écran dans un émulateur neuf de même taille : l'écran principal, puis l'écran alternatif
+    /// par-dessus s'il est affiché (vim, less), les couleurs et attributs, la zone de défilement, les modes (curseur
+    /// « application », collage encadré…) et le curseur. Sans l'historique : seul ce qui est à l'écran est transmis.
+    /// </summary>
+    public string Snapshot()
+    {
+        var text = new StringBuilder("\x1b[0m\x1b[H\x1b[2J");
+        bool alt = IsAlternateScreen && _alt is not null;
+        WriteScreen(text, _main);
+        if (alt)
+        {
+            // Le curseur sauvegardé à l'entrée dans vim, que « \e[?1049l » restaurera.
+            text.Append("\x1b[0m");
+            AppendPosition(text, _savedMain.Row, _savedMain.Column);
+            text.Append("\x1b[?1049h");
+            WriteScreen(text, _alt!);
+        }
+
+        text.Append("\x1b[0m");
+        if (_scrollTop != 0 || _scrollBottom != Rows - 1)
+        {
+            text.Append("\x1b[").Append(_scrollTop + 1).Append(';').Append(_scrollBottom + 1).Append('r');
+        }
+
+        text.Append(ApplicationCursorKeys ? "\x1b[?1h" : "")
+            .Append(BracketedPaste ? "\x1b[?2004h" : "")
+            .Append(AutoWrap ? "" : "\x1b[?7l")
+            .Append(InsertMode ? "\x1b[4h" : "")
+            .Append(OriginMode ? "\x1b[?6h" : "");
+        AppendPosition(text, OriginMode ? CursorRow - _scrollTop : CursorRow, CursorColumn);
+        AppendAttributes(text, _fg, _bg, _flags);
+        text.Append(_g0Graphics ? "\x1b(0" : "").Append(_g1Graphics ? "\x1b)0" : "").Append(_shiftOut ? "\x0e" : "")
+            .Append(CursorVisible ? "" : "\x1b[?25l");
+        return text.ToString();
+    }
+
+    /// <summary>Lignes d'un écran : couleurs et attributs à chaque changement, fin des lignes vides omise ; une ligne repliée
+    /// se poursuit sans repositionnement, pour que la suivante reste repliée.</summary>
+    private void WriteScreen(StringBuilder text, Cell[][] screen)
+    {
+        int fg = TerminalColor.Default, bg = TerminalColor.Default;
+        var flags = CellFlags.None;
+        text.Append("\x1b[0m");
+        bool continued = false;
+        for (int row = 0; row < screen.Length; row++)
+        {
+            var line = screen[row];
+            int end = line.Length;
+            bool wrapped = IsWrapped(line) && row + 1 < screen.Length;
+            if (!wrapped)
+            {
+                while (end > 0 && line[end - 1] is { CodePoint: ' ', Background: TerminalColor.Default } blank
+                       && (blank.Flags & ~CellFlags.Wrapped & (CellFlags.Inverse | CellFlags.Underline)) == 0)
+                {
+                    end--;
+                }
+            }
+
+            if (!continued)
+            {
+                if (end == 0)
+                {
+                    continue;
+                }
+
+                AppendPosition(text, row, 0);
+            }
+
+            for (int column = 0; column < end; column++)
+            {
+                var cell = line[column];
+                if (cell.IsWideTail)
+                {
+                    continue;
+                }
+
+                var cellFlags = cell.Flags & ~CellFlags.Wrapped;
+                if (cell.Foreground != fg || cell.Background != bg || cellFlags != flags)
+                {
+                    AppendAttributes(text, cell.Foreground, cell.Background, cellFlags);
+                    (fg, bg, flags) = (cell.Foreground, cell.Background, cellFlags);
+                }
+
+                AppendText(text, cell);
+            }
+
+            continued = wrapped && end == line.Length;
+        }
+    }
+
+    private static void AppendPosition(StringBuilder text, int row, int column) =>
+        text.Append("\x1b[").Append(row + 1).Append(';').Append(column + 1).Append('H');
+
+    private static void AppendAttributes(StringBuilder text, int fg, int bg, CellFlags flags)
+    {
+        text.Append("\x1b[0");
+        foreach (var (flag, code) in new[] { (CellFlags.Bold, 1), (CellFlags.Dim, 2), (CellFlags.Italic, 3), (CellFlags.Underline, 4),
+                     (CellFlags.Inverse, 7), (CellFlags.Hidden, 8) })
+        {
+            if ((flags & flag) != 0)
+            {
+                text.Append(';').Append(code);
+            }
+        }
+
+        AppendColor(text, fg, foreground: true);
+        AppendColor(text, bg, foreground: false);
+        text.Append('m');
+    }
+
+    private static void AppendColor(StringBuilder text, int color, bool foreground)
+    {
+        if (color == TerminalColor.Default)
+        {
+            return;
+        }
+
+        if ((color & 0x1000000) != 0)
+        {
+            text.Append(foreground ? ";38;2;" : ";48;2;").Append((color >> 16) & 0xFF).Append(';').Append((color >> 8) & 0xFF)
+                .Append(';').Append(color & 0xFF);
+        }
+        else if (color < 8)
+        {
+            text.Append(';').Append((foreground ? 30 : 40) + color);
+        }
+        else if (color < 16)
+        {
+            text.Append(';').Append((foreground ? 90 : 100) + color - 8);
+        }
+        else
+        {
+            text.Append(foreground ? ";38;5;" : ";48;5;").Append(color);
+        }
     }
 
     /// <summary>Oublie l'historique (lignes sorties de l'écran) ; l'écran lui-même ne change pas.</summary>
@@ -292,6 +436,7 @@ public sealed class TerminalEmulator
         _scrollBottom = rows - 1;
         _wrapPending = false;
         Version++;
+        Resized?.Invoke();
     }
 
     /// <summary>Curseur sauvegardé d'un écran qui a perdu ses <paramref name="shift"/> premières lignes.</summary>

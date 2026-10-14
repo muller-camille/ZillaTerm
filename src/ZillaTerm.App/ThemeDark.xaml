@@ -151,16 +151,23 @@
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}" />
         <Setter Property="CaretBrush" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
     </Style>
+    <!-- Listes : le style de Windows 10/11 (Aero2) leur donne un fond blanc écrit en dur, qui ne suit pas les couleurs
+         du système : fond et texte sont donc donnés ici (le style classique les prenait déjà des couleurs du système). -->
     <Style TargetType="ListBox">
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
     </Style>
     <!-- Texte : le style de Windows pour une ListView en colonnes l'écrit en bleu nuit (#042271), illisible ici. -->
     <Style TargetType="ListView">
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
         <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
     </Style>
     <Style TargetType="TreeView">
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
     </Style>
     <Style TargetType="DatePicker">
         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />

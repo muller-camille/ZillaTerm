@@ -109,6 +109,7 @@ public partial class MainWindow
             RemoteSession { Psmp: { } psmp } => Text.Format(Strings.TabModePsmp, psmp),
             RdpSession { Psm: "" } => Strings.TabModePsmPending,
             RdpSession { Psm: { } psm } => Text.Format(Strings.TabModePsm, psm),
+            Services.Sharing.WatchedShare watched => Text.Format(Strings.TabModeWatched, watched.Info.Sharer, watched.Info.Machine),
             _ => Strings.TabModeDirect,
         };
         var shown = SessionTabHeader.UniqueLabel(label, SessionTabs().Select(t => t.Header).OfType<SessionTabHeader>().Select(h => h.Label));
@@ -192,6 +193,11 @@ public partial class MainWindow
                     _ => SessionTabState.Connecting,
                 }));
                 break;
+            case Services.Sharing.WatchedShare watched:
+                // Session regardée : ouverte dès l'accord, terminée avec le partage (évènement hors du fil de l'interface).
+                header.SetState(SessionTabState.Connected);
+                watched.Viewer.Ended += _ => Dispatcher.BeginInvoke(() => header.SetState(SessionTabState.Ended));
+                break;
         }
     }
 
@@ -210,7 +216,7 @@ public partial class MainWindow
         {
             Items =
             {
-                actions.Reconnect, actions.Duplicate, actions.Detach, actions.Parallel, actions.AddSaved, new Separator { Visibility = ssh },
+                actions.Reconnect, actions.Duplicate, actions.Detach, actions.Parallel, actions.AddSaved, actions.Share, new Separator { Visibility = ssh },
                 search, save,
                 new Separator(), actions.Close, closeOthers,
             },
@@ -233,7 +239,7 @@ public partial class MainWindow
         actions.Refresh();
         // Déjà dans une fenêtre séparée ou dans la vue parallèle : rien à détacher depuis le terminal.
         actions.Detach.Visibility = actions.Detach.IsEnabled ? Visibility.Visible : Visibility.Collapsed;
-        foreach (var item in new object[] { actions.Reconnect, actions.Duplicate, actions.Detach, actions.Parallel, actions.AddSaved, new Separator(), actions.Close })
+        foreach (var item in new object[] { actions.Reconnect, actions.Duplicate, actions.Detach, actions.Parallel, actions.AddSaved, actions.Share, new Separator(), actions.Close })
         {
             items.Add(item);
         }
@@ -259,7 +265,7 @@ public partial class MainWindow
 
     /// <summary>Actions communes au menu de l'en-tête d'un onglet et au menu du clic droit dans son terminal.</summary>
     private sealed record SessionActions(MenuItem Reconnect, MenuItem Duplicate, MenuItem Detach, MenuItem Parallel, MenuItem AddSaved,
-        MenuItem Close, Action Refresh);
+        MenuItem Share, MenuItem Close, Action Refresh);
 
     /// <param name="owner">Fenêtre où afficher les questions (confirmation de reconnexion, transferts en cours…).</param>
     private SessionActions CreateSessionActions(TabItem tab, Func<Task>? duplicate, Func<Window?> owner)
@@ -267,7 +273,9 @@ public partial class MainWindow
         static Image MenuIcon(object source) => new() { Source = (System.Windows.Media.ImageSource)source, Width = 16, Height = 16 };
 
         var ssh = tab.Tag is SshSession ? Visibility.Visible : Visibility.Collapsed;
-        var reconnect = new MenuItem { Header = Strings.MenuTabReconnect, Icon = MenuIcon(FindResource("IconRefresh")) };
+        // Session regardée chez une autre personne : ni reconnexion, ni copie ; seulement la fermer.
+        var own = tab.Tag is Services.Sharing.WatchedShare ? Visibility.Collapsed : Visibility.Visible;
+        var reconnect = new MenuItem { Header = Strings.MenuTabReconnect, Icon = MenuIcon(FindResource("IconRefresh")), Visibility = own };
         reconnect.Click += async (_, _) => await ReconnectTabAsync(tab, owner());
         var copy = new MenuItem
         {
@@ -275,6 +283,7 @@ public partial class MainWindow
             ToolTip = Strings.MenuTabDuplicateTip,
             Icon = MenuIcon(FindResource("IconConnect")),
             IsEnabled = duplicate is not null,
+            Visibility = own,
         };
         copy.Click += async (_, _) =>
         {
@@ -305,19 +314,33 @@ public partial class MainWindow
                 AddToCurrent(account, request);
             }
         };
+        // Partage avec un autre ZillaTerm : terminal SSH, Bureau à distance dans l'onglet, VNC (voir MainWindow.Sharing.cs).
+        var share = new MenuItem
+        {
+            Header = Strings.MenuTabShare,
+            Icon = MenuIcon(FindResource("IconScreenShare")),
+            Visibility = tab.Tag is SshSession or RdpSession or VncSession ? Visibility.Visible : Visibility.Collapsed,
+        };
+        ToolTipService.SetShowOnDisabled(share, true);
+        share.Click += (_, _) => ShareTab(tab, owner());
         var close = new MenuItem { Header = Strings.MenuTabClose, Icon = MenuIcon(FindResource("IconClose")), InputGestureText = Strings.ShortcutTabClose };
         close.Click += (_, _) => CloseSessionTab(tab, owner());
-        return new SessionActions(reconnect, copy, detach, parallel, addSaved, close, () =>
+        return new SessionActions(reconnect, copy, detach, parallel, addSaved, share, close, () =>
         {
             detach.IsEnabled = tab.Content is SshSessionView;
             bool inParallel = tab.Tag is SshSession session && _parallel?.Contains(session) == true;
             parallel.Header = inParallel ? Strings.MenuTabRemoveParallel : Strings.MenuTabAddParallel;
             RefreshAddSaved(addSaved, tab.Tag as RemoteSession);
+            bool shared = tab.Tag is { } shown && Services.Sharing.ShareService.Current.ShareOf(shown) is not null;
+            share.Header = shared ? Strings.MenuTabShareManage : Strings.MenuTabShare;
+            share.IsEnabled = shared || IsShareable(tab);
+            share.ToolTip = share.IsEnabled ? null : Strings.MenuTabShareNotConnected;
         });
     }
 
     /// <summary>Onglets de session (SSH, fichiers seuls, Bureau à distance, VNC), dans l'ordre affiché.</summary>
-    private IEnumerable<TabItem> SessionTabs() => MainTabs.Items.OfType<TabItem>().Where(t => t.Tag is RemoteSession or RdpSession or VncSession);
+    private IEnumerable<TabItem> SessionTabs() =>
+        MainTabs.Items.OfType<TabItem>().Where(t => t.Tag is RemoteSession or RdpSession or VncSession or Services.Sharing.WatchedShare);
 
     /// <summary>Nom de la session d'un onglet (« utilisateur@serveur »).</summary>
     private static string TabLabel(TabItem tab) => tab.Tag switch
@@ -325,6 +348,7 @@ public partial class MainWindow
         RemoteSession session => session.Label,
         RdpSession rdp => rdp.Label,
         VncSession vnc => vnc.Label,
+        Services.Sharing.WatchedShare watched => watched.Label,
         _ => "",
     };
 
@@ -341,6 +365,9 @@ public partial class MainWindow
                 break;
             case VncSession:
                 CloseVncTab(tab, owner);
+                break;
+            case Services.Sharing.WatchedShare watched:
+                CloseWatchedTab(tab, watched);
                 break;
         }
     }

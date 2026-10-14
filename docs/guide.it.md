@@ -12,6 +12,7 @@
 - [6. Organizzare i server: scheda «I miei server»](#6-organizzare-i-server-scheda-i-miei-server)
 - [7. Accesso di emergenza fuori da CyberArk: database KeePass](#7-accesso-di-emergenza-fuori-da-cyberark-database-keepass)
 - [8. Intervento: registrazione e promemoria di reperibilità](#8-intervento-registrazione-e-promemoria-di-reperibilità)
+- [9. Condividere una sessione con un collega](#9-condividere-una-sessione-con-un-collega)
 - [Scorciatoie](#scorciatoie)
 - [Impostazioni e file di configurazione](#impostazioni-e-file-di-configurazione)
 - [Sicurezza](#sicurezza)
@@ -1002,6 +1003,70 @@ registrazione interrotta» in rosso, e la finestra «Registrazione interrotta al
 conservato nulla, il titolo, la nota e la cattura sono in grigio nella scheda «Intervento». Liberate spazio, poi
 «Interrompi la registrazione» e «Registra l'intervento» per riprendere in una nuova registrazione.
 
+## 9. Condividere una sessione con un collega
+
+Mostrare in diretta una sessione (terminale SSH, Desktop remoto in una scheda, VNC) a un'altra persona che ha
+ZillaTerm, e guardare le sue: per farsi aiutare, formare qualcuno o lavorare in due durante un intervento. Si possono
+condividere più sessioni contemporaneamente, più persone possono guardare la stessa, e uno stesso ZillaTerm può
+condividere e guardare più sessioni allo stesso tempo.
+
+**Attivare**: Impostazioni › Condivisione › «Consenti di condividere le mie sessioni con un altro ZillaTerm»
+(disattivata per impostazione predefinita; guardare la sessione di un'altra persona funziona anche senza). Poi, come
+gli altri ti raggiungono:
+
+- **Connessioni dirette a questo computer**: l'altro ZillaTerm si connette al tuo computer (porta libera scelta a caso,
+  o porta fissa). La prima volta, Windows Firewall può chiedere di consentire ZillaTerm: consentilo solo sulle reti
+  private o di dominio.
+- **Cartella di inoltro**: una cartella di una condivisione di rete raggiungibile da entrambi i computer
+  (`\\server\condivisione\cartella`), usata quando la connessione diretta non riesce (firewall, VPN). Chi partecipa
+  prova prima la connessione diretta, poi la cartella.
+
+**Condividere una sessione**
+
+1. Clic destro sulla scheda della sessione (o nel terminale) → «Condividi la sessione…».
+2. Scegli la durata (da 15 minuti a 4 ore) e, per un terminale, «Consenti di dare il controllo». Poi «Avvia la
+   condivisione».
+3. Invia l'invito (`zillaterm-share:1:…`, pulsante «Copia l'invito») alla persona, tramite la chat aziendale.
+   L'invito permette solo di **chiedere**: nulla viene mostrato senza il tuo consenso.
+4. Quando la persona lo usa, un banner sopra la sessione dice «Paul Martin (CORP\pmartin, computer PC-PMARTIN) chiede
+   di guardare», e la finestra lampeggia nella barra delle applicazioni. «Rispondi…» mostra un **codice di verifica di
+   6 cifre**: la persona vede lo stesso dalla sua parte. Confrontalo con lei (telefono, chat), spunta «Ho verificato il
+   codice con questa persona», poi «Accetta». Un codice diverso significa che qualcun altro si è interposto: rifiuta.
+   Senza risposta, la richiesta scade dopo 3 minuti.
+
+Finché la sessione è condivisa, il suo banner dice chi guarda, chi ha il controllo e fino a quando, con «Gestisci…» e
+«Interrompi la condivisione»; la barra di stato conta le sessioni condivise e guardate e le richieste in attesa.
+
+**Dare il controllo** (solo terminale, se la condivisione lo consente): la persona fa clic su «Chiedi il controllo»;
+nel banner, «Dai il controllo…» e conferma. Ciò che digita va nella tua sessione **con la tua identità** (il PSMP e il
+server lo registrano a tuo nome): resta davanti alla sessione. «Riprendi il controllo» rimette tutti in sola lettura.
+Una sola persona alla volta ha il controllo. Desktop remoto e VNC restano sempre in sola lettura.
+
+**Guardare la sessione di un'altra persona**: pulsante «Condivisione» della barra degli strumenti → «Partecipa a una
+sessione condivisa…», incolla l'invito (il testo intorno, nel messaggio, non dà fastidio), poi «Partecipa». Comunica
+alla persona il codice mostrato e attendi il suo consenso: la sessione si apre in una scheda. Il terminale mantiene la
+dimensione di quello di chi condivide, ingrandito o ridotto per stare nella scheda; nulla di ciò che digiti viene
+inviato finché non hai il controllo. Con il controllo, un banner arancione lo ricorda; «Restituisci il controllo»
+torna alla sola lettura. Alla fine della condivisione, la scheda dice perché (interrotta, durata scaduta, computer
+bloccato, connessione persa…) e conserva l'ultima immagine.
+
+**Gestire**: pulsante «Condivisione» della barra degli strumenti (o clic sull'indicatore della barra di stato): le tue
+sessioni condivise e le loro persone (rispondere, dare o riprendere il controllo, escludere, mostrare di nuovo l'invito
+per un'altra persona, interrompere), e le sessioni che guardi (mostrare, lasciare).
+
+**La condivisione si interrompe** alla fine della sua durata, quando la interrompi, alla chiusura della sessione o della
+sua scheda, al **blocco di Windows**, alla disconnessione da CyberArk e alla chiusura di ZillaTerm. Una sessione Desktop
+remoto è mostrata solo quando la sua scheda è visualizzata (non a schermo intero, finestra non ridotta a icona):
+altrimenti l'immagine resta bloccata per chi guarda, che ne viene avvisato.
+
+Durante la registrazione di un [intervento](#8-intervento-registrazione-e-promemoria-di-reperibilità), il registro
+annota l'inizio e la fine di ogni condivisione, ogni richiesta (computer e indirizzo), ogni consenso (con il codice
+verificato), rifiuto, uscita o esclusione, il controllo dato e ripreso; dalla parte dell'ospite, la sessione guardata e
+il controllo ricevuto.
+
+⚠ Tutto ciò che appare nella sessione condivisa è visibile alle persone accettate: non mostrare password né segreti
+durante la condivisione.
+
 ## Scorciatoie
 
 | Dove | Azione | Scorciatoia |
@@ -1068,8 +1133,8 @@ terminali SSH si impostano a parte (pagina Terminale).
 <img src="captures/it/settings.png" alt="Impostazioni" width="480">
 
 Pulsante Impostazioni della barra degli strumenti → «Impostazioni…» (o `Ctrl+,`). La finestra, ridimensionabile, è
-organizzata in pagine: Generale, CyberArk, Terminale, File, Sicurezza. «Salva» applica le impostazioni; un valore
-errato mostra la pagina del campo interessato, con il cursore nel campo. Le opzioni con un effetto collaterale lo
+organizzata in pagine: Generale, CyberArk, Terminale, File, Condivisione, Sicurezza. «Salva» applica le impostazioni; un
+valore errato mostra la pagina del campo interessato, con il cursore nel campo. Le opzioni con un effetto collaterale lo
 dicono sotto la loro casella («⚠ Effetto: …»).
 
 | Pagina | Impostazione | Ruolo | Predefinito |
@@ -1102,6 +1167,9 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | File | Monitoraggio in una sessione indipendente | Seguire un file (tail -f) apre una propria connessione SFTP (una sessione PSMP in più) | no |
 | File | Editor di testo | Programma aperto da «Modifica» nella scheda File | Blocco note |
 | File | Strumento di confronto | Programma proposto nella finestra di confronto, con i suoi argomenti (`{0}` = file di sinistra, `{1}` = di destra) | nessuno |
+| Condivisione | Consenti di condividere le mie sessioni con un altro ZillaTerm | Condividere una sessione dal menu della sua scheda; guardare quella di un'altra persona funziona anche senza (vedi [Condividere una sessione](#9-condividere-una-sessione-con-un-collega)); diffusa dal file di ambiente | no |
+| Condivisione | Connessioni dirette a questo computer, porta | L'altro ZillaTerm si connette a questo computer; porta 0 = una porta libera a caso, da 1024 a 65535 per una porta fissa (utile quando il firewall deve consentirla); diffuse dal file di ambiente | sì, 0 |
+| Condivisione | Cartella di inoltro | Cartella di una condivisione di rete raggiungibile da entrambi i computer, usata quando la connessione diretta non riesce; scambi cifrati, cancellati alla fine della condivisione; diffusa dal file di ambiente (una cartella su un server di rete richiede di spuntare «Ho verificato…») | vuota |
 | Sicurezza | Vault locale | Password principali KeePass memorizzate: «Crea…», «Sblocca…», «Cambia password…», «Elimina ora…»; queste azioni si applicano subito, senza «Salva» | — |
 | Sicurezza | Chiavi dei server accettate | Tabella delle impronte verificate e accettate (server, tipo, impronta): PSMP, SSH diretto, certificati FTPS e Desktop remoto delle voci KeePass (una riga per tipo di chiave). «Dimentica le chiavi scelte» rimuove le righe selezionate al salvataggio; la chiave verrà richiesta di nuovo alla prossima connessione | — |
 | Menu del pulsante Impostazioni | Registro di debug | Svolgimento delle connessioni in un file, senza segreti (vedi [Sicurezza](#sicurezza)); «Mostra il file del registro» lo apre in Esplora risorse | no |
@@ -1110,8 +1178,8 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 
 Per dare ZillaTerm a un collega con la configurazione del team (indirizzo del PVWA, metodo di accesso, PSMP predefinito
 e per dominio, componente degli account Windows e componenti per piattaforma, elenchi condivisi, chiavi dei PSMP,
-promemoria di reperibilità (testo o file), avvisi a tempo, etichette dei server, alcune opzioni), senza niente di
-personale né alcuna password:
+promemoria di reperibilità (testo o file), avvisi a tempo, etichette dei server, condivisione delle sessioni, alcune
+opzioni), senza niente di personale né alcuna password:
 
 1. **Esportare**: pulsante «Impostazioni» → «Esporta l'ambiente…» salva `ZillaTerm.env.json`.
 2. **Accanto all'eseguibile**: metti questo file accanto a `ZillaTerm.exe` (ad esempio nello stesso zip).
@@ -1191,6 +1259,17 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   per la durata della sessione. Password PSMP conservate e chiave MFA dimenticate al blocco di Windows; la chiave MFA
   viene cancellata dopo ogni connessione e rimossa dal PVWA alla disconnessione (`Logoff`), fatta alla chiusura.
 - Sessione PVWA aperta con `concurrentSession`: l'eventuale sessione web del PVWA non viene chiusa.
+- **Condivisione delle sessioni** (disattivata per impostazione predefinita): ogni condivisione la avvii tu, e ogni
+  persona la accetti tu dopo il confronto di un codice di 6 cifre; nulla è in ascolto sulla rete finché nessuna
+  sessione è condivisa. L'invito contiene un segreto casuale di 256 bit, valido per la durata della condivisione, e
+  permette solo di chiedere. Gli scambi sono cifrati end-to-end: scambio di chiavi ECDH P-256 autenticato dal segreto
+  dell'invito, poi AES-256-GCM, una chiave per direzione, messaggi numerati (un messaggio alterato, ripetuto o spostato
+  interrompe la connessione). Il codice di verifica è derivato dalle chiavi della connessione: chi si interponesse,
+  anche con l'invito, otterrebbe un altro codice. Dopo 5 tentativi con un invito errato, la condivisione si
+  interrompe. La cartella di inoltro vede passare solo messaggi cifrati, cancellati alla fine della condivisione.
+  Nessuno digita in una sessione se non gli hai dato il controllo (solo terminale), e lo riprendi quando vuoi; la
+  condivisione si interrompe al blocco di Windows. Nome, account e computer di chi chiede sono dichiarativi: fa fede
+  solo il codice.
 - **Fine della sessione Windows** (disconnessione, arresto): ZillaTerm si chiude senza domande; le sue sessioni
   vengono chiuse (copie dei file modificati eliminate), i database KeePass e il vault locale bloccati, gli appunti con
   la password svuotati e la sessione PVWA chiusa (2 secondi al massimo).
@@ -1466,6 +1545,26 @@ chiusura, ZillaTerm attende al massimo 3 s la fine delle sessioni desktop remoto
 bloccato viene allora tolta dalla finestra (il suo spazio è messo da parte), e l'applicazione si disconnette comunque,
 o si chiude direttamente.
 
+### Condivisione delle sessioni
+
+Invito: `zillaterm-share:1:` seguito, in base64url, dall'identificativo della condivisione (128 bit), dal segreto (256
+bit), dalla fine della validità, dagli indirizzi di questo computer con la porta di ascolto e dalla cartella di inoltro.
+Apertura: ogni parte invia una chiave pubblica ECDH P-256 effimera autenticata (HMAC-SHA256) da una chiave derivata dal
+segreto; le chiavi di sessione (una per direzione) e il codice di verifica sono derivati (HKDF-SHA256) dal segreto
+condiviso ECDH, dal segreto dell'invito e dall'intero scambio. Messaggi: AES-256-GCM, nonce = numero del messaggio nella
+sua direzione. Connessione diretta: TCP, ogni messaggio preceduto dalla sua lunghezza; tutti gli indirizzi dell'invito
+sono provati insieme (al massimo 4 secondi). Cartella di inoltro: una sottocartella `zts-<identificativo>` per
+condivisione, due file per persona (uno per direzione), letti ogni 200 ms; le sottocartelle abbandonate da più di due
+giorni vengono cancellate.
+
+Terminale: al consenso, lo schermo attuale (senza la cronologia: contenuto, colori, modalità, cursore), poi il flusso
+così come il terminale lo riceve; un cambio di dimensione rinvia lo schermo intero. Schermo (Desktop remoto, VNC):
+catturato quattro volte al secondo finché qualcuno guarda, in riquadri di 64 × 64 pixel (colori a 16 bit), partono solo
+i riquadri modificati, compressi; un'immagine completa a ogni arrivo. La digitazione di chi ha il controllo è codificata
+da chi condivide, secondo le modalità del suo terminale. Limiti: 10 condivisioni contemporanee, 5 persone per
+condivisione, 3 minuti per rispondere, connessione interrotta dopo 60 secondi senza notizie; una persona in ritardo di
+oltre 48 MB riceve lo schermo intero al posto del ritardo.
+
 ### Sessioni PSMP
 
 Ogni scheda SSH apre fino a tre connessioni al PSMP, con lo stesso identificativo
@@ -1502,6 +1601,8 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 
 | Sintomo | Causa probabile e soluzione |
 | --- | --- |
+| «Impossibile raggiungere il computer che condivide» (Partecipa a una sessione condivisa) | Il firewall o la rete (VPN) bloccano la connessione diretta: chiedi a chi condivide di consentire ZillaTerm in Windows Firewall (reti private o di dominio), o di impostare una cartella di inoltro raggiungibile da entrambi i computer (Impostazioni › Condivisione). |
+| «Condivisione impossibile: né connessione diretta né cartella di inoltro» | La porta scelta è già occupata (porta 0 per una porta a caso), oppure la cartella di inoltro non è raggiungibile: verifica Impostazioni › Condivisione. |
 | «Il PVWA non ha un componente di connessione «PSM-RDP» per questo account» (`EPVWA093E Failed to get the relevant connection component`) | La piattaforma dell'account usa un componente con un altro nome (ad esempio `WIN-PSM`): quello proposto dal pulsante «Connect» del PVWA, o il nome dopo `/c` in un comando `psm /u … /a … /c …`. Inseriscilo in «Componente» e seleziona «Memorizza questo componente per la piattaforma»: viene memorizzato una volta che il PVWA ha accettato la connessione. |
 | «Connessione TLS rifiutata: il certificato del PVWA non è considerato attendibile» | Il certificato (o l'autorità che lo ha emesso) non è nell'archivio Windows della postazione. |
 | «Il PVWA deve essere raggiunto in HTTPS» | Inserisci l'indirizzo senza `http://` (o con `https://`). |
