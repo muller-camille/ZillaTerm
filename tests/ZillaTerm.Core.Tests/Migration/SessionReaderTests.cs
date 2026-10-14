@@ -131,6 +131,36 @@ public sealed class SessionReaderTests
     }
 
     [Fact]
+    public void ReadsPuttyUnixSessionFiles()
+    {
+        var root = Directory.CreateTempSubdirectory("zt-putty-").FullName;
+        try
+        {
+            var sessions = Directory.CreateDirectory(Path.Combine(root, "sessions")).FullName;
+            // Nom encodé (« Prod/web 01 ») : la partie avant « / » devient le dossier, comme pour le registre.
+            File.WriteAllText(Path.Combine(sessions, "Prod%2Fweb%2001"),
+                "HostName=web01.corp.local\nPortNumber=2222\nUserName=jdoe\nPassword=secret\nProtocol=ssh\nTerminalType=xterm=256\n");
+            File.WriteAllText(Path.Combine(sessions, "Default%20Settings"), "HostName=x\n");
+            File.WriteAllText(Path.Combine(sessions, "serie"), "HostName=/dev/ttyS0\nProtocol=serial\n");
+
+            var values = PuttySessions.ParseUnixFile(File.ReadAllText(Path.Combine(sessions, "Prod%2Fweb%2001")));
+            Assert.False(values.ContainsKey("Password"));
+            Assert.False(values.ContainsKey("TerminalType"));
+
+            var read = SessionSources.Read(ImportSourceKind.PuttyFolder, root).OrderBy(s => s.Name, StringComparer.Ordinal).ToList();
+            Assert.Equal(2, read.Count);
+            var web = read.Single(s => s.Name == "web 01");
+            Assert.Equal(("Prod", "web01.corp.local", 2222, "jdoe", ImportProtocol.Ssh), (web.Folder, web.Host, web.Port, web.User, web.Protocol));
+            Assert.Equal(ImportProtocol.Other, read.Single(s => s.Name == "serie").Protocol);
+            Assert.True(SessionSources.IsFolder(ImportSourceKind.PuttyFolder));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ReadsAWinScpIniFile()
     {
         var sessions = WinScpSites.FromIni("""

@@ -44,6 +44,9 @@ public enum ImportSourceKind
 
     /// <summary>Dossier de fichiers .rdp.</summary>
     RdpFolder,
+
+    /// <summary>Dossier des sessions de PuTTY sous Linux et les autres Unix (~/.putty/sessions).</summary>
+    PuttyFolder,
 }
 
 /// <summary>Lecture des sessions d'une source, quel que soit son format.</summary>
@@ -53,7 +56,7 @@ public static class SessionSources
         kind is ImportSourceKind.PuttyRegistry or ImportSourceKind.KittyRegistry or ImportSourceKind.WinScpRegistry;
 
     public static bool IsFolder(ImportSourceKind kind) =>
-        kind is ImportSourceKind.KittyFolder or ImportSourceKind.SecureCrtFolder or ImportSourceKind.RdpFolder;
+        kind is ImportSourceKind.KittyFolder or ImportSourceKind.SecureCrtFolder or ImportSourceKind.RdpFolder or ImportSourceKind.PuttyFolder;
 
     /// <summary>Clé du registre de l'utilisateur (sous HKEY_CURRENT_USER) dont les sous-clés sont les sessions.</summary>
     public static string RegistryPath(ImportSourceKind kind) => kind switch
@@ -93,6 +96,8 @@ public static class SessionSources
         {
             case ImportSourceKind.KittyFolder:
                 return PuttySessions.FromKittyFolder(path);
+            case ImportSourceKind.PuttyFolder:
+                return PuttySessions.FromUnixFolder(path);
             case ImportSourceKind.SecureCrtFolder:
                 return SecureCrtSessions.FromFolder(path);
             case ImportSourceKind.RdpFolder:

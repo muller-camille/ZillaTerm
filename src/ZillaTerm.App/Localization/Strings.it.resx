@@ -6493,4 +6493,7 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="SettingsShareDirectHelpUnix" xml:space="preserve">
     <value>L'altro ZillaTerm si connette a questo computer (connessione cifrata end-to-end). Se un firewall filtra questo computer, consenti ZillaTerm solo sulle reti private o di dominio.</value>
   </data>
+  <data name="SourcePuttyFolder" xml:space="preserve">
+    <value>Sessioni PuTTY (Linux, cartella ~/.putty)</value>
+  </data>
 </root>

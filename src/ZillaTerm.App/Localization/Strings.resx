@@ -6493,4 +6493,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="SettingsShareDirectHelpUnix" xml:space="preserve">
     <value>The other ZillaTerm connects to this computer (end-to-end encrypted connection). If a firewall filters this computer, allow ZillaTerm on private or domain networks only.</value>
   </data>
+  <data name="SourcePuttyFolder" xml:space="preserve">
+    <value>PuTTY sessions (Linux, ~/.putty folder)</value>
+  </data>
 </root>

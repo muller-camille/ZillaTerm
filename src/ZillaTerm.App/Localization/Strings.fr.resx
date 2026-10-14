@@ -6493,4 +6493,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="SettingsShareDirectHelpUnix" xml:space="preserve">
     <value>L'autre ZillaTerm se connecte à ce poste (connexion chiffrée de bout en bout). Si un pare-feu filtre ce poste, autorisez ZillaTerm sur les réseaux privés ou de domaine seulement.</value>
   </data>
+  <data name="SourcePuttyFolder" xml:space="preserve">
+    <value>Sessions PuTTY (Linux, dossier ~/.putty)</value>
+  </data>
 </root>

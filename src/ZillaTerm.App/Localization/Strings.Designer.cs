@@ -19381,5 +19381,14 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("SettingsShareDirectHelpUnix", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PuTTY sessions (Linux, ~/.putty folder).
+        /// </summary>
+        public static string SourcePuttyFolder {
+            get {
+                return ResourceManager.GetString("SourcePuttyFolder", resourceCulture);
+            }
+        }
     }
 }

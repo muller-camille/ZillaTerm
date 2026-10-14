@@ -95,6 +95,8 @@ public partial class SessionImportWindow : DialogWindow
             .Concat(Enum.GetValues<ImportSourceKind>().Except(FirstSources).Except(LastSources))
             .Concat(LastSources)
             .Where(kind => OperatingSystem.IsWindows() || !SessionSources.IsRegistry(kind))
+            // Sessions de PuTTY dans ~/.putty : seulement hors de Windows (sous Windows, elles sont dans le registre).
+            .Where(kind => !OperatingSystem.IsWindows() || kind != ImportSourceKind.PuttyFolder)
             .Select(kind => new SourceChoice(kind, Strings.ResourceManager.GetString("Source" + kind, Strings.Culture) ?? kind.ToString())),
     ];
 
@@ -171,7 +173,8 @@ public partial class SessionImportWindow : DialogWindow
         var title = choice.Label;
         if (SessionSources.IsFolder(choice.Kind))
         {
-            return await Pickers.OpenFolderAsync(this, title);
+            return await Pickers.OpenFolderAsync(this, title,
+                choice.Kind == ImportSourceKind.PuttyFolder ? Path.Combine(profile, ".putty") : null);
         }
 
         var (pattern, directory) = choice.Kind switch

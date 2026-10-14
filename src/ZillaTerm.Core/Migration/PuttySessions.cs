@@ -2,8 +2,9 @@ namespace ZillaTerm.Core.Migration;
 
 /// <summary>
 /// Sessions PuTTY et KiTTY : registre (HKCU\Software\SimonTatham\PuTTY\Sessions, HKCU\Software\9bis.com\KiTTY\Sessions,
-/// lu directement ou exporté en .reg) ou dossier « Sessions » de KiTTY portable (un fichier par session, une ligne
-/// « nom\valeur\ » par réglage, sous-dossiers = dossiers). Seuls le serveur, le port, le protocole, l'utilisateur et le
+/// lu directement ou exporté en .reg), dossier « Sessions » de KiTTY portable (un fichier par session, une ligne
+/// « nom\valeur\ » par réglage, sous-dossiers = dossiers) ou dossier « sessions » de PuTTY sous Linux et les autres
+/// Unix (~/.putty/sessions : un fichier par session, nom encodé en %XX, une ligne « nom=valeur » par réglage). Seuls le serveur, le port, le protocole, l'utilisateur et le
 /// dossier sont lus. Un « / » ou un « \ » dans le nom d'une session la range dans des dossiers.
 /// </summary>
 public static class PuttySessions
@@ -59,6 +60,54 @@ public static class PuttySessions
         }
 
         return sessions;
+    }
+
+    /// <summary>Dossier « sessions » de PuTTY sous Unix (~/.putty/sessions), ou le dossier ~/.putty qui le contient.</summary>
+    public static List<ImportedSession> FromUnixFolder(string directory)
+    {
+        var root = Path.Combine(directory, "sessions");
+        root = Directory.Exists(root) ? root : directory;
+        var sessions = new List<ImportedSession>();
+        foreach (var (_, path) in ImportText.Files(root, "*"))
+        {
+            var text = ImportText.ReadSessionFile(path);
+            if (text is null)
+            {
+                continue;
+            }
+
+            var values = ParseUnixFile(text);
+            if (FromValues("", Path.GetFileName(path), n => values.GetValueOrDefault(n), n => ImportText.Int(values.GetValueOrDefault(n)))
+                is { } session)
+            {
+                sessions.Add(session);
+            }
+        }
+
+        return sessions;
+    }
+
+    /// <summary>Réglages utiles d'un fichier de session PuTTY sous Unix (« HostName=srv01 »), valeurs telles quelles.</summary>
+    internal static Dictionary<string, string> ParseUnixFile(string text)
+    {
+        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var raw in text.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            int sep = line.IndexOf('=');
+            if (sep <= 0)
+            {
+                continue;
+            }
+
+            var name = line[..sep];
+            if (ValueNames.Contains(name, StringComparer.OrdinalIgnoreCase))
+            {
+                values[name] = line[(sep + 1)..];
+            }
+        }
+
+        return values;
     }
 
     /// <summary>Réglages utiles d'un fichier de session KiTTY (« HostName\srv01\ »), valeurs décodées.</summary>
