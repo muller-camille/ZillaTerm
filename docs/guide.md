@@ -861,9 +861,10 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
 
   It shows as plain text (selectable to copy a number): no link or formatting is interpreted, and the invisible
   characters of a file (which could reverse the order of the digits of a number) are removed.
-- **"Record the intervention"**: from then on, ZillaTerm keeps everything that happens, until "Stop recording" or
-  until ZillaTerm closes. Recording goes on after signing out of CyberArk and in emergency access. A red dot on the
-  button and "● Intervention recorded" in the status bar remind you of it. What is kept:
+- **"Record the intervention"**: from then on, ZillaTerm keeps everything that happens, until "Stop recording" (or "End
+  the intervention" in the Intervention tab) or until ZillaTerm closes. Recording goes on after signing out of CyberArk
+  and in emergency access. A red dot on the button and "● Intervention recorded" in the status bar remind you of it.
+  What is kept:
   - the **text of the SSH terminals** (commands typed and their output, line by line, with the time; not the screen
     of vim, less or top, nor the command ZillaTerm types itself to follow the folder);
   - **connections**: SSH, files, remote desktop and VNC sessions opened, failed and closed, and PSM sessions with
@@ -903,8 +904,10 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
     while it is at the bottom. The history is kept in memory only; its terminal text is limited to 8 million characters
     (beyond that, a message says so, and the text is still in the report).
 
-  When recording stops, input is greyed out and the history stays shown until **"Close the history"** (the tab goes
-  away) or the next recording; the report is exported from the Intervention window.
+  **"■ End the intervention"**, at the bottom of the tab, stops the recording after a confirmation (`Enter` confirms,
+  `Esc` or "Keep recording" cancels); a note being typed is added to the journal first. When recording stops, from here
+  or from the Intervention window, the tab goes away and the Intervention window shows the intervention in "Recorded
+  interventions", ready for "Export the report…".
 - **Timed reminders** (Settings › General, or the team's environment file): one line per reminder, the minutes since the
   start of the recording then the text ("30 Escalate to level 3"), 10 at most. The status bar shows the next one ("●
   Intervention recorded · Escalate to level 3 in 12 min"); at that time a banner appears at the top of the

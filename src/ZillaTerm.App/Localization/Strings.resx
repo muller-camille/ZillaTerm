@@ -5641,14 +5641,8 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="InterventionJournalItemTitled" xml:space="preserve">
     <value>{0} — {1}  ({2})</value>
   </data>
-  <data name="InterventionNotesStopped" xml:space="preserve">
-    <value>Recording stopped. The report is exported from the Intervention window.</value>
-  </data>
   <data name="TabInterventionTip" xml:space="preserve">
     <value>Title, notes and history of the current intervention (Ctrl+4)</value>
-  </data>
-  <data name="InterventionCloseHistory" xml:space="preserve">
-    <value>Close the _history</value>
   </data>
   <data name="InterventionKindScreen" xml:space="preserve">
     <value>Screen</value>
@@ -6414,5 +6408,32 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="TabModeWatched" xml:space="preserve">
     <value>Session of {0} (computer {1}), watched through session sharing</value>
+  </data>
+  <data name="InterventionEnd" xml:space="preserve">
+    <value>_End the intervention</value>
+  </data>
+  <data name="InterventionEndTip" xml:space="preserve">
+    <value>Stops the recording and closes this tab; the report is then exported from the Intervention window.</value>
+  </data>
+  <data name="InterventionEndTitle" xml:space="preserve">
+    <value>End the intervention</value>
+  </data>
+  <data name="InterventionEndHeading" xml:space="preserve">
+    <value>End the intervention?</value>
+  </data>
+  <data name="InterventionEndBulletStop" xml:space="preserve">
+    <value>Recording stops and the "Intervention" tab closes.</value>
+  </data>
+  <data name="InterventionEndBulletReport" xml:space="preserve">
+    <value>The journal stays in "Recorded interventions": the Intervention window opens to export its report.</value>
+  </data>
+  <data name="InterventionEndBulletNote" xml:space="preserve">
+    <value>The note being typed is added to the journal first.</value>
+  </data>
+  <data name="InterventionEndAction" xml:space="preserve">
+    <value>End the intervention</value>
+  </data>
+  <data name="InterventionEndCancel" xml:space="preserve">
+    <value>Keep recording</value>
   </data>
 </root>

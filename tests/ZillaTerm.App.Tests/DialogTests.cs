@@ -3881,16 +3881,16 @@ public sealed partial class DialogTests
                 var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new XorProtector());
                 var panel = new InterventionPanel();
                 panel.Attach(recorder);
-                Assert.False(panel.HasHistory);
+                Assert.Empty(panel.HistoryList.Items);
+                Assert.Equal(Visibility.Collapsed, panel.EndButton.Visibility);
                 Assert.False(panel.TitleBox.IsEnabled);
                 Assert.Equal(Strings.InterventionNotRecording, panel.StatusText.Text);
                 var window = new Window { Content = panel, Width = 420, Height = 640, ShowActivated = false, ShowInTaskbar = false };
                 window.Show();
 
                 recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
-                Assert.True(panel.HasHistory);
                 Assert.True(panel.TitleBox.IsEnabled);
-                Assert.Equal(Visibility.Collapsed, panel.CloseHistoryButton.Visibility);
+                Assert.Equal(Visibility.Visible, panel.EndButton.Visibility);
                 var started = Assert.IsType<InterventionHistoryItem>(Assert.Single(panel.HistoryList.Items));
                 Assert.Equal(Strings.InterventionKindStarted, started.Kind);
 
@@ -3950,32 +3950,41 @@ public sealed partial class DialogTests
                 Assert.Equal(22, output.LineCount);
                 Assert.EndsWith("ligne 21", output.FullText, StringComparison.Ordinal);
 
-                // Arrêt : saisie grisée, historique gardé avec la fin, jusqu'à « Fermer l'historique ».
+                // Arrêt (fenêtre Intervention, fermeture) : l'onglet se vide, la fenêtre principale le retire.
                 recorder.Stop(Strings.InterventionStoppedByUser);
                 Assert.False(panel.TitleBox.IsEnabled);
                 Assert.False(panel.NoteBox.IsEnabled);
                 Assert.False(panel.CaptureButton.IsEnabled);
-                Assert.Equal(Strings.InterventionNotesStopped, panel.MessageText.Text);
-                Assert.Equal(ZillaTerm.Core.Interventions.InterventionKind.Stopped,
-                    ((InterventionHistoryItem)panel.HistoryList.Items[^1]).Block.Kind);
-                Assert.True(panel.HasHistory);
-                Assert.Equal(Visibility.Visible, panel.CloseHistoryButton.Visibility);
+                Assert.Empty(panel.HistoryList.Items);
+                Assert.Equal("", panel.TitleBox.Text);
+                Assert.Equal("", panel.MessageText.Text);
+                Assert.Equal(Visibility.Collapsed, panel.EndButton.Visibility);
 
                 // Nouvel enregistrement : l'onglet repart de zéro.
                 recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
                 Assert.Single(panel.HistoryList.Items);
                 Assert.True(panel.NoteBox.IsEnabled);
                 Assert.Equal("", panel.TitleBox.Text);
-                Assert.Equal(Visibility.Collapsed, panel.CloseHistoryButton.Visibility);
-                recorder.Stop(Strings.InterventionStoppedByUser);
+                Assert.Equal(Visibility.Visible, panel.EndButton.Visibility);
 
-                int closed = 0;
-                panel.CloseRequested += (_, _) => closed++;
-                panel.CloseHistoryButton.RaiseEvent(click);
-                Assert.Equal(1, closed);
-                Assert.False(panel.HasHistory);
+                // « Terminer l'intervention » : demandé à la fenêtre principale ; la note tapée part d'abord au journal.
+                int ends = 0;
+                panel.EndRequested += (_, _) => ends++;
+                panel.EndButton.RaiseEvent(click);
+                Assert.Equal(1, ends);
+                Assert.False(panel.HasPendingNote);
+                panel.NoteBox.Text = "rotation des journaux relancée";
+                Assert.True(panel.HasPendingNote);
+                panel.CommitPendingNote();
+                Assert.False(panel.HasPendingNote);
+                Assert.Equal("", panel.NoteBox.Text);
+                var journal = recorder.JournalPath!;
+                recorder.Stop(Strings.InterventionStoppedByUser);
+                Assert.Contains(ZillaTerm.Core.Interventions.InterventionJournal.Read(journal, recorder.Protector).Entries,
+                    entry => entry.Kind == ZillaTerm.Core.Interventions.InterventionKind.Note && entry.Text == "rotation des journaux relancée");
                 Assert.Empty(panel.HistoryList.Items);
-                Assert.Equal(Visibility.Collapsed, panel.CloseHistoryButton.Visibility);
+                panel.EndButton.RaiseEvent(click);
+                Assert.Equal(1, ends);
                 panel.Detach();
                 window.Close();
             });

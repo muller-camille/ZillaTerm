@@ -918,9 +918,9 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   interprété, et les caractères invisibles d'un fichier (qui pourraient inverser l'ordre des chiffres d'un numéro)
   sont retirés.
 - **« Enregistrer l'intervention »** : à partir de là, ZillaTerm garde tout ce qui se passe, jusqu'à « Arrêter
-  l'enregistrement » ou la fermeture de ZillaTerm. L'enregistrement continue après une déconnexion de CyberArk et en
-  accès d'urgence. Une pastille rouge sur le bouton et « ● Intervention enregistrée » dans la barre d'état le
-  rappellent. Sont gardés :
+  l'enregistrement » (ou « Terminer l'intervention » dans l'onglet Intervention) ou la fermeture de ZillaTerm.
+  L'enregistrement continue après une déconnexion de CyberArk et en accès d'urgence. Une pastille rouge sur le bouton et
+  « ● Intervention enregistrée » dans la barre d'état le rappellent. Sont gardés :
   - le **texte des terminaux SSH** (commandes tapées et leur résultat, ligne par ligne, avec l'heure ; pas l'écran
     de vim, less ou top, ni la commande que ZillaTerm tape lui-même pour suivre le dossier) ;
   - les **connexions** : ouverture, échec et fermeture des sessions SSH, fichiers, Bureau à distance et VNC, et les
@@ -962,8 +962,10 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
     texte des terminaux est limité à 8 millions de caractères (au-delà, un message le dit, et le texte reste dans le
     rapport).
 
-  À l'arrêt de l'enregistrement, la saisie est grisée et l'historique reste affiché jusqu'à **« Fermer l'historique »**
-  (l'onglet disparaît) ou au prochain enregistrement ; le rapport s'exporte depuis la fenêtre Intervention.
+  **« ■ Terminer l'intervention »**, en bas de l'onglet, arrête l'enregistrement après confirmation (`Entrée` confirme,
+  `Échap` ou « Continuer l'intervention » annule) ; une note en cours de saisie est d'abord ajoutée au journal. À
+  l'arrêt, d'ici ou depuis la fenêtre Intervention, l'onglet disparaît et la fenêtre Intervention montre l'intervention
+  dans « Interventions enregistrées », prête pour « Exporter le rapport… ».
 - **Rappels pendant l'intervention** (Paramètres › Général, ou fichier d'environnement de l'équipe) : une ligne par
   rappel, les minutes depuis le début de l'enregistrement puis le texte (« 30 Escalader au N3 »), 10 au plus. La barre
   d'état montre le prochain (« ● Intervention enregistrée · Escalader au N3 dans 12 min ») ; à l'heure dite, un bandeau

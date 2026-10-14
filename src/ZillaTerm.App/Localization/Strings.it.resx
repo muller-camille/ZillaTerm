@@ -5641,14 +5641,8 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="InterventionJournalItemTitled" xml:space="preserve">
     <value>{0} — {1}  ({2})</value>
   </data>
-  <data name="InterventionNotesStopped" xml:space="preserve">
-    <value>Registrazione interrotta. Il rapporto si esporta dalla finestra Intervento.</value>
-  </data>
   <data name="TabInterventionTip" xml:space="preserve">
     <value>Titolo, note e cronologia dell'intervento in corso (Ctrl+4)</value>
-  </data>
-  <data name="InterventionCloseHistory" xml:space="preserve">
-    <value>Chiudi la c_ronologia</value>
   </data>
   <data name="InterventionKindScreen" xml:space="preserve">
     <value>Schermo</value>
@@ -6414,5 +6408,32 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   </data>
   <data name="TabModeWatched" xml:space="preserve">
     <value>Sessione di {0} (computer {1}), guardata tramite la condivisione delle sessioni</value>
+  </data>
+  <data name="InterventionEnd" xml:space="preserve">
+    <value>Ter_mina l'intervento</value>
+  </data>
+  <data name="InterventionEndTip" xml:space="preserve">
+    <value>Interrompe la registrazione e chiude questa scheda; il rapporto si esporta poi dalla finestra Intervento.</value>
+  </data>
+  <data name="InterventionEndTitle" xml:space="preserve">
+    <value>Termina l'intervento</value>
+  </data>
+  <data name="InterventionEndHeading" xml:space="preserve">
+    <value>Terminare l'intervento?</value>
+  </data>
+  <data name="InterventionEndBulletStop" xml:space="preserve">
+    <value>La registrazione si interrompe e la scheda «Intervento» si chiude.</value>
+  </data>
+  <data name="InterventionEndBulletReport" xml:space="preserve">
+    <value>Il registro resta in «Interventi registrati»: si apre la finestra Intervento per esportarne il rapporto.</value>
+  </data>
+  <data name="InterventionEndBulletNote" xml:space="preserve">
+    <value>La nota in corso di digitazione viene prima aggiunta al registro.</value>
+  </data>
+  <data name="InterventionEndAction" xml:space="preserve">
+    <value>Termina l'intervento</value>
+  </data>
+  <data name="InterventionEndCancel" xml:space="preserve">
+    <value>Continua l'intervento</value>
   </data>
 </root>

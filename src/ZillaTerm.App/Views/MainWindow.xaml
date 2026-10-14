@@ -898,8 +898,7 @@
                     </TabItem.Header>
                     <views:FileBrowserPanel x:Name="FilesPanel" Foreground="{DynamicResource SidePanelForeground}" />
                 </TabItem>
-                <!-- Intervention enregistrée : titre, notes et historique à côté de la session (et après l'arrêt, jusqu'à
-                     « Fermer l'historique »). -->
+                <!-- Intervention enregistrée : titre, notes et historique à côté de la session, le temps de l'enregistrement. -->
                 <TabItem x:Name="InterventionTab" ToolTip="{x:Static loc:Strings.TabInterventionTip}" Visibility="Collapsed">
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
