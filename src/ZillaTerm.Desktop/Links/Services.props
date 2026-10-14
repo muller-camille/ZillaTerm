@@ -1,0 +1,25 @@
+<Project>
+  <!--
+    Services de session (SSH, fichiers, VNC, éditeur, presse-papiers du mot de passe, partage, lancement externe) :
+    portés dans Services/ (même classe, même espace de noms) ; ceux sans WPF ni appel propre à Windows sont liés tels quels.
+  -->
+  <ItemGroup>
+    <!-- Remove puis Include : une autre partie du portage peut lier le même fichier sans qu'il soit compilé deux fois. -->
+    <Compile Remove="..\ZillaTerm.App\ConnectRequest.cs" />
+    <Compile Include="..\ZillaTerm.App\ConnectRequest.cs" Link="Shared\ConnectRequest.cs" />
+    <Compile Remove="..\ZillaTerm.App\Services\VncSession.cs" />
+    <Compile Include="..\ZillaTerm.App\Services\VncSession.cs" Link="Shared\Services\VncSession.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Verrouillage de la session Windows (SystemEvents) : il arrête les partages, comme dans ZillaTerm.App. -->
+    <PackageReference Remove="Microsoft.Win32.SystemEvents" />
+    <PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.12" />
+    <!--
+      D-Bus, déjà livré avec Avalonia sous Linux (même version) : verrouillage et mise en veille de la session (logind,
+      économiseur d'écran) qui arrêtent les partages, notifications du suivi de fichier.
+    -->
+    <PackageReference Remove="Tmds.DBus.Protocol" />
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.94.1" />
+  </ItemGroup>
+</Project>
