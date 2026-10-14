@@ -25,6 +25,10 @@ public enum EnvironmentSetting
     DutyText,
     DutyTextFile,
     InterventionReminders,
+    SessionSharing,
+    ShareDirect,
+    SharePort,
+    ShareRelayFolder,
     ServerTags,
     PsmDesktopInTab,
     PsmRedirectDrives,
@@ -156,6 +160,18 @@ public sealed class EnvironmentProfile
     /// </summary>
     public List<Interventions.InterventionReminder>? InterventionReminders { get; set; }
 
+    /// <summary>Partage de sessions avec un autre ZillaTerm permis (voir <see cref="AppSettings.SessionSharing"/>).</summary>
+    public bool? SessionSharing { get; set; }
+
+    /// <summary>Partages : connexions directes acceptées.</summary>
+    public bool? ShareDirect { get; set; }
+
+    /// <summary>Partages : port des connexions directes (0 : au hasard).</summary>
+    public int? SharePort { get; set; }
+
+    /// <summary>Partages : dossier relais (partage réseau de l'équipe) ; vide pour ne plus en avoir.</summary>
+    public string? ShareRelayFolder { get; set; }
+
     /// <summary>Étiquettes des serveurs (nom et couleur), à la place de celles du poste ; vide pour n'en garder aucune.</summary>
     public List<ServerTag>? ServerTags { get; set; }
 
@@ -199,6 +215,10 @@ public sealed class EnvironmentProfile
             DutyText = string.IsNullOrWhiteSpace(settings.DutyText) ? null : NormalizeDutyText(settings.DutyText),
             DutyTextFile = NullIfEmpty(settings.DutyTextFile),
             InterventionReminders = settings.InterventionReminders.Count == 0 ? null : [.. settings.InterventionReminders],
+            SessionSharing = settings.SessionSharing,
+            ShareDirect = settings.ShareDirect,
+            SharePort = settings.SharePort == 0 ? null : settings.SharePort,
+            ShareRelayFolder = NullIfEmpty(settings.ShareRelayFolder),
             ServerTags = settings.ServerTags.Select(t => new ServerTag(t.Name, t.Color)).ToList(),
         };
     }
@@ -332,6 +352,16 @@ public sealed class EnvironmentProfile
         if (!string.IsNullOrWhiteSpace(DutyTextFile) && !DutyReminderFile.IsValidPath(DutyTextFile))
         {
             Fail(EnvironmentProblem.InvalidPath, DutyTextFile);
+        }
+
+        if (SharePort is { } sharePort && !AppSettings.IsSharePort(sharePort))
+        {
+            Fail(EnvironmentProblem.InvalidPort, sharePort.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        if (!string.IsNullOrWhiteSpace(ShareRelayFolder) && !Sharing.ShareInvitation.IsRelayFolder(ShareRelayFolder.Trim()))
+        {
+            Fail(EnvironmentProblem.InvalidPath, ShareRelayFolder);
         }
 
         if (InterventionReminders is not null)
@@ -492,6 +522,21 @@ public sealed class EnvironmentProfile
             Add(EnvironmentSetting.DutyTextFile, server, settings.DutyTextFile.Trim(), DutyTextFile.Trim(), server is not null);
         }
 
+        AddFlag(EnvironmentSetting.SessionSharing, settings.SessionSharing, SessionSharing);
+        AddFlag(EnvironmentSetting.ShareDirect, settings.ShareDirect, ShareDirect);
+        if (SharePort is { } port)
+        {
+            Add(EnvironmentSetting.SharePort, null, settings.SharePort.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                port.ToString(System.Globalization.CultureInfo.InvariantCulture), false);
+        }
+
+        if (ShareRelayFolder is not null)
+        {
+            // Dossier sur un partage réseau : Windows s'y authentifie à chaque partage ; signalé avec le serveur.
+            var server = NetworkServer(ShareRelayFolder);
+            Add(EnvironmentSetting.ShareRelayFolder, server, settings.ShareRelayFolder.Trim(), ShareRelayFolder.Trim(), server is not null);
+        }
+
         if (InterventionReminders is not null)
         {
             Add(EnvironmentSetting.InterventionReminders, null, Interventions.InterventionReminder.Format(settings.InterventionReminders),
@@ -597,6 +642,14 @@ public sealed class EnvironmentProfile
         if (InterventionReminders is not null)
         {
             settings.InterventionReminders = Interventions.InterventionReminder.Sanitize(InterventionReminders);
+        }
+
+        settings.SessionSharing = SessionSharing ?? settings.SessionSharing;
+        settings.ShareDirect = ShareDirect ?? settings.ShareDirect;
+        settings.SharePort = SharePort ?? settings.SharePort;
+        if (ShareRelayFolder is not null)
+        {
+            settings.ShareRelayFolder = ShareRelayFolder.Trim();
         }
 
         if (ServerTags is not null)

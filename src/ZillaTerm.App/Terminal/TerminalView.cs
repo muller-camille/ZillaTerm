@@ -119,6 +119,8 @@ public sealed class TerminalView : FrameworkElement
         _fontSize = size;
         MeasureCell();
         FitToSize();
+        // Taille imposée : la place demandée suit la police.
+        InvalidateMeasure();
         InvalidateVisual();
     }
 
@@ -178,9 +180,21 @@ public sealed class TerminalView : FrameworkElement
             _emulator = value;
             _viewport = value is null ? null : new TerminalViewport(value);
             FitToSize();
+            InvalidateMeasure();
             InvalidateVisual();
         }
     }
+
+    /// <summary>
+    /// Taille imposée par l'émulateur (session partagée regardée : celle du terminal de la personne qui partage) : le
+    /// terminal ne se redimensionne pas à la place qu'il a, il demande celle de ses cases (à mettre dans une Viewbox).
+    /// </summary>
+    public bool FixedSize { get; set; }
+
+    protected override Size MeasureOverride(Size availableSize) =>
+        FixedSize && _emulator is { } emulator
+            ? new Size((emulator.Columns * _cellWidth) + (2 * Padding), (emulator.Rows * _cellHeight) + (2 * Padding))
+            : base.MeasureOverride(availableSize);
 
     /// <summary>Lignes remontées dans l'historique (0 = en bas).</summary>
     private int ScrollOffset => _viewport?.ScrollOffset ?? 0;
@@ -469,7 +483,7 @@ public sealed class TerminalView : FrameworkElement
 
     private void FitToSize()
     {
-        if (_emulator is null || ActualWidth <= 0 || ActualHeight <= 0)
+        if (FixedSize || _emulator is null || ActualWidth <= 0 || ActualHeight <= 0)
         {
             return;
         }

@@ -406,6 +406,42 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- ===== Partage de sessions ===== -->
+            <TabItem x:Name="SharingPage" Header="{x:Static loc:Strings.SettingsPageSharing}">
+                <ScrollViewer>
+                    <StackPanel Margin="16,12">
+                        <CheckBox x:Name="SessionSharingBox" Margin="0,0,0,2">
+                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsSessionSharing}" />
+                        </CheckBox>
+                        <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.SettingsSessionSharingHelp}" Margin="20,0,0,14" />
+                        <!-- Par où les autres rejoignent mes partages : directement, sinon par le dossier relais. -->
+                        <StackPanel IsEnabled="{Binding IsChecked, ElementName=SessionSharingBox}">
+                            <WrapPanel Margin="0,0,0,2">
+                                <CheckBox x:Name="ShareDirectBox" VerticalAlignment="Center">
+                                    <AccessText Text="{x:Static loc:Strings.SettingsShareDirect}" />
+                                </CheckBox>
+                                <Label Content="{x:Static loc:Strings.SettingsSharePort}" Target="{Binding ElementName=SharePortBox}" Margin="16,0,4,0" Padding="0"
+                                       VerticalAlignment="Center" />
+                                <TextBox x:Name="SharePortBox" Width="70" VerticalAlignment="Center" MaxLength="5"
+                                         IsEnabled="{Binding IsChecked, ElementName=ShareDirectBox}" ToolTip="{x:Static loc:Strings.SettingsSharePortTip}" />
+                            </WrapPanel>
+                            <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.SettingsShareDirectHelp}" Margin="20,0,0,14" />
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" MinWidth="140" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Content="{x:Static loc:Strings.SettingsShareRelay}" Target="{Binding ElementName=ShareRelayBox}" />
+                                <TextBox Grid.Column="1" x:Name="ShareRelayBox" VerticalContentAlignment="Center" MaxLength="400" />
+                                <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseShareRelay" Margin="8,0,0,0" />
+                            </Grid>
+                            <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.SettingsShareRelayHelp}" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- ===== Sécurité ===== -->
             <TabItem x:Name="SecurityPage" Header="{x:Static loc:Strings.SettingsPageSecurity}">
                 <DockPanel Margin="16,12">

@@ -6,13 +6,38 @@ using ZillaTerm.Core.Terminal;
 
 namespace ZillaTerm.Core.Sharing;
 
+/// <summary>Une session regardée, vue de son onglet : ce qu'elle reçoit, sa fin, la saisie et la main.</summary>
+/// <remarks>Les évènements arrivent sur un fil de travail.</remarks>
+public interface IShareConnection : IAsyncDisposable
+{
+    /// <summary>Code de vérification (le même chez celui qui partage).</summary>
+    string VerificationCode { get; }
+
+    /// <summary>Adresse du poste qui partage, ou « relay ».</summary>
+    string Route { get; }
+
+    bool IsRelay { get; }
+
+    /// <summary>Écran, flux du terminal, image d'écran, main donnée ou reprise, avis.</summary>
+    event Action<ShareMessage>? MessageReceived;
+
+    /// <summary>Fin : partage arrêté, exclu, connexion perdue, ou départ.</summary>
+    event Action<ShareEndReason>? Ended;
+
+    /// <summary>Saisie envoyée à celui qui partage (prise en compte seulement si la main a été donnée).</summary>
+    Task SendInputAsync(TerminalInput input);
+
+    /// <summary>Demande la main (vrai) ou la rend (faux).</summary>
+    Task RequestControlAsync(bool want);
+}
+
 /// <summary>
 /// Regarder une session partagée par un autre ZillaTerm : connexion directe au poste qui partage (ses adresses, essayées
 /// ensemble), sinon par le dossier relais ; ouverture authentifiée par le secret de l'invitation ; demande (nom, poste) ;
 /// puis attente de l'accord. Plusieurs se regardent en même temps : une instance par session regardée.
 /// </summary>
 /// <remarks>Les évènements arrivent sur un fil de travail.</remarks>
-public sealed class ShareViewer : IAsyncDisposable
+public sealed class ShareViewer : IShareConnection
 {
     /// <summary>Attente au plus d'une connexion directe à une adresse.</summary>
     public static readonly TimeSpan DirectTimeout = TimeSpan.FromSeconds(4);
@@ -29,6 +54,17 @@ public sealed class ShareViewer : IAsyncDisposable
     private readonly ShareCipher _cipher;
     private readonly CancellationTokenSource _stop = new();
     private readonly TaskCompletionSource<ShareInfo> _accepted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly object _delivery = new();
+
+    // Un envoi à la fois, scellé et écrit d'un tenant : la réponse au « ping » (fil de réception) ne peut pas se glisser
+    // entre le scellement et l'écriture d'une frappe (fil de l'interface), ce qui mettrait les messages hors d'ordre.
+    private readonly SemaphoreSlim _sendGate = new(1, 1);
+    private Action<ShareMessage>? _received;
+
+    // Messages arrivés avant le premier abonnement (l'écran envoyé à l'accord, avant que l'onglet ne soit prêt) ; null
+    // une fois remis.
+    private List<ShareMessage>? _early = [];
+    private long _earlyBytes;
     private long _lastHeard = DateTime.UtcNow.Ticks;
     private int _ended;
 
@@ -50,8 +86,35 @@ public sealed class ShareViewer : IAsyncDisposable
     /// <summary>Ce qui est partagé, une fois l'accord donné ; en échec (<see cref="ShareException"/>) si la demande est refusée.</summary>
     public Task<ShareInfo> Accepted => _accepted.Task;
 
-    /// <summary>Écran, flux du terminal, image d'écran, main donnée ou reprise, avis.</summary>
-    public event Action<ShareMessage>? MessageReceived;
+    /// <summary>
+    /// Écran, flux du terminal, image d'écran, main donnée ou reprise, avis. Ceux arrivés avant le premier abonnement lui
+    /// sont remis d'abord, dans l'ordre : rien ne se perd entre l'accord et l'ouverture de l'onglet.
+    /// </summary>
+    public event Action<ShareMessage>? MessageReceived
+    {
+        add
+        {
+            lock (_delivery)
+            {
+                _received += value;
+                if (_early is { } early && value is not null)
+                {
+                    _early = null;
+                    foreach (var message in early)
+                    {
+                        value(message);
+                    }
+                }
+            }
+        }
+        remove
+        {
+            lock (_delivery)
+            {
+                _received -= value;
+            }
+        }
+    }
 
     /// <summary>Fin : partage arrêté, exclu, connexion perdue, ou départ.</summary>
     public event Action<ShareEndReason>? Ended;
@@ -230,7 +293,15 @@ public sealed class ShareViewer : IAsyncDisposable
     {
         try
         {
-            await _link.SendAsync(_cipher.Seal(message.ToBytes()), cancellationToken).ConfigureAwait(false);
+            await _sendGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await _link.SendAsync(_cipher.Seal(message.ToBytes()), cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _sendGate.Release();
+            }
         }
         catch (Exception e) when (e is IOException or SocketException or ObjectDisposedException or OperationCanceledException)
         {
@@ -280,9 +351,10 @@ public sealed class ShareViewer : IAsyncDisposable
                         End(Enum.IsDefined(reason) ? reason : ShareEndReason.Stopped, sendLeave: false);
                         return;
                     default:
-                        if (_accepted.Task.IsCompletedSuccessfully)
+                        if (_accepted.Task.IsCompletedSuccessfully && !Deliver(message))
                         {
-                            MessageReceived?.Invoke(message);
+                            End(ShareEndReason.Lost, sendLeave: true);
+                            return;
                         }
 
                         break;
@@ -292,6 +364,28 @@ public sealed class ShareViewer : IAsyncDisposable
         catch (Exception e) when (e is OperationCanceledException or IOException or SocketException or InvalidDataException or ObjectDisposedException)
         {
             End(ShareEndReason.Lost, sendLeave: false);
+        }
+    }
+
+    /// <summary>Remet un message, ou le garde jusqu'au premier abonnement ; faux si trop attendent (personne ne lit).</summary>
+    private bool Deliver(ShareMessage message)
+    {
+        lock (_delivery)
+        {
+            if (_received is { } received)
+            {
+                received(message);
+                return true;
+            }
+
+            if (_early is not { } early)
+            {
+                return true;
+            }
+
+            early.Add(message);
+            _earlyBytes += message.Payload.Length;
+            return _earlyBytes <= ShareMessage.MaxLength * 2L;
         }
     }
 
@@ -330,7 +424,15 @@ public sealed class ShareViewer : IAsyncDisposable
                 try
                 {
                     using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-                    await _link.SendAsync(_cipher.Seal(ShareMessage.Leave().ToBytes()), timeout.Token).ConfigureAwait(false);
+                    await _sendGate.WaitAsync(timeout.Token).ConfigureAwait(false);
+                    try
+                    {
+                        await _link.SendAsync(_cipher.Seal(ShareMessage.Leave().ToBytes()), timeout.Token).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        _sendGate.Release();
+                    }
                 }
                 catch (Exception e) when (e is IOException or SocketException or ObjectDisposedException or OperationCanceledException)
                 {

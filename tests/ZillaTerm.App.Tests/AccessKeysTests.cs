@@ -16,7 +16,7 @@ public sealed partial class AccessKeysTests
 
     private static readonly string[] SessionActions =
         ["MenuTabReconnect", "MenuTabDuplicate", "MenuTabDetach", "MenuTabAddParallel", "MenuTabRemoveParallel", "MenuAddToMyServers",
-            "MenuTabClose"];
+            "MenuTabShare", "MenuTabShareManage", "MenuTabClose"];
 
     /// <summary>Menus construits dans le code (MainWindow.Ssh.cs, TerminalView.cs, MainWindow.Parallel.cs…).</summary>
     private static readonly (string Name, string[] Keys)[] CodeMenus =

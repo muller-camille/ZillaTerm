@@ -133,8 +133,26 @@ public partial class RdpSessionView : UserControl
         }
     }
 
-    /// <summary>Bureau affiché dans l'onglet visible : son écran est capturé (s'il y a un enregistrement en cours).</summary>
-    private void ShowScreen() => _screen.Show(IsVisible && Session.ShowsDesktop, Session.Host.SlotHandle);
+    /// <summary>Bureau affiché dans l'onglet visible : son écran est capturé (s'il y a un enregistrement en cours ou un partage).</summary>
+    private void ShowScreen()
+    {
+        bool showing = IsVisible && Session.ShowsDesktop;
+        _screen.Show(showing, Session.Host.SlotHandle);
+        Interlocked.Exchange(ref _shownSlot, showing ? Session.Host.SlotHandle : IntPtr.Zero);
+    }
+
+    // Emplacement du bureau tant qu'il est affiché dans l'onglet ; zéro sinon.
+    private IntPtr _shownSlot;
+
+    /// <summary>
+    /// Image du bureau pour une session partagée (fil de travail) ; null s'il n'est pas affiché dans l'onglet (onglet en
+    /// arrière-plan, plein écran, session qui ne répond plus) : la personne qui regarde voit l'image figée, et le sait.
+    /// </summary>
+    internal Services.ScreenPixels? CaptureForShare(byte[]? buffer)
+    {
+        var slot = Volatile.Read(ref _shownSlot);
+        return slot == IntPtr.Zero || Session.IsFullScreen || Session.IsNotResponding ? null : Services.WindowCapture.CaptureChildPixels(slot, buffer);
+    }
 
     private void OnFullScreen(object sender, RoutedEventArgs e) => Session.EnterFullScreen();
 

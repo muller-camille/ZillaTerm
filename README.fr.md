@@ -45,6 +45,7 @@ avez accès et ouvre vos sessions en un double-clic : bureau à distance via **P
 | **Sessions SSH (PSMP)** | Terminal intégré en onglet (compatible xterm : couleurs, vim, less, top…), MFA, menu du clic droit, recherche, fenêtres séparées, « Reconnecter » en fin de session, un PSMP par domaine de serveurs. Fichiers seuls (SFTP, sans terminal) pour les plateformes « SFTP » ou à la demande. |
 | **Onglet Fichiers** | Navigateur SFTP du serveur : dépôt (SFTP, ou SCP, l'autre prenant le relais si le serveur refuse) et téléchargement par glisser-déposer, vérification SHA-256 de chaque fichier, file d'attente (résultats gardés) et historique des transferts, tri par colonne, renommage, modification dans votre éditeur de texte, droits, suivi en direct (`tail -f`), comparaison, envoi vers plusieurs serveurs. |
 | **Vue parallèle** | Jusqu'à 8 sessions SSH côte à côte (un dossier de « Mes serveurs » s'ouvre d'un clic), saisie simultanée en option. |
+| **Partage de sessions** | Montrer une session en direct (terminal, Bureau à distance, VNC) à un collègue qui a ZillaTerm, et regarder les siennes, plusieurs à la fois : invitation, accord après comparaison d'un code, lecture seule et main donnée sur demande (terminal), chiffré de bout en bout, connexion directe ou dossier relais. |
 | **Accès d'urgence (KeePass)** | Sans CyberArk : bases KeePass (.kdbx) dans « Mes serveurs », connexions SSH, bureau à distance et VNC directes, fichiers en SFTP, FTP ou FTPS dans l'onglet Fichiers, journal local. |
 | **Clavier et accessibilité** | Raccourcis pour les onglets, le panneau de gauche et la connexion rapide, confirmations aux boutons explicites, lecteurs d'écran, contraste élevé. |
 | **Langues** | Français, anglais et italien : langue de Windows par défaut, modifiable à tout moment. |
@@ -165,6 +166,9 @@ Le **[guide d'utilisation](docs/guide.fr.md)** décrit chaque onglet en détail,
 - **Aucune requête vers Internet** sans votre action ou l'option de mise à jour (désactivée par défaut) ; une mise à jour
   téléchargée n'est gardée que si sa somme SHA-256 correspond à `SHA256SUMS.txt`, et rien n'est installé
   automatiquement.
+- **Partage de sessions** désactivé par défaut : chaque personne est acceptée après comparaison d'un code à 6 chiffres,
+  les échanges sont chiffrés de bout en bout, personne ne tape sans que vous lui donniez la main, et tout s'arrête au
+  verrouillage de Windows.
 - **Journal de débogage** désactivé par défaut ; il ne contient jamais de mot de passe, de jeton ni le contenu des
   sessions.
 

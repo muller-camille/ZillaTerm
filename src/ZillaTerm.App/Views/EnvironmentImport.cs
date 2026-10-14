@@ -199,6 +199,10 @@ internal static class EnvironmentImport
             EnvironmentSetting.DutyTextFile => change.Detail is { } dutyServer ? Text.Format(Strings.EnvDutyFileNetwork, dutyServer) : Strings.EnvDutyFile,
             EnvironmentSetting.ServerTags => Strings.EnvServerTags,
             EnvironmentSetting.InterventionReminders => Strings.EnvInterventionReminders,
+            EnvironmentSetting.SessionSharing => Strings.EnvSessionSharing,
+            EnvironmentSetting.ShareDirect => Strings.EnvShareDirect,
+            EnvironmentSetting.SharePort => Strings.EnvSharePort,
+            EnvironmentSetting.ShareRelayFolder => change.Detail is { } relayServer ? Text.Format(Strings.EnvShareRelayNetwork, relayServer) : Strings.EnvShareRelay,
             _ => Strings.EnvUploadProtocol,
         };
         if (change.Setting is EnvironmentSetting.DutyText or EnvironmentSetting.InterventionReminders)

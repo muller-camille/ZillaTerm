@@ -51,6 +51,7 @@ public sealed class ShareSessionTests : IDisposable
     private static ShareInvitation Local(HostedShare share, int port) =>
         share.Invitation with { Endpoints = [new IPEndPoint(IPAddress.Loopback, port)] };
 
+    // Suites des attentes hors des fils du partage : un test qui attend ensuite (TryTake) ne bloque pas la réception.
     private static async Task<T> Within<T>(Task<T> task) => await task.WaitAsync(Wait);
 
     [Theory]
@@ -64,18 +65,18 @@ public sealed class ShareSessionTests : IDisposable
         Assert.Equal(direct, invitation.Endpoints.Count > 0);
         Assert.Equal(!direct, share.UsesRelay);
 
-        var requested = new TaskCompletionSource<ShareWatcher>();
+        var requested = new TaskCompletionSource<ShareWatcher>(TaskCreationOptions.RunContinuationsAsynchronously);
         share.JoinRequested += w => requested.TrySetResult(w);
         var inputs = new BlockingCollection<TerminalInput>();
         share.InputReceived += (_, input) => inputs.Add(input);
-        var controlAsked = new TaskCompletionSource<bool>();
+        var controlAsked = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         share.ControlRequested += (_, want) => controlAsked.TrySetResult(want);
 
         await using var viewer = await Within(ShareViewer.ConnectAsync(invitation, Join(), CancellationToken.None));
         Assert.Equal(direct ? "127.0.0.1" : "relay", viewer.Route);
         var messages = new BlockingCollection<ShareMessage>();
         viewer.MessageReceived += messages.Add;
-        var ended = new TaskCompletionSource<ShareEndReason>();
+        var ended = new TaskCompletionSource<ShareEndReason>(TaskCreationOptions.RunContinuationsAsynchronously);
         viewer.Ended += r => ended.TrySetResult(r);
 
         var watcher = await Within(requested.Task);
@@ -132,6 +133,33 @@ public sealed class ShareSessionTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// L'écran envoyé à l'accord arrive avant que l'onglet ne s'abonne : il lui est remis d'abord, dans l'ordre, avec ce
+    /// qui a suivi.
+    /// </summary>
+    [Fact]
+    public async Task MessagesBeforeSubscriptionAreKept()
+    {
+        var host = Host(direct: true, relay: false);
+        var share = host.Start(Info());
+        share.JoinRequested += w => share.Accept(w, [ShareMessage.TerminalReset(20, 4, "écran"), ShareMessage.TerminalData("a")]);
+        await using var viewer = await Within(ShareViewer.ConnectAsync(Local(share, host.ListeningPort!.Value), Join(), CancellationToken.None));
+        await Within(viewer.Accepted);
+        share.Broadcast(ShareMessage.TerminalData("b"));
+        await Task.Delay(500);
+
+        var messages = new BlockingCollection<ShareMessage>();
+        viewer.MessageReceived += messages.Add;
+        share.Broadcast(ShareMessage.TerminalData("c"));
+        Assert.True(messages.TryTake(out var reset, Wait));
+        Assert.Equal("écran", reset.ReadReset()!.Value.Screen);
+        foreach (var expected in new[] { "a", "b", "c" })
+        {
+            Assert.True(messages.TryTake(out var data, Wait));
+            Assert.Equal(expected, data.ReadText());
+        }
+    }
+
     /// <summary>Refus : la demande échoue ; départ avant l'accord : la demande disparaît chez celui qui partage.</summary>
     [Fact]
     public async Task RefusedOrWithdrawnRequests()
@@ -169,7 +197,7 @@ public sealed class ShareSessionTests : IDisposable
     {
         var host = Host(direct: true, relay: false);
         var share = host.Start(Info());
-        var stopped = new TaskCompletionSource<ShareEndReason>();
+        var stopped = new TaskCompletionSource<ShareEndReason>(TaskCreationOptions.RunContinuationsAsynchronously);
         share.Stopped += r => stopped.TrySetResult(r);
         var forged = Local(share, host.ListeningPort!.Value) with { Secret = new byte[32] };
         for (int i = 0; i < HostedShare.MaxFailedAttempts; i++)

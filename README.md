@@ -45,6 +45,7 @@ and opens your sessions with a double-click: remote desktop through **PSM**, or 
 | **SSH sessions (PSMP)** | Built-in terminal in a tab (xterm compatible: colours, vim, less, top…), MFA, right-click menu, search, separate windows, "Reconnect" at the end of a session, one PSMP per server domain. Files only (SFTP, without a terminal) for "SFTP" platforms or on request. |
 | **Files tab** | SFTP browser of the server: drag-and-drop upload (SFTP, or SCP, the other one taking over if the server refuses) and download, SHA-256 check of every file, transfer queue (results kept) and history, sortable columns, renaming, editing in your text editor, permissions, live following (`tail -f`), comparison, sending to several servers. |
 | **Parallel view** | Up to 8 SSH sessions side by side (a "My servers" folder opens in one click), optional simultaneous typing. |
+| **Session sharing** | Show a session live (terminal, Remote Desktop, VNC) to a colleague who has ZillaTerm, and watch theirs, several at once: invitation, agreement after comparing a code, read-only with control given on request (terminal), end-to-end encrypted, direct connection or relay folder. |
 | **Emergency access (KeePass)** | Without CyberArk: KeePass databases (.kdbx) in "My servers", direct SSH, remote desktop and VNC connections, files over SFTP, FTP or FTPS in the Files tab, local log. |
 | **Keyboard and accessibility** | Shortcuts for the tabs, the side panel and quick connect, confirmations with explicit buttons, screen readers, high contrast. |
 | **Languages** | English, French and Italian: Windows language by default, can be changed at any time. |
@@ -156,6 +157,8 @@ The **[user guide](docs/guide.md)** describes every tab in detail, the
   imported server goes through PSM or the PSMP with a PVWA account.
 - **No request to the Internet** without your action or the update option (off by default); a downloaded update is
   kept only if its SHA-256 matches `SHA256SUMS.txt`, and nothing is installed automatically.
+- **Session sharing** off by default: each person is accepted after comparing a 6-digit code, exchanges are
+  end-to-end encrypted, nobody types unless you give them control, and everything stops when Windows locks.
 - **Debug log** off by default; it never contains a password, token or session content.
 
 All the details: [user guide → Security](docs/guide.md#security). To report a vulnerability, see

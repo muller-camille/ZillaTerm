@@ -745,6 +745,9 @@ public sealed class ShareWatcher
     private static readonly TimeSpan PingInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan SilenceLimit = TimeSpan.FromSeconds(60);
 
+    /// <summary>Après la fermeture, délai au-delà duquel un envoi bloqué (personne qui ne lit plus) est abandonné.</summary>
+    private static readonly TimeSpan CloseTimeout = TimeSpan.FromSeconds(5);
+
     private readonly HostedShare _share;
     private readonly IShareLink _link;
     private readonly ShareCipher _cipher;
@@ -753,6 +756,9 @@ public sealed class ShareWatcher
     private long _queuedBytes;
     private long _lastHeard = DateTime.UtcNow.Ticks;
     private int _closed;
+    private int _sending;
+    private int _finished;
+    private int _closeReason;
 
     internal ShareWatcher(HostedShare share, IShareLink link, ShareCipher cipher, ShareJoin join, string verificationCode)
     {
@@ -786,6 +792,7 @@ public sealed class ShareWatcher
 
     internal void Start()
     {
+        Volatile.Write(ref _sending, 1);
         _ = SendLoopAsync(_stop.Token);
         _ = ReceiveLoopAsync(_stop.Token);
         _ = PingLoopAsync(_stop.Token);
@@ -810,7 +817,11 @@ public sealed class ShareWatcher
         _queue.Writer.TryWrite(data);
     }
 
-    /// <summary>Ferme la connexion ; <paramref name="notify"/> : prévenir le partage (départ).</summary>
+    /// <summary>
+    /// Ferme la connexion ; <paramref name="notify"/> : prévenir le partage (départ). Ce qui attendait encore dans la file
+    /// ne part plus (personne exclue : plus rien ne lui est montré) ; seul l'au revoir, avec la raison, part, scellé par
+    /// la boucle d'envoi après le dernier message (les messages se suivent : un message hors d'ordre ne s'ouvrirait pas).
+    /// </summary>
     internal void Close(ShareEndReason reason, bool notify = true)
     {
         if (Interlocked.Exchange(ref _closed, 1) != 0)
@@ -818,27 +829,17 @@ public sealed class ShareWatcher
             return;
         }
 
+        Volatile.Write(ref _closeReason, (int)reason);
         State = ShareWatcherState.Closed;
         HasControl = false;
         _queue.Writer.TryComplete();
-        _ = Task.Run(async () =>
+        _ = Task.Delay(CloseTimeout).ContinueWith(_ => CancelQuietly(), TaskScheduler.Default);
+        if (Volatile.Read(ref _sending) == 0)
         {
-            try
-            {
-                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-                await _link.SendAsync(_cipher.Seal(ShareMessage.Bye(reason).ToBytes()), timeout.Token).ConfigureAwait(false);
-            }
-            catch (Exception e) when (e is OperationCanceledException or IOException or SocketException or ObjectDisposedException)
-            {
-                // Déjà partie.
-            }
-            finally
-            {
-                _stop.Cancel();
-                await _link.DisposeAsync().ConfigureAwait(false);
-                _cipher.Dispose();
-            }
-        });
+            // Pas encore de boucle d'envoi (partage plein, arrêt pendant l'ouverture) : l'au revoir part d'ici.
+            _ = FinishAsync();
+        }
+
         _share.Departed(this, reason, notify);
     }
 
@@ -849,12 +850,60 @@ public sealed class ShareWatcher
             await foreach (var data in _queue.Reader.ReadAllAsync(stop).ConfigureAwait(false))
             {
                 Interlocked.Add(ref _queuedBytes, -data.Length);
+                if (Volatile.Read(ref _closed) != 0)
+                {
+                    break;
+                }
+
                 await _link.SendAsync(_cipher.Seal(data), stop).ConfigureAwait(false);
             }
         }
         catch (Exception e) when (e is OperationCanceledException or IOException or SocketException or ObjectDisposedException)
         {
             Close(ShareEndReason.Lost);
+        }
+
+        await FinishAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Au revoir (sauf connexion perdue), puis fermeture du lien ; une seule fois.</summary>
+    private async Task FinishAsync()
+    {
+        if (Interlocked.Exchange(ref _finished, 1) != 0)
+        {
+            return;
+        }
+
+        var reason = (ShareEndReason)Volatile.Read(ref _closeReason);
+        try
+        {
+            if (reason != ShareEndReason.Lost)
+            {
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                await _link.SendAsync(_cipher.Seal(ShareMessage.Bye(reason).ToBytes()), timeout.Token).ConfigureAwait(false);
+            }
+        }
+        catch (Exception e) when (e is OperationCanceledException or IOException or SocketException or ObjectDisposedException)
+        {
+            // Déjà partie.
+        }
+        finally
+        {
+            CancelQuietly();
+            await _link.DisposeAsync().ConfigureAwait(false);
+            _cipher.Dispose();
+        }
+    }
+
+    private void CancelQuietly()
+    {
+        try
+        {
+            _stop.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Déjà fermé.
         }
     }
 

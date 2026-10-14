@@ -1,0 +1,48 @@
+<UserControl x:Class="ZillaTerm.App.Views.SharedSessionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:ZillaTerm.App.Views"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+             xmlns:term="clr-namespace:ZillaTerm.App.Terminal">
+    <DockPanel>
+        <!-- Qui partage, quoi, jusqu'à quand, par où ; demander ou rendre la main ; quitter. Pas de touches d'accès : avec la
+             main, Alt+lettre part dans la session. -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource MainTabBrush}" BorderBrush="{DynamicResource MainTabBorderBrush}" BorderThickness="0,0,0,1" Padding="8,3">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="ControlButton" Click="OnControl" Padding="10,1" Margin="0,0,6,0" Focusable="False" Visibility="Collapsed" />
+                    <Button x:Name="LeaveButton" Content="{x:Static loc:Strings.WatchLeave}" ToolTip="{x:Static loc:Strings.WatchLeaveTip}" Click="OnLeave"
+                            Padding="10,1" Focusable="False" />
+                </StackPanel>
+                <Image Source="{DynamicResource IconScreenShare}" Width="16" Height="16" Margin="0,0,6,0" />
+                <TextBlock x:Name="StatusLine" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+        <!-- Avec la main : rappel permanent que la frappe part dans la session d'une autre personne. -->
+        <Border x:Name="ControlBanner" DockPanel.Dock="Top" Background="{DynamicResource BroadcastBrush}" Padding="8,3" Visibility="Collapsed">
+            <TextBlock x:Name="ControlText" Foreground="{DynamicResource BroadcastForeground}" FontWeight="SemiBold" TextWrapping="Wrap" />
+        </Border>
+        <Border x:Name="NoticeBanner" DockPanel.Dock="Top" Background="{DynamicResource WarningBackgroundBrush}" BorderBrush="{DynamicResource WarningBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="8,3" Visibility="Collapsed">
+            <views:AnnouncedText x:Name="NoticeText" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+        </Border>
+        <Grid x:Name="Body" Background="#0C0C0C">
+            <!-- Terminal à la taille de celui de la personne qui partage, agrandi ou réduit pour tenir dans l'onglet. -->
+            <Viewbox x:Name="TerminalBox" Stretch="Uniform" Visibility="Collapsed">
+                <term:TerminalView x:Name="Terminal" FixedSize="True" />
+            </Viewbox>
+            <Image x:Name="Screen" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" Visibility="Collapsed"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Border x:Name="Overlay" Background="#D80C0C0C" Visibility="Collapsed">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
+                    <Image Source="{DynamicResource IconScreenShare}" Width="44" Height="44" Margin="0,0,0,12" />
+                    <views:AnnouncedText x:Name="OverlayText" Foreground="White" FontSize="15" TextAlignment="Center" TextWrapping="Wrap"
+                                         AutomationProperties.LiveSetting="Assertive" />
+                    <TextBlock x:Name="OverlayDetail" Foreground="#9AA5B1" TextAlignment="Center" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <Button x:Name="CloseButton" Content="{x:Static loc:Strings.WatchCloseTab}" HorizontalAlignment="Center" Padding="12,2" Margin="0,16,0,0"
+                            Click="OnLeave" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

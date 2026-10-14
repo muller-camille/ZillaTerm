@@ -525,6 +525,19 @@
                             <TextBlock Text="{x:Static loc:Strings.ToolIntervention}" Style="{StaticResource ToolLabel}" />
                         </StackPanel>
                     </Button>
+                    <Button x:Name="ShareButton" Style="{StaticResource ToolButton}" Click="OnSharing" ToolTip="{x:Static loc:Strings.ToolSharingTip}"
+                            AutomationProperties.Name="{x:Static loc:Strings.ToolSharing}">
+                        <StackPanel>
+                            <Grid>
+                                <Image Source="{DynamicResource IconScreenShare}" Style="{StaticResource ToolIcon}" />
+                                <!-- Demande en attente : regarder une session, ou avoir la main. -->
+                                <Ellipse x:Name="ShareBadge" Visibility="Collapsed" Width="11" Height="11" HorizontalAlignment="Right"
+                                         VerticalAlignment="Top" Margin="0,-3,-5,0" Fill="{DynamicResource BroadcastBrush}"
+                                         Stroke="{DynamicResource ToolbarBrush}" StrokeThickness="1.5" />
+                            </Grid>
+                            <TextBlock Text="{x:Static loc:Strings.ToolSharing}" Style="{StaticResource ToolLabel}" />
+                        </StackPanel>
+                    </Button>
                     <Button Style="{StaticResource ToolButton}" Click="OnSettingsMenu" ToolTip="{x:Static loc:Strings.ToolSettingsTip}"
                             AutomationProperties.Name="{x:Static loc:Strings.ToolSettings}">
                         <StackPanel>
@@ -547,6 +560,9 @@
                 <TextBlock DockPanel.Dock="Right" x:Name="InterventionIndicator" Foreground="{DynamicResource StatusWarningForeground}" Margin="0,0,16,0"
                            Visibility="Collapsed" Text="{x:Static loc:Strings.InterventionRecordingIndicator}" Cursor="Hand"
                            MouseLeftButtonUp="OnInterventionIndicatorClick" ToolTip="{x:Static loc:Strings.InterventionIndicatorTip}" />
+                <!-- Sessions partagées ou regardées, demandes en attente : un clic ouvre « Partage de sessions ». -->
+                <TextBlock DockPanel.Dock="Right" x:Name="ShareIndicator" Foreground="{DynamicResource StatusWarningForeground}" Margin="0,0,16,0"
+                           Visibility="Collapsed" Cursor="Hand" MouseLeftButtonUp="OnShareIndicatorClick" ToolTip="{x:Static loc:Strings.ShareIndicatorTip}" />
                 <TextBlock DockPanel.Dock="Right" x:Name="DebugLogText" Foreground="{DynamicResource StatusWarningForeground}" Margin="0,0,16,0" Visibility="Collapsed"
                            Text="{x:Static loc:Strings.DebugLogActive}" />
                 <TextBlock x:Name="CountText" Foreground="{DynamicResource StatusForeground}" Margin="0,0,16,0" />

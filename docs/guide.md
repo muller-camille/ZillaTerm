@@ -12,6 +12,7 @@
 - [6. Organize your servers: "My servers" tab](#6-organize-your-servers-my-servers-tab)
 - [7. Emergency access outside CyberArk: KeePass databases](#7-emergency-access-outside-cyberark-keepass-databases)
 - [8. Intervention: recording and on-call duty reminder](#8-intervention-recording-and-on-call-duty-reminder)
+- [9. Share a session with a colleague](#9-share-a-session-with-a-colleague)
 - [Shortcuts](#shortcuts)
 - [Settings and configuration file](#settings-and-configuration-file)
 - [Security](#security)
@@ -944,6 +945,65 @@ interrupted" in red, and the window "Recording interrupted at 14:10.": nothing m
 title, the note and the capture are greyed out in the "Intervention" tab. Free some space, then "Stop recording" and
 "Record the intervention" to start again in a new recording.
 
+## 9. Share a session with a colleague
+
+Show a session live (SSH terminal, Remote Desktop in a tab, VNC) to another person who has ZillaTerm, and watch
+theirs: to get help, train someone or work together during an intervention. Several sessions can be shared at once,
+several people can watch the same one, and one ZillaTerm can share and watch several sessions at the same time.
+
+**Turn it on**: Settings › Sharing › "Allow sharing my sessions with another ZillaTerm" (off by default; watching
+another person's session works without it). Then, how others reach you:
+
+- **Direct connections to this computer**: the other ZillaTerm connects to your computer (a free port chosen at
+  random, or a fixed port). The first time, Windows Firewall may ask to allow ZillaTerm: allow it on private or domain
+  networks only.
+- **Relay folder**: a folder of a network share that both computers can reach (`\\server\share\folder`), used when
+  the direct connection does not get through (firewall, VPN). The person joining tries the direct connection first,
+  then the folder.
+
+**Share a session**
+
+1. Right-click the session tab (or in the terminal) → "Share the session…".
+2. Choose the duration (15 minutes to 4 hours) and, for a terminal, "Allow giving control". Then "Start sharing".
+3. Send the invitation (`zillaterm-share:1:…`, "Copy the invitation" button) to the person through the company chat.
+   The invitation only lets them **ask**: nothing is shown without your agreement.
+4. When the person uses it, a banner above the session says "Paul Martin (CORP\pmartin, computer PC-PMARTIN) asks to
+   watch", and the window flashes in the taskbar. "Answer…" shows a **6-digit verification code**: the person sees the
+   same one on their side. Compare it with them (phone, chat), tick "I checked the code with this person", then
+   "Accept". A different code means someone else is in between: refuse. Without an answer, the request expires after
+   3 minutes.
+
+While the session is shared, its banner says who is watching, who has control and until when, with "Manage…" and
+"Stop sharing"; the status bar counts the shared and watched sessions and the waiting requests.
+
+**Give control** (terminal only, if the share allows it): the person clicks "Ask for control"; in the banner, "Give
+control…" then confirm. What they type goes into your session **under your identity** (the PSMP and the server record
+it in your name): stay in front of the session. "Take back control" makes everyone read-only again. One person has
+control at a time. Remote Desktop and VNC are always read-only.
+
+**Watch another person's session**: "Sharing" toolbar button → "Join a shared session…", paste the invitation (the text
+around it in the message does not matter), then "Join". Give the person the code shown and wait for their agreement:
+the session opens in a tab. The terminal keeps the size of the sharer's terminal, enlarged or reduced to fit the tab;
+nothing you type is sent until you have control. With control, an orange banner reminds you; "Give control back"
+returns to read-only. When sharing ends, the tab says why (stopped, time up, computer locked, connection lost…) and
+keeps the last image.
+
+**Manage**: "Sharing" toolbar button (or click the status bar indicator): your shared sessions and their people
+(answer, give or take back control, remove, show the invitation again for someone else, stop), and the sessions you
+watch (show, leave).
+
+**Sharing stops** at the end of its duration, when you stop it, when the session or its tab closes, when **Windows
+locks**, when you sign out of CyberArk and when ZillaTerm closes. A Remote Desktop session is shown only while its tab
+is displayed (not in full screen, window not minimized): otherwise the image stays frozen for the person watching, who
+is told so.
+
+While an [intervention](#8-intervention-recording-and-on-call-duty-reminder) is recorded, the journal notes the start
+and end of each share, each request (computer and address), each agreement (with the code checked), refusal, departure
+or removal, control given and taken back; on the guest side, the session watched and control received.
+
+⚠ Everything displayed in the shared session is visible to the accepted people: do not display passwords or secrets
+while sharing.
+
 ## Shortcuts
 
 | Where | Action | Shortcut |
@@ -1007,8 +1067,8 @@ windows and to the title bar; Windows high contrast always takes precedence. SSH
 
 <img src="captures/en/settings.png" alt="Settings" width="480">
 
-Settings toolbar button → "Settings…" (or `Ctrl+,`). The window, which can be resized, is organized in pages:
-General, CyberArk, Terminal, Files, Security. "Save" applies the settings; an incorrect value shows the page of the
+Settings toolbar button → "Settings…" (or `Ctrl+,`). The window, which can be resized, is organized in pages: General,
+CyberArk, Terminal, Files, Sharing, Security. "Save" applies the settings; an incorrect value shows the page of the
 field concerned, with the cursor in it. Options with a side effect say so under their box ("⚠ Effect: …").
 
 | Page | Setting | Purpose | Default |
@@ -1041,6 +1101,9 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | Files | Follow in an independent session | Following a file (tail -f) opens its own SFTP connection (one more PSMP session) | no |
 | Files | Text editor | Program opened by "Edit" in the Files tab | Notepad |
 | Files | Comparison tool | Program offered in the comparison window, with its arguments (`{0}` = left file, `{1}` = right file) | none |
+| Sharing | Allow sharing my sessions with another ZillaTerm | Share a session from the menu of its tab; watching another person's session works without it (see [Share a session](#9-share-a-session-with-a-colleague)); spread by the environment file | no |
+| Sharing | Direct connections to this computer, port | The other ZillaTerm connects to this computer; port 0 = a free port at random, 1024 to 65535 for a fixed port (useful when the firewall must allow it); spread by the environment file | yes, 0 |
+| Sharing | Relay folder | Folder of a network share that both computers can reach, used when the direct connection does not get through; encrypted exchanges, deleted at the end of the share; spread by the environment file (a folder on a network server requires ticking "I checked…") | empty |
 | Security | Local vault | Remembered KeePass master passwords: "Create…", "Unlock…", "Change password…", "Delete now…"; these actions apply at once, without "Save" | — |
 | Security | Accepted server keys | Table of the fingerprints checked and accepted (server, type, fingerprint): PSMP, direct SSH, FTPS and Remote Desktop certificates of KeePass entries (one row per key type). "Forget the selected keys" removes the selected rows on save; the key will be asked again at the next connection | — |
 | Settings button menu | Debug log | How connections unfold, in a file, without secrets (see [Security](#security)); "Show the debug log file" opens it in Explorer | no |
@@ -1049,7 +1112,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 
 To give ZillaTerm to a colleague with the team's configuration (PVWA address, sign-in method, default and by-domain
 PSMPs, Windows accounts component and per-platform components, shared lists, PSMP keys, on-call duty reminder (text or
-file), timed reminders, server tags, a few options), with nothing personal and no password:
+file), timed reminders, server tags, session sharing, a few options), with nothing personal and no password:
 
 1. **Export**: "Settings" button → "Export the environment…" saves `ZillaTerm.env.json`.
 2. **Next to the executable**: put this file next to `ZillaTerm.exe` (for example in the same zip). At start, when
@@ -1122,6 +1185,15 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
   Kept PSMP passwords and the MFA key are forgotten when Windows locks; the MFA key is wiped after each connection and
   removed from the PVWA at logoff (`Logoff`), done on exit.
 - PVWA session opened with `concurrentSession`: your PVWA web session, if any, is not closed.
+- **Session sharing** (off by default): you start each share, and you accept each person after comparing a 6-digit
+  code; nothing listens on the network while no session is shared. The invitation holds a random 256-bit secret, valid
+  for the duration of the share, and only lets someone ask. Exchanges are end-to-end encrypted: ECDH P-256 key exchange
+  authenticated by the invitation secret, then AES-256-GCM, one key per direction, numbered messages (an altered,
+  replayed or moved message cuts the connection). The verification code is derived from the connection keys: someone
+  in between, even with the invitation, would get another code. After 5 attempts with a wrong invitation, the share
+  stops. The relay folder only sees encrypted messages, deleted at the end of the share. Nobody types in a session
+  unless you gave them control (terminal only), and you take it back whenever you want; sharing stops when Windows
+  locks. The name, account and computer of a person who asks are declarative: only the code is proof.
 - **End of the Windows session** (sign-out, shutdown): ZillaTerm closes without asking; its sessions are closed
   (copies of edited files deleted), the KeePass databases and the local vault locked, the clipboard holding the
   password cleared and the PVWA session closed (2 seconds at most).
@@ -1379,6 +1451,24 @@ its area or a focus change. On sign-out or exit, ZillaTerm waits at most 3 s for
 a session whose control stays stuck is then taken out of the window (its slot is set aside), and the application
 signs out anyway, or exits directly.
 
+### Session sharing
+
+Invitation: `zillaterm-share:1:` followed, in base64url, by the share identifier (128 bits), the secret (256 bits), the
+end of validity, the addresses of this computer with the listening port, and the relay folder. Opening: each side sends
+an ephemeral ECDH P-256 public key authenticated (HMAC-SHA256) by a key derived from the secret; the session keys (one
+per direction) and the verification code are derived (HKDF-SHA256) from the ECDH shared secret, the invitation secret
+and the whole exchange. Messages: AES-256-GCM, nonce = message number in its direction. Direct connection: TCP, each
+message preceded by its length; all the addresses of the invitation are tried together (4 seconds at most). Relay
+folder: one `zts-<identifier>` subfolder per share, two files per person (one per direction), read every 200 ms;
+subfolders abandoned for more than two days are deleted.
+
+Terminal: on agreement, the current screen (without the history: content, colors, modes, cursor), then the stream as
+the terminal receives it; a size change sends the whole screen again. Screen (Remote Desktop, VNC): captured four times
+per second while someone watches, in 64 × 64 pixel tiles (16-bit colors), only the changed tiles are sent, compressed;
+a full image at each arrival. The typing of the person who has control is encoded on the sharer's side, according to
+the modes of their terminal. Limits: 10 shares at once, 5 people per share, 3 minutes to answer, connection cut after
+60 seconds without news; a person more than 48 MB behind receives the whole screen instead of the backlog.
+
 ### PSMP sessions
 
 Each SSH tab opens up to three connections to the PSMP, with the same login `<you>@<account>[#domain]@<target>`: the
@@ -1415,6 +1505,8 @@ sh or fish, following is not set up and nothing stays on screen.
 
 | Symptom | Likely cause and fix |
 | --- | --- |
+| "Cannot reach the computer that shares" (Join a shared session) | The firewall or the network (VPN) blocks the direct connection: ask the sharer to allow ZillaTerm in Windows Firewall (private or domain networks), or to set a relay folder that both computers can reach (Settings › Sharing). |
+| "Cannot share: neither direct connections nor the relay folder" | The chosen port is already in use (port 0 for a random port), or the relay folder cannot be reached: check Settings › Sharing. |
 | "The PVWA has no connection component “PSM-RDP” for this account" (`EPVWA093E Failed to get the relevant connection component`) | The account's platform uses a component with another name (for example `WIN-PSM`): the one offered by the PVWA "Connect" button, or the name after `/c` in a `psm /u … /a … /c …` command. Enter it in "Component" and tick "Remember this component for platform": it is kept once the PVWA accepts the connection. |
 | "TLS connection refused: this computer does not trust the PVWA certificate" | The certificate (or its issuing authority) is not in the workstation's Windows store. |
 | "The PVWA must be reached over HTTPS" | Type the address without `http://` (or with `https://`). |
