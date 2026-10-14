@@ -1,0 +1,273 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Thèmes des contrôles de ZillaTerm, mêmes clés que les styles de Theme.xaml (WPF) : Theme="{StaticResource …}"
+         remplace Style="{StaticResource …}". Les éléments sans modèle (textes, cadres, images) prennent une classe du même
+         nom (Styles.axaml). -->
+
+    <!-- Police à espacement fixe : celle de Windows, sinon celles des distributions Linux et de macOS. -->
+    <FontFamily x:Key="MonospaceFont">Cascadia Mono, Consolas, DejaVu Sans Mono, Liberation Mono, Menlo, monospace</FontFamily>
+
+    <!-- Gros bouton icône + libellé de la barre d'outils. Un bouton grisé dit pourquoi dans son infobulle. -->
+    <ControlTheme x:Key="ToolButton" TargetType="Button">
+        <Setter Property="MinWidth" Value="66" />
+        <Setter Property="Padding" Value="6,3" />
+        <Setter Property="Margin" Value="1,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Foreground" Value="{DynamicResource SidePanelForeground}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="ToolTip.ShowOnDisabled" Value="True" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ToolHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolHoverBorderBrush}" />
+        </Style>
+        <Style Selector="^:pressed">
+            <Setter Property="Background" Value="{DynamicResource ToolPressedBrush}" />
+        </Style>
+        <!-- Focus clavier bien visible : bordure d'accent. -->
+        <Style Selector="^:focus-visible">
+            <Setter Property="Background" Value="{DynamicResource ToolFocusBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="^:disabled /template/ Border#Bd">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+    </ControlTheme>
+
+    <!-- Bouton icône seule : son infobulle lui sert de nom pour les lecteurs d'écran (AccessibleName). -->
+    <ControlTheme x:Key="SmallToolButton" TargetType="Button" BasedOn="{StaticResource ToolButton}">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </ControlTheme>
+
+    <!-- Croix d'un onglet : zone cliquable d'environ 22 px ; au clavier, Ctrl+F4 ferme l'onglet. -->
+    <ControlTheme x:Key="TabCloseButton" TargetType="Button" BasedOn="{StaticResource ToolButton}">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="Margin" Value="4,-2,-8,-2" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Focusable" Value="False" />
+    </ControlTheme>
+
+    <!-- « ✕ » d'un champ de recherche ou de filtre (ClearFieldButton), par-dessus le champ, à droite. -->
+    <ControlTheme x:Key="ClearFieldButton" TargetType="Button">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="Margin" Value="0,0,3,0" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}" CornerRadius="9">
+                    <Path Data="M5,5 L13,13 M13,5 L5,13" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.6"
+                          StrokeLineCap="Round" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ToolHoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource HeadingBrush}" />
+        </Style>
+        <Style Selector="^:pressed">
+            <Setter Property="Background" Value="{DynamicResource ToolPressedBrush}" />
+        </Style>
+    </ControlTheme>
+
+    <!-- Bouton d'une action irréversible (supprimer, remplacer une clé) : rouge, jamais bouton par défaut. -->
+    <ControlTheme x:Key="DangerButton" TargetType="Button">
+        <Setter Property="Padding" Value="12,4" />
+        <Setter Property="MinWidth" Value="90" />
+        <Setter Property="Foreground" Value="{DynamicResource DangerForeground}" />
+        <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      RecognizesAccessKey="True"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource DangerHoverBrush}" />
+        </Style>
+        <Style Selector="^:pressed">
+            <Setter Property="Background" Value="{DynamicResource DangerPressedBrush}" />
+        </Style>
+        <Style Selector="^:focus-visible">
+            <Setter Property="BorderBrush" Value="{DynamicResource DangerFocusBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        <Style Selector="^:disabled /template/ Border#Bd">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
+    </ControlTheme>
+
+    <!-- Bloc de texte à espacement fixe (empreintes, chemins) : sélectionnable, sans saisie. -->
+    <ControlTheme x:Key="CodeBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="FontFamily" Value="{StaticResource MonospaceFont}" />
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Background" Value="{DynamicResource CodeBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CodeBorderBrush}" />
+        <Setter Property="Padding" Value="6,4" />
+    </ControlTheme>
+
+    <!-- Onglets verticaux du bandeau latéral (« Disponibles », « Mes serveurs », « Fichiers », « Intervention »). -->
+    <ControlTheme x:Key="SideTabItem" TargetType="TabItem">
+        <Setter Property="Foreground" Value="{DynamicResource SideStripForeground}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid Margin="0,0,0,2">
+                    <Border Name="Bd" Background="{TemplateBinding Background}" Padding="7,14"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                        <LayoutTransformControl HorizontalAlignment="Center">
+                            <LayoutTransformControl.LayoutTransform>
+                                <RotateTransform Angle="-90" />
+                            </LayoutTransformControl.LayoutTransform>
+                            <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Header}"
+                                              ContentTemplate="{TemplateBinding HeaderTemplate}" RecognizesAccessKey="True" />
+                        </LayoutTransformControl>
+                    </Border>
+                    <!-- Onglet choisi : une barre claire en plus de la couleur (contraste avec le bandeau). -->
+                    <Border Name="Marker" Width="4" HorizontalAlignment="Left" Background="Transparent" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SideStripHoverBrush}" />
+        </Style>
+        <Style Selector="^:selected">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SideStripSelectedForeground}" />
+        </Style>
+        <Style Selector="^:selected /template/ Border#Marker">
+            <Setter Property="Background" Value="{DynamicResource SideStripMarkerBrush}" />
+        </Style>
+        <Style Selector="^:focus-visible">
+            <Setter Property="BorderBrush" Value="{DynamicResource SideStripFocusBrush}" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="SideTabControl" TargetType="TabControl">
+        <Setter Property="TabStripPlacement" Value="Left" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="ItemContainerTheme" Value="{StaticResource SideTabItem}" />
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <StackPanel />
+            </ItemsPanelTemplate>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <DockPanel>
+                    <Border DockPanel.Dock="Left" Background="{DynamicResource SideStripBrush}">
+                        <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" Margin="0,4,0,0" />
+                    </Border>
+                    <Border Background="{DynamicResource SidePanelBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                            BorderThickness="0,0,1,0">
+                        <Panel>
+                            <ContentPresenter Name="PART_SelectedContentHost2" IsVisible="False" />
+                            <ContentPresenter Name="PART_SelectedContentHost" />
+                        </Panel>
+                    </Border>
+                </DockPanel>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <!-- Onglets de la zone principale (« Accueil », sessions SSH et Bureau à distance). -->
+    <ControlTheme x:Key="MainTabItem" TargetType="TabItem">
+        <Setter Property="Foreground" Value="{DynamicResource SidePanelForeground}" />
+        <Setter Property="Background" Value="{DynamicResource MainTabBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource MainTabBorderBrush}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="1,1,1,0" CornerRadius="5,5,0,0" Padding="12,5,14,5" Margin="0,0,3,-1">
+                    <Grid>
+                        <Border Name="Accent" Height="3" VerticalAlignment="Top" Margin="-12,-5,-14,0"
+                                CornerRadius="5,5,0,0" Background="Transparent" />
+                        <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Header}"
+                                          ContentTemplate="{TemplateBinding HeaderTemplate}" VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource MainTabHoverBrush}" />
+        </Style>
+        <Style Selector="^:selected">
+            <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
+            <Setter Property="ZIndex" Value="1" />
+        </Style>
+        <Style Selector="^:selected /template/ Border#Accent">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="^:focus-visible">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="MainTabControl" TargetType="TabControl">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="ItemContainerTheme" Value="{StaticResource MainTabItem}" />
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource TabStripBrush}" Padding="6,6,6,0"
+                            BorderBrush="{DynamicResource MainTabBorderBrush}" BorderThickness="0,0,0,1">
+                        <!-- Trop d'onglets : la bande défile (molette, onglet choisi toujours visible). -->
+                        <ScrollViewer Name="TabScroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
+                                      Focusable="False" Margin="0,0,0,-1">
+                            <ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
+                        </ScrollViewer>
+                    </Border>
+                    <Border Background="{DynamicResource ContentBrush}">
+                        <Panel>
+                            <ContentPresenter Name="PART_SelectedContentHost2" IsVisible="False" />
+                            <ContentPresenter Name="PART_SelectedContentHost" />
+                        </Panel>
+                    </Border>
+                </DockPanel>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>

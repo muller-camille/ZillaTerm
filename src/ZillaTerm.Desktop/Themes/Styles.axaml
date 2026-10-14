@@ -1,0 +1,110 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Styles des éléments sans modèle, en classes du nom des styles de Theme.xaml (WPF) : Classes="SectionTitle" remplace
+         Style="{StaticResource SectionTitle}". -->
+
+    <Style Selector="Image.SmallIcon">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+    </Style>
+
+    <Style Selector="Image.ToolIcon">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="TextBlock.ToolLabel, AccessText.ToolLabel">
+        <Setter Property="Margin" Value="0,2,0,0" />
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="Rectangle.ToolSeparator">
+        <Setter Property="Width" Value="1" />
+        <Setter Property="Margin" Value="6,6" />
+        <Setter Property="Fill" Value="{DynamicResource ToolbarBorderBrush}" />
+    </Style>
+
+    <!-- Texte secondaire d'une ligne d'arbre (nombre, mode, « correspond : … », ⚠, ✓) : sur la ligne sélectionnée, il prend
+         la couleur du texte de la ligne, faite pour le fond de la sélection. Le texte ou le symbole garde le sens. -->
+    <Style Selector="TextBlock.TreeNote">
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.TreeWarning">
+        <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+    </Style>
+    <Style Selector="TextBlock.TreeAccent">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+    </Style>
+    <Style Selector="TreeViewItem:selected TextBlock.TreeNote, TreeViewItem:selected TextBlock.TreeWarning, TreeViewItem:selected TextBlock.TreeAccent, ListBoxItem:selected TextBlock.TreeNote">
+        <Setter Property="Foreground" Value="{Binding $parent[TreeViewItem].Foreground}" />
+    </Style>
+
+    <!-- ===== Kit des dialogues ===== -->
+    <!-- Bandeau d'erreur (réponse du PVWA, échec de connexion) : le texte est une ErrorLine, annoncée. -->
+    <Style Selector="Border.ErrorBanner">
+        <Setter Property="Background" Value="{DynamicResource ErrorBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ErrorBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="10,8" />
+    </Style>
+
+    <!-- Bandeau d'avertissement (FTP en clair, accès d'urgence…). -->
+    <Style Selector="Border.WarningBanner">
+        <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource WarningBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="10,6" />
+    </Style>
+
+    <!-- Pied des dialogues : fond du panneau, filet en haut, boutons à droite (principal puis Annuler/Fermer). -->
+    <Style Selector="Border.DialogFooter">
+        <Setter Property="Background" Value="{DynamicResource SidePanelBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ToolbarBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="Padding" Value="16,10,16,12" />
+    </Style>
+
+    <!-- Conséquence d'une option sensible, sous sa case (« ⚠ Effet : … »). La variante « affichée quand la case est cochée »
+         lie IsVisible à la case. -->
+    <Style Selector="TextBlock.OptionEffect">
+        <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="20,0,0,8" />
+    </Style>
+
+    <!-- Aide sous un réglage. -->
+    <Style Selector="TextBlock.OptionHelp">
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Margin" Value="20,0,0,8" />
+    </Style>
+
+    <Style Selector="TextBlock.SectionTitle">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource HeadingBrush}" />
+        <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+
+    <Style Selector="TextBlock.Muted">
+        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+    </Style>
+
+    <!-- ===== Contrôles standard ===== -->
+    <Style Selector="Window">
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <!-- Boutons des dialogues : largeur commune, comme sous Windows. -->
+    <Style Selector="Border.DialogFooter Button, StackPanel.DialogButtons > Button">
+        <Setter Property="MinWidth" Value="90" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBox">
+        <Setter Property="PlaceholderForeground" Value="{DynamicResource PlaceholderBrush}" />
+    </Style>
+</Styles>

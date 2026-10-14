@@ -1,0 +1,76 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.LoginWindow"
+                    Title="{x:Static loc:Strings.LoginTitle}"
+                    Width="440" SizeToContent="Height" CanResize="False"
+                    WindowStartupLocation="CenterScreen">
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="{x:Static loc:Strings.LoginHeading}" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Static loc:Strings.LoginSubtitle}" Classes="Muted" Margin="0,4,0,0" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- Saisie des identifiants -->
+        <Grid Grid.Row="1" x:Name="CredentialsPanel" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto">
+            <Label Grid.Row="0" Content="{x:Static loc:Strings.LoginAddress}" Target="{Binding #UrlBox}" Margin="0,0,8,8" VerticalAlignment="Center" />
+            <TextBox Grid.Row="0" Grid.Column="1" x:Name="UrlBox" Margin="0,0,0,8" ToolTip.Tip="{x:Static loc:Strings.LoginAddressTip}" />
+
+            <Label Grid.Row="1" Content="{x:Static loc:Strings.LoginMethod}" Target="{Binding #MethodBox}" Margin="0,0,8,8" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" x:Name="MethodBox" Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                      SelectionChanged="OnMethodChanged" />
+
+            <Label Grid.Row="2" Content="{x:Static loc:Strings.LoginUser}" Target="{Binding #UserBox}" Margin="0,0,8,8" VerticalAlignment="Center" />
+            <TextBox Grid.Row="2" Grid.Column="1" x:Name="UserBox" Margin="0,0,0,8" />
+
+            <Label Grid.Row="3" Content="{x:Static loc:Strings.LoginPassword}" Target="{Binding #PasswordBox}" Margin="0,0,8,8" VerticalAlignment="Center" />
+            <views:PasswordBox Grid.Row="3" Grid.Column="1" x:Name="PasswordBox" Margin="0,0,0,8" />
+        </Grid>
+
+        <!-- Challenge RADIUS (MFA) : affiché seulement si le PVWA le demande -->
+        <StackPanel Grid.Row="1" x:Name="ChallengePanel" IsVisible="False">
+            <TextBlock x:Name="ChallengeText" TextWrapping="Wrap" Margin="0,0,0,8" />
+            <!-- Nom accessible du champ : la question du PVWA. -->
+            <views:PasswordBox x:Name="ChallengeBox" Margin="0,0,0,8" AutomationProperties.LabeledBy="{Binding #ChallengeText}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2">
+            <!-- Avertissement Verr. Maj, pendant la saisie du mot de passe. -->
+            <views:AnnouncedText x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}"
+                                 Margin="0,0,0,6" IsVisible="False" />
+            <views:ErrorLine x:Name="StatusText" Margin="0,4,0,8" IsVisible="False" />
+        </StackPanel>
+
+        <DockPanel Grid.Row="3" LastChildFill="False" Margin="0,8,0,0">
+            <ComboBox x:Name="LanguageBox" DockPanel.Dock="Left" VerticalAlignment="Center"
+                      ToolTip.Tip="{x:Static loc:Strings.LoginLanguageTip}" SelectionChanged="OnLanguageChanged"
+                      AutomationProperties.Name="{x:Static loc:Strings.LoginLanguageName}" />
+            <ProgressBar x:Name="Busy" DockPanel.Dock="Left" Width="70" MinWidth="70" Height="6" MinHeight="6" Margin="10,0,0,0"
+                         IsIndeterminate="True" Opacity="0" VerticalAlignment="Center" />
+            <!-- Sans connexion, l'application se ferme : le bouton le dit. Pendant la question RADIUS, Échap fait « Retour ». -->
+            <Button DockPanel.Dock="Right" x:Name="QuitButton" Content="{x:Static loc:Strings.LoginQuit}" IsCancel="True" Margin="8,0,0,0" />
+            <!-- Pas d'IsCancel : un bouton d'annulation fermerait la fenêtre (Échap est pris dans OnKeyDownTunnel). -->
+            <Button DockPanel.Dock="Right" x:Name="BackButton" Margin="8,0,0,0" IsVisible="False" Click="OnBackClick"
+                    ToolTip.Tip="{x:Static loc:Strings.LoginBackTip}" Content="{x:Static loc:Strings.LoginBack}" />
+            <Button DockPanel.Dock="Right" x:Name="LoginButton" Content="{x:Static loc:Strings.LoginButton}" IsDefault="True"
+                    Classes="accent" Click="OnLoginClick" />
+        </DockPanel>
+
+        <!-- Accès d'urgence : coffres KeePass, sans passer par CyberArk. -->
+        <Border Grid.Row="4" BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="0,1,0,0" Margin="0,14,0,0" Padding="0,10,0,0">
+            <DockPanel>
+                <!-- Environnement de l'équipe (PVWA, PSMP, composants) depuis un fichier qu'elle a fourni. -->
+                <Button DockPanel.Dock="Right" Theme="{StaticResource ToolButton}" ToolTip.Tip="{x:Static loc:Strings.LoginEnvImportTip}"
+                        Click="OnImportEnvironment" Content="{x:Static loc:Strings.LoginEnvImport}" />
+                <Button x:Name="EmergencyButton" Theme="{StaticResource ToolButton}" HorizontalAlignment="Left"
+                        ToolTip.Tip="{x:Static loc:Strings.LoginEmergencyTip}" Click="OnEmergencyClick">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{DynamicResource IconKeePass}" Width="18" Height="18" Margin="0,0,8,0" />
+                        <AccessText Text="{x:Static loc:Strings.LoginEmergency}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </DockPanel>
+        </Border>
+    </Grid>
+</views:DialogWindow>

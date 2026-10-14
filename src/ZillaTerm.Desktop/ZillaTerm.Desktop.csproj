@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Interface Avalonia de ZillaTerm (Windows, Linux, macOS), portée fenêtre par fenêtre depuis ZillaTerm.App (WPF), qui
+    reste l'application publiée pour Windows tant que ce portage n'est pas complet. Mêmes textes (Strings*.resx) et même
+    code sans interface que ZillaTerm.App, liés depuis ce projet plutôt que copiés.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>ZillaTerm</AssemblyName>
+    <!-- Mêmes espaces de noms que ZillaTerm.App : le code lié et le code porté s'y retrouvent. -->
+    <RootNamespace>ZillaTerm.App</RootNamespace>
+    <ApplicationIcon>..\ZillaTerm.App\Assets\ZillaTerm.ico</ApplicationIcon>
+    <NeutralLanguage>en</NeutralLanguage>
+    <SatelliteResourceLanguages>en;fr;it</SatelliteResourceLanguages>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <!-- Police Inter embarquée : même rendu sur toutes les distributions Linux. -->
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
+    <!-- Statistiques de compilation d'Avalonia (envoyées à avaloniaui.net à chaque build) : désactivées. -->
+    <PackageReference Include="Avalonia.BuildServices" Version="11.3.2" ExcludeAssets="all" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Textes de l'interface : ceux de ZillaTerm.App (anglais, français, italien). -->
+    <EmbeddedResource Include="..\ZillaTerm.App\Localization\Strings.resx" Link="Localization\Strings.resx" />
+    <EmbeddedResource Include="..\ZillaTerm.App\Localization\Strings.fr.resx" Link="Localization\Strings.fr.resx" />
+    <EmbeddedResource Include="..\ZillaTerm.App\Localization\Strings.it.resx" Link="Localization\Strings.it.resx" />
+    <Compile Include="..\ZillaTerm.App\Localization\Strings.Designer.cs" Link="Localization\Strings.Designer.cs" />
+    <Compile Include="..\ZillaTerm.App\Localization\Text.cs" Link="Localization\Text.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Code sans interface de ZillaTerm.App, partagé tel quel. -->
+    <Compile Include="..\ZillaTerm.App\AppDebugLog.cs" Link="Shared\AppDebugLog.cs" />
+    <Compile Include="..\ZillaTerm.App\ErrorText.cs" Link="Shared\ErrorText.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\ZillaTerm.App\Assets\ZillaTerm.ico" Link="Assets\ZillaTerm.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZillaTerm.Core\ZillaTerm.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ZillaTerm.Desktop.Tests" />
+  </ItemGroup>
+
+</Project>

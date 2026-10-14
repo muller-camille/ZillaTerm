@@ -1,0 +1,61 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    x:Class="ZillaTerm.App.Views.ConfirmDialog"
+                    Width="460" SizeToContent="Height" CanResize="False">
+    <DockPanel>
+        <!-- Bandeau d'alerte (clé changée…). -->
+        <Border x:Name="Banner" DockPanel.Dock="Top" Background="{DynamicResource ErrorBackgroundBrush}" BorderBrush="{DynamicResource DangerBrush}"
+                BorderThickness="0,0,0,2" Padding="16,8" IsVisible="False">
+            <views:AnnouncedText x:Name="BannerText" Foreground="{DynamicResource ErrorBrush}" FontWeight="SemiBold" TextWrapping="Wrap"
+                                 AutomationProperties.LiveSetting="Assertive" />
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Classes="DialogFooter">
+            <!-- Cases sur leur propre ligne : un texte long ne recouvre jamais les boutons. -->
+            <StackPanel>
+                <CheckBox x:Name="AcknowledgeBox" IsVisible="False" Margin="0,0,0,10" IsCheckedChanged="OnAcknowledgeChanged">
+                    <TextBlock x:Name="AcknowledgeText" TextWrapping="Wrap" />
+                </CheckBox>
+                <CheckBox x:Name="DontAskBox" IsVisible="False" Margin="0,0,0,10" />
+                <StackPanel x:Name="ButtonsPanel" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel Margin="16,14,16,12">
+            <DockPanel>
+                <Image x:Name="KindImage" Width="32" Height="32" Margin="0,0,12,0" VerticalAlignment="Top" />
+                <StackPanel>
+                    <TextBlock x:Name="HeadingText" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock x:Name="SubjectText" Margin="0,3,0,0" Classes="Muted" TextWrapping="Wrap" IsVisible="False" />
+                </StackPanel>
+            </DockPanel>
+            <TextBlock x:Name="MessageText" Margin="44,10,0,0" TextWrapping="Wrap" IsVisible="False" />
+            <ItemsControl x:Name="BulletList" Margin="44,6,0,0" IsVisible="False" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <DockPanel Margin="0,2,0,0">
+                            <TextBlock Text="•" Margin="0,0,6,0" />
+                            <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <!-- Éléments concernés (fichiers, serveurs) : la liste défile au-delà de quelques lignes. -->
+            <Border x:Name="ItemsPanel" Margin="44,8,0,0" BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="1"
+                    IsVisible="False">
+                <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                    <ItemsControl x:Name="ItemsList" Margin="6,4" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+            <!-- Empreintes : police à espacement fixe, sélectionnables, avec un bouton « Copier ». -->
+            <StackPanel x:Name="CodeList" Margin="44,8,0,0" IsVisible="False" />
+        </StackPanel>
+    </DockPanel>
+</views:DialogWindow>

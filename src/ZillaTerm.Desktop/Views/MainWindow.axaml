@@ -1,0 +1,7 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ZillaTerm.App.Views.MainWindow"
+        Title="ZillaTerm"
+        Width="1280" Height="780" MinWidth="820" MinHeight="480"
+        WindowStartupLocation="CenterScreen">
+</Window>

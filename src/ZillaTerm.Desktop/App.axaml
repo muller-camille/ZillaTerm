@@ -1,0 +1,27 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ZillaTerm.App.App"
+             RequestedThemeVariant="Default">
+    <!-- Thème Fluent d'Avalonia, puis les couleurs, icônes et thèmes de contrôles de ZillaTerm (Themes/). Les styles d'abord :
+         les thèmes de contrôles s'appuient sur ceux de Fluent (BasedOn). -->
+    <Application.Styles>
+        <!-- Densité compacte et police de 12 : les fenêtres gardent les tailles de l'application WPF. -->
+        <FluentTheme DensityStyle="Compact">
+            <!-- Accent de ZillaTerm pour les contrôles Fluent (sélection, case cochée, bouton principal). -->
+            <FluentTheme.Palettes>
+                <ColorPaletteResources x:Key="Light" Accent="#1565C0" />
+                <ColorPaletteResources x:Key="Dark" Accent="#2563A8" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
+        <StyleInclude Source="avares://ZillaTerm/Themes/Styles.axaml" />
+    </Application.Styles>
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://ZillaTerm/Themes/Palette.axaml" />
+                <ResourceInclude Source="avares://ZillaTerm/Themes/Controls.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <x:Double x:Key="ControlContentThemeFontSize">12</x:Double>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

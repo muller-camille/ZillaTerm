@@ -1,0 +1,1435 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Palette et icônes de ZillaTerm, reprises du thème WPF (Theme.xaml, ThemeDark.xaml) : mêmes clés, référencées en
+         DynamicResource ; le thème sombre a ses icônes éclaircies (3:1 au moins sur la barre d'outils sombre), sauf les
+         pastilles des dialogues, lisibles sur tout fond. -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="AccentBrush" Color="#1565C0" />
+            <SolidColorBrush x:Key="AccentLightBrush" Color="#E3EEFB" />
+            <SolidColorBrush x:Key="ToolbarBorderBrush" Color="#C9D1DA" />
+            <SolidColorBrush x:Key="SideStripBrush" Color="#2B3A4A" />
+            <SolidColorBrush x:Key="SidePanelBrush" Color="#F7F9FB" />
+            <SolidColorBrush x:Key="TabStripBrush" Color="#DCE3EA" />
+            <SolidColorBrush x:Key="StatusBrush" Color="#2B3A4A" />
+            <SolidColorBrush x:Key="MutedBrush" Color="#5A6573" />
+            <SolidColorBrush x:Key="SidePanelForeground" Color="#1F2933" />
+            <SolidColorBrush x:Key="ContentBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="HeadingBrush" Color="#2B3A4A" />
+            <SolidColorBrush x:Key="PlaceholderBrush" Color="#6B7785" />
+            <SolidColorBrush x:Key="ToolHoverBrush" Color="#DCE8F5" />
+            <SolidColorBrush x:Key="ToolHoverBorderBrush" Color="#A9C7E8" />
+            <SolidColorBrush x:Key="ToolPressedBrush" Color="#C4DBF2" />
+            <SolidColorBrush x:Key="ToolFocusBrush" Color="#E8F1FB" />
+            <SolidColorBrush x:Key="SideStripForeground" Color="#C8D3DE" />
+            <SolidColorBrush x:Key="SideStripHoverBrush" Color="#3A4D61" />
+            <SolidColorBrush x:Key="SideStripMarkerBrush" Color="#64B5F6" />
+            <SolidColorBrush x:Key="SideStripSelectedForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="SideStripFocusBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="MainTabBrush" Color="#EEF2F6" />
+            <SolidColorBrush x:Key="MainTabBorderBrush" Color="#BAC5D1" />
+            <SolidColorBrush x:Key="MainTabHoverBrush" Color="#F6F8FA" />
+            <SolidColorBrush x:Key="StateConnectedBrush" Color="#2E7D32" />
+            <SolidColorBrush x:Key="StateConnectingBrush" Color="#B26A00" />
+            <SolidColorBrush x:Key="StateEndedBrush" Color="#6B7785" />
+            <SolidColorBrush x:Key="StateFailedBrush" Color="#C62828" />
+            <SolidColorBrush x:Key="BadgeForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="StatusForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="StatusMutedForeground" Color="#C8D3DE" />
+            <SolidColorBrush x:Key="StatusOkForeground" Color="#9FD39F" />
+            <SolidColorBrush x:Key="StatusErrorForeground" Color="#FFB4A9" />
+            <SolidColorBrush x:Key="StatusWarningForeground" Color="#F2C14E" />
+            <SolidColorBrush x:Key="ErrorBrush" Color="#A4262C" />
+            <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#FDECEA" />
+            <SolidColorBrush x:Key="ErrorBorderBrush" Color="#F5C2BD" />
+            <SolidColorBrush x:Key="WarningBrush" Color="#8F5600" />
+            <SolidColorBrush x:Key="WarningBackgroundBrush" Color="#FFF4CE" />
+            <SolidColorBrush x:Key="WarningBorderBrush" Color="#E0C068" />
+            <SolidColorBrush x:Key="SuccessBrush" Color="#1E7B45" />
+            <SolidColorBrush x:Key="DangerBrush" Color="#B3261E" />
+            <SolidColorBrush x:Key="DangerHoverBrush" Color="#C93A31" />
+            <SolidColorBrush x:Key="DangerPressedBrush" Color="#8C1D18" />
+            <SolidColorBrush x:Key="DangerBorderBrush" Color="#8C1D18" />
+            <SolidColorBrush x:Key="DangerForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DangerFocusBrush" Color="#1F2933" />
+            <SolidColorBrush x:Key="GridLineBrush" Color="#E5E9EE" />
+            <SolidColorBrush x:Key="AlternateRowBrush" Color="#F7F9FC" />
+            <SolidColorBrush x:Key="CodeBrush" Color="#F3F5F7" />
+            <SolidColorBrush x:Key="CodeBorderBrush" Color="#D5DCE3" />
+            <SolidColorBrush x:Key="DiffRemovedBrush" Color="#FDE2E1" />
+            <SolidColorBrush x:Key="DiffAddedBrush" Color="#DCF5E0" />
+            <SolidColorBrush x:Key="DiffEmptyBrush" Color="#F1F3F5" />
+            <SolidColorBrush x:Key="DiffRemovedForeground" Color="#B42318" />
+            <SolidColorBrush x:Key="DiffAddedForeground" Color="#1E7B34" />
+            <SolidColorBrush x:Key="DiffTextBrush" Color="#1F2933" />
+            <SolidColorBrush x:Key="LineNumberBrush" Color="#6B7785" />
+            <SolidColorBrush x:Key="BroadcastBrush" Color="#F59E0B" />
+            <SolidColorBrush x:Key="BroadcastForeground" Color="#1F1300" />
+            <SolidColorBrush x:Key="DropHintBrush" Color="#E8E3EEFB" />
+            <LinearGradientBrush x:Key="ToolbarBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#FBFCFD" Offset="0" />
+                <GradientStop Color="#E8EDF2" Offset="1" />
+            </LinearGradientBrush>
+
+            <DrawingImage x:Key="IconConnect">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#2E6DB4" Geometry="M2,3.5 H22 V17 H2 Z" />
+                        <GeometryDrawing Brush="#D6E7F8" Geometry="M3.6,5.1 H20.4 V15.4 H3.6 Z" />
+                        <GeometryDrawing Brush="#5A6573" Geometry="M9,17 H15 V19 H9 Z M6,19.3 H18 V21 H6 Z" />
+                        <GeometryDrawing Brush="#2E9E4F" Geometry="M11.8,16 A5.6,5.6 0 1 1 23,16 A5.6,5.6 0 1 1 11.8,16 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M15.9,13.2 L20.2,16 L15.9,18.8 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconConnectAdvanced">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#2E6DB4" Geometry="M2,3.5 H22 V17 H2 Z" />
+                        <GeometryDrawing Brush="#D6E7F8" Geometry="M3.6,5.1 H20.4 V15.4 H3.6 Z" />
+                        <GeometryDrawing Brush="#5A6573" Geometry="M9,17 H15 V19 H9 Z M6,19.3 H18 V21 H6 Z" />
+                        <GeometryDrawing Brush="#E08A00" Geometry="M11.8,16 A5.6,5.6 0 1 1 23,16 A5.6,5.6 0 1 1 11.8,16 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M14.2,16 A1,1 0 1 1 16.2,16 A1,1 0 1 1 14.2,16 Z M16.4,16 A1,1 0 1 1 18.4,16 A1,1 0 1 1 16.4,16 Z M18.6,16 A1,1 0 1 1 20.6,16 A1,1 0 1 1 18.6,16 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconSsh">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#263238" Geometry="M2,3.5 H22 V20.5 H2 Z" />
+                        <GeometryDrawing Brush="#455A64" Geometry="M2,3.5 H22 V6.5 H2 Z" />
+                        <GeometryDrawing Geometry="M5.5,10 L9.5,13 L5.5,16 M11,17 H17">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7CE07C" Thickness="1.8" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconParallel">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#263238" Geometry="M2,3 H11 V11.2 H2 Z M13,3 H22 V11.2 H13 Z M2,12.8 H11 V21 H2 Z M13,12.8 H22 V21 H13 Z" />
+                        <GeometryDrawing Geometry="M4,5.6 L6.4,7.2 L4,8.8 M15,5.6 L17.4,7.2 L15,8.8 M4,15.4 L6.4,17 L4,18.6 M15,15.4 L17.4,17 L15,18.6">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7CE07C" Thickness="1.3" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconRefresh">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M18.06,15.5 A7,7 0 1 1 18.06,8.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E9E4F" Thickness="2.6" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#2E9E4F" Geometry="M19.66,11.27 L15.16,9.48 L20.36,6.48 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconExport">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M4,2 H14 L19,7 V22 H4 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#C9D1DA" Geometry="M14,2 V7 H19 Z" />
+                        <GeometryDrawing Brush="#1E7B45" Geometry="M6.5,10 H12 V12 H6.5 Z M6.5,13.5 H12 V15.5 H6.5 Z M6.5,17 H12 V19 H6.5 Z" />
+                        <GeometryDrawing Geometry="M13,15 H22 M19,12 L22,15 L19,18">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1565C0" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconImport">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M4,2 H14 L19,7 V22 H4 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#C9D1DA" Geometry="M14,2 V7 H19 Z" />
+                        <GeometryDrawing Brush="#1E7B45" Geometry="M6.5,10 H12 V12 H6.5 Z M6.5,13.5 H12 V15.5 H6.5 Z M6.5,17 H12 V19 H6.5 Z" />
+                        <GeometryDrawing Geometry="M22,15 H13 M16,12 L13,15 L16,18">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1565C0" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconMigrate">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M1.5,3.5 H12.5 V13.5 H1.5 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#C9D1DA" Geometry="M1.5,3.5 H12.5 V5.8 H1.5 Z" />
+                        <GeometryDrawing Geometry="M3.8,8 L5.8,9.6 L3.8,11.2 M7,11.4 H10">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1E7B45" Thickness="1.3" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M6.5,15.5 V18.5 H11.5 M9.8,16.8 L11.5,18.5 L9.8,20.2">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1E7B45" Thickness="1.6" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#1565C0" Geometry="M18,8.5 L22.8,10.4 V14.2 C22.8,17.6 20.6,20.1 18,21.6 C15.4,20.1 13.2,17.6 13.2,14.2 V10.4 Z" />
+                        <GeometryDrawing Geometry="M15.8,14.8 L17.4,16.4 L20.3,13.2">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="1.5" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconStar">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="#F2B01E" Geometry="M12,2.6 L14.47,9.2 L21.51,9.51 L15.99,13.9 L17.88,20.69 L12,16.8 L6.12,20.69 L8.01,13.9 L2.49,9.51 L9.53,9.2 Z">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#C98A00" Thickness="0.8" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconSettings">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="#5A6573" Geometry="F0 M19.95,9.98 L22.38,10.42 L22.38,13.58 L19.95,14.02 L19.58,15.14 L19.05,16.19 L20.46,18.22 L18.22,20.46 L16.19,19.05 L15.14,19.58 L14.02,19.95 L13.58,22.38 L10.42,22.38 L9.98,19.95 L8.86,19.58 L7.81,19.05 L5.78,20.46 L3.54,18.22 L4.95,16.19 L4.42,15.14 L4.05,14.02 L1.62,13.58 L1.62,10.42 L4.05,9.98 L4.42,8.86 L4.95,7.81 L3.54,5.78 L5.78,3.54 L7.81,4.95 L8.86,4.42 L9.98,4.05 L10.42,1.62 L13.58,1.62 L14.02,4.05 L15.14,4.42 L16.19,4.95 L18.22,3.54 L20.46,5.78 L19.05,7.81 L19.58,8.86 Z M15.2,12 A3.2,3.2 0 1 0 8.8,12 A3.2,3.2 0 1 0 15.2,12 Z" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconLogout">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#8D6E63" Geometry="M3,2.5 H13.5 V21.5 H3 Z" />
+                        <GeometryDrawing Brush="#BCAAA4" Geometry="M5,4.5 H11.5 V19.5 H5 Z" />
+                        <GeometryDrawing Geometry="M10,12 H21 M17.5,8.5 L21,12 L17.5,15.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#C62828" Thickness="2.2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconExit">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M7.4,6.6 A7.5,7.5 0 1 0 16.6,6.6 M12,2.5 V11">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#C62828" Thickness="2.6" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconFolder">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A82E" Geometry="M2,5 H9.5 L11.5,7 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Brush="#F5C94E" Geometry="M2,9 H22 V19.5 H2 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconWindows">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="#0078D4" Geometry="M3,4.6 L10.6,3.6 V11.2 H3 Z M11.6,3.5 L21,2.2 V11.2 H11.6 Z M3,12.2 H10.6 V19.8 L3,18.8 Z M11.6,12.2 H21 V21.2 L11.6,19.9 Z" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconKeePass">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1B5E20" Geometry="M4.5,19 H7.5 V21.5 H4.5 Z M16.5,19 H19.5 V21.5 H16.5 Z" />
+                        <GeometryDrawing Brush="#2E7D32" Geometry="M2.5,3.5 H21.5 V19.5 H2.5 Z" />
+                        <GeometryDrawing Brush="#43A047" Geometry="M4,5 H20 V18 H4 Z" />
+                        <GeometryDrawing Brush="#E8F5E9">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="11.5,11.5" RadiusX="4.2" RadiusY="4.2" />
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#2E7D32">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="11.5,11.5" RadiusX="1.5" RadiusY="1.5" />
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#E8F5E9" Geometry="M17.5,9.5 H19 V13.5 H17.5 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconUnix">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#263238" Geometry="M2,4 H22 V20 H2 Z" />
+                        <GeometryDrawing Geometry="M5.5,9 L9.5,12 L5.5,15 M11,16 H17">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7CE07C" Thickness="1.8" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconDatabase">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#6A4FA3" Geometry="M4,5.5 V18.5 A8,3 0 0 0 20,18.5 V5.5 Z" />
+                        <GeometryDrawing Brush="#9C84D4">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="12,5.5" RadiusX="8" RadiusY="3" />
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M4,10.5 A8,3 0 0 0 20,10.5 M4,14.5 A8,3 0 0 0 20,14.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#9C84D4" Thickness="1" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconNetwork">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M12,8 V12 M5,16 V12 H19 V16">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="1.6" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#00897B" Geometry="M8.5,2 H15.5 V8 H8.5 Z M1.5,16 H8.5 V22 H1.5 Z M15.5,16 H22.5 V22 H15.5 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconOther">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M12.5,11.5 L21,20 M18,17 L20.5,14.5 M15.5,14.5 L17.5,12.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#B7791F" Thickness="2.2" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#D69E2E" Geometry="F0 M2,8.5 A6,6 0 1 1 14,8.5 A6,6 0 1 1 2,8.5 Z M5.5,7 A1.8,1.8 0 1 0 9.1,7 A1.8,1.8 0 1 0 5.5,7 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconHome">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1E88E5" Geometry="M4,11 L12,4 L20,11 V21 H14.5 V15 H9.5 V21 H4 Z" />
+                        <GeometryDrawing Geometry="M2,12 L12,3 L22,12">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#0D47A1" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconHistory">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M2.5,12 A9.5,9.5 0 1 1 21.5,12 A9.5,9.5 0 1 1 2.5,12 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1565C0" Thickness="2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,6.5 V12 L16,14.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1565C0" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconTransferHistory">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M2,14.5 V20.5 H13">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M5.5,15.5 V3.5 M2.3,6.7 L5.5,3.5 L8.7,6.7">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2.1" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,3.5 V15.5 M8.8,12.3 L12,15.5 L15.2,12.3">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1565C0" Thickness="2.1" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="White" Geometry="M13.7,18 A4.9,4.9 0 1 1 23.5,18 A4.9,4.9 0 1 1 13.7,18 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="1.5" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M18.6,15.3 V18 L20.4,19.2">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="1.4" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconIntervention">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#5A6573" Geometry="M4.5,18 H19.5 A1,1 0 0 1 20.5,19 V21.5 H3.5 V19 A1,1 0 0 1 4.5,18 Z" />
+                        <GeometryDrawing Brush="#D32F2F" Geometry="M6.5,18 V13 A5.5,5.5 0 0 1 17.5,13 V18 Z" />
+                        <GeometryDrawing Geometry="M9.5,13.2 A2.6,2.6 0 0 1 12,10.6">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="1.5" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,2.5 V5 M4.2,5.8 L5.9,7.5 M19.8,5.8 L18.1,7.5 M1.8,12.5 H4 M22.2,12.5 H20">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#E8A33D" Thickness="1.7" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconScreenShare">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1565C0" Geometry="M4,8 H14 V13 H4 Z" />
+                        <GeometryDrawing Geometry="M3,5.5 H15 A1.5,1.5 0 0 1 16.5,7 V14 A1.5,1.5 0 0 1 15,15.5 H3 A1.5,1.5 0 0 1 1.5,14 V7 A1.5,1.5 0 0 1 3,5.5 Z M5.5,20 H12.5 M9,15.5 V20">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="1.6" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M19,3 A2.8,2.8 0 0 1 21.8,5.8 M19,0.5 A5.3,5.3 0 0 1 24.3,5.8">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#E8A33D" Thickness="1.6" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#E8A33D" Geometry="M18,5.8 A1,1 0 1 1 20,5.8 A1,1 0 1 1 18,5.8 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconSearch">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Geometry="M3,10 A7,7 0 1 1 17,10 A7,7 0 1 1 3,10 Z M15,15 L21,21">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#6B7785" Thickness="2.2" LineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconFile">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M5,2 H14 L19,7 V22 H5 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7A8693" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#C9D1DA" Geometry="M14,2 V7 H19 Z" />
+                        <GeometryDrawing Brush="#B0BAC5" Geometry="M8,11 H16 V12.2 H8 Z M8,14 H16 V15.2 H8 Z M8,17 H13 V18.2 H8 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconTail">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M4,2 H13 L17,6 V20 H4 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7A8693" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#B0BAC5" Geometry="M7,8 H14 V9.2 H7 Z M7,11 H14 V12.2 H7 Z M7,14 H11 V15.2 H7 Z" />
+                        <GeometryDrawing Brush="#1565C0" Geometry="M15.5,12 H19.5 V17 H22.5 L17.5,22.5 L12.5,17 H15.5 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconFileLink">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M5,2 H14 L19,7 V22 H5 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7A8693" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M8,18 C8,13 11,12 15,12 M12.5,9.5 L15,12 L12.5,14.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1565C0" Thickness="1.8" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconFiles">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A82E" Geometry="M2,5 H9.5 L11.5,7 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Brush="#F5C94E" Geometry="M2,9 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Geometry="M12,17.5 V11 M9,13.8 L12,10.8 L15,13.8">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconParentFolder">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A82E" Geometry="M7,9 H12 L14,11 H22 V21 H7 Z" />
+                        <GeometryDrawing Brush="#F5C94E" Geometry="M7,13 H22 V21 H7 Z" />
+                        <GeometryDrawing Geometry="M16,17 V6 H4.5 M8,2.5 L4.5,6 L8,9.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1565C0" Thickness="2.4" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconRename">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M2,7 H22 V17 H2 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="1.6" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#1565C0" Geometry="M5,10 H13.5 V14 H5 Z" />
+                        <GeometryDrawing Geometry="M17,4 V20 M15,4 H19 M15,20 H19">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#263238" Thickness="1.6" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconUploadMany">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#5A6573" Geometry="M1.5,16 H7.5 V21 H1.5 Z M9,16 H15 V21 H9 Z M16.5,16 H22.5 V21 H16.5 Z" />
+                        <GeometryDrawing Geometry="M12,13 V3 M8,7 L12,3 L16,7 M4.5,14 L9.5,10 M19.5,14 L14.5,10">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconCompare">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M2,3 H11 V21 H2 Z M13,3 H22 V21 H13 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7A8693" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#E5484D" Geometry="M4,7 H9 V8.6 H4 Z M4,13 H9 V14.6 H4 Z" />
+                        <GeometryDrawing Brush="#2E7D32" Geometry="M15,7 H20 V8.6 H15 Z M15,10 H20 V11.6 H15 Z" />
+                        <GeometryDrawing Brush="#B0BAC5" Geometry="M4,10 H9 V11.6 H4 Z M4,16 H9 V17.6 H4 Z M15,13 H20 V14.6 H15 Z M15,16 H20 V17.6 H15 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconUpload">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M4,15 V20 H20 V15">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,16 V4 M7.5,8.5 L12,4 L16.5,8.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2.2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconDownload">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M4,15 V20 H20 V15">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,4 V16 M7.5,11.5 L12,16 L16.5,11.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1565C0" Thickness="2.2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconDelete">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E57373" Geometry="M6,7 H18 L17,21 H7 Z" />
+                        <GeometryDrawing Geometry="M4,6.5 H20 M9.5,6.5 V4 H14.5 V6.5 M10,10 V18 M14,10 V18">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#B71C1C" Thickness="1.6" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconNewFolder">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A82E" Geometry="M2,5 H9.5 L11.5,7 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Brush="#F5C94E" Geometry="M2,9 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Geometry="M12,11 V18 M8.5,14.5 H15.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2.2" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconEdit">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#F2B01E" Geometry="M4,17 L15,6 L18,9 L7,20 H4 Z" />
+                        <GeometryDrawing Brush="#5A6573" Geometry="M16,5 L17.5,3.5 A1.4,1.4 0 0 1 19.5,3.5 L20.5,4.5 A1.4,1.4 0 0 1 20.5,6.5 L19,8 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconPermissions">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M8,11 V8 A4,4 0 0 1 16,8 V11">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5A6573" Thickness="2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#F2B01E" Geometry="M5,11 H19 V21 H5 Z" />
+                        <GeometryDrawing Brush="#5A6573">
+                            <GeometryDrawing.Geometry>
+                                <GeometryGroup>
+                                    <EllipseGeometry Center="12,15" RadiusX="1.6" RadiusY="1.6" />
+                                    <RectangleGeometry Rect="11.2,15,1.6,3.5" />
+                                </GeometryGroup>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconClose">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Geometry="M6,6 L18,18 M18,6 L6,18">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#6B7785" Thickness="2.4" LineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconBookmark">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1E88E5" Geometry="M6,2.5 H18 V21.5 L12,16.5 L6,21.5 Z" />
+                        <GeometryDrawing Brush="#F2B01E" Geometry="M12,5.6 L13.2,8.6 L16.4,8.8 L13.9,10.8 L14.8,13.9 L12,12.1 L9.2,13.9 L10.1,10.8 L7.6,8.8 L10.8,8.6 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconShared">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#8FB8E8" Geometry="M13,7 A3.2,3.2 0 1 1 19.4,7 A3.2,3.2 0 1 1 13,7 Z M10.6,18.5 C10.6,13.8 13.2,11.6 16.2,11.6 C19.2,11.6 21.8,13.8 21.8,18.5 Z" />
+                        <GeometryDrawing Brush="#1565C0" Geometry="M5.3,9.5 A3.7,3.7 0 1 1 12.7,9.5 A3.7,3.7 0 1 1 5.3,9.5 Z M2.4,22 C2.4,16.6 5.4,14.3 9,14.3 C12.6,14.3 15.6,16.6 15.6,22 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="1" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconKey">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A100" Geometry="M2.5,12 A5,5 0 1 1 12.5,12 A5,5 0 1 1 2.5,12 Z M5.5,12 A2,2 0 1 0 9.5,12 A2,2 0 1 0 5.5,12 Z M12,10.9 H21.8 V13.1 H12 Z M16.6,13 H18.6 V16.4 H16.6 Z M19.8,13 H21.8 V15.4 H19.8 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#8A6100" Thickness="0.7" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconQuestion">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1565C0" Geometry="M2,12 A10,10 0 1 1 22,12 A10,10 0 1 1 2,12 Z" />
+                        <GeometryDrawing Geometry="M9.1,9.3 A2.9,2.9 0 1 1 13.4,11.8 C12.5,12.3 12,12.9 12,13.9 V14.4">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="2" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="White" Geometry="M10.8,17.6 A1.2,1.2 0 1 1 13.2,17.6 A1.2,1.2 0 1 1 10.8,17.6 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconInfo">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1565C0" Geometry="M2,12 A10,10 0 1 1 22,12 A10,10 0 1 1 2,12 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M10.8,7.4 A1.2,1.2 0 1 1 13.2,7.4 A1.2,1.2 0 1 1 10.8,7.4 Z M11,10.4 H13 V17.6 H11 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconWarning">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#F2B01E" Geometry="M12,2.4 L22.6,20.8 H1.4 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#9A6700" Thickness="0.9" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#1F2933" Geometry="M11,8.2 H13 V14.4 H11 Z M10.8,17.3 A1.2,1.2 0 1 1 13.2,17.3 A1.2,1.2 0 1 1 10.8,17.3 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconDanger">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#B3261E" Geometry="M7.9,2 H16.1 L22,7.9 V16.1 L16.1,22 H7.9 L2,16.1 V7.9 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M11,6.6 H13 V13.8 H11 Z M10.8,17 A1.2,1.2 0 1 1 13.2,17 A1.2,1.2 0 1 1 10.8,17 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="AccentBrush" Color="#5AA9F0" />
+            <SolidColorBrush x:Key="AccentLightBrush" Color="#1C3550" />
+            <SolidColorBrush x:Key="ToolbarBorderBrush" Color="#3A424C" />
+            <SolidColorBrush x:Key="SideStripBrush" Color="#15191D" />
+            <SolidColorBrush x:Key="SidePanelBrush" Color="#23282E" />
+            <SolidColorBrush x:Key="TabStripBrush" Color="#181C20" />
+            <SolidColorBrush x:Key="StatusBrush" Color="#15191D" />
+            <SolidColorBrush x:Key="MutedBrush" Color="#A3ADB8" />
+            <SolidColorBrush x:Key="SidePanelForeground" Color="#E3E8ED" />
+            <SolidColorBrush x:Key="ContentBrush" Color="#1E2227" />
+            <SolidColorBrush x:Key="HeadingBrush" Color="#D5DEE7" />
+            <SolidColorBrush x:Key="PlaceholderBrush" Color="#96A1AD" />
+            <SolidColorBrush x:Key="ToolHoverBrush" Color="#33404E" />
+            <SolidColorBrush x:Key="ToolHoverBorderBrush" Color="#4F86BF" />
+            <SolidColorBrush x:Key="ToolPressedBrush" Color="#284563" />
+            <SolidColorBrush x:Key="ToolFocusBrush" Color="#2A3542" />
+            <SolidColorBrush x:Key="SideStripForeground" Color="#B8C4D0" />
+            <SolidColorBrush x:Key="SideStripHoverBrush" Color="#222A33" />
+            <SolidColorBrush x:Key="SideStripMarkerBrush" Color="#9CCEFA" />
+            <SolidColorBrush x:Key="SideStripSelectedForeground" Color="#0E1620" />
+            <SolidColorBrush x:Key="SideStripFocusBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="MainTabBrush" Color="#2A3038" />
+            <SolidColorBrush x:Key="MainTabBorderBrush" Color="#46505B" />
+            <SolidColorBrush x:Key="MainTabHoverBrush" Color="#313842" />
+            <SolidColorBrush x:Key="StateConnectedBrush" Color="#5BC46A" />
+            <SolidColorBrush x:Key="StateConnectingBrush" Color="#F0A43A" />
+            <SolidColorBrush x:Key="StateEndedBrush" Color="#8E99A5" />
+            <SolidColorBrush x:Key="StateFailedBrush" Color="#F26B63" />
+            <SolidColorBrush x:Key="BadgeForeground" Color="#1E2227" />
+            <SolidColorBrush x:Key="StatusForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="StatusMutedForeground" Color="#C8D3DE" />
+            <SolidColorBrush x:Key="StatusOkForeground" Color="#9FD39F" />
+            <SolidColorBrush x:Key="StatusErrorForeground" Color="#FFB4A9" />
+            <SolidColorBrush x:Key="StatusWarningForeground" Color="#F2C14E" />
+            <SolidColorBrush x:Key="ErrorBrush" Color="#FF9A90" />
+            <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#3A1D1E" />
+            <SolidColorBrush x:Key="ErrorBorderBrush" Color="#8A3B36" />
+            <SolidColorBrush x:Key="WarningBrush" Color="#F0C060" />
+            <SolidColorBrush x:Key="WarningBackgroundBrush" Color="#3A3017" />
+            <SolidColorBrush x:Key="WarningBorderBrush" Color="#8A7330" />
+            <SolidColorBrush x:Key="SuccessBrush" Color="#74D194" />
+            <SolidColorBrush x:Key="DangerBrush" Color="#B3261E" />
+            <SolidColorBrush x:Key="DangerHoverBrush" Color="#C93A31" />
+            <SolidColorBrush x:Key="DangerPressedBrush" Color="#8C1D18" />
+            <SolidColorBrush x:Key="DangerBorderBrush" Color="#E0786F" />
+            <SolidColorBrush x:Key="DangerForeground" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DangerFocusBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="GridLineBrush" Color="#323942" />
+            <SolidColorBrush x:Key="AlternateRowBrush" Color="#252A30" />
+            <SolidColorBrush x:Key="CodeBrush" Color="#181B1F" />
+            <SolidColorBrush x:Key="CodeBorderBrush" Color="#46505B" />
+            <SolidColorBrush x:Key="DiffRemovedBrush" Color="#4A2226" />
+            <SolidColorBrush x:Key="DiffAddedBrush" Color="#1D3F2B" />
+            <SolidColorBrush x:Key="DiffEmptyBrush" Color="#23282E" />
+            <SolidColorBrush x:Key="DiffRemovedForeground" Color="#FF9A90" />
+            <SolidColorBrush x:Key="DiffAddedForeground" Color="#7EE2A0" />
+            <SolidColorBrush x:Key="DiffTextBrush" Color="#E3E8ED" />
+            <SolidColorBrush x:Key="LineNumberBrush" Color="#8E99A5" />
+            <SolidColorBrush x:Key="BroadcastBrush" Color="#F59E0B" />
+            <SolidColorBrush x:Key="BroadcastForeground" Color="#1F1300" />
+            <SolidColorBrush x:Key="DropHintBrush" Color="#E81C3550" />
+            <LinearGradientBrush x:Key="ToolbarBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#2E343C" Offset="0" />
+                <GradientStop Color="#262B32" Offset="1" />
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="ButtonBrush" Color="#343B44" />
+            <SolidColorBrush x:Key="ButtonHoverBrush" Color="#3E4651" />
+            <SolidColorBrush x:Key="ButtonPressedBrush" Color="#2A3038" />
+            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#6E7884" />
+            <SolidColorBrush x:Key="ButtonDisabledBrush" Color="#2A2F35" />
+            <SolidColorBrush x:Key="FieldBorderBrush" Color="#6E7884" />
+            <SolidColorBrush x:Key="GlyphBrush" Color="#E3E8ED" />
+            <SolidColorBrush x:Key="OptionBoxBrush" Color="#181B1F" />
+            <SolidColorBrush x:Key="PopupBrush" Color="#262B32" />
+            <SolidColorBrush x:Key="PopupBorderBrush" Color="#5A6470" />
+            <SolidColorBrush x:Key="MenuHoverBrush" Color="#2E4560" />
+            <SolidColorBrush x:Key="MenuHoverBorderBrush" Color="#4F86BF" />
+            <SolidColorBrush x:Key="MenuSeparatorBrush" Color="#46505B" />
+            <SolidColorBrush x:Key="HeaderBrush" Color="#2A3038" />
+            <SolidColorBrush x:Key="HeaderHoverBrush" Color="#343B44" />
+            <SolidColorBrush x:Key="HeaderBorderBrush" Color="#3A424C" />
+            <SolidColorBrush x:Key="ScrollTrackBrush" Color="#23282E" />
+            <SolidColorBrush x:Key="ScrollThumbBrush" Color="#6A7480" />
+            <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#808B97" />
+            <SolidColorBrush x:Key="ScrollThumbDraggingBrush" Color="#9AA5B1" />
+
+            <DrawingImage x:Key="IconConnect">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#2E6DB4" Geometry="M2,3.5 H22 V17 H2 Z" />
+                        <GeometryDrawing Brush="#D6E7F8" Geometry="M3.6,5.1 H20.4 V15.4 H3.6 Z" />
+                        <GeometryDrawing Brush="#AEB8C2" Geometry="M9,17 H15 V19 H9 Z M6,19.3 H18 V21 H6 Z" />
+                        <GeometryDrawing Brush="#2E9E4F" Geometry="M11.8,16 A5.6,5.6 0 1 1 23,16 A5.6,5.6 0 1 1 11.8,16 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M15.9,13.2 L20.2,16 L15.9,18.8 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconConnectAdvanced">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#2E6DB4" Geometry="M2,3.5 H22 V17 H2 Z" />
+                        <GeometryDrawing Brush="#D6E7F8" Geometry="M3.6,5.1 H20.4 V15.4 H3.6 Z" />
+                        <GeometryDrawing Brush="#AEB8C2" Geometry="M9,17 H15 V19 H9 Z M6,19.3 H18 V21 H6 Z" />
+                        <GeometryDrawing Brush="#E08A00" Geometry="M11.8,16 A5.6,5.6 0 1 1 23,16 A5.6,5.6 0 1 1 11.8,16 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M14.2,16 A1,1 0 1 1 16.2,16 A1,1 0 1 1 14.2,16 Z M16.4,16 A1,1 0 1 1 18.4,16 A1,1 0 1 1 16.4,16 Z M18.6,16 A1,1 0 1 1 20.6,16 A1,1 0 1 1 18.6,16 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconSsh">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#263238" Geometry="M2,3.5 H22 V20.5 H2 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#8C99A6" Thickness="1" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#455A64" Geometry="M2,3.5 H22 V6.5 H2 Z" />
+                        <GeometryDrawing Geometry="M5.5,10 L9.5,13 L5.5,16 M11,17 H17">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7CE07C" Thickness="1.8" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconParallel">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#263238" Geometry="M2,3 H11 V11.2 H2 Z M13,3 H22 V11.2 H13 Z M2,12.8 H11 V21 H2 Z M13,12.8 H22 V21 H13 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#8C99A6" Thickness="1" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M4,5.6 L6.4,7.2 L4,8.8 M15,5.6 L17.4,7.2 L15,8.8 M4,15.4 L6.4,17 L4,18.6 M15,15.4 L17.4,17 L15,18.6">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7CE07C" Thickness="1.3" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconRefresh">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M18.06,15.5 A7,7 0 1 1 18.06,8.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E9E4F" Thickness="2.6" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#2E9E4F" Geometry="M19.66,11.27 L15.16,9.48 L20.36,6.48 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconExport">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M4,2 H14 L19,7 V22 H4 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#C9D1DA" Geometry="M14,2 V7 H19 Z" />
+                        <GeometryDrawing Brush="#1E7B45" Geometry="M6.5,10 H12 V12 H6.5 Z M6.5,13.5 H12 V15.5 H6.5 Z M6.5,17 H12 V19 H6.5 Z" />
+                        <GeometryDrawing Geometry="M13,15 H22 M19,12 L22,15 L19,18">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5AA9F0" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconImport">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M4,2 H14 L19,7 V22 H4 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#C9D1DA" Geometry="M14,2 V7 H19 Z" />
+                        <GeometryDrawing Brush="#1E7B45" Geometry="M6.5,10 H12 V12 H6.5 Z M6.5,13.5 H12 V15.5 H6.5 Z M6.5,17 H12 V19 H6.5 Z" />
+                        <GeometryDrawing Geometry="M22,15 H13 M16,12 L13,15 L16,18">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5AA9F0" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconMigrate">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="Transparent" Geometry="M0,0 H24 V24 H0 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M1.5,3.5 H12.5 V13.5 H1.5 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#C9D1DA" Geometry="M1.5,3.5 H12.5 V5.8 H1.5 Z" />
+                        <GeometryDrawing Geometry="M3.8,8 L5.8,9.6 L3.8,11.2 M7,11.4 H10">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1E7B45" Thickness="1.3" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M6.5,15.5 V18.5 H11.5 M9.8,16.8 L11.5,18.5 L9.8,20.2">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#1E7B45" Thickness="1.6" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#5AA9F0" Geometry="M18,8.5 L22.8,10.4 V14.2 C22.8,17.6 20.6,20.1 18,21.6 C15.4,20.1 13.2,17.6 13.2,14.2 V10.4 Z" />
+                        <GeometryDrawing Geometry="M15.8,14.8 L17.4,16.4 L20.3,13.2">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="1.5" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconStar">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="#F2B01E" Geometry="M12,2.6 L14.47,9.2 L21.51,9.51 L15.99,13.9 L17.88,20.69 L12,16.8 L6.12,20.69 L8.01,13.9 L2.49,9.51 L9.53,9.2 Z">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#C98A00" Thickness="0.8" LineJoin="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconSettings">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="#AEB8C2" Geometry="F0 M19.95,9.98 L22.38,10.42 L22.38,13.58 L19.95,14.02 L19.58,15.14 L19.05,16.19 L20.46,18.22 L18.22,20.46 L16.19,19.05 L15.14,19.58 L14.02,19.95 L13.58,22.38 L10.42,22.38 L9.98,19.95 L8.86,19.58 L7.81,19.05 L5.78,20.46 L3.54,18.22 L4.95,16.19 L4.42,15.14 L4.05,14.02 L1.62,13.58 L1.62,10.42 L4.05,9.98 L4.42,8.86 L4.95,7.81 L3.54,5.78 L5.78,3.54 L7.81,4.95 L8.86,4.42 L9.98,4.05 L10.42,1.62 L13.58,1.62 L14.02,4.05 L15.14,4.42 L16.19,4.95 L18.22,3.54 L20.46,5.78 L19.05,7.81 L19.58,8.86 Z M15.2,12 A3.2,3.2 0 1 0 8.8,12 A3.2,3.2 0 1 0 15.2,12 Z" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconLogout">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#8D6E63" Geometry="M3,2.5 H13.5 V21.5 H3 Z" />
+                        <GeometryDrawing Brush="#BCAAA4" Geometry="M5,4.5 H11.5 V19.5 H5 Z" />
+                        <GeometryDrawing Geometry="M10,12 H21 M17.5,8.5 L21,12 L17.5,15.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#C62828" Thickness="2.2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconExit">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M7.4,6.6 A7.5,7.5 0 1 0 16.6,6.6 M12,2.5 V11">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#C62828" Thickness="2.6" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconFolder">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A82E" Geometry="M2,5 H9.5 L11.5,7 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Brush="#F5C94E" Geometry="M2,9 H22 V19.5 H2 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconWindows">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="#0078D4" Geometry="M3,4.6 L10.6,3.6 V11.2 H3 Z M11.6,3.5 L21,2.2 V11.2 H11.6 Z M3,12.2 H10.6 V19.8 L3,18.8 Z M11.6,12.2 H21 V21.2 L11.6,19.9 Z" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconKeePass">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1B5E20" Geometry="M4.5,19 H7.5 V21.5 H4.5 Z M16.5,19 H19.5 V21.5 H16.5 Z" />
+                        <GeometryDrawing Brush="#2E7D32" Geometry="M2.5,3.5 H21.5 V19.5 H2.5 Z" />
+                        <GeometryDrawing Brush="#43A047" Geometry="M4,5 H20 V18 H4 Z" />
+                        <GeometryDrawing Brush="#E8F5E9">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="11.5,11.5" RadiusX="4.2" RadiusY="4.2" />
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#2E7D32">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="11.5,11.5" RadiusX="1.5" RadiusY="1.5" />
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#E8F5E9" Geometry="M17.5,9.5 H19 V13.5 H17.5 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconUnix">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#263238" Geometry="M2,4 H22 V20 H2 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#8C99A6" Thickness="1" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M5.5,9 L9.5,12 L5.5,15 M11,16 H17">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7CE07C" Thickness="1.8" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconDatabase">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#8A6FC8" Geometry="M4,5.5 V18.5 A8,3 0 0 0 20,18.5 V5.5 Z" />
+                        <GeometryDrawing Brush="#9C84D4">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="12,5.5" RadiusX="8" RadiusY="3" />
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M4,10.5 A8,3 0 0 0 20,10.5 M4,14.5 A8,3 0 0 0 20,14.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#9C84D4" Thickness="1" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconNetwork">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M12,8 V12 M5,16 V12 H19 V16">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="1.6" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#00897B" Geometry="M8.5,2 H15.5 V8 H8.5 Z M1.5,16 H8.5 V22 H1.5 Z M15.5,16 H22.5 V22 H15.5 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconOther">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M12.5,11.5 L21,20 M18,17 L20.5,14.5 M15.5,14.5 L17.5,12.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#B7791F" Thickness="2.2" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#D69E2E" Geometry="F0 M2,8.5 A6,6 0 1 1 14,8.5 A6,6 0 1 1 2,8.5 Z M5.5,7 A1.8,1.8 0 1 0 9.1,7 A1.8,1.8 0 1 0 5.5,7 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconHome">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1E88E5" Geometry="M4,11 L12,4 L20,11 V21 H14.5 V15 H9.5 V21 H4 Z" />
+                        <GeometryDrawing Geometry="M2,12 L12,3 L22,12">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#3F86D8" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconHistory">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M2.5,12 A9.5,9.5 0 1 1 21.5,12 A9.5,9.5 0 1 1 2.5,12 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5AA9F0" Thickness="2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,6.5 V12 L16,14.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5AA9F0" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconTransferHistory">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M2,14.5 V20.5 H13">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M5.5,15.5 V3.5 M2.3,6.7 L5.5,3.5 L8.7,6.7">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2.1" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,3.5 V15.5 M8.8,12.3 L12,15.5 L15.2,12.3">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5AA9F0" Thickness="2.1" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="White" Geometry="M13.7,18 A4.9,4.9 0 1 1 23.5,18 A4.9,4.9 0 1 1 13.7,18 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="1.5" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M18.6,15.3 V18 L20.4,19.2">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="1.4" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconIntervention">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#AEB8C2" Geometry="M4.5,18 H19.5 A1,1 0 0 1 20.5,19 V21.5 H3.5 V19 A1,1 0 0 1 4.5,18 Z" />
+                        <GeometryDrawing Brush="#D32F2F" Geometry="M6.5,18 V13 A5.5,5.5 0 0 1 17.5,13 V18 Z" />
+                        <GeometryDrawing Geometry="M9.5,13.2 A2.6,2.6 0 0 1 12,10.6">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="1.5" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,2.5 V5 M4.2,5.8 L5.9,7.5 M19.8,5.8 L18.1,7.5 M1.8,12.5 H4 M22.2,12.5 H20">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#E8A33D" Thickness="1.7" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconScreenShare">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#5AA9F0" Geometry="M4,8 H14 V13 H4 Z" />
+                        <GeometryDrawing Geometry="M3,5.5 H15 A1.5,1.5 0 0 1 16.5,7 V14 A1.5,1.5 0 0 1 15,15.5 H3 A1.5,1.5 0 0 1 1.5,14 V7 A1.5,1.5 0 0 1 3,5.5 Z M5.5,20 H12.5 M9,15.5 V20">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="1.6" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M19,3 A2.8,2.8 0 0 1 21.8,5.8 M19,0.5 A5.3,5.3 0 0 1 24.3,5.8">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#E8A33D" Thickness="1.6" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#E8A33D" Geometry="M18,5.8 A1,1 0 1 1 20,5.8 A1,1 0 1 1 18,5.8 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconSearch">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Geometry="M3,10 A7,7 0 1 1 17,10 A7,7 0 1 1 3,10 Z M15,15 L21,21">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#AEB8C2" Thickness="2.2" LineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconFile">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M5,2 H14 L19,7 V22 H5 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7A8693" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#C9D1DA" Geometry="M14,2 V7 H19 Z" />
+                        <GeometryDrawing Brush="#B0BAC5" Geometry="M8,11 H16 V12.2 H8 Z M8,14 H16 V15.2 H8 Z M8,17 H13 V18.2 H8 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconTail">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M4,2 H13 L17,6 V20 H4 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7A8693" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#B0BAC5" Geometry="M7,8 H14 V9.2 H7 Z M7,11 H14 V12.2 H7 Z M7,14 H11 V15.2 H7 Z" />
+                        <GeometryDrawing Brush="#5AA9F0" Geometry="M15.5,12 H19.5 V17 H22.5 L17.5,22.5 L12.5,17 H15.5 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconFileLink">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M5,2 H14 L19,7 V22 H5 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7A8693" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M8,18 C8,13 11,12 15,12 M12.5,9.5 L15,12 L12.5,14.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5AA9F0" Thickness="1.8" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconFiles">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A82E" Geometry="M2,5 H9.5 L11.5,7 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Brush="#F5C94E" Geometry="M2,9 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Geometry="M12,17.5 V11 M9,13.8 L12,10.8 L15,13.8">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconParentFolder">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A82E" Geometry="M7,9 H12 L14,11 H22 V21 H7 Z" />
+                        <GeometryDrawing Brush="#F5C94E" Geometry="M7,13 H22 V21 H7 Z" />
+                        <GeometryDrawing Geometry="M16,17 V6 H4.5 M8,2.5 L4.5,6 L8,9.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5AA9F0" Thickness="2.4" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconRename">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M2,7 H22 V17 H2 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="1.6" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#5AA9F0" Geometry="M5,10 H13.5 V14 H5 Z" />
+                        <GeometryDrawing Geometry="M17,4 V20 M15,4 H19 M15,20 H19">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#94A3B0" Thickness="1.6" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconUploadMany">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#AEB8C2" Geometry="M1.5,16 H7.5 V21 H1.5 Z M9,16 H15 V21 H9 Z M16.5,16 H22.5 V21 H16.5 Z" />
+                        <GeometryDrawing Geometry="M12,13 V3 M8,7 L12,3 L16,7 M4.5,14 L9.5,10 M19.5,14 L14.5,10">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconCompare">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="White" Geometry="M2,3 H11 V21 H2 Z M13,3 H22 V21 H13 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#7A8693" Thickness="1.2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#E5484D" Geometry="M4,7 H9 V8.6 H4 Z M4,13 H9 V14.6 H4 Z" />
+                        <GeometryDrawing Brush="#2E7D32" Geometry="M15,7 H20 V8.6 H15 Z M15,10 H20 V11.6 H15 Z" />
+                        <GeometryDrawing Brush="#B0BAC5" Geometry="M4,10 H9 V11.6 H4 Z M4,16 H9 V17.6 H4 Z M15,13 H20 V14.6 H15 Z M15,16 H20 V17.6 H15 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconUpload">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M4,15 V20 H20 V15">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,16 V4 M7.5,8.5 L12,4 L16.5,8.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2.2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconDownload">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M4,15 V20 H20 V15">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Geometry="M12,4 V16 M7.5,11.5 L12,16 L16.5,11.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#5AA9F0" Thickness="2.2" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconDelete">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E57373" Geometry="M6,7 H18 L17,21 H7 Z" />
+                        <GeometryDrawing Geometry="M4,6.5 H20 M9.5,6.5 V4 H14.5 V6.5 M10,10 V18 M14,10 V18">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#B71C1C" Thickness="1.6" LineCap="Round" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconNewFolder">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A82E" Geometry="M2,5 H9.5 L11.5,7 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Brush="#F5C94E" Geometry="M2,9 H22 V19.5 H2 Z" />
+                        <GeometryDrawing Geometry="M12,11 V18 M8.5,14.5 H15.5">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#2E7D32" Thickness="2.2" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconEdit">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#F2B01E" Geometry="M4,17 L15,6 L18,9 L7,20 H4 Z" />
+                        <GeometryDrawing Brush="#AEB8C2" Geometry="M16,5 L17.5,3.5 A1.4,1.4 0 0 1 19.5,3.5 L20.5,4.5 A1.4,1.4 0 0 1 20.5,6.5 L19,8 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconPermissions">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Geometry="M8,11 V8 A4,4 0 0 1 16,8 V11">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#AEB8C2" Thickness="2" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#F2B01E" Geometry="M5,11 H19 V21 H5 Z" />
+                        <GeometryDrawing Brush="#AEB8C2">
+                            <GeometryDrawing.Geometry>
+                                <GeometryGroup>
+                                    <EllipseGeometry Center="12,15" RadiusX="1.6" RadiusY="1.6" />
+                                    <RectangleGeometry Rect="11.2,15,1.6,3.5" />
+                                </GeometryGroup>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconClose">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Geometry="M6,6 L18,18 M18,6 L6,18">
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#AEB8C2" Thickness="2.4" LineCap="Round" />
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconBookmark">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1E88E5" Geometry="M6,2.5 H18 V21.5 L12,16.5 L6,21.5 Z" />
+                        <GeometryDrawing Brush="#F2B01E" Geometry="M12,5.6 L13.2,8.6 L16.4,8.8 L13.9,10.8 L14.8,13.9 L12,12.1 L9.2,13.9 L10.1,10.8 L7.6,8.8 L10.8,8.6 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconShared">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#8FB8E8" Geometry="M13,7 A3.2,3.2 0 1 1 19.4,7 A3.2,3.2 0 1 1 13,7 Z M10.6,18.5 C10.6,13.8 13.2,11.6 16.2,11.6 C19.2,11.6 21.8,13.8 21.8,18.5 Z" />
+                        <GeometryDrawing Brush="#5AA9F0" Geometry="M5.3,9.5 A3.7,3.7 0 1 1 12.7,9.5 A3.7,3.7 0 1 1 5.3,9.5 Z M2.4,22 C2.4,16.6 5.4,14.3 9,14.3 C12.6,14.3 15.6,16.6 15.6,22 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="1" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconKey">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#E0A100" Geometry="M2.5,12 A5,5 0 1 1 12.5,12 A5,5 0 1 1 2.5,12 Z M5.5,12 A2,2 0 1 0 9.5,12 A2,2 0 1 0 5.5,12 Z M12,10.9 H21.8 V13.1 H12 Z M16.6,13 H18.6 V16.4 H16.6 Z M19.8,13 H21.8 V15.4 H19.8 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#8A6100" Thickness="0.7" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconQuestion">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1565C0" Geometry="M2,12 A10,10 0 1 1 22,12 A10,10 0 1 1 2,12 Z" />
+                        <GeometryDrawing Geometry="M9.1,9.3 A2.9,2.9 0 1 1 13.4,11.8 C12.5,12.3 12,12.9 12,13.9 V14.4">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="2" LineCap="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="White" Geometry="M10.8,17.6 A1.2,1.2 0 1 1 13.2,17.6 A1.2,1.2 0 1 1 10.8,17.6 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconInfo">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#1565C0" Geometry="M2,12 A10,10 0 1 1 22,12 A10,10 0 1 1 2,12 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M10.8,7.4 A1.2,1.2 0 1 1 13.2,7.4 A1.2,1.2 0 1 1 10.8,7.4 Z M11,10.4 H13 V17.6 H11 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconWarning">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#F2B01E" Geometry="M12,2.4 L22.6,20.8 H1.4 Z">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#9A6700" Thickness="0.9" LineJoin="Round" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#1F2933" Geometry="M11,8.2 H13 V14.4 H11 Z M10.8,17.3 A1.2,1.2 0 1 1 13.2,17.3 A1.2,1.2 0 1 1 10.8,17.3 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="IconDanger">
+                <DrawingImage.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#B3261E" Geometry="M7.9,2 H16.1 L22,7.9 V16.1 L16.1,22 H7.9 L2,16.1 V7.9 Z" />
+                        <GeometryDrawing Brush="White" Geometry="M11,6.6 H13 V13.8 H11 Z M10.8,17 A1.2,1.2 0 1 1 13.2,17 A1.2,1.2 0 1 1 10.8,17 Z" />
+                    </DrawingGroup>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>
