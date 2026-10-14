@@ -7,10 +7,12 @@ namespace ZillaTerm.App.Services.Sharing;
 /// Verrouillage de la session hors de Windows (où <c>SystemEvents.SessionSwitch</c> le signale), pour arrêter les partages
 /// comme au verrouillage de Windows. Sous Linux : logind (bus système) — signal « Lock » de la session, « LockedHint » qui
 /// passe à vrai (bureau verrouillé), session qui n'est plus active (changement d'utilisateur, autre console), mise en
-/// veille (« PrepareForSleep ») — et l'économiseur d'écran du bureau (bus de session, « ActiveChanged »).
+/// veille (« PrepareForSleep ») — et l'économiseur d'écran du bureau (bus de session, « ActiveChanged »). Sur demande,
+/// le déverrouillage aussi (« Unlock », « LockedHint » repassé à faux, économiseur d'écran arrêté) : le maintien de la
+/// session PVWA reprend.
 /// </summary>
 /// <remarks>
-/// <para><c>locked</c> est appelé depuis un fil de D-Bus, une fois par évènement.</para>
+/// <para><c>locked</c> et <c>unlocked</c> sont appelés depuis un fil de D-Bus, une fois par évènement.</para>
 /// <para>
 /// Sans D-Bus (macOS, conteneur sans bus système, logind absent) rien n'est suivi : <see cref="IsWatching"/> reste faux et
 /// le journal de débogage le dit. Les partages continuent alors pendant le verrouillage.
@@ -24,11 +26,16 @@ internal sealed class SessionLockWatch : IDisposable
     private const string SessionInterface = "org.freedesktop.login1.Session";
 
     private readonly Action<string> _locked;
+    private readonly Action<string>? _unlocked;
     private readonly List<IDisposable> _watches = [];
     private readonly List<DBusConnection> _connections = [];
     private volatile bool _disposed;
 
-    private SessionLockWatch(Action<string> locked) => _locked = locked;
+    private SessionLockWatch(Action<string> locked, Action<string>? unlocked)
+    {
+        _locked = locked;
+        _unlocked = unlocked;
+    }
 
     /// <summary>Vrai une fois logind suivi (verrouillage, changement d'utilisateur, veille).</summary>
     public bool IsWatching { get; private set; }
@@ -37,9 +44,12 @@ internal sealed class SessionLockWatch : IDisposable
     public Task Started { get; private set; } = Task.CompletedTask;
 
     /// <param name="locked">Session verrouillée ou quittée ; reçoit la cause (pour le journal).</param>
-    public static SessionLockWatch Start(Action<string> locked)
+    /// <param name="unlocked">
+    /// Session déverrouillée (seulement celle de ce processus, une fois connue) ; reçoit la cause. Facultatif.
+    /// </param>
+    public static SessionLockWatch Start(Action<string> locked, Action<string>? unlocked = null)
     {
-        var watch = new SessionLockWatch(locked);
+        var watch = new SessionLockWatch(locked, unlocked);
         if (OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
         {
             watch.Started = watch.StartAsync();
@@ -64,11 +74,17 @@ internal sealed class SessionLockWatch : IDisposable
                 : $"Verrouillage de la session suivi (logind, {path}).");
             _watches.Add(await system.WatchSignalAsync(Login1, path, SessionInterface, "Lock",
                 (Notification n) => OnSignal(n.IsCompletion, "verrouillage (logind)"), ObserverFlags.None, emitOnCapturedContext: false));
+            if (_unlocked is not null && path is not null)
+            {
+                _watches.Add(await system.WatchSignalAsync(Login1, path, SessionInterface, "Unlock",
+                    (Notification n) => OnUnlock(n.IsCompletion, "déverrouillage (logind)"), ObserverFlags.None, emitOnCapturedContext: false));
+            }
+
             _watches.Add(await system.WatchSignalAsync(Login1, Login1Path, ManagerInterface, "PrepareForSleep",
                 static (Message m, object? _) => m.GetBodyReader().ReadBool(),
                 (Notification<bool> n) => OnSignal(n.IsCompletion || !n.HasValue || !n.Value, "mise en veille"), ObserverFlags.None, emitOnCapturedContext: false));
             _watches.Add(await system.WatchPropertiesChangedAsync(Login1, path, SessionInterface, static (Message m, object? _) => ReadSessionChanges(m),
-                (Notification<(bool Locked, bool Inactive)> n) =>
+                (Notification<(bool Locked, bool Inactive, bool Unlocked)> n) =>
                 {
                     if (n.IsCompletion || !n.HasValue)
                     {
@@ -78,6 +94,11 @@ internal sealed class SessionLockWatch : IDisposable
                     if (n.Value.Locked)
                     {
                         Notify("bureau verrouillé (LockedHint)");
+                    }
+                    else if (n.Value.Unlocked && path is not null)
+                    {
+                        // Seulement pour notre session : un autre utilisateur qui déverrouille la sienne ne compte pas.
+                        OnUnlock(ignore: false, "bureau déverrouillé (LockedHint)");
                     }
                     else if (n.Value.Inactive && path is not null)
                     {
@@ -100,7 +121,11 @@ internal sealed class SessionLockWatch : IDisposable
             {
                 _watches.Add(await session.WatchSignalAsync(null, null, name, "ActiveChanged",
                     static (Message m, object? _) => m.GetBodyReader().ReadBool(),
-                    (Notification<bool> n) => OnSignal(n.IsCompletion || !n.HasValue || !n.Value, $"économiseur d'écran ({name})"),
+                    (Notification<bool> n) =>
+                    {
+                        OnSignal(n.IsCompletion || !n.HasValue || !n.Value, $"économiseur d'écran ({name})");
+                        OnUnlock(n.IsCompletion || !n.HasValue || n.Value, $"économiseur d'écran arrêté ({name})");
+                    },
                     ObserverFlags.None, emitOnCapturedContext: false));
             }
         }
@@ -172,15 +197,16 @@ internal sealed class SessionLockWatch : IDisposable
         return connection.CallMethodAsync(writer.CreateMessage(), static (Message m, object? _) => m.GetBodyReader().ReadObjectPathAsString(), null);
     }
 
-    /// <summary>« LockedHint » passé à vrai, « Active » passé à faux (propriétés absentes : faux).</summary>
-    private static (bool Locked, bool Inactive) ReadSessionChanges(Message message)
+    /// <summary>« LockedHint » passé à vrai ou à faux, « Active » passé à faux (propriétés absentes : faux).</summary>
+    private static (bool Locked, bool Inactive, bool Unlocked) ReadSessionChanges(Message message)
     {
         var reader = message.GetBodyReader();
         reader.ReadString();
         var changed = reader.ReadDictionaryOfStringToVariantValue();
-        bool locked = changed.TryGetValue("LockedHint", out var hint) && hint.GetBool();
+        bool hinted = changed.TryGetValue("LockedHint", out var hint);
+        bool locked = hinted && hint.GetBool();
         bool inactive = changed.TryGetValue("Active", out var active) && !active.GetBool();
-        return (locked, inactive);
+        return (locked, inactive, hinted && !locked);
     }
 
     /// <param name="ignore">Fin d'abonnement, ou valeur qui ne signale pas de verrouillage.</param>
@@ -192,6 +218,25 @@ internal sealed class SessionLockWatch : IDisposable
         }
     }
 
+    /// <param name="ignore">Fin d'abonnement, ou valeur qui ne signale pas de déverrouillage.</param>
+    private void OnUnlock(bool ignore, string cause)
+    {
+        if (ignore || _disposed || _unlocked is null)
+        {
+            return;
+        }
+
+        DebugLog.Write("partage", $"Session : {cause}");
+        try
+        {
+            _unlocked(cause);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            DebugLog.Write("partage", "Reprise au déverrouillage", ex);
+        }
+    }
+
     private void Notify(string cause)
     {
         if (_disposed)
@@ -199,7 +244,7 @@ internal sealed class SessionLockWatch : IDisposable
             return;
         }
 
-        DebugLog.Write("partage", $"Session : {cause}, partages arrêtés");
+        DebugLog.Write("partage", $"Session : {cause}");
         try
         {
             _locked(cause);

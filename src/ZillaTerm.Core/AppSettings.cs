@@ -387,14 +387,14 @@ public sealed class AppSettings
     }
 
     public static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
         "ZillaTerm",
         "settings.json");
 
     /// <summary>Nom de l'application jusqu'à la version 0.18 : son dossier de réglages est repris au premier démarrage.</summary>
     public const string LegacyName = "CyberArkTerm";
 
-    public static string LegacyDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), LegacyName);
+    public static string LegacyDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify), LegacyName);
 
     /// <summary>
     /// Premier démarrage sous le nom ZillaTerm : copie le dossier de CyberArkTerm (réglages et leur sauvegarde, coffre local,

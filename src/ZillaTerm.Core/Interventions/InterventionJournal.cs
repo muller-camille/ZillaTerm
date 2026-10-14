@@ -235,7 +235,7 @@ public sealed class InterventionJournal : IDisposable
 
     /// <summary>Dossier des interventions de l'utilisateur.</summary>
     public static string DefaultDirectory =>
-        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ZillaTerm", "Interventions");
+        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify), "ZillaTerm", "Interventions");
 
     /// <summary>Commence une intervention : nouveau fichier, nommé d'après l'heure de début.</summary>
     /// <param name="terminalTextLimit">Texte des terminaux gardé au plus (caractères).</param>

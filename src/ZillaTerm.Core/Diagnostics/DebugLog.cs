@@ -22,7 +22,7 @@ public static partial class DebugLog
 
     /// <summary>Emplacement du journal : dossier local de l'utilisateur (non itinérant).</summary>
     public static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
         "ZillaTerm",
         "debug.log");
 
