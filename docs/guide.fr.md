@@ -380,6 +380,8 @@ utilisé.
     l'onglet hors de la fenêtre. La fermer ramène la vue dans son onglet, sans fermer les sessions.
   - **Envoyer des fichiers** aux sessions de la vue : bouton « Envoyer des fichiers… » (voir l'onglet Fichiers).
 
+![Vue parallèle : la même commande envoyée à trois serveurs par la saisie simultanée](captures/fr/parallel-view.png)
+
 ## 5. Parcourir et déposer des fichiers : onglet « Fichiers »
 
 L'onglet **Fichiers** du panneau de gauche (`Ctrl+3`) suit l'onglet SSH actif et s'affiche à l'ouverture d'une session
@@ -899,6 +901,8 @@ bases mémorisées sans mot de passe), à la fermeture et au verrouillage de Win
 
 ## 8. Intervention : enregistrement et consignes d'astreinte
 
+<img src="captures/fr/intervention-window.png" alt="Fenêtre Intervention : consignes d'astreinte, enregistrement et interventions enregistrées" width="34%"> <img src="captures/fr/intervention.png" alt="Onglet Intervention pendant l'enregistrement : titre, note et historique à côté de la session" width="64%">
+
 Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile à toute intervention, d'astreinte ou non :
 
 - **Les consignes d'astreinte** : bonnes pratiques, numéros d'urgence, contacts… Elles viennent :
@@ -1035,6 +1039,8 @@ défaut ; regarder la session d'une autre personne fonctionne sans). Puis, par o
    vérification à 6 chiffres** : la personne voit le même chez elle. Comparez-le avec elle (téléphone, messagerie),
    cochez « J'ai vérifié le code avec cette personne », puis « Accepter ». Un code différent veut dire que quelqu'un
    d'autre s'interpose : refusez. Sans réponse, la demande expire au bout de 3 minutes.
+
+<img src="captures/fr/share-request.png" alt="Demande d'une personne pour regarder une session partagée, avec le code de vérification" width="554">
 
 Tant que la session est partagée, son bandeau dit qui regarde, qui a la main et jusqu'à quand, avec « Gérer… » et
 « Arrêter le partage » ; la barre d'état compte les sessions partagées et regardées, et les demandes en attente.
