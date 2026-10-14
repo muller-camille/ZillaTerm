@@ -3405,6 +3405,258 @@ public sealed partial class DialogTests
     }
 
     /// <summary>
+    /// Modifier une note : « Modifier » (ou F2) met son texte dans le champ de la note, la note en cours de saisie est mise
+    /// de côté puis revient ; Entrée enregistre, Échap annule. Le bloc de l'historique prend le nouveau texte à sa place
+    /// avec « modifiée à … » ; le journal garde la note d'origine et la modification ; le rapport montre les deux textes.
+    /// À l'arrêt, plus de modification.
+    /// </summary>
+    [Fact]
+    public void InterventionPanelEditsANote()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var click = new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent);
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new XorProtector());
+                var panel = new InterventionPanel();
+                panel.Attach(recorder);
+                var window = new Window { Content = panel, Width = 420, Height = 640, ShowActivated = false, ShowInTaskbar = false };
+                window.Show();
+                recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
+                Assert.True(panel.NotesEditable);
+
+                System.Windows.Input.KeyEventArgs Key(System.Windows.Input.Key key) =>
+                    new(System.Windows.Input.Keyboard.PrimaryDevice, PresentationSource.FromVisual(window)!, 0, key)
+                    {
+                        RoutedEvent = System.Windows.Input.Keyboard.PreviewKeyDownEvent,
+                    };
+
+                panel.NoteBox.Text = "Disque /var plein";
+                panel.NoteBox.RaiseEvent(Key(System.Windows.Input.Key.Enter));
+                panel.ReadHistory();
+                var note = panel.HistoryList.Items.Cast<InterventionHistoryItem>().Single(item => item.IsNote);
+                Assert.Equal("", note.Edited);
+
+                // Modifier, puis Échap : rien ne change, la saisie en cours revient.
+                panel.NoteBox.Text = "brouillon";
+                panel.StartEdit(note);
+                Assert.Equal("Disque /var plein", panel.NoteBox.Text);
+                Assert.Equal(Strings.InterventionSaveNoteEdit, panel.NoteButtonText.Text);
+                Assert.Equal(Visibility.Visible, panel.CancelEditButton.Visibility);
+                Assert.Equal(Text.Format(Strings.InterventionEditingNote, note.Time), panel.EditingText.Text);
+                panel.NoteBox.RaiseEvent(Key(System.Windows.Input.Key.Escape));
+                Assert.Equal("brouillon", panel.NoteBox.Text);
+                Assert.Equal(Strings.InterventionAddNote, panel.NoteButtonText.Text);
+                Assert.Equal(Visibility.Collapsed, panel.EditingText.Visibility);
+
+                // F2 sur la note choisie, nouveau texte, Entrée : enregistré à sa place.
+                panel.HistoryList.SelectedItem = note;
+                var f2 = Key(System.Windows.Input.Key.F2);
+                panel.HistoryList.RaiseEvent(f2);
+                Assert.True(f2.Handled);
+                panel.NoteBox.Text = "Disque /var plein sur srv01 : logs purgés";
+                panel.NoteButton.RaiseEvent(click);
+                Assert.Equal(Strings.InterventionNoteSaved, panel.MessageText.Text);
+                Assert.Equal("brouillon", panel.NoteBox.Text);
+                Assert.Equal("Disque /var plein sur srv01 : logs purgés", note.AllText);
+                Assert.StartsWith(Text.Format(Strings.InterventionNoteEditedAt, ""), note.Edited, StringComparison.Ordinal);
+                Assert.Single(panel.HistoryList.Items.Cast<InterventionHistoryItem>(), item => item.IsNote);
+
+                var path = recorder.JournalPath!;
+                recorder.Stop(Strings.InterventionStoppedByUser);
+                Assert.False(panel.NotesEditable);
+                panel.StartEdit(note);
+                Assert.Equal(Strings.InterventionAddNote, panel.NoteButtonText.Text);
+
+                var recording = ZillaTerm.Core.Interventions.InterventionJournal.Read(path, recorder.Protector);
+                var notes = recording.Entries.Where(e => e.Kind == ZillaTerm.Core.Interventions.InterventionKind.Note).ToList();
+                Assert.Equal(2, notes.Count);
+                Assert.Equal(notes[0].Time, notes[1].Edits);
+                var html = ZillaTerm.Core.Interventions.InterventionReport.ToHtml(recording, InterventionWindow.ReportText(), TimeZoneInfo.Local,
+                    System.Globalization.CultureInfo.CurrentUICulture);
+                Assert.Contains(WebUtility.HtmlEncode("Disque /var plein sur srv01 : logs purgés"), html, StringComparison.Ordinal);
+                Assert.Contains("<span class=\"edited\">", html, StringComparison.Ordinal);
+                Assert.Contains(WebUtility.HtmlEncode("Disque /var plein") + "</span>", html, StringComparison.Ordinal);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Intervention interrompue par l'arrêt de ZillaTerm : reprise dans le même journal (titre, historique, numéros d'écran
+    /// à la suite, un rappel déjà noté ne revient pas), ou close sans changer sa durée. Rappels : notés au journal à leur
+    /// heure, une fois ; le bandeau de l'onglet les montre jusqu'à « Vu », noté lui aussi.
+    /// </summary>
+    [Fact]
+    public void InterventionRecorderResumesAndReminds()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var protector = new XorProtector();
+                var reminders = new List<ZillaTerm.Core.Interventions.InterventionReminder> { new(1, "Prévenir le responsable"), new(30, "Escalader au N3") };
+                var start = DateTime.UtcNow.AddMinutes(-40);
+                string Crashed(DateTime at, string title)
+                {
+                    var journal = ZillaTerm.Core.Interventions.InterventionJournal.Start(dir, protector, at);
+                    journal.Write(new(at, ZillaTerm.Core.Interventions.InterventionKind.Started, "", "jdoe"));
+                    journal.Write(new(at.AddSeconds(1), ZillaTerm.Core.Interventions.InterventionKind.Title, "", title));
+                    journal.Write(new(at.AddMinutes(1), ZillaTerm.Core.Interventions.InterventionKind.Action, "",
+                        ZillaTerm.App.Services.InterventionRecorder.ReminderEntry(reminders[0])));
+                    var screen = new byte[64 * 64 * 4];
+                    var frame = new ZillaTerm.Core.Interventions.ScreenTileEncoder(stream: 3).Encode(at.AddMinutes(2), screen, 64, 64, 256)!;
+                    journal.Write(new(at.AddMinutes(2), ZillaTerm.Core.Interventions.InterventionKind.Screen, "srv01", "", frame.Data));
+                    journal.Write(new(at.AddMinutes(3), ZillaTerm.Core.Interventions.InterventionKind.Note, "", "avant l'arrêt"));
+                    journal.Flush();
+                    journal.Dispose();
+                    return journal.Path;
+                }
+
+                var path = Crashed(start, "INC0012345");
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, protector);
+                var panel = new InterventionPanel();
+                panel.Attach(recorder);
+                var seen = new List<ZillaTerm.Core.Interventions.InterventionReminder>();
+                panel.ReminderSeen += r =>
+                {
+                    seen.Add(r);
+                    recorder.ReminderSeen(r);
+                };
+                var window = new Window { Content = panel, Width = 420, Height = 640, ShowActivated = false, ShowInTaskbar = false };
+                window.Show();
+
+                Assert.Equal(path, ZillaTerm.Core.Interventions.InterventionJournal.FindUnfinished(dir, protector, DateTime.UtcNow)?.File.Path);
+                recorder.Resume(path, "jdoe", "session CyberArk (pvwa.corp.local)");
+                Assert.True(recorder.IsRecording);
+                Assert.Equal(path, recorder.JournalPath);
+                Assert.Equal("INC0012345", recorder.Title);
+                Assert.Equal(start, recorder.StartedAt);
+                Assert.Equal(4, recorder.NextScreenStream());
+                panel.ReadHistory();
+                Assert.Equal("INC0012345", panel.TitleBox.Text);
+                Assert.Contains(panel.HistoryList.Items.Cast<InterventionHistoryItem>(), i => i.IsNote);
+
+                // 40 minutes après le début : le rappel à 1 min était déjà noté avant l'arrêt, celui à 30 min arrive.
+                var due = recorder.DueReminders(reminders, DateTime.UtcNow);
+                Assert.Equal([reminders[1]], due);
+                Assert.Empty(recorder.DueReminders(reminders, DateTime.UtcNow));
+                Assert.Null(recorder.NextReminder(reminders, DateTime.UtcNow));
+                panel.ShowReminder(due[0]);
+                Assert.Equal(Visibility.Visible, panel.ReminderBanner.Visibility);
+                Assert.Equal(Text.Format(Strings.InterventionReminderStatus, 30, "Escalader au N3"), panel.ReminderText.Text);
+                panel.ReminderSeenButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+                Assert.Equal(due, seen);
+                Assert.Equal(Visibility.Collapsed, panel.ReminderBanner.Visibility);
+                recorder.Stop(Strings.InterventionStoppedByUser);
+
+                var recording = ZillaTerm.Core.Interventions.InterventionJournal.Read(path, protector);
+                Assert.False(recording.Damaged);
+                Assert.False(recording.Unfinished);
+                var actions = recording.Entries.Where(e => e.Kind == ZillaTerm.Core.Interventions.InterventionKind.Action).Select(e => e.Text).ToList();
+                Assert.Equal(4, actions.Count);
+                Assert.StartsWith(Text.Format(Strings.InterventionResumedEntry, "jdoe", Environment.MachineName, "", "", "").Split(',')[0], actions[1],
+                    StringComparison.Ordinal);
+                Assert.Equal(ZillaTerm.App.Services.InterventionRecorder.ReminderEntry(reminders[1]), actions[2]);
+                Assert.Equal(Text.Format(Strings.InterventionReminderSeenEntry, "Escalader au N3"), actions[3]);
+
+                // Nouvel enregistrement : les rappels repartent de zéro, le premier arrive à 1 min.
+                recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
+                var next = recorder.NextReminder(reminders, recorder.StartedAt!.Value.AddSeconds(15));
+                Assert.Equal(reminders[0], next?.Reminder);
+                Assert.Equal(TimeSpan.FromSeconds(45), next?.Remaining);
+                Assert.Equal([reminders[0]], recorder.DueReminders(reminders, recorder.StartedAt!.Value.AddMinutes(2)));
+                recorder.Stop(Strings.InterventionStoppedByUser);
+
+                // Clore sans reprendre : la fin a l'heure du dernier événement.
+                var other = Crashed(start.AddMinutes(-90), "INC0099999");
+                recorder.CloseUnfinished(other);
+                var closed = ZillaTerm.Core.Interventions.InterventionJournal.Read(other, protector);
+                Assert.False(closed.Unfinished);
+                Assert.Equal(start.AddMinutes(-87), closed.End);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Interventions enregistrées : plusieurs se choisissent ensemble (un seul rapport, une seule suppression) ; le
+    /// masquage des secrets est coché par défaut ; l'intervention en cours ne se supprime pas.
+    /// </summary>
+    [Fact]
+    public void InterventionWindowChoosesSeveralJournals()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                UseDispatcherContext();
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new XorProtector());
+                recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
+                recorder.Stop(Strings.InterventionStoppedByUser);
+                Thread.Sleep(1100);
+                recorder.Start("jdoe", "session CyberArk (pvwa.corp.local)");
+                var window = new InterventionWindow("", "", recorder, "jdoe", "session CyberArk (pvwa.corp.local)") { ShowActivated = false, ShowInTaskbar = false };
+                window.Show();
+                Assert.True(window.RedactBox.IsChecked);
+                Assert.Equal(System.Windows.Controls.SelectionMode.Extended, window.JournalList.SelectionMode);
+                Assert.Equal(2, window.JournalList.Items.Count);
+                window.JournalList.SelectAll();
+                Assert.True(window.ExportButton.IsEnabled);
+                // L'intervention en cours fait partie du choix : rien ne se supprime.
+                Assert.False(window.DeleteButton.IsEnabled);
+                recorder.Stop(Strings.InterventionStoppedByUser);
+                window.JournalList.SelectAll();
+                Assert.Equal(2, window.JournalList.SelectedItems.Count);
+                Assert.True(window.DeleteButton.IsEnabled);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Écran des Bureaux à distance : les images en tuiles vont au journal, pas dans l'historique affiché ; au-delà de la
     /// taille de bridage, le journal le note une fois, l'interface en est prévenue et l'onglet « Intervention » le dit ; le
     /// rapport rejoue l'écran avec les textes de l'interface.

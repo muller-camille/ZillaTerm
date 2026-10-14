@@ -206,6 +206,11 @@ public partial class InterventionWindow : Window
         Activity = Strings.InterventionReportActivity,
         ScriptNeeded = Strings.InterventionReportScriptNeeded,
         ScreenGap = Strings.InterventionReportScreenGap,
+        NoteEdited = Strings.InterventionReportNoteEdited,
+        NoteMarker = Strings.InterventionReportNoteMarker,
+        Redacted = count => count == 0 ? Strings.InterventionReportRedactedNone : Text.Format(Strings.InterventionReportRedacted, count),
+        Parts = count => Text.Format(Strings.InterventionReportParts, count),
+        Part = Strings.InterventionReportPart,
     };
 
     private void OnRecorderChanged()
@@ -260,6 +265,7 @@ public partial class InterventionWindow : Window
             // L'intervention arrêtée reste sélectionnée : son rapport s'exporte tout de suite.
             var path = _recorder.JournalPath;
             _recorder.Stop(Strings.InterventionStoppedByUser);
+            JournalList.SelectedItems.Clear();
             JournalList.SelectedItem = JournalList.Items.OfType<ListBoxItem>()
                 .FirstOrDefault(item => item.Tag is InterventionFile file && string.Equals(file.Path, path, StringComparison.OrdinalIgnoreCase));
             ShowMessage(Strings.InterventionStoppedHint);
@@ -282,7 +288,7 @@ public partial class InterventionWindow : Window
 
     private void RefreshJournals()
     {
-        var selected = (JournalList.SelectedItem as ListBoxItem)?.Tag as InterventionFile;
+        var keep = SelectedJournals.Select(file => file.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
         JournalList.Items.Clear();
         IReadOnlyList<InterventionFile> files;
         try
@@ -307,9 +313,9 @@ public partial class InterventionWindow : Window
 
             var item = new ListBoxItem { Content = label, Tag = file };
             JournalList.Items.Add(item);
-            if (selected is not null && string.Equals(selected.Path, file.Path, StringComparison.OrdinalIgnoreCase))
+            if (keep.Contains(file.Path))
             {
-                JournalList.SelectedItem = item;
+                JournalList.SelectedItems.Add(item);
             }
         }
 
@@ -321,45 +327,56 @@ public partial class InterventionWindow : Window
         UpdateJournalButtons();
     }
 
-    private InterventionFile? SelectedJournal => (JournalList.SelectedItem as ListBoxItem)?.Tag as InterventionFile;
+    /// <summary>Interventions choisies, de la plus ancienne à la plus récente.</summary>
+    private List<InterventionFile> SelectedJournals =>
+        [.. JournalList.SelectedItems.OfType<ListBoxItem>().Select(item => item.Tag).OfType<InterventionFile>().OrderBy(file => file.Start)];
 
     private void OnJournalSelected(object sender, SelectionChangedEventArgs e) => UpdateJournalButtons();
 
     private void UpdateJournalButtons()
     {
-        var file = SelectedJournal;
-        ExportButton.IsEnabled = file is not null;
+        var files = SelectedJournals;
+        ExportButton.IsEnabled = files.Count > 0;
         // L'intervention en cours ne se supprime pas : il faut d'abord l'arrêter.
-        DeleteButton.IsEnabled = file is not null && !string.Equals(file.Path, _recorder.JournalPath, StringComparison.OrdinalIgnoreCase);
+        DeleteButton.IsEnabled = files.Count > 0 && !files.Any(IsRecording);
     }
+
+    private bool IsRecording(InterventionFile file) => string.Equals(file.Path, _recorder.JournalPath, StringComparison.OrdinalIgnoreCase);
 
     private void OnJournalDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (SelectedJournal is not null)
+        if (SelectedJournals is { Count: > 0 } files)
         {
-            Export(SelectedJournal);
+            Export(files);
         }
     }
 
     private void OnExport(object sender, RoutedEventArgs e)
     {
-        if (SelectedJournal is { } file)
+        if (SelectedJournals is { Count: > 0 } files)
         {
-            Export(file);
+            Export(files);
         }
     }
 
-    private void Export(InterventionFile file)
+    /// <summary>
+    /// Rapport des interventions choisies : un seul pour plusieurs (leurs événements à la suite), le texte masqué si la
+    /// case est cochée.
+    /// </summary>
+    private void Export(IReadOnlyList<InterventionFile> files)
     {
-        InterventionRecording recording;
+        var recordings = new List<InterventionRecording>();
         try
         {
-            if (string.Equals(file.Path, _recorder.JournalPath, StringComparison.OrdinalIgnoreCase))
+            foreach (var file in files)
             {
-                _recorder.Flush();
-            }
+                if (IsRecording(file))
+                {
+                    _recorder.Flush();
+                }
 
-            recording = InterventionJournal.Read(file.Path, _recorder.Protector);
+                recordings.Add(InterventionJournal.Read(file.Path, _recorder.Protector));
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or CryptographicException)
         {
@@ -367,9 +384,17 @@ public partial class InterventionWindow : Window
             return;
         }
 
+        var recording = InterventionRecording.Merge(recordings);
+        int? redacted = null;
+        if (RedactBox.IsChecked == true)
+        {
+            recording = InterventionRedaction.Apply(recording, Strings.InterventionRedactedMask, out int count);
+            redacted = count;
+        }
+
         var dialog = new SaveFileDialog
         {
-            FileName = InterventionReport.FileName(file.Start.ToLocalTime(), recording.Title),
+            FileName = InterventionReport.FileName(files[0].Start.ToLocalTime(), recording.Title),
             DefaultExt = ".html",
             Filter = "HTML (*.html)|*.html",
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -381,7 +406,7 @@ public partial class InterventionWindow : Window
 
         try
         {
-            var html = InterventionReport.ToHtml(recording, ReportText(), TimeZoneInfo.Local, CultureInfo.CurrentUICulture);
+            var html = InterventionReport.ToHtml(recording, ReportText(), TimeZoneInfo.Local, CultureInfo.CurrentUICulture, redacted);
             File.WriteAllText(dialog.FileName, html, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -390,7 +415,9 @@ public partial class InterventionWindow : Window
             return;
         }
 
-        ShowMessage(Text.Format(Strings.InterventionReportSaved, dialog.FileName));
+        ShowMessage(redacted is { } masked
+            ? Text.Format(Strings.InterventionReportSavedRedacted, dialog.FileName, masked)
+            : Text.Format(Strings.InterventionReportSaved, dialog.FileName));
         try
         {
             WindowsExplorer.ShowFile(dialog.FileName);
@@ -404,16 +431,19 @@ public partial class InterventionWindow : Window
 
     private void OnDelete(object sender, RoutedEventArgs e)
     {
-        if (SelectedJournal is not { } file || string.Equals(file.Path, _recorder.JournalPath, StringComparison.OrdinalIgnoreCase))
+        var files = SelectedJournals;
+        if (files.Count == 0 || files.Any(IsRecording))
         {
             return;
         }
 
+        string Start(InterventionFile file) => file.Start.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
         if (!ConfirmDialog.Confirm(this, new ConfirmRequest
             {
                 Title = Strings.InterventionTitle,
-                Heading = Strings.InterventionDeleteHeading,
-                Message = Text.Format(Strings.InterventionDeleteDetail, file.Start.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)),
+                Heading = files.Count == 1 ? Strings.InterventionDeleteHeading : Text.Format(Strings.InterventionDeleteManyHeading, files.Count),
+                Message = files.Count == 1 ? Text.Format(Strings.InterventionDeleteDetail, Start(files[0])) : Strings.InterventionDeleteManyDetail,
+                Items = files.Count == 1 ? [] : [.. files.Select(file => file.Title is { } title ? $"{Start(file)} — {title}" : Start(file))],
                 Kind = ConfirmKind.Warning,
                 Actions = [Strings.InterventionDeleteAction],
                 DangerAction = 0,
@@ -422,13 +452,16 @@ public partial class InterventionWindow : Window
             return;
         }
 
-        try
+        foreach (var file in files)
         {
-            InterventionJournal.Delete(file.Path);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            ShowMessage(ex.Message, error: true);
+            try
+            {
+                InterventionJournal.Delete(file.Path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                ShowMessage(ex.Message, error: true);
+            }
         }
 
         RefreshJournals();

@@ -198,9 +198,10 @@ internal static class EnvironmentImport
             EnvironmentSetting.DutyText => Strings.EnvDutyText,
             EnvironmentSetting.DutyTextFile => change.Detail is { } dutyServer ? Text.Format(Strings.EnvDutyFileNetwork, dutyServer) : Strings.EnvDutyFile,
             EnvironmentSetting.ServerTags => Strings.EnvServerTags,
+            EnvironmentSetting.InterventionReminders => Strings.EnvInterventionReminders,
             _ => Strings.EnvUploadProtocol,
         };
-        if (change.Setting == EnvironmentSetting.DutyText)
+        if (change.Setting is EnvironmentSetting.DutyText or EnvironmentSetting.InterventionReminders)
         {
             // Texte de plusieurs lignes : son début, sur une ligne (le texte complet s'affiche ensuite dans la fenêtre Intervention).
             return change.Current.Length == 0
@@ -243,6 +244,7 @@ internal static class EnvironmentImport
         EnvironmentProblem.InvalidHostKey => Strings.EnvInvalidHostKey,
         EnvironmentProblem.InvalidDutyText => Strings.EnvInvalidDutyText,
         EnvironmentProblem.InvalidServerTag => Strings.EnvInvalidServerTag,
+        EnvironmentProblem.InvalidReminder => Strings.EnvInvalidReminder,
         _ => Strings.EnvInvalidPath,
     }, ex.Detail);
 

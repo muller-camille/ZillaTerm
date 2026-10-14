@@ -106,7 +106,13 @@
                             <TextBox Grid.Column="1" x:Name="DutyFileBox" VerticalContentAlignment="Center" MaxLength="1024" />
                             <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseDutyFile" Margin="8,0,0,0" />
                         </Grid>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,16" Text="{x:Static loc:Strings.DutyFileHelp}" />
+                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,8" Text="{x:Static loc:Strings.DutyFileHelp}" />
+                        <!-- Rappels pendant l'intervention : une ligne par rappel, minutes depuis le début puis le texte. -->
+                        <Label Content="{x:Static loc:Strings.RemindersLabel}" Target="{Binding ElementName=RemindersBox}" Padding="0,0,0,4" />
+                        <TextBox x:Name="RemindersBox" AcceptsReturn="True" AcceptsTab="False" TextWrapping="Wrap" MinHeight="58" MaxHeight="160"
+                                 VerticalScrollBarVisibility="Auto" MaxLength="2400" FontFamily="Consolas, Courier New"
+                                 AutomationProperties.HelpText="{x:Static loc:Strings.RemindersHelp}" />
+                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,4,0,16" Text="{x:Static loc:Strings.RemindersHelp}" />
 
                         <!-- Étiquettes des serveurs de « Mes serveurs » (PROD, QA, DEV…) : nom et couleur. -->
                         <TextBlock Text="{x:Static loc:Strings.ServerTagsSection}" Style="{StaticResource SectionTitle}" />

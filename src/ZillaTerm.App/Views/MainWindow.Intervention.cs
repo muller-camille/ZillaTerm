@@ -1,8 +1,13 @@
+using System.Globalization;
+using System.IO;
+using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services;
+using ZillaTerm.Core.Diagnostics;
 using ZillaTerm.Core.Interventions;
 
 namespace ZillaTerm.App.Views;
@@ -14,6 +19,13 @@ public partial class MainWindow
 
     // Enregistrement en cours au dernier changement : son début montre l'onglet « Intervention ».
     private bool _interventionWasRecording;
+
+    // Rappels : regardés toutes les 5 secondes pendant l'enregistrement (le prochain s'affiche dans la barre d'état).
+    private DispatcherTimer? _reminderTimer;
+
+    // Intervention interrompue déjà proposée à la reprise dans ce lancement de ZillaTerm (une fenêtre principale peut en
+    // suivre une autre : reconnexion, accès d'urgence).
+    private static bool _resumeOffered;
 
     private static InterventionRecorder Intervention => InterventionRecorder.Current;
 
@@ -27,8 +39,12 @@ public partial class MainWindow
         InterventionView.Attach(Intervention);
         InterventionView.CloseRequested += (_, _) => UpdateInterventionTab();
         Intervention.Changed += UpdateInterventionIndicator;
+        InterventionView.ReminderSeen += reminder => Intervention.ReminderSeen(reminder);
+        _reminderTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _reminderTimer.Tick += (_, _) => CheckReminders();
         Closed += (_, _) =>
         {
+            _reminderTimer.Stop();
             Intervention.Changed -= UpdateInterventionIndicator;
             InterventionView.Detach();
         };
@@ -53,6 +69,15 @@ public partial class MainWindow
         }
 
         InterventionBadge.Visibility = InterventionIndicator.Visibility = recording ? Visibility.Visible : Visibility.Collapsed;
+        if (recording)
+        {
+            _reminderTimer?.Start();
+        }
+        else
+        {
+            _reminderTimer?.Stop();
+        }
+
         foreach (var view in _rdpViews)
         {
             view.InterventionRecording = recording;
@@ -60,12 +85,112 @@ public partial class MainWindow
 
         // Journal refusé par le disque : l'indicateur passe en erreur et la barre d'état dit quoi faire.
         var failure = recording ? Intervention.FailureMessage : null;
-        InterventionIndicator.Text = failure is null ? Strings.InterventionRecordingIndicator : Strings.InterventionInterruptedIndicator;
+        InterventionIndicator.Text = failure is null ? IndicatorText() : Strings.InterventionInterruptedIndicator;
         InterventionIndicator.ToolTip = failure ?? Strings.InterventionIndicatorTip;
         InterventionIndicator.SetResourceReference(TextBlock.ForegroundProperty, failure is null ? "StatusWarningForeground" : "StatusErrorForeground");
         if (failure is not null)
         {
             SetStatus(failure, isError: true);
+        }
+    }
+
+    /// <summary>« ● Intervention enregistrée », suivi du prochain rappel (son début) et du temps qui reste.</summary>
+    private string IndicatorText()
+    {
+        if (Intervention.NextReminder(_settings.InterventionReminders, DateTime.UtcNow) is not { } next)
+        {
+            return Strings.InterventionRecordingIndicator;
+        }
+
+        var (reminder, remaining) = next;
+
+        var text = reminder.Text.Length <= 40 ? reminder.Text : reminder.Text[..(char.IsHighSurrogate(reminder.Text[39]) ? 39 : 40)].TrimEnd() + "…";
+        return Strings.InterventionRecordingIndicator + " · "
+               + Text.Format(Strings.InterventionNextReminder, text, (int)Math.Ceiling(remaining.TotalMinutes));
+    }
+
+    /// <summary>
+    /// Rappels arrivés à leur heure (notés au journal par l'enregistrement) : montrés dans l'onglet « Intervention » et la
+    /// barre d'état, et le bouton de la fenêtre clignote dans la barre des tâches (s'il n'est pas au premier plan).
+    /// </summary>
+    private void CheckReminders()
+    {
+        if (!Intervention.IsRecording)
+        {
+            return;
+        }
+
+        var due = Intervention.DueReminders(_settings.InterventionReminders, DateTime.UtcNow);
+        foreach (var reminder in due)
+        {
+            InterventionView.ShowReminder(reminder);
+        }
+
+        if (due.Count > 0)
+        {
+            var last = due[^1];
+            // Ni onglet changé ni focus déplacé : la frappe en cours (terminal) ne doit pas partir ailleurs.
+            SetStatus(Text.Format(Strings.InterventionReminderStatus, last.Minutes, last.Text));
+            TailAlerts.Flash(this);
+        }
+
+        if (Intervention.FailureMessage is null)
+        {
+            InterventionIndicator.Text = IndicatorText();
+        }
+    }
+
+    /// <summary>
+    /// Au démarrage : l'enregistrement le plus récent n'a pas de fin (ZillaTerm arrêté pendant l'intervention, il y a moins
+    /// de 12 heures) ; le reprendre dans le même journal, le clore, ou décider plus tard (redemandé au prochain lancement).
+    /// </summary>
+    private void OfferInterventionResume()
+    {
+        if (_resumeOffered || Intervention.IsRecording || !IsLoaded)
+        {
+            return;
+        }
+
+        _resumeOffered = true;
+        if (InterventionJournal.FindUnfinished(Intervention.Directory, Intervention.Protector, DateTime.UtcNow) is not { } unfinished)
+        {
+            return;
+        }
+
+        var file = unfinished.File;
+        int choice = ConfirmDialog.Ask(this, new ConfirmRequest
+        {
+            Title = Strings.InterventionResumeTitle,
+            Heading = Strings.InterventionResumeHeading,
+            Subject = file.Title,
+            Message = Text.Format(Strings.InterventionResumeDetail, file.Start.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
+                unfinished.LastEvent.ToLocalTime().ToString("t", CultureInfo.CurrentCulture)),
+            Bullets = [Strings.InterventionResumeBullet, Strings.InterventionCloseBullet],
+            Actions = [Strings.InterventionResumeAction, Strings.InterventionCloseAction],
+            DefaultAction = 0,
+            CancelLabel = Strings.InterventionResumeLater,
+        });
+        if (choice < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            if (choice == 0)
+            {
+                Intervention.Resume(file.Path, _sessionUser, InterventionMode);
+                SetStatus(Strings.InterventionResumed);
+            }
+            else
+            {
+                Intervention.CloseUnfinished(file.Path);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or CryptographicException)
+        {
+            DebugLog.Write("intervention", "Reprise de l'intervention impossible", ex);
+            SetStatus(Text.Format(Strings.InterventionResumeFailed, ex.Message), isError: true);
         }
     }
 

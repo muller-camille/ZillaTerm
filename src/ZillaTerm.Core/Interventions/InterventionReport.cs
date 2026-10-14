@@ -41,7 +41,8 @@ public sealed class InterventionReportText
 
     public string ScreenHelp { get; init; } =
         "Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. "
-        + "The graph under the cursor shows the share of the screen that changed: click a peak to go there.";
+        + "The graph under the cursor shows the share of the screen that changed: click a peak to go there. "
+        + "The orange marks below are the notes: click one to go to its time.";
 
     /// <summary>{0} = session, {1} = début, {2} = fin, {3} = taille.</summary>
     public string ScreenHeading { get; init; } = "{0}: {1} to {2} ({3})";
@@ -56,8 +57,25 @@ public sealed class InterventionReportText
 
     public string ScriptNeeded { get; init; } = "The player needs JavaScript and a recent browser.";
 
+    /// <summary>Note modifiée : {0} = heure de la dernière modification, {1} = texte d'origine.</summary>
+    public string NoteEdited { get; init; } = "Edited on {0}. Original text: {1}";
+
+    /// <summary>Repère d'une note sous le lecteur d'écran : {0} = heure, {1} = texte.</summary>
+    public string NoteMarker { get; init; } = "Note at {0}: {1}";
+
     /// <summary>Images d'écran manquantes (bloc du journal abîmé) : l'écran reste figé jusqu'à l'image clé suivante.</summary>
     public string ScreenGap { get; init; } = "Images missing here (damaged journal): the screen resumes at the next full image.";
+
+    /// <summary>Secrets masqués à l'export : phrase selon leur nombre (accord du pluriel).</summary>
+    public Func<int, string> Redacted { get; init; } = n =>
+        $"Secrets masked: {n} passage(s) that look like a password, a private key or a token were replaced by [masked]. "
+        + "Images (captures, recorded screens) are not masked. The encrypted journal keeps everything.";
+
+    /// <summary>Rapport de plusieurs enregistrements : phrase d'introduction selon leur nombre.</summary>
+    public Func<int, string> Parts { get; init; } = n => $"This report brings together {n} recordings:";
+
+    /// <summary>Un des enregistrements réunis : {0} = début, {1} = fin, {2} = durée, {3} = titre (vide s'il n'y en a pas).</summary>
+    public string Part { get; init; } = "{0} to {1} ({2}) {3}";
 }
 
 /// <summary>
@@ -70,11 +88,20 @@ public static class InterventionReport
     private static readonly byte[] PngSignature = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
 
     /// <param name="zone">Fuseau des heures affichées (celui du poste).</param>
-    public static string ToHtml(InterventionRecording recording, InterventionReportText text, TimeZoneInfo zone, CultureInfo culture)
+    /// <param name="redacted">
+    /// Secrets masqués avant l'export (<see cref="InterventionRedaction"/>) : leur nombre, dit en tête du rapport ; null si
+    /// le texte n'a pas été masqué.
+    /// </param>
+    public static string ToHtml(InterventionRecording recording, InterventionReportText text, TimeZoneInfo zone, CultureInfo culture,
+        int? redacted = null)
     {
-        // Images d'écran en tuiles : rejouées par le lecteur, pas dans la chronologie.
-        var entries = recording.Entries.Where(e => e.Kind != InterventionKind.Screen).ToList();
-        var screens = InterventionScreenPlayer.Recordings(recording.Entries);
+        // Images d'écran en tuiles : rejouées par le lecteur, pas dans la chronologie. Notes modifiées : leur dernier texte, à
+        // leur place.
+        var entries = InterventionNotes.Apply(recording.Entries.Where(e => e.Kind != InterventionKind.Screen), out var edits);
+        // Enregistrements réunis : les numéros d'enregistrement d'écran ne valent que dans leur journal.
+        var screens = recording.Parts.Count > 1
+            ? recording.Parts.SelectMany(p => InterventionScreenPlayer.Recordings(p.Entries)).ToList()
+            : InterventionScreenPlayer.Recordings(recording.Entries);
         var html = new StringBuilder();
         string Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), zone)
             .ToString("g", culture);
@@ -98,7 +125,7 @@ public static class InterventionReport
             .Append("table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #d0d7de;padding:6px 8px;text-align:left;vertical-align:top}")
             .Append("th{background:#f3f5f7}td.time{white-space:nowrap;color:#57606a}td.source{white-space:nowrap}")
             .Append("pre{margin:0;padding:6px 8px;background:#1e2227;color:#e6e6e6;white-space:pre-wrap;word-break:break-all;font:12px Consolas,monospace;border-radius:4px}")
-            .Append("img{max-width:100%;border:1px solid #d0d7de}.kind{font-weight:600}")
+            .Append("img{max-width:100%;border:1px solid #d0d7de}.kind{font-weight:600}.edited{color:#57606a;font-size:13px}")
             .Append("@media print{pre{background:#fff;color:#000;border:1px solid #999}}")
             .Append(screens.Count > 0 ? InterventionScreenPlayer.Styles : "")
             .Append("\n</style>\n</head>\n<body>\n");
@@ -111,6 +138,24 @@ public static class InterventionReport
         }
 
         html.Append("<p class=\"note info\">").Append(Encode(text.Confidential)).Append("</p>\n");
+        if (redacted is { } masked)
+        {
+            html.Append("<p class=\"note info\">").Append(Encode(text.Redacted(masked))).Append("</p>\n");
+        }
+
+        if (recording.Parts.Count > 1)
+        {
+            html.Append("<p>").Append(Encode(text.Parts(recording.Parts.Count))).Append("</p>\n<ul>\n");
+            foreach (var part in recording.Parts)
+            {
+                var title = part.Title is { } partTitle ? "— " + InterventionJournal.CleanTitle(partTitle) : "";
+                html.Append("<li>").Append(Encode(string.Format(culture, text.Part, Local(part.Start!.Value), Local(part.End!.Value),
+                    text.Duration(part.End.Value - part.Start.Value), title).TrimEnd())).Append("</li>\n");
+            }
+
+            html.Append("</ul>\n");
+        }
+
         if (recording.Unfinished)
         {
             html.Append("<p class=\"note warn\">").Append(Encode(text.Unfinished)).Append("</p>\n");
@@ -134,7 +179,7 @@ public static class InterventionReport
         html.Append("</ul>\n");
         if (screens.Count > 0)
         {
-            InterventionScreenPlayer.Append(html, screens, text, Local, zone, culture);
+            InterventionScreenPlayer.Append(html, screens, entries.Where(e => e.Kind == InterventionKind.Note).ToList(), text, Local, zone, culture);
         }
 
         html.Append("<h2>").Append(Encode(text.Timeline)).Append("</h2>\n<table>\n<tr><th>")
@@ -163,6 +208,13 @@ public static class InterventionReport
             {
                 html.Append("<span class=\"kind\">").Append(Encode(text.Kind(entry.Kind))).Append("</span> ")
                     .Append(Encode(entry.Text).Replace("\n", "<br>", StringComparison.Ordinal));
+                if (entry.Kind == InterventionKind.Note && edits.TryGetValue(entry.Time, out var edit))
+                {
+                    // Le texte d'origine reste lisible : une note modifiée ne cache rien.
+                    html.Append("<br><span class=\"edited\">")
+                        .Append(Encode(string.Format(culture, text.NoteEdited, Local(edit.EditedAt), edit.OriginalText)).Replace("\n", "<br>", StringComparison.Ordinal))
+                        .Append("</span>");
+                }
                 if (entry.Kind == InterventionKind.Screenshot && entry.Image is { } image && IsPng(image))
                 {
                     html.Append("<br><img alt=\"").Append(Encode(entry.Text)).Append("\" src=\"data:image/png;base64,")

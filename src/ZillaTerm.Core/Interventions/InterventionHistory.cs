@@ -112,6 +112,17 @@ public sealed class InterventionBlock
     /// <summary>Lignes du bloc, caractères invisibles (venus des serveurs) remplacés par « � ».</summary>
     public IReadOnlyList<string> Lines => _lines;
 
+    /// <summary>Note modifiée : heure (UTC) de sa dernière modification ; null sinon.</summary>
+    public DateTime? EditedAt { get; private set; }
+
+    /// <summary>Note modifiée : son nouveau texte remplace l'ancien.</summary>
+    internal void Replace(string text, DateTime at)
+    {
+        _lines.Clear();
+        Add(text);
+        EditedAt = at;
+    }
+
     internal void Add(string text)
     {
         foreach (var line in text.Split('\n'))
@@ -139,7 +150,23 @@ public sealed class InterventionBlockBuilder
 
     public IReadOnlyList<InterventionBlock> Blocks => _blocks;
 
-    /// <summary>Ajoute un événement.</summary>
+    /// <summary>
+    /// Modification d'une note (<see cref="InterventionEntry.Edits"/>) : le bloc de la note prend le nouveau texte.
+    /// </summary>
+    /// <returns>Le bloc modifié ; null si l'événement n'est pas une modification ou que la note n'est pas dans l'historique.</returns>
+    public InterventionBlock? Edit(InterventionEntry entry)
+    {
+        if (entry is not { Kind: InterventionKind.Note, Edits: { } original }
+            || _blocks.LastOrDefault(b => b.Kind == InterventionKind.Note && b.Start == original) is not { } block)
+        {
+            return null;
+        }
+
+        block.Replace(entry.Text, entry.Time);
+        return block;
+    }
+
+    /// <summary>Ajoute un événement (une modification de note passe d'abord par <see cref="Edit"/>).</summary>
     /// <returns>Vrai s'il prolonge le dernier bloc, faux s'il en commence un nouveau.</returns>
     public bool Add(InterventionEntry entry)
     {

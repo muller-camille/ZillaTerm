@@ -24,6 +24,11 @@ public sealed class RemoteFileBrowser : IRemoteFiles
     // d'abord en SFTP.
     private long _scpRefusedFrom = long.MaxValue;
 
+    // SCP refusé pour tout fichier dans cet onglet (connexion SCP refusée, ou canal fermé dès la commande scp : PSMP sans
+    // le composant PSMP-SCP, erreur 118E) : la raison du premier refus. Les fichiers suivants partent en SFTP sans rouvrir
+    // une session SCP par le PSMP, refusée à coup sûr.
+    private string? _scpRefused;
+
     public RemoteFileBrowser(SftpClient sftp, Func<CancellationToken, Task<ScpClient>> scpFactory)
     {
         _sftp = sftp;
@@ -719,7 +724,14 @@ public sealed class RemoteFileBrowser : IRemoteFiles
         TransferProtocol? refused = null;
         string? reason = null;
         long refusedFrom = Interlocked.Read(ref _scpRefusedFrom);
-        if (protocol == TransferProtocol.Scp && length >= refusedFrom)
+        if (protocol == TransferProtocol.Scp && Volatile.Read(ref _scpRefused) is not null)
+        {
+            // La raison complète est sur le premier fichier refusé (et dans le bilan).
+            used = TransferProtocol.Sftp;
+            refused = TransferProtocol.Scp;
+            reason = CoreStrings.ScpRefusedForTab;
+        }
+        else if (protocol == TransferProtocol.Scp && length >= refusedFrom)
         {
             // Un fichier au moins aussi gros a déjà été refusé en SCP à son annonce dans cet onglet : SFTP d'abord, sans
             // attendre un nouveau refus (SCP reste essayé si SFTP est refusé à son tour).
@@ -749,9 +761,21 @@ public sealed class RemoteFileBrowser : IRemoteFiles
                     RememberScpRefusal(length);
                 }
 
+                if (used == TransferProtocol.Scp)
+                {
+                    RememberScpRefused(e);
+                }
+
                 reason = e.Message;
                 refused = used;
                 used = used.Other();
+                if (used == TransferProtocol.Scp && Volatile.Read(ref _scpRefused) is { } known)
+                {
+                    // SFTP refusé, et SCP déjà refusé dans cet onglet : pas de nouvelle session pour un refus certain.
+                    throw new IOException(string.Format(CultureInfo.CurrentCulture, CoreStrings.UploadRefusedThenFailed, refused.Value.Label(),
+                        e.Message, used.Label(), string.Format(CultureInfo.CurrentCulture, CoreStrings.ScpRefusedForTabBecause, known)), e);
+                }
+
                 try
                 {
                     sent = await SendAsync(used, localPath, remotePath, name, length, state, progress, background, ct)
@@ -759,6 +783,11 @@ public sealed class RemoteFileBrowser : IRemoteFiles
                 }
                 catch (Exception second) when (second is not OperationCanceledException && second is not OutOfMemoryException)
                 {
+                    if (used == TransferProtocol.Scp && second is UploadRefusedException refusal)
+                    {
+                        RememberScpRefused(refusal);
+                    }
+
                     throw new IOException(string.Format(CultureInfo.CurrentCulture, CoreStrings.UploadRefusedThenFailed,
                         refused.Value.Label(), e.Message, used.Label(), second.Message), second);
                 }
@@ -904,6 +933,18 @@ public sealed class RemoteFileBrowser : IRemoteFiles
     }
 
     /// <summary>
+    /// SCP refusé quel que soit le fichier (connexion refusée, canal fermé dès la commande scp) : retenu pour l'onglet, avec
+    /// la raison du premier refus.
+    /// </summary>
+    private void RememberScpRefused(UploadRefusedException refusal)
+    {
+        if (refusal.EveryFile && Interlocked.CompareExchange(ref _scpRefused, refusal.Message, null) is null)
+        {
+            Diagnostics.DebugLog.Write("files", "SCP refusé quel que soit le fichier : les envois suivants de cet onglet partent directement en SFTP");
+        }
+    }
+
+    /// <summary>
     /// Envoi SFTP, en hachant le fichier local au fil de l'envoi. Refusé par le serveur avant tout contenu (ouverture
     /// du fichier refusée, la connexion restant ouverte) : <see cref="UploadRefusedException"/>.
     /// </summary>
@@ -962,9 +1003,9 @@ public sealed class RemoteFileBrowser : IRemoteFiles
             }
             catch (Exception e) when (!ct.IsCancellationRequested && e is not OutOfMemoryException)
             {
-                // Connexion SCP refusée (PSMP, authentification abandonnée…).
+                // Connexion SCP refusée (PSMP, authentification abandonnée…) : elle le serait pour les fichiers suivants.
                 Diagnostics.DebugLog.Write("files", $"SCP {name} : connexion SCP impossible ({e.GetType().Name} : {e.Message})");
-                throw new UploadRefusedException(e.Message, e);
+                throw new UploadRefusedException(e.Message, e, everyFile: true);
             }
 
             await using var file = File.OpenRead(localPath);
@@ -1025,7 +1066,8 @@ public sealed class RemoteFileBrowser : IRemoteFiles
                 var message = atHeader
                     ? string.Format(CultureInfo.CurrentCulture, CoreStrings.ScpRefusedHeader, RemotePath.FormatSize(file.Length), e.Message)
                     : string.Format(CultureInfo.CurrentCulture, CoreStrings.ScpRefusedCommand, e.Message);
-                throw new UploadRefusedException(message, e, atHeader);
+                // Dès la commande : refus du protocole lui-même (PSMP sans PSMP-SCP), qui vaudra pour tout fichier.
+                throw new UploadRefusedException(message, e, atHeader, everyFile: !atHeader);
             }
             catch (Renci.SshNet.Common.SshException e)
             {
@@ -1066,9 +1108,15 @@ public sealed class RemoteFileBrowser : IRemoteFiles
     /// <param name="atHeader">
     /// Canal SCP fermé par le serveur à l'annonce du fichier (nom et taille), la commande scp ayant été acceptée.
     /// </param>
-    private sealed class UploadRefusedException(string message, Exception inner, bool atHeader = false) : IOException(message, inner)
+    /// <param name="everyFile">
+    /// SCP refusé quel que soit le fichier (connexion refusée, canal fermé dès la commande scp) : retenu pour l'onglet.
+    /// </param>
+    private sealed class UploadRefusedException(string message, Exception inner, bool atHeader = false, bool everyFile = false)
+        : IOException(message, inner)
     {
         public bool AtHeader { get; } = atHeader;
+
+        public bool EveryFile { get; } = everyFile;
     }
 
     /// <summary>

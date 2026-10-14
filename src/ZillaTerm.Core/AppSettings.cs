@@ -181,6 +181,12 @@ public sealed class AppSettings
     /// </summary>
     public string DutyTextFile { get; set; } = "";
 
+    /// <summary>
+    /// Rappels pendant une intervention (« 30 Escalader au N3 »), comptés depuis le début de l'enregistrement ; en général
+    /// diffusés par le fichier d'environnement de l'équipe.
+    /// </summary>
+    public List<Interventions.InterventionReminder> InterventionReminders { get; set; } = [];
+
     /// <summary>Serveur X de ce poste pour le transfert X11 (voir <see cref="Ssh.X11Display"/>), « :0 » par défaut.</summary>
     public string X11Display { get; set; } = Ssh.X11Display.Default;
 
@@ -549,6 +555,7 @@ public sealed class AppSettings
 
         settings.DutyText ??= "";
         settings.DutyTextFile = DutyReminderFile.IsValidPath(settings.DutyTextFile) ? settings.DutyTextFile.Trim() : "";
+        settings.InterventionReminders = Interventions.InterventionReminder.Sanitize(settings.InterventionReminders);
         settings.X11Servers ??= [];
         settings.X11Servers.RemoveAll(string.IsNullOrWhiteSpace);
         settings.ServerTags = ServerTagRules.Sanitize(settings.ServerTags);

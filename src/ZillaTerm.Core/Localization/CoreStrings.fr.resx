@@ -259,7 +259,7 @@
     <value>Le serveur a fermé la connexion SCP pendant l'envoi : {0}.</value>
   </data>
   <data name="ScpRefusedCommand" xml:space="preserve">
-    <value>le serveur a fermé le canal SCP dès la commande scp : {0}</value>
+    <value>le serveur a fermé le canal SCP dès la commande scp (par un PSMP : la plateforme du compte n'a sans doute pas le composant de connexion PSMP-SCP, erreur 118E) : {0}</value>
   </data>
   <data name="ScpRefusedHeader" xml:space="preserve">
     <value>le serveur a fermé le canal SCP à l'annonce du fichier ({0}) : {1}</value>
@@ -581,5 +581,11 @@
   </data>
   <data name="DownloadExceedsAnnounced" xml:space="preserve">
     <value>Le serveur a envoyé plus de {0} pour un fichier annoncé à {1} : téléchargement arrêté.</value>
+  </data>
+  <data name="ScpRefusedForTab" xml:space="preserve">
+    <value>refusé plus tôt dans cet onglet, fichiers envoyés en SFTP sans nouvelle session SCP</value>
+  </data>
+  <data name="ScpRefusedForTabBecause" xml:space="preserve">
+    <value>refusé plus tôt dans cet onglet ({0})</value>
   </data>
 </root>

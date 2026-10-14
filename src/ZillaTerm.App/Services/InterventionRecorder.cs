@@ -43,6 +43,14 @@ public sealed class InterventionRecorder
     private InterventionJournal? _throttled;
     private SynchronizationContext? _ui;
 
+    // Numéro du dernier enregistrement d'écran : unique dans un journal, même repris après un arrêt de ZillaTerm.
+    private int _screenStreams;
+
+    // Rappels déjà montrés pour l'enregistrement en cours (minutes et texte), et textes du journal repris (un rappel
+    // montré avant l'arrêt de ZillaTerm ne revient pas).
+    private readonly HashSet<InterventionReminder> _remindersShown = [];
+    private HashSet<string> _resumedActions = new(StringComparer.Ordinal);
+
     /// <param name="screenThrottleBytes">Taille du journal au-delà de laquelle l'écran est bridé (tests).</param>
     public InterventionRecorder(string directory, ISecretProtector protector, long screenThrottleBytes = ScreenThrottleBytes)
     {
@@ -140,11 +148,146 @@ public sealed class InterventionRecorder
         journal.Flush();
         StartedAt = now;
         Title = "";
+        _remindersShown.Clear();
+        _resumedActions = new(StringComparer.Ordinal);
         _history = history;
         _journal = journal;
         DebugLog.Write("intervention", $"Intervention enregistrée dans {journal.Path}");
         Changed?.Invoke();
     }
+
+    /// <summary>
+    /// Reprend un enregistrement interrompu par l'arrêt de ZillaTerm (<see cref="InterventionJournal.FindUnfinished"/>) :
+    /// la suite s'ajoute au même journal, après un événement qui dit qui reprend et depuis quand rien n'a été gardé.
+    /// L'historique affiché repart de tout ce que le journal contenait.
+    /// </summary>
+    /// <exception cref="System.IO.IOException">Journal inaccessible.</exception>
+    /// <exception cref="System.IO.InvalidDataException">Journal d'un autre format, ou illisible.</exception>
+    public void Resume(string path, string who, string mode)
+    {
+        if (_journal is not null)
+        {
+            return;
+        }
+
+        var journal = InterventionJournal.Resume(path, _protector, out var recording);
+        var history = new InterventionHistory();
+        foreach (var entry in recording.Entries.Where(e => e.Kind != InterventionKind.Screen))
+        {
+            history.Add(entry);
+        }
+
+        _ui = SynchronizationContext.Current;
+        journal.Failed += () =>
+        {
+            DebugLog.Write("intervention", $"Journal d'intervention refusé par le disque : {journal.Failure?.Message}");
+            PostChanged();
+        };
+        var now = DateTime.UtcNow;
+        var last = recording.End ?? now;
+        var resumed = new InterventionEntry(now, InterventionKind.Action, "",
+            Text.Format(Strings.InterventionResumedEntry, who, Environment.MachineName, UpdateChecker.CurrentVersion, mode,
+                last.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)));
+        journal.Write(resumed);
+        history.Add(resumed);
+        journal.Flush();
+        // Les numéros d'enregistrement d'écran continuent après ceux du journal.
+        foreach (var entry in recording.Entries)
+        {
+            if (entry.Kind == InterventionKind.Screen && ScreenFrameHeader.TryRead(entry.Image, out var header) && header.Stream > _screenStreams)
+            {
+                _screenStreams = header.Stream;
+            }
+        }
+
+        StartedAt = recording.Start ?? now;
+        Title = recording.Title ?? "";
+        _remindersShown.Clear();
+        _resumedActions = recording.Entries.Where(e => e.Kind == InterventionKind.Action).Select(e => e.Text).ToHashSet(StringComparer.Ordinal);
+        _history = history;
+        _journal = journal;
+        DebugLog.Write("intervention", $"Intervention reprise dans {journal.Path}");
+        Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Clôt un enregistrement interrompu sans le reprendre : un événement de fin, daté de son dernier événement (la durée
+    /// de l'intervention ne change pas), dit que ZillaTerm s'était arrêté.
+    /// </summary>
+    /// <exception cref="System.IO.IOException">Journal inaccessible.</exception>
+    /// <exception cref="System.IO.InvalidDataException">Journal d'un autre format, ou illisible.</exception>
+    public void CloseUnfinished(string path)
+    {
+        using var journal = InterventionJournal.Resume(path, _protector, out var recording);
+        var end = recording.End ?? DateTime.UtcNow;
+        journal.Stop(new InterventionEntry(end, InterventionKind.Stopped, "",
+            Text.Format(Strings.InterventionClosedEntry, DateTime.Now.ToString("g", CultureInfo.CurrentCulture))));
+        DebugLog.Write("intervention", $"Intervention interrompue close : {path}");
+        Changed?.Invoke();
+    }
+
+    /// <summary>Numéro d'un nouvel enregistrement d'écran, unique dans le journal (depuis n'importe quel fil).</summary>
+    public int NextScreenStream() => Interlocked.Increment(ref _screenStreams);
+
+    /// <summary>
+    /// Rappels arrivés à leur heure depuis le dernier appel (fil de l'interface) : chacun est noté au journal, une fois par
+    /// enregistrement. Un rappel déjà noté avant l'arrêt de ZillaTerm (enregistrement repris) ne revient pas.
+    /// </summary>
+    public IReadOnlyList<InterventionReminder> DueReminders(IReadOnlyList<InterventionReminder> reminders, DateTime now)
+    {
+        if (_journal is null || StartedAt is not { } start)
+        {
+            return [];
+        }
+
+        var due = new List<InterventionReminder>();
+        foreach (var reminder in reminders)
+        {
+            if (now < start.AddMinutes(reminder.Minutes) || !_remindersShown.Add(reminder))
+            {
+                continue;
+            }
+
+            var text = ReminderEntry(reminder);
+            if (_resumedActions.Contains(text))
+            {
+                continue;
+            }
+
+            Write(new InterventionEntry(now, InterventionKind.Action, "", text));
+            due.Add(reminder);
+        }
+
+        return due;
+    }
+
+    /// <summary>Prochain rappel de l'enregistrement en cours et le temps qui reste ; null s'il n'y en a plus.</summary>
+    public (InterventionReminder Reminder, TimeSpan Remaining)? NextReminder(IReadOnlyList<InterventionReminder> reminders, DateTime now)
+    {
+        if (_journal is null || StartedAt is not { } start)
+        {
+            return null;
+        }
+
+        foreach (var reminder in reminders.OrderBy(r => r.Minutes))
+        {
+            var at = start.AddMinutes(reminder.Minutes);
+            if (at > now)
+            {
+                return (reminder, at - now);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Rappel vu par l'utilisateur : noté au journal.</summary>
+    public void ReminderSeen(InterventionReminder reminder) =>
+        Record(InterventionKind.Action, "", Text.Format(Strings.InterventionReminderSeenEntry, reminder.Text));
+
+    /// <summary>Texte d'un rappel dans le journal.</summary>
+    internal static string ReminderEntry(InterventionReminder reminder) =>
+        Text.Format(Strings.InterventionReminderEntry, reminder.Minutes, reminder.Text);
 
     /// <summary>Arrête l'enregistrement (fin écrite, fichier fermé).</summary>
     public void Stop(string reason)
@@ -160,6 +303,7 @@ public sealed class InterventionRecorder
         _history = null;
         StartedAt = null;
         Title = "";
+        _remindersShown.Clear();
         var stopped = new InterventionEntry(DateTime.UtcNow, InterventionKind.Stopped, "", reason);
         if (journal.Write(stopped))
         {
@@ -173,6 +317,25 @@ public sealed class InterventionRecorder
 
     /// <summary>Écrit sur le disque ce qui attend (avant de relire l'intervention en cours).</summary>
     public void Flush() => _journal?.Flush();
+
+    /// <summary>
+    /// Modifie une note de l'enregistrement en cours. Le journal n'est jamais réécrit : la modification s'y ajoute avec
+    /// l'heure de la note (<see cref="InterventionEntry.Edits"/>), et le rapport montre le dernier texte et celui d'origine.
+    /// </summary>
+    /// <param name="noteTime">Heure (UTC) de la note modifiée.</param>
+    /// <returns>Vrai si la modification est gardée (enregistrement en cours, journal accepté).</returns>
+    public bool EditNote(DateTime noteTime, string text)
+    {
+        var history = _history;
+        var entry = new InterventionEntry(DateTime.UtcNow, InterventionKind.Note, "", text, Edits: noteTime);
+        if (_journal is not { } journal || !journal.Write(entry))
+        {
+            return false;
+        }
+
+        history?.Add(entry);
+        return true;
+    }
 
     /// <summary>Ajoute un événement si l'enregistrement est lancé (depuis n'importe quel fil).</summary>
     public void Record(InterventionKind kind, string source, string text, byte[]? image = null) =>

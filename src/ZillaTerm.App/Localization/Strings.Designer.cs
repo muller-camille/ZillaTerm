@@ -16976,5 +16976,392 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("InterventionReportScreenGap", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Edit.
+        /// </summary>
+        public static string InterventionEditNote {
+            get {
+                return ResourceManager.GetString("InterventionEditNote", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Edit this note (F2). The journal keeps the original text: the report shows both..
+        /// </summary>
+        public static string InterventionEditNoteTip {
+            get {
+                return ResourceManager.GetString("InterventionEditNoteTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Save the change.
+        /// </summary>
+        public static string InterventionSaveNoteEdit {
+            get {
+                return ResourceManager.GetString("InterventionSaveNoteEdit", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cance_l.
+        /// </summary>
+        public static string InterventionCancelNoteEdit {
+            get {
+                return ResourceManager.GetString("InterventionCancelNoteEdit", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Editing the note of {0}. Enter saves, Esc cancels..
+        /// </summary>
+        public static string InterventionEditingNote {
+            get {
+                return ResourceManager.GetString("InterventionEditingNote", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Note changed. The journal keeps the original text..
+        /// </summary>
+        public static string InterventionNoteSaved {
+            get {
+                return ResourceManager.GetString("InterventionNoteSaved", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to edited at {0}.
+        /// </summary>
+        public static string InterventionNoteEditedAt {
+            get {
+                return ResourceManager.GetString("InterventionNoteEditedAt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Edited on {0}. Original text: {1}.
+        /// </summary>
+        public static string InterventionReportNoteEdited {
+            get {
+                return ResourceManager.GetString("InterventionReportNoteEdited", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Note at {0}: {1}.
+        /// </summary>
+        public static string InterventionReportNoteMarker {
+            get {
+                return ResourceManager.GetString("InterventionReportNoteMarker", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Mask what looks like a secret (passwords, private keys, tokens).
+        /// </summary>
+        public static string InterventionRedactSecrets {
+            get {
+                return ResourceManager.GetString("InterventionRedactSecrets", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Recommended: the report is not encrypted. Text that looks like a password, a private key, a token or a password hash is replaced by [masked]. Images are not masked. The encrypted journal keeps everything..
+        /// </summary>
+        public static string InterventionRedactSecretsTip {
+            get {
+                return ResourceManager.GetString("InterventionRedactSecretsTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to [masked].
+        /// </summary>
+        public static string InterventionRedactedMask {
+            get {
+                return ResourceManager.GetString("InterventionRedactedMask", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Secrets masked: {0:# passage|# passages} that look like a password, a private key or a token replaced by [masked]. Images (captures, recorded screens) are not masked; the encrypted journal keeps everything..
+        /// </summary>
+        public static string InterventionReportRedacted {
+            get {
+                return ResourceManager.GetString("InterventionReportRedacted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Secrets masked: nothing in the text looks like a password, a private key or a token. Images (captures, recorded screens) are not masked..
+        /// </summary>
+        public static string InterventionReportRedactedNone {
+            get {
+                return ResourceManager.GetString("InterventionReportRedactedNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Report saved: {0} ({1:# passage|# passages} masked)..
+        /// </summary>
+        public static string InterventionReportSavedRedacted {
+            get {
+                return ResourceManager.GetString("InterventionReportSavedRedacted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This report brings together {0} recordings:.
+        /// </summary>
+        public static string InterventionReportParts {
+            get {
+                return ResourceManager.GetString("InterventionReportParts", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} to {1} ({2}) {3}.
+        /// </summary>
+        public static string InterventionReportPart {
+            get {
+                return ResourceManager.GetString("InterventionReportPart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Ctrl+click or Shift+click to choose several: one report brings them together (an intervention over the night and the morning, for example)..
+        /// </summary>
+        public static string InterventionPreviousHelp {
+            get {
+                return ResourceManager.GetString("InterventionPreviousHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Delete these {0} intervention journals?.
+        /// </summary>
+        public static string InterventionDeleteManyHeading {
+            get {
+                return ResourceManager.GetString("InterventionDeleteManyHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to They cannot be recovered..
+        /// </summary>
+        public static string InterventionDeleteManyDetail {
+            get {
+                return ResourceManager.GetString("InterventionDeleteManyDetail", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Recording resumed by {0} on {1}, ZillaTerm {2}, {3}: ZillaTerm had stopped during the intervention, nothing was kept since {4}..
+        /// </summary>
+        public static string InterventionResumedEntry {
+            get {
+                return ResourceManager.GetString("InterventionResumedEntry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Recording closed when ZillaTerm restarted ({0}): ZillaTerm had stopped during the intervention..
+        /// </summary>
+        public static string InterventionClosedEntry {
+            get {
+                return ResourceManager.GetString("InterventionClosedEntry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Interrupted intervention.
+        /// </summary>
+        public static string InterventionResumeTitle {
+            get {
+                return ResourceManager.GetString("InterventionResumeTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The intervention recording stopped with ZillaTerm.
+        /// </summary>
+        public static string InterventionResumeHeading {
+            get {
+                return ResourceManager.GetString("InterventionResumeHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Started on {0}, last event at {1}..
+        /// </summary>
+        public static string InterventionResumeDetail {
+            get {
+                return ResourceManager.GetString("InterventionResumeDetail", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Resume: what follows is added to the same journal, for a single report; the interruption is noted in it..
+        /// </summary>
+        public static string InterventionResumeBullet {
+            get {
+                return ResourceManager.GetString("InterventionResumeBullet", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Close: the intervention ends as it is; its report says when ZillaTerm stopped..
+        /// </summary>
+        public static string InterventionCloseBullet {
+            get {
+                return ResourceManager.GetString("InterventionCloseBullet", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Resume the recording.
+        /// </summary>
+        public static string InterventionResumeAction {
+            get {
+                return ResourceManager.GetString("InterventionResumeAction", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Close the intervention.
+        /// </summary>
+        public static string InterventionCloseAction {
+            get {
+                return ResourceManager.GetString("InterventionCloseAction", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Later.
+        /// </summary>
+        public static string InterventionResumeLater {
+            get {
+                return ResourceManager.GetString("InterventionResumeLater", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The intervention cannot be resumed: {0}.
+        /// </summary>
+        public static string InterventionResumeFailed {
+            get {
+                return ResourceManager.GetString("InterventionResumeFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Intervention resumed: what follows is added to the same journal..
+        /// </summary>
+        public static string InterventionResumed {
+            get {
+                return ResourceManager.GetString("InterventionResumed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reminder at {0} min: {1}.
+        /// </summary>
+        public static string InterventionReminderEntry {
+            get {
+                return ResourceManager.GetString("InterventionReminderEntry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reminder seen: {0}.
+        /// </summary>
+        public static string InterventionReminderSeenEntry {
+            get {
+                return ResourceManager.GetString("InterventionReminderSeenEntry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Got _it.
+        /// </summary>
+        public static string InterventionReminderSeen {
+            get {
+                return ResourceManager.GetString("InterventionReminderSeen", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hides the reminder and notes in the journal that you saw it..
+        /// </summary>
+        public static string InterventionReminderSeenTip {
+            get {
+                return ResourceManager.GetString("InterventionReminderSeenTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} in {1:# min|# min}.
+        /// </summary>
+        public static string InterventionNextReminder {
+            get {
+                return ResourceManager.GetString("InterventionNextReminder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reminder ({0} min since the start): {1}.
+        /// </summary>
+        public static string InterventionReminderStatus {
+            get {
+                return ResourceManager.GetString("InterventionReminderStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Timed reminders:.
+        /// </summary>
+        public static string RemindersLabel {
+            get {
+                return ResourceManager.GetString("RemindersLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to One line per reminder: the minutes since the start of the recording, then the text ("30 Escalate to level 3"). 10 at most. At that time ZillaTerm shows it in the Intervention tab and the status bar, and notes it in the journal..
+        /// </summary>
+        public static string RemindersHelp {
+            get {
+                return ResourceManager.GetString("RemindersHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Timed reminders, line {0}: minutes (1 to 1440), a space, then a text of 200 characters at most (10 reminders at most)..
+        /// </summary>
+        public static string InvalidReminder {
+            get {
+                return ResourceManager.GetString("InvalidReminder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Timed reminders.
+        /// </summary>
+        public static string EnvInterventionReminders {
+            get {
+                return ResourceManager.GetString("EnvInterventionReminders", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid timed reminder (minutes from 1 to 1440, a text of 1 to 200 visible characters, 10 at most): {0}.
+        /// </summary>
+        public static string EnvInvalidReminder {
+            get {
+                return ResourceManager.GetString("EnvInvalidReminder", resourceCulture);
+            }
+        }
     }
 }

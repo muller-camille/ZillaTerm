@@ -886,7 +886,10 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   - the **intervention title** (ticket, incident, server…), kept with `Enter` or when leaving the field: it is written
     to the journal, shown in the "Recorded interventions" list, at the top of the report and in the file name suggested
     for it. One line, 200 characters at most;
-  - the **note**: `Enter` adds it to the journal, `Shift+Enter` starts a new line;
+  - the **note**: `Enter` adds it to the journal, `Shift+Enter` starts a new line. **"Edit"** on a note of the history
+    (or `F2`) brings it back into the field: `Enter` or "Save the change" replaces it in place, `Esc` or "Cancel" gives
+    back what you were typing. The note then shows "edited at …"; the journal keeps the original text and the report
+    shows both. Only the notes of the current recording can be edited;
   - **"Capture a remote desktop…"**;
   - the **history** of the intervention, as it happens: start, title, notes, connections, actions, transfers (with their
     SHA-256), captures and terminal text. A command and its output form a block (a new block starts after 2 seconds
@@ -897,13 +900,35 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
 
   When recording stops, input is greyed out and the history stays shown until **"Close the history"** (the tab goes
   away) or the next recording; the report is exported from the Intervention window.
+- **Timed reminders** (Settings › General, or the team's environment file): one line per reminder, the minutes since the
+  start of the recording then the text ("30 Escalate to level 3"), 10 at most. The status bar shows the next one ("●
+  Intervention recorded · Escalate to level 3 in 12 min"); at that time a banner appears at the top of the
+  "Intervention" tab, the status bar says it and the ZillaTerm button flashes in the taskbar, without taking the
+  keyboard (what you are typing does not go elsewhere). The reminder is noted in the journal, and **"Got it"** notes
+  that you saw it.
+- **ZillaTerm stopped during the recording** (crash, PC restarted): at the next launch, within 12 hours, ZillaTerm
+  offers **"Resume the recording"**: what follows is added to the same journal (title, history and reminders carried
+  over; a single report), after an event that says who resumed and since when nothing was kept. **"Close the
+  intervention"** ends it as it is (its duration does not change); **"Later"** leaves it, and the question comes back at
+  the next launch.
 - **"Recorded interventions"**: the list of recordings, newest first, with their title. When you stop, the intervention
   stays selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
   terminal text and captures, to attach to the intervention report. Each recorded screen has its own player: "Play",
   "Speed" (1× to 60×) and a position slider, under which a graph shows the screen activity (share changed at each
-  moment): click a peak to go there. The player is the only script of the page, allowed by its hash; it needs a recent
-  browser (Edge, Chrome, Firefox). A missing image (damaged journal) freezes the screen until the next full image, with
-  a notice. **"Delete…"** erases a finished recording.
+  moment): click a peak to go there. The notes are placed there at their time (orange marks): click one to go there,
+  hover it to read it; the timeline runs until the last trace of the session (tab closed…), so a note taken in front of
+  a still screen is on it. The player is the only script of the page, allowed by its hash; it needs a recent browser
+  (Edge, Chrome, Firefox). A missing image (damaged journal) freezes the screen until the next full image, with a
+  notice. **"Delete…"** erases a finished recording.
+
+  Several interventions chosen together (`Ctrl+click`, `Shift+click`) make **a single report**: their events one after
+  the other and, at the top, the list of recordings (an intervention over the night and the morning, for example); they
+  are also deleted together. **"Mask what looks like a secret"** (checked by default) replaces in the report, with
+  "[masked]", passwords (`password=…`, `"client_secret": "…"`, `--db-password=…`, the one in an address
+  `https://jdoe:…@srv01.corp.local`), the body of private keys (`-----BEGIN … PRIVATE KEY-----`), `Bearer` and `Basic`
+  headers, tokens of known formats (JWT, GitHub, GitLab, Slack, AWS, Google) and password hashes (`$6$…` from
+  /etc/shadow); the report says how many passages were masked. Images (captures, recorded screens) are not masked, and
+  the encrypted journal keeps everything. Masking is a safety net: read the report again before passing it on.
 
 The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (the
 title too, in a `.title` file next to it, for the list), block by block as recording goes, its text compressed (a crash
@@ -938,6 +963,7 @@ title, the note and the capture are greyed out in the "Intervention" tab. Free s
 | Home | Remove a recent session from the list | `Del` |
 | My servers | Rename / remove or delete | `F2` / `Del` |
 | My servers | Pick several servers (then right-click to open them together) | `Ctrl+click`, `Shift+click`, `Ctrl+Space`, `Shift+↑` / `Shift+↓`; `Esc` cancels |
+| Intervention | Edit the note selected in the history | `F2`, then `Enter`; `Esc` cancels |
 | Terminal | Copy | Mouse selection, or `Ctrl+Shift+C` |
 | Terminal | Paste | `Shift+Insert` or `Ctrl+Shift+V` (right-click with the Settings option) |
 | Terminal | Menu: copy, paste, select all, search, save, clear the history, font size, tab actions | Right-click or Menu key (Shift+right-click with the paste option) |
@@ -990,6 +1016,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | General | Theme | Same as Windows, Light or Dark; applied right away (Windows high contrast takes precedence) | same as Windows |
 | General | Duty reminder | Good practices and emergency numbers shown in the "Intervention" window; plain text, shared by the environment file (see [Intervention](#8-intervention-recording-and-on-call-duty-reminder)) | empty |
 | General | Reminder file | Text file (usually on a network share) read again each time the "Intervention" window opens, shown instead of the reminder above; shared by the environment file | empty |
+| General | Timed reminders | One line per reminder: minutes since the start of the recording, then the text ("30 Escalate to level 3"); shown in the "Intervention" tab and the status bar, noted in the journal; shared by the environment file | empty |
 | General | Server tags | Tags given to the servers of "My servers" (name, color): "Add a tag", "Remove the tag", editable cells; renaming follows in "My servers", deleting removes the tag from the servers; shared by the environment file (see [Tags](#tags-prod-qa-dev)) | PROD (red), QA (blue), DEV (green) |
 | General | Interface language | Français, English, Italiano or system language; applied after signing out of CyberArk or at the next start | Windows language (English if it is not translated) |
 | General | Central file | Team environment file on a network share, read at each start; its changes are shown before being applied (see [Shared environment](#shared-environment)) | empty |
@@ -1020,9 +1047,9 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 
 ### Shared environment
 
-To give ZillaTerm to a colleague with the team's configuration (PVWA address, sign-in method, default and
-by-domain PSMPs, Windows accounts component and per-platform components, shared lists, PSMP keys, on-call duty reminder (text or file), server tags, a few options),
-with nothing personal and no password:
+To give ZillaTerm to a colleague with the team's configuration (PVWA address, sign-in method, default and by-domain
+PSMPs, Windows accounts component and per-platform components, shared lists, PSMP keys, on-call duty reminder (text or
+file), timed reminders, server tags, a few options), with nothing personal and no password:
 
 1. **Export**: "Settings" button → "Export the environment…" saves `ZillaTerm.env.json`.
 2. **Next to the executable**: put this file next to `ZillaTerm.exe` (for example in the same zip). At start, when
@@ -1047,7 +1074,9 @@ only when it has changed. A setting left empty on the exporting PC is
 not exported: it clears nothing on the importing one. Paths (shared lists, central file) are full: `C:\…` or
 `\\server\…`. Your user name, "My servers" and your
 recent sessions are never touched; shared lists are added without removing yours. The tags of the file replace those
-of the computer; your servers keep theirs (a tag missing from the file is then shown in gray).
+of the computer; your servers keep theirs (a tag missing from the file is then shown in gray). The timed reminders of
+the file (`"InterventionReminders": [{ "Minutes": 30, "Text": "Escalate to level 3" }]`) also replace those of the
+computer.
 
 All preferences are saved in `%APPDATA%\ZillaTerm\settings.json`: language, PVWA address, sign-in method and user
 name, the settings above, "My servers", their folders and the files followed on them (paths), recent sessions,
@@ -1405,7 +1434,7 @@ sh or fish, following is not set up and nothing stays on screen.
 | The account does not show up | You lack the "List accounts" permission on its safe, or the list needs reloading (`F5`). |
 | The PSMP password is asked for each tab | MFA caching is not enabled on the PVWA: expected behavior (once per tab). When opening several sessions together, tick "Also use this password…" to type it only once. |
 | The Files tab shows "SFTP connection failed" | SFTP is not allowed on the PSMP or for this account: ask your CyberArk team. |
-| An upload shows "SFTP (SCP refused)" or "SCP (SFTP refused)" | The PSMP or the server refused that protocol for this file: the other one took over and the file was checked as usual. The summary gives the server's answer. A PSMP that refuses SCP for a platform (error `118E Selected component PSMP-SCP does not contain the target settings definitions…` in its logs) lacks the PSMP-SCP connection component: your CyberArk team can add it to the platform, otherwise uploads go over SFTP. |
+| An upload shows "SFTP (SCP refused)" or "SCP (SFTP refused)" | The PSMP or the server refused that protocol for this file: the other one took over and the file was checked as usual. The summary gives the server's answer. A PSMP that refuses SCP for a platform (error `118E Selected component PSMP-SCP does not contain the target settings definitions…` in its logs) lacks the PSMP-SCP connection component: your CyberArk team can add it to the platform, otherwise uploads go over SFTP. After this refusal, the tab no longer tries SCP: the following files go straight over SFTP, without opening a PSMP session for each. |
 | The browser does not follow `cd` | The remote shell is not bash, zsh or tcsh (or tcsh already has its own `cwdcmd` alias), the option is off in Settings, or the prompt was not recognized: tick "Follow the terminal folder" again at the shell prompt. |
 | "The key of the PSMP has changed" warning | Only continue ("I confirmed this change with the CyberArk team" box, then "Replace the key and connect") if your CyberArk team confirms a server change; otherwise, cancel and alert them. |
 | "Connection cancelled: the server key was not accepted." | The fingerprint window was cancelled or closed: connect again and accept the key after comparing its fingerprint. |

@@ -24,6 +24,7 @@ public enum EnvironmentSetting
     UploadProtocol,
     DutyText,
     DutyTextFile,
+    InterventionReminders,
     ServerTags,
     PsmDesktopInTab,
     PsmRedirectDrives,
@@ -54,6 +55,7 @@ public enum EnvironmentProblem
     InvalidPath,
     InvalidDutyText,
     InvalidServerTag,
+    InvalidReminder,
 }
 
 /// <summary>Fichier d'environnement refusé ; <see cref="Detail"/> nomme la valeur en cause.</summary>
@@ -148,6 +150,12 @@ public sealed class EnvironmentProfile
     /// </summary>
     public string? DutyTextFile { get; set; }
 
+    /// <summary>
+    /// Rappels pendant une intervention (minutes depuis le début de l'enregistrement et texte), à la place de ceux du poste ;
+    /// vide pour n'en garder aucun.
+    /// </summary>
+    public List<Interventions.InterventionReminder>? InterventionReminders { get; set; }
+
     /// <summary>Étiquettes des serveurs (nom et couleur), à la place de celles du poste ; vide pour n'en garder aucune.</summary>
     public List<ServerTag>? ServerTags { get; set; }
 
@@ -190,6 +198,7 @@ public sealed class EnvironmentProfile
             UploadProtocol = settings.PreferredUploadProtocol,
             DutyText = string.IsNullOrWhiteSpace(settings.DutyText) ? null : NormalizeDutyText(settings.DutyText),
             DutyTextFile = NullIfEmpty(settings.DutyTextFile),
+            InterventionReminders = settings.InterventionReminders.Count == 0 ? null : [.. settings.InterventionReminders],
             ServerTags = settings.ServerTags.Select(t => new ServerTag(t.Name, t.Color)).ToList(),
         };
     }
@@ -323,6 +332,23 @@ public sealed class EnvironmentProfile
         if (!string.IsNullOrWhiteSpace(DutyTextFile) && !DutyReminderFile.IsValidPath(DutyTextFile))
         {
             Fail(EnvironmentProblem.InvalidPath, DutyTextFile);
+        }
+
+        if (InterventionReminders is not null)
+        {
+            if (InterventionReminders.Count > Interventions.InterventionReminder.MaxReminders)
+            {
+                Fail(EnvironmentProblem.InvalidReminder, InterventionReminders.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+
+            foreach (var reminder in InterventionReminders)
+            {
+                if (!Interventions.InterventionReminder.IsValid(reminder))
+                {
+                    Fail(EnvironmentProblem.InvalidReminder, reminder is null ? ""
+                        : $"{reminder.Minutes} {(reminder.Text?.Length > 40 ? reminder.Text[..40] + "…" : reminder.Text)}");
+                }
+            }
         }
 
         if (ServerTags is not null)
@@ -466,6 +492,12 @@ public sealed class EnvironmentProfile
             Add(EnvironmentSetting.DutyTextFile, server, settings.DutyTextFile.Trim(), DutyTextFile.Trim(), server is not null);
         }
 
+        if (InterventionReminders is not null)
+        {
+            Add(EnvironmentSetting.InterventionReminders, null, Interventions.InterventionReminder.Format(settings.InterventionReminders),
+                Interventions.InterventionReminder.Format(Interventions.InterventionReminder.Sanitize(InterventionReminders)), false);
+        }
+
         if (ServerTags is not null)
         {
             Add(EnvironmentSetting.ServerTags, null, Describe(settings.ServerTags), Describe(ServerTagRules.Sanitize(ServerTags)), false);
@@ -560,6 +592,11 @@ public sealed class EnvironmentProfile
         if (DutyTextFile is not null)
         {
             settings.DutyTextFile = DutyTextFile.Trim();
+        }
+
+        if (InterventionReminders is not null)
+        {
+            settings.InterventionReminders = Interventions.InterventionReminder.Sanitize(InterventionReminders);
         }
 
         if (ServerTags is not null)
