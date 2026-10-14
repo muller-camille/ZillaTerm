@@ -59,7 +59,12 @@
                         </DockPanel>
                         <DockPanel>
                             <TextBlock Text="•" Margin="0,0,6,0" DockPanel.Dock="Left" />
-                            <TextBlock Text="{x:Static loc:Strings.ShareWarningEnds}" TextWrapping="Wrap" />
+                            <TextBlock Text="{x:Static loc:PlatformText.ShareWarningEnds}" TextWrapping="Wrap" />
+                        </DockPanel>
+                        <!-- Verrouillage de la session non suivi sur ce poste (macOS, Linux sans logind) : dit avant de partager. -->
+                        <DockPanel x:Name="LockNotWatched" IsVisible="False" Margin="0,3,0,0">
+                            <TextBlock Text="•" Margin="0,0,6,0" DockPanel.Dock="Left" />
+                            <TextBlock Text="{x:Static loc:Strings.ShareLockNotWatched}" TextWrapping="Wrap" FontWeight="SemiBold" />
                         </DockPanel>
                     </StackPanel>
                 </Border>

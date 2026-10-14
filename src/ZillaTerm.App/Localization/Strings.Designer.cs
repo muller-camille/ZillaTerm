@@ -19264,5 +19264,122 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("KeyringMacUnsupported", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client for CyberArk: accounts of the PVWA, PSM sessions, SSH sessions through the PSMP with terminal and files, emergency access with KeePass..
+        /// </summary>
+        public static string AboutDescriptionUnix {
+            get {
+                return ResourceManager.GetString("AboutDescriptionUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to On Linux and macOS, download the new version from its page..
+        /// </summary>
+        public static string AboutUpdatePageOnly {
+            get {
+                return ResourceManager.GetString("AboutUpdatePageOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This password protects the KeePass master passwords you choose to remember. It cannot be recovered: if you forget it, you will have to delete the local vault and type each master password again. The local vault is encrypted with this password (Argon2id, AES-256) and a key kept in the keyring of your session..
+        /// </summary>
+        public static string LocalStoreCreateIntroUnix {
+            get {
+                return ResourceManager.GetString("LocalStoreCreateIntroUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Copied to the clipboard for {0} seconds, never shown, then cleared. A clipboard history manager may keep a copy..
+        /// </summary>
+        public static string RetrieveClipboardUnix {
+            get {
+                return ResourceManager.GetString("RetrieveClipboardUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Encrypted with the local vault password and a key from the keyring of your session..
+        /// </summary>
+        public static string KeePassRememberHintUnix {
+            get {
+                return ResourceManager.GetString("KeePassRememberHintUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sharing stops at the end of the duration, when the session locks, when the shared session or ZillaTerm closes..
+        /// </summary>
+        public static string ShareWarningEndsUnix {
+            get {
+                return ResourceManager.GetString("ShareWarningEndsUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Session locking is not watched on this computer: sharing would continue while it is locked. Stop it yourself before leaving the computer..
+        /// </summary>
+        public static string ShareLockNotWatched {
+            get {
+                return ResourceManager.GetString("ShareLockNotWatched", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to SSH client not found: install OpenSSH (openssh-client package)..
+        /// </summary>
+        public static string SshClientNotFoundUnix {
+            get {
+                return ResourceManager.GetString("SshClientNotFoundUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Used by “Edit” in the Files tab. Empty: the system text editor..
+        /// </summary>
+        public static string TextEditorHelpUnix {
+            get {
+                return ResourceManager.GetString("TextEditorHelpUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Keep the CyberArk session open while you use the computer (a light request every 4 minutes; paused while the session is locked or after 15 minutes without keyboard or mouse).
+        /// </summary>
+        public static string KeepAliveUnix {
+            get {
+                return ResourceManager.GetString("KeepAliveUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Same as the system.
+        /// </summary>
+        public static string AppThemeSystemUnix {
+            get {
+                return ResourceManager.GetString("AppThemeSystemUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Optional: the comparison window offers to open both files in this program (e.g. meld). {0} is the left file, {1} the right one; for VS Code: code with --diff "{0}" "{1}"..
+        /// </summary>
+        public static string CompareToolHelpUnix {
+            get {
+                return ResourceManager.GetString("CompareToolHelpUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The other ZillaTerm connects to this computer (end-to-end encrypted connection). If a firewall filters this computer, allow ZillaTerm on private or domain networks only..
+        /// </summary>
+        public static string SettingsShareDirectHelpUnix {
+            get {
+                return ResourceManager.GetString("SettingsShareDirectHelpUnix", resourceCulture);
+            }
+        }
     }
 }

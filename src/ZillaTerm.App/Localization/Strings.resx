@@ -6454,4 +6454,43 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="KeyringMacUnsupported" xml:space="preserve">
     <value>Protecting secrets is not yet available on macOS: this feature is disabled.</value>
   </data>
+  <data name="AboutDescriptionUnix" xml:space="preserve">
+    <value>Client for CyberArk: accounts of the PVWA, PSM sessions, SSH sessions through the PSMP with terminal and files, emergency access with KeePass.</value>
+  </data>
+  <data name="AboutUpdatePageOnly" xml:space="preserve">
+    <value>On Linux and macOS, download the new version from its page.</value>
+  </data>
+  <data name="LocalStoreCreateIntroUnix" xml:space="preserve">
+    <value>This password protects the KeePass master passwords you choose to remember. It cannot be recovered: if you forget it, you will have to delete the local vault and type each master password again. The local vault is encrypted with this password (Argon2id, AES-256) and a key kept in the keyring of your session.</value>
+  </data>
+  <data name="RetrieveClipboardUnix" xml:space="preserve">
+    <value>Copied to the clipboard for {0} seconds, never shown, then cleared. A clipboard history manager may keep a copy.</value>
+  </data>
+  <data name="KeePassRememberHintUnix" xml:space="preserve">
+    <value>Encrypted with the local vault password and a key from the keyring of your session.</value>
+  </data>
+  <data name="ShareWarningEndsUnix" xml:space="preserve">
+    <value>Sharing stops at the end of the duration, when the session locks, when the shared session or ZillaTerm closes.</value>
+  </data>
+  <data name="ShareLockNotWatched" xml:space="preserve">
+    <value>Session locking is not watched on this computer: sharing would continue while it is locked. Stop it yourself before leaving the computer.</value>
+  </data>
+  <data name="SshClientNotFoundUnix" xml:space="preserve">
+    <value>SSH client not found: install OpenSSH (openssh-client package).</value>
+  </data>
+  <data name="TextEditorHelpUnix" xml:space="preserve">
+    <value>Used by “Edit” in the Files tab. Empty: the system text editor.</value>
+  </data>
+  <data name="KeepAliveUnix" xml:space="preserve">
+    <value>_Keep the CyberArk session open while you use the computer (a light request every 4 minutes; paused while the session is locked or after 15 minutes without keyboard or mouse)</value>
+  </data>
+  <data name="AppThemeSystemUnix" xml:space="preserve">
+    <value>Same as the system</value>
+  </data>
+  <data name="CompareToolHelpUnix" xml:space="preserve">
+    <value>Optional: the comparison window offers to open both files in this program (e.g. meld). {0} is the left file, {1} the right one; for VS Code: code with --diff "{0}" "{1}".</value>
+  </data>
+  <data name="SettingsShareDirectHelpUnix" xml:space="preserve">
+    <value>The other ZillaTerm connects to this computer (end-to-end encrypted connection). If a firewall filters this computer, allow ZillaTerm on private or domain networks only.</value>
+  </data>
 </root>

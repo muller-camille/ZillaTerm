@@ -40,7 +40,7 @@ public partial class RetrievePasswordDialog : DialogWindow
             SafeText.IsVisible = true;
         }
 
-        ClipboardText.Text = Text.Format(Strings.RetrieveClipboard, (int)clipboardDelay.TotalSeconds);
+        ClipboardText.Text = Text.Format(PlatformText.RetrieveClipboard, (int)clipboardDelay.TotalSeconds);
         ReasonBox.Text = reason ?? "";
         Opened += (_, _) => FocusLater(ReasonBox);
         Closed += (_, _) => _closing.Cancel();

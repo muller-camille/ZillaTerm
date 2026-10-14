@@ -22,7 +22,7 @@
             <StackPanel>
                 <TextBlock Text="ZillaTerm" FontSize="20" FontWeight="SemiBold" />
                 <TextBlock x:Name="VersionText" Classes="Muted" Margin="0,2,0,6" />
-                <TextBlock Text="{x:Static loc:Strings.AboutDescription}" TextWrapping="Wrap" />
+                <TextBlock Text="{x:Static loc:PlatformText.AboutDescription}" TextWrapping="Wrap" />
             </StackPanel>
         </DockPanel>
 

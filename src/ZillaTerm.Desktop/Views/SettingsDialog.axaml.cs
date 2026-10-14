@@ -58,7 +58,7 @@ public partial class SettingsDialog : DialogWindow
         AppThemeBox.SelectedValueBinding = new Binding(nameof(KeyValuePair<AppTheme, string>.Key));
         AppThemeBox.ItemsSource = new[]
         {
-            new KeyValuePair<AppTheme, string>(AppTheme.System, Strings.AppThemeSystem),
+            new KeyValuePair<AppTheme, string>(AppTheme.System, PlatformText.AppThemeSystem),
             new KeyValuePair<AppTheme, string>(AppTheme.Light, Strings.AppThemeLight),
             new KeyValuePair<AppTheme, string>(AppTheme.Dark, Strings.AppThemeDark),
         };

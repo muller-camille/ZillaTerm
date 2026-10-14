@@ -17,6 +17,12 @@ namespace ZillaTerm.App.Services.Secrets;
 /// </remarks>
 internal static class SecretProtectors
 {
+    /// <summary>
+    /// Le système a une protection prévue (DPAPI sous Windows, trousseau Secret Service sous Linux) : ce qui en dépend peut
+    /// être proposé ; sa présence réelle (trousseau démarré, déverrouillé) se vérifie à l'usage.
+    /// </summary>
+    public static bool PlatformSupported => OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD();
+
     /// <summary>Délai maximal de la vérification de <see cref="IsAvailable"/>.</summary>
     private static readonly TimeSpan AvailabilityTimeout = TimeSpan.FromSeconds(5);
 

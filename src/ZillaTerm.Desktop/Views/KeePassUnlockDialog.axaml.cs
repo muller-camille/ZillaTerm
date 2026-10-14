@@ -16,7 +16,8 @@ namespace ZillaTerm.App.Views;
 /// <remarks>
 /// Le mot de passe maître est lu puis effacé du champ dès le clic sur « Déverrouiller » (Avalonia le garde dans une
 /// chaîne .NET, sans SecureString) : après un échec, il est à retaper. L'option « Mémoriser » n'apparaît que là où le
-/// coffre local peut être protégé pour le compte de l'utilisateur (<see cref="DpapiProtector.IsAvailable"/>).
+/// coffre local peut être protégé pour le compte de l'utilisateur : DPAPI sous Windows, trousseau sous Linux
+/// (<see cref="Services.Secrets.SecretProtectors.PlatformSupported"/>).
 /// </remarks>
 public partial class KeePassUnlockDialog : DialogWindow
 {
@@ -45,7 +46,7 @@ public partial class KeePassUnlockDialog : DialogWindow
         {
             PasswordLabel.IsVisible = PasswordBox.IsVisible = RememberBox.IsVisible = RememberHint.IsVisible = false;
         }
-        else if (!DpapiProtector.IsAvailable)
+        else if (!Services.Secrets.SecretProtectors.PlatformSupported)
         {
             // Coffre local non protégeable sur ce système (Linux, macOS : trousseau non relié) : rien n'est proposé à mémoriser.
             RememberBox.IsVisible = RememberHint.IsVisible = false;
@@ -105,7 +106,7 @@ public partial class KeePassUnlockDialog : DialogWindow
 
         // Lu en UTF-8 puis effacé du champ ; le tableau est effacé à la fin, ouvert ou non.
         var password = SecretInput.ReadUtf8(PasswordBox, clear: true);
-        bool remember = _folder.UsesPassword && DpapiProtector.IsAvailable && RememberBox.IsChecked == true;
+        bool remember = _folder.UsesPassword && Services.Secrets.SecretProtectors.PlatformSupported && RememberBox.IsChecked == true;
         SetBusy(true);
         _unlocking = new CancellationTokenSource();
         try

@@ -32,7 +32,7 @@
             <CheckBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="RememberBox" Margin="0,2,0,0">
                 <AccessText Text="{x:Static loc:Strings.KeePassRemember}" TextWrapping="Wrap" />
             </CheckBox>
-            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="RememberHint" Text="{x:Static loc:Strings.KeePassRememberHint}"
+            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="RememberHint" Text="{x:Static loc:PlatformText.KeePassRememberHint}"
                        Classes="Muted" TextWrapping="Wrap" Margin="20,2,0,8" />
             <ProgressBar Grid.Row="4" Grid.ColumnSpan="3" x:Name="Progress" Height="6" MinHeight="6" IsIndeterminate="True" Margin="0,4,0,4"
                          IsVisible="False" />

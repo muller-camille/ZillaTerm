@@ -89,7 +89,7 @@ internal sealed class SessionLauncher
             return OperatingSystem.IsMacOS() ? MacTerminal(["/usr/bin/ssh", .. unix]) : LinuxTerminal(find, title, ["ssh", .. unix]);
         }
 
-        var ssh = FindSsh() ?? throw new FileNotFoundException(Strings.SshClientNotFound);
+        var ssh = FindSsh() ?? throw new FileNotFoundException(PlatformText.SshClientNotFound);
 
         // Identifiant avec espace : ssh.exe est lancé directement, sans passer par wt.exe, pour que l'argument
         // arrive entier à ssh quelle que soit la façon dont Windows Terminal recompose sa ligne de commande.

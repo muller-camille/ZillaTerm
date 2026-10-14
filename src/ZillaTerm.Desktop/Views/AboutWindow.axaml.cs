@@ -46,7 +46,8 @@ public partial class AboutWindow : DialogWindow
         AutoCheckText.Text = settings.CheckForUpdates ? Strings.AboutAutoCheckOn : Strings.AboutAutoCheckOff;
         // Hors Windows : pas d'archive à télécharger ni d'exécutable à remplacer ; la note qui le décrit ne s'applique pas.
         DownloadButton.IsVisible = CanDownload;
-        UpdateNoteText.IsVisible = CanDownload;
+        // Hors de Windows, pas de remplacement de l'exécutable : la nouvelle version se télécharge depuis sa page.
+        UpdateNoteText.Text = CanDownload ? Strings.AboutUpdateNote : Strings.AboutUpdatePageOnly;
         if (UpdateService.Available is { } known)
         {
             ShowUpdate(known);

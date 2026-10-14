@@ -41,6 +41,7 @@ public partial class ShareSessionDialog : DialogWindow
         ControlBox.IsChecked = terminal;
         ControlBox.IsVisible = ControlHelp.IsVisible = terminal;
         ScreenHelp.IsVisible = !terminal;
+        LockNotWatched.IsVisible = !Services.Sharing.ShareService.Current.StopsOnLock;
         // Invitation d'un partage en cours (montrée avant l'ouverture) : « Copier l'invitation » a le focus.
         Opened += (_, _) => FocusLater(OptionsPanel.IsVisible ? DurationBox : CopyButton);
     }

@@ -6454,4 +6454,43 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="KeyringMacUnsupported" xml:space="preserve">
     <value>La protection des secrets n'est pas encore disponible sous macOS : cette fonction est désactivée.</value>
   </data>
+  <data name="AboutDescriptionUnix" xml:space="preserve">
+    <value>Client pour CyberArk : comptes du PVWA, sessions PSM, sessions SSH via le PSMP avec terminal et fichiers, accès d'urgence avec KeePass.</value>
+  </data>
+  <data name="AboutUpdatePageOnly" xml:space="preserve">
+    <value>Sous Linux et macOS, téléchargez la nouvelle version depuis sa page.</value>
+  </data>
+  <data name="LocalStoreCreateIntroUnix" xml:space="preserve">
+    <value>Ce mot de passe protège les mots de passe maîtres KeePass que vous choisissez de mémoriser. Il ne peut pas être récupéré : oublié, il faudra supprimer le coffre local et ressaisir chaque mot de passe maître. Le coffre local est chiffré avec ce mot de passe (Argon2id, AES-256) et une clé gardée dans le trousseau de votre session.</value>
+  </data>
+  <data name="RetrieveClipboardUnix" xml:space="preserve">
+    <value>Copié dans le presse-papiers pendant {0} secondes, jamais affiché, puis effacé. Un gestionnaire d'historique du presse-papiers peut en garder une copie.</value>
+  </data>
+  <data name="KeePassRememberHintUnix" xml:space="preserve">
+    <value>Chiffré avec le mot de passe du coffre local et une clé du trousseau de votre session.</value>
+  </data>
+  <data name="ShareWarningEndsUnix" xml:space="preserve">
+    <value>Le partage s'arrête à la fin de la durée, au verrouillage de la session, à la fermeture de la session partagée ou de ZillaTerm.</value>
+  </data>
+  <data name="ShareLockNotWatched" xml:space="preserve">
+    <value>Le verrouillage de la session n'est pas suivi sur ce poste : le partage continuerait pendant le verrouillage. Arrêtez-le vous-même avant de quitter le poste.</value>
+  </data>
+  <data name="SshClientNotFoundUnix" xml:space="preserve">
+    <value>Client SSH introuvable : installez OpenSSH (paquet openssh-client).</value>
+  </data>
+  <data name="TextEditorHelpUnix" xml:space="preserve">
+    <value>Utilisé par « Modifier » dans l'onglet Fichiers. Vide : l'éditeur de texte du système.</value>
+  </data>
+  <data name="KeepAliveUnix" xml:space="preserve">
+    <value>_Garder la session CyberArk ouverte pendant que vous utilisez le poste (une requête légère toutes les 4 minutes ; suspendue quand la session est verrouillée ou après 15 minutes sans clavier ni souris)</value>
+  </data>
+  <data name="AppThemeSystemUnix" xml:space="preserve">
+    <value>Comme le système</value>
+  </data>
+  <data name="CompareToolHelpUnix" xml:space="preserve">
+    <value>Facultatif : la fenêtre de comparaison propose d'ouvrir les deux fichiers dans ce programme (par ex. meld). {0} est le fichier de gauche, {1} celui de droite ; pour VS Code : code avec --diff "{0}" "{1}".</value>
+  </data>
+  <data name="SettingsShareDirectHelpUnix" xml:space="preserve">
+    <value>L'autre ZillaTerm se connecte à ce poste (connexion chiffrée de bout en bout). Si un pare-feu filtre ce poste, autorisez ZillaTerm sur les réseaux privés ou de domaine seulement.</value>
+  </data>
 </root>

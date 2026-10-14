@@ -232,7 +232,7 @@
                     <StackPanel Margin="16,12">
                         <TextBlock Text="{x:Static loc:Strings.PvwaSessionSection}" Classes="SectionTitle" />
                         <CheckBox x:Name="KeepAliveBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.KeepAlive}" />
+                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:PlatformText.KeepAlive}" />
                         </CheckBox>
                         <TextBlock Classes="OptionEffect" Text="{x:Static loc:Strings.SettingsKeepAliveEffect}" Margin="20,0,0,16" />
 
@@ -416,7 +416,7 @@
                             <Label Content="{x:Static loc:Strings.TextEditorLabel}" Target="{Binding #EditorBox}" />
                             <TextBox Grid.Column="1" x:Name="EditorBox" VerticalContentAlignment="Center" />
                             <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseEditor" Margin="8,0,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{x:Static loc:Strings.TextEditorHelp}"
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{x:Static loc:PlatformText.TextEditorHelp}"
                                        Classes="Muted" TextWrapping="Wrap" Margin="0,4,0,0" />
                         </Grid>
                         <!-- Outil de comparaison externe (facultatif) : la comparaison intégrée suffit sinon. -->
@@ -432,7 +432,7 @@
                             <Label Grid.Row="1" Content="{x:Static loc:Strings.CompareArgumentsLabel}" Target="{Binding #CompareArgsBox}" Margin="0,4,0,0" />
                             <TextBox Grid.Row="1" Grid.Column="1" x:Name="CompareArgsBox" VerticalContentAlignment="Center" Margin="0,4,0,0"
                                      FontFamily="{StaticResource MonospaceFont}" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{x:Static loc:Strings.CompareToolHelp}"
+                            <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{x:Static loc:PlatformText.CompareToolHelp}"
                                        Classes="Muted" TextWrapping="Wrap" Margin="0,4,0,0" />
                         </Grid>
                     </StackPanel>
@@ -458,7 +458,7 @@
                                 <TextBox x:Name="SharePortBox" Width="70" VerticalAlignment="Center" MaxLength="5"
                                          IsEnabled="{Binding #ShareDirectBox.IsChecked}" ToolTip.Tip="{x:Static loc:Strings.SettingsSharePortTip}" />
                             </WrapPanel>
-                            <TextBlock Classes="OptionHelp" Text="{x:Static loc:Strings.SettingsShareDirectHelp}" Margin="20,0,0,14" />
+                            <TextBlock Classes="OptionHelp" Text="{x:Static loc:PlatformText.SettingsShareDirectHelp}" Margin="20,0,0,14" />
                             <Grid Margin="0,0,0,4">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" MinWidth="140" />

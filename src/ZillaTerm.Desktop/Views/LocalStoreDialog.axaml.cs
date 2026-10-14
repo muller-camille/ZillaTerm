@@ -43,7 +43,7 @@ public partial class LocalStoreDialog : DialogWindow
         _remembered = remembered;
         IntroText.Text = mode switch
         {
-            Mode.Create => Strings.LocalStoreCreateIntro,
+            Mode.Create => PlatformText.LocalStoreCreateIntro,
             Mode.Unlock => Strings.LocalStoreUnlockIntro,
             _ => Strings.LocalStoreChangeIntro,
         };
