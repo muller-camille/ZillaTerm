@@ -14,21 +14,29 @@ public sealed partial class AccessKeysTests
     private static readonly XNamespace Wpf = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
     private static readonly XNamespace Xaml = "http://schemas.microsoft.com/winfx/2006/xaml";
 
-    private static readonly string[] SessionActions =
-        ["MenuTabReconnect", "MenuTabDuplicate", "MenuTabDetach", "MenuTabAddParallel", "MenuTabRemoveParallel", "MenuAddToMyServers",
-            "MenuTabShare", "MenuTabShareManage", "MenuTabClose"];
-
     /// <summary>Menus construits dans le code (MainWindow.Ssh.cs, TerminalView.cs, MainWindow.Parallel.cs…).</summary>
     private static readonly (string Name, string[] Keys)[] CodeMenus =
     [
-        ("TabMenu", [.. SessionActions, "MenuTerminalSearch", "MenuTerminalSave", "MenuTabCloseOthers"]),
-        ("TerminalMenu", [.. SessionActions, "MenuTerminalCopy", "MenuTerminalPaste", "MenuTerminalSelectAll", "MenuTerminalSearch",
-            "MenuTerminalSave", "MenuTerminalClear", "MenuTerminalFont"]),
+        .. SessionMenus("MenuTabShare"),
+        .. SessionMenus("MenuTabShareManage"),
         ("FontMenu", ["MenuFontBigger", "MenuFontSmaller", "MenuFontDefault"]),
         ("ParallelTabMenu", ["MenuTabDetach", "ParallelClose"]),
         ("KeePassConnectAs", ["MenuKeePassSsh", "MenuKeePassRdp", "MenuKeePassVnc", "MenuKeePassSftp", "MenuKeePassFtp"]),
         ("TailFiles", ["TailFilesAll", "TailFilesForget"]),
     ];
+
+    /// <summary>
+    /// Menus d'une session (onglet, terminal). « Partager la session… » devient « Gérer le partage… » une fois la session
+    /// partagée : une seule entrée, dont chaque libellé ne doit pas reprendre la lettre d'une autre.
+    /// </summary>
+    private static IEnumerable<(string Name, string[] Keys)> SessionMenus(string share)
+    {
+        string[] actions = ["MenuTabReconnect", "MenuTabDuplicate", "MenuTabDetach", "MenuTabAddParallel", "MenuTabRemoveParallel",
+            "MenuAddToMyServers", share, "MenuTabClose"];
+        yield return ($"TabMenu/{share}", [.. actions, "MenuTerminalSearch", "MenuTerminalSave", "MenuTabCloseOthers"]);
+        yield return ($"TerminalMenu/{share}", [.. actions, "MenuTerminalCopy", "MenuTerminalPaste", "MenuTerminalSelectAll", "MenuTerminalSearch",
+            "MenuTerminalSave", "MenuTerminalClear", "MenuTerminalFont"]);
+    }
 
     [Fact]
     public void NoMenuOrWindowSharesAnAccessKey()

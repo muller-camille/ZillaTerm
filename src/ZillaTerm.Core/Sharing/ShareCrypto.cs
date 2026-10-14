@@ -183,7 +183,8 @@ public static class ShareHandshake
             });
             return key.DeriveRawSecretAgreement(other.PublicKey);
         }
-        catch (CryptographicException)
+        // Point hors de la courbe : CryptographicException avec OpenSSL, PlatformNotSupportedException avec CNG (Windows).
+        catch (Exception e) when (e is CryptographicException or PlatformNotSupportedException)
         {
             return null;
         }

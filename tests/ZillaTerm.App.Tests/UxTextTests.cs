@@ -182,7 +182,7 @@ public sealed partial class UxTextTests
             .Select(c => (string?)c.Attribute("Content") ?? (string?)c.Element(Wpf + "AccessText")?.Attribute("Text") ?? (string?)c.Element(Wpf + "TextBlock")?.Attribute("Text"))
             .Select(v => StaticKey().Match(v ?? "").Groups[1].Value)
             .ToList();
-        Assert.Equal(12, keys.Count);
+        Assert.Equal(14, keys.Count);
         foreach (var suffix in new[] { "", ".fr", ".it" })
         {
             var texts = XDocument.Load(Path.Combine(app, "Localization", $"Strings{suffix}.resx")).Root!.Elements("data")
