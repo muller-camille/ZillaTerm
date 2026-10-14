@@ -19,6 +19,20 @@
             <views:AnnouncedText x:Name="StatusText" TextWrapping="Wrap" VerticalAlignment="Center" />
         </DockPanel>
 
+        <!-- Rappel arrivé à son heure (Paramètres › Rappels pendant l'intervention) : reste affiché jusqu'à « Vu », noté
+             au journal. Jamais de focus déplacé : la frappe en cours ne part pas ailleurs. -->
+        <Border x:Name="ReminderBanner" DockPanel.Dock="Top" Style="{StaticResource WarningBanner}" Margin="0,0,0,10" Visibility="Collapsed">
+            <DockPanel>
+                <Button x:Name="ReminderSeenButton" DockPanel.Dock="Right" Click="OnReminderSeen" Margin="8,0,0,0" VerticalAlignment="Center"
+                        MinWidth="0" Padding="10,1" ToolTip="{x:Static loc:Strings.InterventionReminderSeenTip}"
+                        AutomationProperties.HelpText="{x:Static loc:Strings.InterventionReminderSeenTip}">
+                    <AccessText Text="{x:Static loc:Strings.InterventionReminderSeen}" />
+                </Button>
+                <views:AnnouncedText x:Name="ReminderText" TextWrapping="Wrap" FontWeight="SemiBold" VerticalAlignment="Center"
+                                     Foreground="{DynamicResource WarningBrush}" AutomationProperties.LiveSetting="Assertive" />
+            </DockPanel>
+        </Border>
+
         <Label DockPanel.Dock="Top" Target="{Binding ElementName=TitleBox}" Padding="0,0,0,3" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"
                Content="{x:Static loc:Strings.InterventionTitleLabel}" />
         <Grid DockPanel.Dock="Top" Margin="0,0,0,10">

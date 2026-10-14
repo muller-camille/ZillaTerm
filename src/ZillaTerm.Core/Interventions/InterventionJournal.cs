@@ -64,9 +64,45 @@ public sealed record InterventionRecording(string Path, IReadOnlyList<Interventi
 
     public DateTime? End => Entries.Count > 0 ? Entries[^1].Time : null;
 
-    /// <summary>Dernier titre donné à l'intervention ; null s'il n'y en a pas ou s'il a été effacé.</summary>
-    public string? Title => Entries.LastOrDefault(e => e.Kind == InterventionKind.Title) is { Text.Length: > 0 } title ? title.Text : null;
+    /// <summary>
+    /// Enregistrements réunis dans un même rapport (<see cref="Merge"/>), dans l'ordre ; vide pour un seul enregistrement.
+    /// </summary>
+    public IReadOnlyList<InterventionRecording> Parts { get; init; } = [];
+
+    /// <summary>
+    /// Dernier titre donné à l'intervention ; null s'il n'y en a pas ou s'il a été effacé. Enregistrements réunis : leurs
+    /// titres, chacun une fois.
+    /// </summary>
+    public string? Title => Parts.Count > 1
+        ? Parts.Select(p => p.Title).OfType<string>().Distinct(StringComparer.Ordinal).ToList() is { Count: > 0 } titles ? string.Join(" / ", titles) : null
+        : Entries.LastOrDefault(e => e.Kind == InterventionKind.Title) is { Text.Length: > 0 } title ? title.Text : null;
+
+    /// <summary>
+    /// Plusieurs enregistrements dans un même rapport (une intervention sur la nuit et le matin) : leurs événements à la
+    /// suite, du plus ancien au plus récent. Abîmé ou interrompu si l'un d'eux l'est.
+    /// </summary>
+    public static InterventionRecording Merge(IReadOnlyList<InterventionRecording> recordings)
+    {
+        var parts = recordings.Where(r => r.Entries.Count > 0).OrderBy(r => r.Start).ToList();
+        if (parts.Count == 0)
+        {
+            return recordings.Count > 0 ? recordings[0] : new InterventionRecording("", [], false, true);
+        }
+
+        if (parts.Count == 1)
+        {
+            return parts[0];
+        }
+
+        return new InterventionRecording(parts[0].Path, parts.SelectMany(p => p.Entries).ToList(), parts.Any(p => p.Damaged), parts.Any(p => p.Unfinished))
+        {
+            Parts = parts,
+        };
+    }
 }
+
+/// <summary>Enregistrement interrompu (ZillaTerm arrêté pendant l'intervention) et l'heure UTC de son dernier événement.</summary>
+public sealed record UnfinishedIntervention(InterventionFile File, DateTime LastEvent);
 
 /// <summary>Intervention enregistrée (fichier), pour la liste des interventions précédentes.</summary>
 /// <param name="Title">Titre de l'intervention (voir <see cref="InterventionJournal.ReadTitle"/>) ; null s'il n'y en a pas.</param>
@@ -126,8 +162,14 @@ public sealed class InterventionJournal : IDisposable
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
+    /// <summary>
+    /// Âge au plus (dernière écriture) d'un enregistrement interrompu que ZillaTerm propose de reprendre au démarrage : au-delà,
+    /// ce n'est plus la même intervention.
+    /// </summary>
+    public static readonly TimeSpan ResumeWindow = TimeSpan.FromHours(12);
+
     private readonly ISecretProtector _protector;
-    private readonly string _id = Guid.NewGuid().ToString("N");
+    private readonly string _id;
     private readonly object _lock = new();
     private readonly List<InterventionEntry> _pending = [];
     private readonly Timer _timer;
@@ -138,13 +180,16 @@ public sealed class InterventionJournal : IDisposable
     private bool _terminalCapped;
     private long _written;
 
-    private InterventionJournal(string path, FileStream file, ISecretProtector protector, long terminalTextLimit)
+    private InterventionJournal(string path, FileStream file, ISecretProtector protector, long terminalTextLimit, string? id = null,
+        long sequence = 0)
     {
         Path = path;
         _file = file;
         _written = file.Length;
         _protector = protector;
         _terminalTextLimit = terminalTextLimit;
+        _id = id ?? Guid.NewGuid().ToString("N");
+        _sequence = sequence;
         _timer = new Timer(_ => Flush(), null, FlushInterval, FlushInterval);
     }
 
@@ -208,6 +253,123 @@ public sealed class InterventionJournal : IDisposable
         file.Write(MagicV3);
         file.Flush(flushToDisk: true);
         return new InterventionJournal(path, file, protector, terminalTextLimit);
+    }
+
+    /// <summary>
+    /// Reprend un enregistrement interrompu (ZillaTerm arrêté pendant l'intervention) : la suite s'écrit dans le même
+    /// journal, avec le même identifiant et les numéros de bloc suivants ; un seul rapport couvre l'intervention. Un bloc
+    /// coupé en fin de fichier (arrêt pendant l'écriture) est retiré : il ne se relirait pas, ni ce qui le suivrait.
+    /// </summary>
+    /// <param name="recording">Ce que le journal contenait déjà.</param>
+    /// <exception cref="InvalidDataException">Pas un journal du format actuel, ou aucun bloc lisible.</exception>
+    /// <exception cref="IOException">Fichier inaccessible.</exception>
+    public static InterventionJournal Resume(string path, ISecretProtector protector, out InterventionRecording recording,
+        long terminalTextLimit = MaxTerminalText)
+    {
+        var file = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+        try
+        {
+            var read = ReadAll(file, path, protector);
+            if (read.Format != 3 || read.Id is null)
+            {
+                throw new InvalidDataException("Intervention journal cannot be resumed.");
+            }
+
+            file.SetLength(read.End);
+            file.Seek(0, SeekOrigin.End);
+            recording = read.Recording;
+            var journal = new InterventionJournal(path, file, protector, terminalTextLimit, read.Id, read.LastSequence + 1);
+            // Le plafond du texte des terminaux vaut pour toute l'intervention.
+            journal._terminalText = recording.Entries.Where(e => e.Kind == InterventionKind.Terminal).Sum(e => (long)e.Text.Length);
+            journal._terminalCapped = journal._terminalText > terminalTextLimit;
+            journal.Count = recording.Entries.Count(e => e.Kind != InterventionKind.Screen);
+            return journal;
+        }
+        catch
+        {
+            file.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Enregistrement interrompu à proposer de reprendre au démarrage : le plus récent du dossier, s'il n'a pas d'événement
+    /// de fin et a été écrit il y a moins de <see cref="ResumeWindow"/>. Seul son dernier bloc est déchiffré.
+    /// </summary>
+    public static UnfinishedIntervention? FindUnfinished(string directory, ISecretProtector protector, DateTime now)
+    {
+        try
+        {
+            if (List(directory, protector) is not [var latest, ..]
+                || now - File.GetLastWriteTimeUtc(latest.Path) > ResumeWindow)
+            {
+                return null;
+            }
+
+            return LastEventIfUnfinished(latest.Path, protector) is { } last ? new UnfinishedIntervention(latest, last) : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Journal sans événement de fin, du format actuel (qui seul se reprend).</summary>
+    internal static bool IsUnfinished(string path, ISecretProtector protector) => LastEventIfUnfinished(path, protector) is not null;
+
+    /// <summary>
+    /// Heure (UTC) du dernier événement d'un journal sans événement de fin, du format actuel ; null s'il est fini, vide ou
+    /// d'un autre format. Les longueurs des blocs sont parcourues sans les lire, seul le dernier bloc entier est déchiffré ;
+    /// illisible, l'heure est celle de la dernière écriture du fichier.
+    /// </summary>
+    private static DateTime? LastEventIfUnfinished(string path, ISecretProtector protector)
+    {
+        using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        var magic = new byte[MagicV3.Length];
+        if (file.ReadAtLeast(magic, magic.Length, throwOnEndOfStream: false) < magic.Length || !magic.AsSpan().SequenceEqual(MagicV3))
+        {
+            return null;
+        }
+
+        long last = -1;
+        int lastSize = 0;
+        var length = new byte[4];
+        while (file.ReadAtLeast(length, 4, throwOnEndOfStream: false) == 4)
+        {
+            int size = BinaryPrimitives.ReadInt32LittleEndian(length);
+            if (size <= 0 || size > file.Length - file.Position)
+            {
+                break;
+            }
+
+            last = file.Position;
+            lastSize = size;
+            file.Seek(size, SeekOrigin.Current);
+        }
+
+        if (last < 0 || lastSize > MaxChunk)
+        {
+            // Rien d'écrit après l'en-tête, ou dernier bloc trop gros pour être relu : rien à reprendre.
+            return null;
+        }
+
+        file.Seek(last, SeekOrigin.Begin);
+        var data = new byte[lastSize];
+        file.ReadExactly(data);
+        try
+        {
+            byte[] plain = protector.Unprotect(data);
+            var (_, entries) = ReadBinaryChunk(plain, compressed: true);
+            Array.Clear(plain);
+            return entries is not { Count: > 0 } ? File.GetLastWriteTimeUtc(path)
+                : entries[^1].Kind != InterventionKind.Stopped ? entries[^1].Time
+                : null;
+        }
+        catch (Exception e) when (e is System.Security.Cryptography.CryptographicException or JsonException or InvalidDataException)
+        {
+            // Dernier bloc illisible : l'arrêt l'a sans doute abîmé, l'intervention n'a pas de fin lisible.
+            return File.GetLastWriteTimeUtc(path);
+        }
     }
 
     /// <summary>Ajoute un événement (depuis n'importe quel fil).</summary>
@@ -483,6 +645,17 @@ public sealed class InterventionJournal : IDisposable
     public static InterventionRecording Read(string path, ISecretProtector protector)
     {
         using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        return ReadAll(file, path, protector).Recording;
+    }
+
+    /// <summary>
+    /// Journal relu depuis le début : ses événements, son format, son identifiant, le numéro de son dernier bloc lu et la fin
+    /// du dernier bloc entier (un bloc coupé peut suivre).
+    /// </summary>
+    private sealed record JournalRead(InterventionRecording Recording, int Format, string? Id, long LastSequence, long End);
+
+    private static JournalRead ReadAll(FileStream file, string path, ISecretProtector protector)
+    {
         var magic = new byte[MagicV3.Length];
         int format = file.ReadAtLeast(magic, magic.Length, throwOnEndOfStream: false) < magic.Length ? 0
             : magic.AsSpan().SequenceEqual(MagicV3) ? 3
@@ -498,6 +671,7 @@ public sealed class InterventionJournal : IDisposable
         bool damaged = false;
         string? id = null;
         long expected = 0;
+        long end = file.Position;
         var length = new byte[4];
         while (true)
         {
@@ -514,6 +688,7 @@ public sealed class InterventionJournal : IDisposable
                 break;
             }
 
+            end = file.Position + size;
             if (size > MaxChunk)
             {
                 // Bloc trop gros pour être relu (écrit par une version qui ne bornait pas les blocs) : sauté, la suite
@@ -557,7 +732,8 @@ public sealed class InterventionJournal : IDisposable
             entries.AddRange(chunkEntries);
         }
 
-        return new InterventionRecording(path, entries, damaged, entries.Count == 0 || entries[^1].Kind != InterventionKind.Stopped);
+        var recording = new InterventionRecording(path, entries, damaged, entries.Count == 0 || entries[^1].Kind != InterventionKind.Stopped);
+        return new JournalRead(recording, format, id, expected - 1, end);
     }
 
     /// <summary>Bloc du format 1 : JSON seul, images en base64.</summary>

@@ -19,8 +19,8 @@ namespace ZillaTerm.Core.Interventions;
 /// </remarks>
 internal static class InterventionScreenPlayer
 {
-    /// <summary>Un enregistrement d'écran : une session, ses images dans l'ordre.</summary>
-    internal sealed record Recording(int Stream, string Source, List<InterventionEntry> Frames);
+    /// <summary>Un enregistrement d'écran : une session, ses images dans l'ordre, et les événements de son journal.</summary>
+    internal sealed record Recording(int Stream, string Source, List<InterventionEntry> Frames, IReadOnlyList<InterventionEntry> Journal);
 
     /// <summary>Images d'écran du journal, par session, dans l'ordre de leur premier passage.</summary>
     internal static List<Recording> Recordings(IReadOnlyList<InterventionEntry> entries)
@@ -36,7 +36,7 @@ internal static class InterventionScreenPlayer
 
             if (!byStream.TryGetValue(header.Stream, out var recording))
             {
-                recording = new Recording(header.Stream, entry.Source, []);
+                recording = new Recording(header.Stream, entry.Source, [], entries);
                 byStream[header.Stream] = recording;
                 order.Add(recording);
             }
@@ -56,17 +56,16 @@ internal static class InterventionScreenPlayer
     /// Section des écrans enregistrés : un lecteur par session, avec sous le curseur l'activité et les notes prises pendant
     /// la session (repères qui y mènent), puis les textes du lecteur et le script.
     /// </summary>
-    /// <param name="all">Tous les événements : la fin de chaque session (fermeture…) prolonge sa ligne de temps.</param>
     /// <param name="notes">Notes de l'intervention, modifications appliquées.</param>
-    internal static void Append(StringBuilder html, List<Recording> recordings, IReadOnlyList<InterventionEntry> all,
-        IReadOnlyList<InterventionEntry> notes, InterventionReportText text, Func<DateTime, string> local, TimeZoneInfo zone, CultureInfo culture)
+    internal static void Append(StringBuilder html, List<Recording> recordings, IReadOnlyList<InterventionEntry> notes, InterventionReportText text, Func<DateTime, string> local, TimeZoneInfo zone, CultureInfo culture)
     {
         html.Append("<h2>").Append(Encode(text.Screens)).Append("</h2>\n<p class=\"help\">").Append(Encode(text.ScreenHelp)).Append("</p>\n");
         var prefix = new byte[8];
         foreach (var recording in recordings)
         {
             var first = recording.Frames[0].Time;
-            var last = End(recording, all);
+            // La fin de chaque session (fermeture…) dans son journal prolonge sa ligne de temps.
+            var last = End(recording, recording.Journal);
             long bytes = recording.Frames.Sum(f => (long)f.Image!.Length);
             var startLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(first, DateTimeKind.Utc), zone);
             ScreenFrameHeader.TryRead(recording.Frames.First(f => ScreenFrameHeader.TryRead(f.Image, out var h) && h.Key).Image, out var key);

@@ -956,6 +956,17 @@ reperibilità o no:
 
   All'interruzione della registrazione l'inserimento è in grigio e la cronologia resta visibile fino a **«Chiudi la
   cronologia»** (la scheda scompare) o alla registrazione successiva; il rapporto si esporta dalla finestra Intervento.
+- **Avvisi a tempo** (Impostazioni › Generale, o file di ambiente del team): una riga per avviso, i minuti dall'inizio
+  della registrazione poi il testo («30 Scalare al livello 3»), al massimo 10. La barra di stato mostra il prossimo («●
+  Intervento registrato · Scalare al livello 3 tra 12 min»); all'ora indicata un banner appare in cima alla scheda
+  «Intervento», la barra di stato lo dice e il pulsante di ZillaTerm lampeggia nella barra delle applicazioni, senza
+  prendere la tastiera (ciò che si sta digitando non va altrove). L'avviso è annotato nel registro, e **«Visto»** annota
+  che l'avete visto.
+- **ZillaTerm chiuso durante la registrazione** (arresto anomalo, computer riavviato): all'avvio successivo, entro 12
+  ore, ZillaTerm propone **«Riprendi la registrazione»**: il seguito si aggiunge allo stesso registro (titolo,
+  cronologia e avvisi ripresi; un solo rapporto), dopo un evento che dice chi ha ripreso e da quando nulla è stato
+  conservato. **«Chiudi l'intervento»** lo termina così com'è (la sua durata non cambia); **«Più tardi»** lo lascia, e
+  la domanda torna all'avvio successivo.
 - **«Interventi registrati»**: l'elenco delle registrazioni, dalla più recente, con il loro titolo. All'interruzione
   l'intervento resta selezionato: **«Esporta il rapporto…»** (o doppio clic) ne fa una pagina HTML: riepilogo,
   cronologia, blocchi di testo dei terminali e catture, da allegare al resoconto dell'intervento. Ogni schermo
@@ -966,6 +977,16 @@ reperibilità o no:
   schermo immobile vi figura. Il lettore è l'unico script della pagina, autorizzato dalla sua impronta; richiede un
   browser recente (Edge, Chrome, Firefox). Un'immagine mancante (registro danneggiato) blocca lo schermo fino alla
   prossima immagine completa, con un avviso. **«Elimina…»** cancella una registrazione terminata.
+
+  Più interventi scelti insieme (`Ctrl+clic`, `Maiusc+clic`) danno **un solo rapporto**: i loro eventi uno dopo l'altro
+  e, in testa, l'elenco delle registrazioni (un intervento sulla notte e la mattina, ad esempio); si eliminano anche
+  insieme. **«Maschera ciò che sembra un segreto»** (selezionato per impostazione predefinita) sostituisce nel rapporto,
+  con «[mascherato]», le password (`password=…`, `"client_secret": "…"`, `--db-password=…`, quella di un indirizzo
+  `https://jdoe:…@srv01.corp.local`), il corpo delle chiavi private (`-----BEGIN … PRIVATE KEY-----`), le intestazioni
+  `Bearer` e `Basic`, i token di formato noto (JWT, GitHub, GitLab, Slack, AWS, Google) e gli hash di password (`$6$…`
+  di /etc/shadow); il rapporto dice quanti passaggi sono stati mascherati. Le immagini (catture, schermi registrati) non
+  sono mascherate, e il registro cifrato conserva tutto. Il mascheramento è una rete di sicurezza: rileggete il rapporto
+  prima di trasmetterlo.
 
 Il registro è **cifrato solo per il vostro account Windows** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (anche
 il titolo, in un file `.title` accanto, per l'elenco), blocco per blocco durante la registrazione, con il testo
@@ -1056,6 +1077,7 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | Generale | Tema | Come Windows, Chiaro o Scuro; applicato subito (il contrasto elevato di Windows ha la precedenza) | come Windows |
 | Generale | Promemoria di reperibilità | Buone pratiche e numeri di emergenza mostrati nella finestra «Intervento»; testo semplice, diffuso dal file di ambiente (vedi [Intervento](#8-intervento-registrazione-e-promemoria-di-reperibilità)) | vuoto |
 | Generale | File del promemoria | File di testo (di solito su una condivisione di rete) riletto a ogni apertura della finestra «Intervento», mostrato al posto del promemoria qui sopra; diffuso dal file di ambiente | vuoto |
+| Generale | Avvisi a tempo | Una riga per avviso: minuti dall'inizio della registrazione, poi il testo («30 Scalare al livello 3»); mostrati nella scheda «Intervento» e nella barra di stato, annotati nel registro; diffusi dal file di ambiente | vuoto |
 | Generale | Etichette dei server | Etichette assegnate ai server di «I miei server» (nome, colore): «Aggiungi un'etichetta», «Elimina l'etichetta», celle modificabili; la ridenominazione si applica in «I miei server», l'eliminazione toglie l'etichetta dai server; diffuse dal file di ambiente (vedi [Etichette](#etichette-prod-qa-dev)) | PROD (rosso), QA (blu), DEV (verde) |
 | Generale | Lingua dell'interfaccia | Français, English, Italiano o lingua del sistema; applicata dopo la disconnessione da CyberArk o al prossimo avvio | lingua di Windows (inglese se non è tradotta) |
 | Generale | File centrale | File di ambiente del team su una condivisione di rete, riletto a ogni avvio; le sue modifiche vengono mostrate prima di essere applicate (vedi [Ambiente condiviso](#ambiente-condiviso)) | vuoto |
@@ -1086,9 +1108,10 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 
 ### Ambiente condiviso
 
-Per dare ZillaTerm a un collega con la configurazione del team (indirizzo del PVWA, metodo di accesso, PSMP
-predefinito e per dominio, componente degli account Windows e componenti per piattaforma, elenchi condivisi, chiavi
-dei PSMP, promemoria di reperibilità (testo o file), etichette dei server, alcune opzioni), senza niente di personale né alcuna password:
+Per dare ZillaTerm a un collega con la configurazione del team (indirizzo del PVWA, metodo di accesso, PSMP predefinito
+e per dominio, componente degli account Windows e componenti per piattaforma, elenchi condivisi, chiavi dei PSMP,
+promemoria di reperibilità (testo o file), avvisi a tempo, etichette dei server, alcune opzioni), senza niente di
+personale né alcuna password:
 
 1. **Esportare**: pulsante «Impostazioni» → «Esporta l'ambiente…» salva `ZillaTerm.env.json`.
 2. **Accanto all'eseguibile**: metti questo file accanto a `ZillaTerm.exe` (ad esempio nello stesso zip).
@@ -1116,7 +1139,8 @@ se è cambiato. Un'impostazione vuota sul computer che esporta non viene esporta
 importa. I percorsi (elenchi condivisi, file centrale) sono completi: `C:\…` o `\\server\…`.
 Il tuo nome utente, «I miei server» e le tue sessioni recenti non vengono mai toccati; gli elenchi
 condivisi si aggiungono senza togliere i tuoi. Le etichette del file sostituiscono quelle del computer; i server
-mantengono la loro (un'etichetta assente dal file appare allora in grigio).
+mantengono la loro (un'etichetta assente dal file appare allora in grigio). Anche gli avvisi a tempo del file
+(`"InterventionReminders": [{ "Minutes": 30, "Text": "Scalare al livello 3" }]`) sostituiscono quelli del computer.
 
 Tutte le preferenze sono salvate in `%APPDATA%\ZillaTerm\settings.json`: lingua, indirizzo del PVWA, metodo e
 nome utente di accesso, impostazioni qui sopra, «I miei server», le loro cartelle e i file seguiti su di essi

@@ -283,6 +283,23 @@ pixels) :
 - **Temps actif par session** (clavier et souris dans l'onglet, jamais les touches) pour le tableau « Serveurs
   touchés ».
 
+### Rapport : commandes, fichiers modifiés, texte pour le ticket
+
+- **Commandes tapées** en liste à part (heure, serveur), sans leur retour : ce qu'on recopie dans le ticket.
+- **Fichiers modifiés avant / après** : un fichier modifié par « Modifier » dans l'onglet Fichiers, sa différence dans
+  le rapport (fichiers texte, taille plafonnée, masquage des secrets appliqué).
+- **« Copier le résumé »** : titre, période, serveurs, notes et transferts en texte brut, à coller dans le ticket.
+- **Titre proposé depuis le ticket PSM** : le ticket d'une connexion PSM (déjà au journal) proposé comme titre d'un
+  enregistrement qui n'en a pas.
+- **Jalons d'incident** : une note marquée « Début », « Cause trouvée », « Corrigé », « Validé » ; le rapport calcule les
+  délais et les pose sur la ligne de temps du lecteur.
+
+### Rapport : retirer un passage, rapport protégé
+
+- **Retirer un passage avant l'export** : des blocs de l'historique exclus du rapport, qui dit qu'un passage a été retiré
+  et à quelle heure.
+- **Rapport protégé par mot de passe** : un seul fichier HTML déchiffré par le navigateur à l'ouverture.
+
 ## KeePass (accès d'urgence)
 
 - Coffres chiffrés en Twofish.

@@ -959,6 +959,17 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
 
   À l'arrêt de l'enregistrement, la saisie est grisée et l'historique reste affiché jusqu'à **« Fermer l'historique »**
   (l'onglet disparaît) ou au prochain enregistrement ; le rapport s'exporte depuis la fenêtre Intervention.
+- **Rappels pendant l'intervention** (Paramètres › Général, ou fichier d'environnement de l'équipe) : une ligne par
+  rappel, les minutes depuis le début de l'enregistrement puis le texte (« 30 Escalader au N3 »), 10 au plus. La barre
+  d'état montre le prochain (« ● Intervention enregistrée · Escalader au N3 dans 12 min ») ; à l'heure dite, un bandeau
+  s'affiche en tête de l'onglet « Intervention », la barre d'état le dit et le bouton de ZillaTerm clignote dans la
+  barre des tâches, sans prendre le clavier (la frappe en cours ne part pas ailleurs). Le rappel est noté au journal, et
+  **« Vu »** note que vous l'avez vu.
+- **ZillaTerm arrêté pendant l'enregistrement** (plantage, poste redémarré) : au lancement suivant, dans les 12 heures,
+  ZillaTerm propose **« Reprendre l'enregistrement »** : la suite s'ajoute au même journal (titre, historique et rappels
+  repris ; un seul rapport), après un événement qui dit qui a repris et depuis quand rien n'a été gardé. **« Clore
+  l'intervention »** la termine telle quelle (sa durée ne change pas) ; **« Plus tard »** la laisse, et la question
+  revient au lancement suivant.
 - **« Interventions enregistrées »** : la liste des enregistrements, du plus récent au plus ancien, avec leur titre. À
   l'arrêt, l'intervention reste sélectionnée : **« Exporter le rapport… »** (ou double-clic) en fait une page HTML :
   résumé, chronologie, blocs de texte des terminaux et captures, à joindre au compte rendu d'intervention. Les écrans
@@ -969,6 +980,16 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   lecteur est le seul script de la page, autorisé par son empreinte ; il demande un navigateur récent (Edge, Chrome,
   Firefox). Une image manquante (journal abîmé) fige l'écran jusqu'à la prochaine image complète, avec un avis.
   **« Supprimer… »** efface un enregistrement terminé.
+
+  Plusieurs interventions choisies ensemble (`Ctrl+clic`, `Maj+clic`) donnent **un seul rapport** : leurs événements à
+  la suite et, en tête, la liste des enregistrements (une intervention sur la nuit et le matin, par exemple) ; elles se
+  suppriment aussi ensemble. **« Masquer ce qui ressemble à un secret »** (coché par défaut) remplace dans le rapport,
+  par « [masqué] », les mots de passe (`password=…`, `"client_secret": "…"`, `--db-password=…`, celui d'une adresse
+  `https://jdoe:…@srv01.corp.local`), le corps des clés privées (`-----BEGIN … PRIVATE KEY-----`), les en-têtes `Bearer`
+  et `Basic`, les jetons de format connu (JWT, GitHub, GitLab, Slack, AWS, Google) et les empreintes de mot de passe
+  (`$6$…` de /etc/shadow) ; le rapport dit combien de passages l'ont été. Les images (captures, écrans enregistrés) ne
+  sont pas masquées, et le journal chiffré garde tout. Le masquage est un filet : relisez le rapport avant de le
+  transmettre.
 
 Le journal est **chiffré pour votre compte Windows seul** (DPAPI) dans `%LOCALAPPDATA%\ZillaTerm\Interventions` (le
 titre aussi, dans un fichier `.title` à côté, pour la liste), bloc par bloc au fil de l'enregistrement, son texte
@@ -1059,6 +1080,7 @@ disent sous leur case (« ⚠ Effet : … »).
 | Général | Thème | Comme Windows, Clair ou Sombre ; appliqué tout de suite (le contraste élevé de Windows l'emporte) | comme Windows |
 | Général | Consignes d'astreinte | Bonnes pratiques et numéros d'urgence affichés dans la fenêtre « Intervention » ; texte brut, diffusé par le fichier d'environnement (voir [Intervention](#8-intervention--enregistrement-et-consignes-dastreinte)) | vide |
 | Général | Fichier des consignes | Fichier texte (partage réseau en général) relu à chaque ouverture de la fenêtre « Intervention », affiché à la place des consignes ci-dessus ; diffusé par le fichier d'environnement | vide |
+| Général | Rappels pendant l'intervention | Une ligne par rappel : minutes depuis le début de l'enregistrement, puis le texte (« 30 Escalader au N3 ») ; montrés dans l'onglet « Intervention » et la barre d'état, notés au journal ; diffusés par le fichier d'environnement | vide |
 | Général | Étiquettes des serveurs | Étiquettes données aux serveurs de « Mes serveurs » (nom, couleur) : « Ajouter une étiquette », « Supprimer l'étiquette », cellules modifiables ; renommer suit dans « Mes serveurs », supprimer retire l'étiquette des serveurs ; diffusées par le fichier d'environnement (voir [Étiquettes](#étiquettes-prod-qa-dev)) | PROD (rouge), QA (bleu), DEV (vert) |
 | Général | Langue de l'interface | Français, English, Italiano ou langue du système ; appliquée après la déconnexion de CyberArk ou au prochain démarrage | langue de Windows (anglais si elle n'est pas traduite) |
 | Général | Fichier central | Fichier d'environnement de l'équipe sur un partage réseau, relu à chaque démarrage ; ses changements sont montrés avant d'être appliqués (voir [Environnement partagé](#environnement-partagé)) | vide |
@@ -1089,9 +1111,10 @@ disent sous leur case (« ⚠ Effet : … »).
 
 ### Environnement partagé
 
-Pour donner ZillaTerm à un collègue avec la configuration de l'équipe (adresse du PVWA, méthode de connexion,
-PSMP par défaut et par domaine, composant des comptes Windows et composants par plateforme, listes partagées, clés
-des PSMP, consignes d'astreinte (texte ou fichier), étiquettes des serveurs, quelques options), sans rien de personnel ni aucun mot de passe :
+Pour donner ZillaTerm à un collègue avec la configuration de l'équipe (adresse du PVWA, méthode de connexion, PSMP par
+défaut et par domaine, composant des comptes Windows et composants par plateforme, listes partagées, clés des PSMP,
+consignes d'astreinte (texte ou fichier), rappels pendant l'intervention, étiquettes des serveurs, quelques options),
+sans rien de personnel ni aucun mot de passe :
 
 1. **Exporter** : bouton « Paramètres » → « Exporter l'environnement… » enregistre `ZillaTerm.env.json`.
 2. **À côté de l'exécutable** : posez ce fichier à côté de `ZillaTerm.exe` (par exemple dans le même zip). Au
@@ -1105,20 +1128,20 @@ des PSMP, consignes d'astreinte (texte ou fichier), étiquettes des serveurs, qu
 
 Chaque fois, une fenêtre montre ce qui va changer (« ancienne valeur → nouvelle valeur ») et l'empreinte SHA-256 du
 fichier ; « Ne pas appliquer » est le choix par défaut. Le PVWA et les PSMP reçoivent votre mot de passe CyberArk :
-quand le fichier change leur adresse, ajoute une clé de serveur ou une liste partagée sur un serveur réseau (Windows
-s'y authentifie à chaque démarrage ; le serveur est nommé), il faut cocher « J'ai vérifié… » avant d'appliquer. Une
-clé de serveur déjà acceptée sur le poste n'est jamais remplacée par un fichier (elle est signalée). Seules les clés
-des PSMP (ceux du poste ou du fichier) sont reprises : celle d'un autre serveur, d'accès d'urgence par exemple, est
-ignorée et se vérifie à sa première connexion. Une clé reprise d'un fichier ne vaut que pour les connexions au PSMP :
-une connexion directe au même serveur (KeePass) fait toujours vérifier sa clé. Dans Paramètres, ces clés
-apparaissent sous la forme `psmp://hôte:port`.
-Un fichier écrit en « UTF-8 avec BOM » (PowerShell 5.1 : `Set-Content -Encoding UTF8`) est accepté, comme une liste
-partagée. Un fichier invalide (adresse en http, nom de composant incorrect…) est refusé en entier. Un fichier déjà proposé
-n'est reproposé que s'il a changé. Un réglage vide sur le poste qui exporte n'est pas exporté : il n'efface rien
-chez celui qui importe. Les chemins (listes partagées, fichier central) sont complets : `C:\…` ou `\\serveur\…`.
-Votre identifiant, « Mes serveurs » et vos sessions récentes ne sont jamais
-touchés ; les listes partagées s'ajoutent sans retirer les vôtres. Les étiquettes du fichier remplacent celles du
-poste ; vos serveurs gardent la leur (une étiquette absente du fichier s'affiche alors en gris).
+quand le fichier change leur adresse, ajoute une clé de serveur ou une liste partagée sur un serveur réseau (Windows s'y
+authentifie à chaque démarrage ; le serveur est nommé), il faut cocher « J'ai vérifié… » avant d'appliquer. Une clé de
+serveur déjà acceptée sur le poste n'est jamais remplacée par un fichier (elle est signalée). Seules les clés des PSMP
+(ceux du poste ou du fichier) sont reprises : celle d'un autre serveur, d'accès d'urgence par exemple, est ignorée et se
+vérifie à sa première connexion. Une clé reprise d'un fichier ne vaut que pour les connexions au PSMP : une connexion
+directe au même serveur (KeePass) fait toujours vérifier sa clé. Dans Paramètres, ces clés apparaissent sous la forme
+`psmp://hôte:port`. Un fichier écrit en « UTF-8 avec BOM » (PowerShell 5.1 : `Set-Content -Encoding UTF8`) est accepté,
+comme une liste partagée. Un fichier invalide (adresse en http, nom de composant incorrect…) est refusé en entier. Un
+fichier déjà proposé n'est reproposé que s'il a changé. Un réglage vide sur le poste qui exporte n'est pas exporté : il
+n'efface rien chez celui qui importe. Les chemins (listes partagées, fichier central) sont complets : `C:\…` ou
+`\\serveur\…`. Votre identifiant, « Mes serveurs » et vos sessions récentes ne sont jamais touchés ; les listes
+partagées s'ajoutent sans retirer les vôtres. Les étiquettes du fichier remplacent celles du poste ; vos serveurs
+gardent la leur (une étiquette absente du fichier s'affiche alors en gris). Les rappels du fichier
+(`"InterventionReminders": [{ "Minutes": 30, "Text": "Escalader au N3" }]`) remplacent eux aussi ceux du poste.
 
 Toutes les préférences sont enregistrées dans `%APPDATA%\ZillaTerm\settings.json` : langue, adresse du PVWA,
 méthode et identifiant de connexion, paramètres ci-dessus, serveurs de « Mes serveurs », leurs dossiers et les fichiers qui

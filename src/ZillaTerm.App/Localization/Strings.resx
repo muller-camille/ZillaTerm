@@ -5719,4 +5719,106 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="InterventionReportNoteMarker" xml:space="preserve">
     <value>Note at {0}: {1}</value>
   </data>
+  <data name="InterventionRedactSecrets" xml:space="preserve">
+    <value>_Mask what looks like a secret (passwords, private keys, tokens)</value>
+  </data>
+  <data name="InterventionRedactSecretsTip" xml:space="preserve">
+    <value>Recommended: the report is not encrypted. Text that looks like a password, a private key, a token or a password hash is replaced by [masked]. Images are not masked. The encrypted journal keeps everything.</value>
+  </data>
+  <data name="InterventionRedactedMask" xml:space="preserve">
+    <value>[masked]</value>
+  </data>
+  <data name="InterventionReportRedacted" xml:space="preserve">
+    <value>Secrets masked: {0:# passage|# passages} that look like a password, a private key or a token replaced by [masked]. Images (captures, recorded screens) are not masked; the encrypted journal keeps everything.</value>
+  </data>
+  <data name="InterventionReportRedactedNone" xml:space="preserve">
+    <value>Secrets masked: nothing in the text looks like a password, a private key or a token. Images (captures, recorded screens) are not masked.</value>
+  </data>
+  <data name="InterventionReportSavedRedacted" xml:space="preserve">
+    <value>Report saved: {0} ({1:# passage|# passages} masked).</value>
+  </data>
+  <data name="InterventionReportParts" xml:space="preserve">
+    <value>This report brings together {0} recordings:</value>
+  </data>
+  <data name="InterventionReportPart" xml:space="preserve">
+    <value>{0} to {1} ({2}) {3}</value>
+  </data>
+  <data name="InterventionPreviousHelp" xml:space="preserve">
+    <value>Ctrl+click or Shift+click to choose several: one report brings them together (an intervention over the night and the morning, for example).</value>
+  </data>
+  <data name="InterventionDeleteManyHeading" xml:space="preserve">
+    <value>Delete these {0} intervention journals?</value>
+  </data>
+  <data name="InterventionDeleteManyDetail" xml:space="preserve">
+    <value>They cannot be recovered.</value>
+  </data>
+  <data name="InterventionResumedEntry" xml:space="preserve">
+    <value>Recording resumed by {0} on {1}, ZillaTerm {2}, {3}: ZillaTerm had stopped during the intervention, nothing was kept since {4}.</value>
+  </data>
+  <data name="InterventionClosedEntry" xml:space="preserve">
+    <value>Recording closed when ZillaTerm restarted ({0}): ZillaTerm had stopped during the intervention.</value>
+  </data>
+  <data name="InterventionResumeTitle" xml:space="preserve">
+    <value>Interrupted intervention</value>
+  </data>
+  <data name="InterventionResumeHeading" xml:space="preserve">
+    <value>The intervention recording stopped with ZillaTerm</value>
+  </data>
+  <data name="InterventionResumeDetail" xml:space="preserve">
+    <value>Started on {0}, last event at {1}.</value>
+  </data>
+  <data name="InterventionResumeBullet" xml:space="preserve">
+    <value>Resume: what follows is added to the same journal, for a single report; the interruption is noted in it.</value>
+  </data>
+  <data name="InterventionCloseBullet" xml:space="preserve">
+    <value>Close: the intervention ends as it is; its report says when ZillaTerm stopped.</value>
+  </data>
+  <data name="InterventionResumeAction" xml:space="preserve">
+    <value>Resume the recording</value>
+  </data>
+  <data name="InterventionCloseAction" xml:space="preserve">
+    <value>Close the intervention</value>
+  </data>
+  <data name="InterventionResumeLater" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="InterventionResumeFailed" xml:space="preserve">
+    <value>The intervention cannot be resumed: {0}</value>
+  </data>
+  <data name="InterventionResumed" xml:space="preserve">
+    <value>Intervention resumed: what follows is added to the same journal.</value>
+  </data>
+  <data name="InterventionReminderEntry" xml:space="preserve">
+    <value>Reminder at {0} min: {1}</value>
+  </data>
+  <data name="InterventionReminderSeenEntry" xml:space="preserve">
+    <value>Reminder seen: {0}</value>
+  </data>
+  <data name="InterventionReminderSeen" xml:space="preserve">
+    <value>_Got it</value>
+  </data>
+  <data name="InterventionReminderSeenTip" xml:space="preserve">
+    <value>Hides the reminder and notes in the journal that you saw it.</value>
+  </data>
+  <data name="InterventionNextReminder" xml:space="preserve">
+    <value>{0} in {1:# min|# min}</value>
+  </data>
+  <data name="InterventionReminderStatus" xml:space="preserve">
+    <value>Reminder ({0} min since the start): {1}</value>
+  </data>
+  <data name="RemindersLabel" xml:space="preserve">
+    <value>Timed _reminders:</value>
+  </data>
+  <data name="RemindersHelp" xml:space="preserve">
+    <value>One line per reminder: the minutes since the start of the recording, then the text ("30 Escalate to level 3"). 10 at most. At that time ZillaTerm shows it in the Intervention tab and the status bar, and notes it in the journal.</value>
+  </data>
+  <data name="InvalidReminder" xml:space="preserve">
+    <value>Timed reminders, line {0}: minutes (1 to 1440), a space, then a text of 200 characters at most (10 reminders at most).</value>
+  </data>
+  <data name="EnvInterventionReminders" xml:space="preserve">
+    <value>Timed reminders</value>
+  </data>
+  <data name="EnvInvalidReminder" xml:space="preserve">
+    <value>Invalid timed reminder (minutes from 1 to 1440, a text of 1 to 200 visible characters, 10 at most): {0}</value>
+  </data>
 </root>

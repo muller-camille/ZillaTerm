@@ -32,6 +32,9 @@ public partial class InterventionPanel : UserControl
     private bool _shownRecording;
     private bool _shownInterrupted;
 
+    // Rappels arrivés à leur heure, pas encore vus : le premier est affiché.
+    private readonly Queue<InterventionReminder> _reminders = new();
+
     // Note de l'historique en cours de modification dans le champ de la note ; null pour une nouvelle note. La note en
     // cours de saisie, mise de côté pendant la modification, revient ensuite.
     private InterventionHistoryItem? _editing;
@@ -62,6 +65,43 @@ public partial class InterventionPanel : UserControl
 
     /// <summary>« Fermer l'historique » d'un enregistrement arrêté : l'onglet n'a plus rien à montrer.</summary>
     public event EventHandler? CloseRequested;
+
+    /// <summary>Rappel vu (« Vu ») : à noter au journal.</summary>
+    public event Action<InterventionReminder>? ReminderSeen;
+
+    /// <summary>Rappel arrivé à son heure : affiché en tête de l'onglet jusqu'à « Vu » (les suivants attendent leur tour).</summary>
+    public void ShowReminder(InterventionReminder reminder)
+    {
+        _reminders.Enqueue(reminder);
+        if (_reminders.Count == 1)
+        {
+            ShowNextReminder();
+        }
+    }
+
+    private void ShowNextReminder()
+    {
+        if (_reminders.TryPeek(out var reminder))
+        {
+            ReminderText.Text = Text.Format(Strings.InterventionReminderStatus, reminder.Minutes, reminder.Text);
+            ReminderBanner.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            ReminderText.SetQuietly("");
+            ReminderBanner.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void OnReminderSeen(object sender, RoutedEventArgs e)
+    {
+        if (_reminders.TryDequeue(out var reminder))
+        {
+            ReminderSeen?.Invoke(reminder);
+        }
+
+        ShowNextReminder();
+    }
 
     /// <summary>Quelque chose à montrer : l'enregistrement en cours, ou l'historique d'un enregistrement arrêté.</summary>
     public bool HasHistory => _history is not null;
@@ -227,6 +267,13 @@ public partial class InterventionPanel : UserControl
         if (!keeping)
         {
             EndEdit();
+        }
+
+        if (!recording && _reminders.Count > 0)
+        {
+            // Enregistrement arrêté : ses rappels n'ont plus lieu d'être.
+            _reminders.Clear();
+            ShowNextReminder();
         }
 
         RecordingDot.Visibility = keeping ? Visibility.Visible : Visibility.Collapsed;

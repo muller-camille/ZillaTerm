@@ -20,9 +20,6 @@ internal sealed class RdpScreenRecorder : IDisposable
 {
     public static readonly TimeSpan CaptureInterval = TimeSpan.FromSeconds(1);
 
-    // Numéro d'enregistrement d'écran : unique dans un journal, pour que le rapport sépare les sessions.
-    private static int _streams;
-
     private readonly RdpSession _session;
     private readonly InterventionRecorder _recorder;
     private readonly CancellationTokenSource _stop = new();
@@ -110,7 +107,8 @@ internal sealed class RdpScreenRecorder : IDisposable
         // capture, même sans changement : un reste sous le seuil de bruit se rattrape une fois l'écran immobile.
         if (_encoder is null || journal != _journal)
         {
-            _encoder = new ScreenTileEncoder(Interlocked.Increment(ref _streams));
+            // Numéro d'enregistrement d'écran unique dans le journal, pour que le rapport sépare les sessions.
+            _encoder = new ScreenTileEncoder(_recorder.NextScreenStream());
             _journal = journal;
         }
 

@@ -900,6 +900,17 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
 
   When recording stops, input is greyed out and the history stays shown until **"Close the history"** (the tab goes
   away) or the next recording; the report is exported from the Intervention window.
+- **Timed reminders** (Settings › General, or the team's environment file): one line per reminder, the minutes since the
+  start of the recording then the text ("30 Escalate to level 3"), 10 at most. The status bar shows the next one ("●
+  Intervention recorded · Escalate to level 3 in 12 min"); at that time a banner appears at the top of the
+  "Intervention" tab, the status bar says it and the ZillaTerm button flashes in the taskbar, without taking the
+  keyboard (what you are typing does not go elsewhere). The reminder is noted in the journal, and **"Got it"** notes
+  that you saw it.
+- **ZillaTerm stopped during the recording** (crash, PC restarted): at the next launch, within 12 hours, ZillaTerm
+  offers **"Resume the recording"**: what follows is added to the same journal (title, history and reminders carried
+  over; a single report), after an event that says who resumed and since when nothing was kept. **"Close the
+  intervention"** ends it as it is (its duration does not change); **"Later"** leaves it, and the question comes back at
+  the next launch.
 - **"Recorded interventions"**: the list of recordings, newest first, with their title. When you stop, the intervention
   stays selected: **"Export the report…"** (or double-click) turns it into an HTML page: summary, timeline, blocks of
   terminal text and captures, to attach to the intervention report. Each recorded screen has its own player: "Play",
@@ -909,6 +920,15 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   a still screen is on it. The player is the only script of the page, allowed by its hash; it needs a recent browser
   (Edge, Chrome, Firefox). A missing image (damaged journal) freezes the screen until the next full image, with a
   notice. **"Delete…"** erases a finished recording.
+
+  Several interventions chosen together (`Ctrl+click`, `Shift+click`) make **a single report**: their events one after
+  the other and, at the top, the list of recordings (an intervention over the night and the morning, for example); they
+  are also deleted together. **"Mask what looks like a secret"** (checked by default) replaces in the report, with
+  "[masked]", passwords (`password=…`, `"client_secret": "…"`, `--db-password=…`, the one in an address
+  `https://jdoe:…@srv01.corp.local`), the body of private keys (`-----BEGIN … PRIVATE KEY-----`), `Bearer` and `Basic`
+  headers, tokens of known formats (JWT, GitHub, GitLab, Slack, AWS, Google) and password hashes (`$6$…` from
+  /etc/shadow); the report says how many passages were masked. Images (captures, recorded screens) are not masked, and
+  the encrypted journal keeps everything. Masking is a safety net: read the report again before passing it on.
 
 The journal is **encrypted for your Windows account only** (DPAPI) in `%LOCALAPPDATA%\ZillaTerm\Interventions` (the
 title too, in a `.title` file next to it, for the list), block by block as recording goes, its text compressed (a crash
@@ -996,6 +1016,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | General | Theme | Same as Windows, Light or Dark; applied right away (Windows high contrast takes precedence) | same as Windows |
 | General | Duty reminder | Good practices and emergency numbers shown in the "Intervention" window; plain text, shared by the environment file (see [Intervention](#8-intervention-recording-and-on-call-duty-reminder)) | empty |
 | General | Reminder file | Text file (usually on a network share) read again each time the "Intervention" window opens, shown instead of the reminder above; shared by the environment file | empty |
+| General | Timed reminders | One line per reminder: minutes since the start of the recording, then the text ("30 Escalate to level 3"); shown in the "Intervention" tab and the status bar, noted in the journal; shared by the environment file | empty |
 | General | Server tags | Tags given to the servers of "My servers" (name, color): "Add a tag", "Remove the tag", editable cells; renaming follows in "My servers", deleting removes the tag from the servers; shared by the environment file (see [Tags](#tags-prod-qa-dev)) | PROD (red), QA (blue), DEV (green) |
 | General | Interface language | Français, English, Italiano or system language; applied after signing out of CyberArk or at the next start | Windows language (English if it is not translated) |
 | General | Central file | Team environment file on a network share, read at each start; its changes are shown before being applied (see [Shared environment](#shared-environment)) | empty |
@@ -1026,9 +1047,9 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 
 ### Shared environment
 
-To give ZillaTerm to a colleague with the team's configuration (PVWA address, sign-in method, default and
-by-domain PSMPs, Windows accounts component and per-platform components, shared lists, PSMP keys, on-call duty reminder (text or file), server tags, a few options),
-with nothing personal and no password:
+To give ZillaTerm to a colleague with the team's configuration (PVWA address, sign-in method, default and by-domain
+PSMPs, Windows accounts component and per-platform components, shared lists, PSMP keys, on-call duty reminder (text or
+file), timed reminders, server tags, a few options), with nothing personal and no password:
 
 1. **Export**: "Settings" button → "Export the environment…" saves `ZillaTerm.env.json`.
 2. **Next to the executable**: put this file next to `ZillaTerm.exe` (for example in the same zip). At start, when
@@ -1053,7 +1074,9 @@ only when it has changed. A setting left empty on the exporting PC is
 not exported: it clears nothing on the importing one. Paths (shared lists, central file) are full: `C:\…` or
 `\\server\…`. Your user name, "My servers" and your
 recent sessions are never touched; shared lists are added without removing yours. The tags of the file replace those
-of the computer; your servers keep theirs (a tag missing from the file is then shown in gray).
+of the computer; your servers keep theirs (a tag missing from the file is then shown in gray). The timed reminders of
+the file (`"InterventionReminders": [{ "Minutes": 30, "Text": "Escalate to level 3" }]`) also replace those of the
+computer.
 
 All preferences are saved in `%APPDATA%\ZillaTerm\settings.json`: language, PVWA address, sign-in method and user
 name, the settings above, "My servers", their folders and the files followed on them (paths), recent sessions,

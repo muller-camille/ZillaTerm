@@ -5719,4 +5719,106 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="InterventionReportNoteMarker" xml:space="preserve">
     <value>Note à {0} : {1}</value>
   </data>
+  <data name="InterventionRedactSecrets" xml:space="preserve">
+    <value>_Masquer ce qui ressemble à un secret (mots de passe, clés privées, jetons)</value>
+  </data>
+  <data name="InterventionRedactSecretsTip" xml:space="preserve">
+    <value>Conseillé : le rapport n'est pas chiffré. Le texte qui ressemble à un mot de passe, une clé privée, un jeton ou une empreinte de mot de passe est remplacé par [masqué]. Les images ne sont pas masquées. Le journal chiffré garde tout.</value>
+  </data>
+  <data name="InterventionRedactedMask" xml:space="preserve">
+    <value>[masqué]</value>
+  </data>
+  <data name="InterventionReportRedacted" xml:space="preserve">
+    <value>Secrets masqués : {0:# passage qui ressemble|# passages qui ressemblent} à un mot de passe, une clé privée ou un jeton, remplacés par [masqué]. Les images (captures, écrans enregistrés) ne sont pas masquées ; le journal chiffré garde tout.</value>
+  </data>
+  <data name="InterventionReportRedactedNone" xml:space="preserve">
+    <value>Secrets masqués : rien dans le texte ne ressemble à un mot de passe, une clé privée ou un jeton. Les images (captures, écrans enregistrés) ne sont pas masquées.</value>
+  </data>
+  <data name="InterventionReportSavedRedacted" xml:space="preserve">
+    <value>Rapport enregistré : {0} ({1:# passage masqué|# passages masqués}).</value>
+  </data>
+  <data name="InterventionReportParts" xml:space="preserve">
+    <value>Ce rapport réunit {0} enregistrements :</value>
+  </data>
+  <data name="InterventionReportPart" xml:space="preserve">
+    <value>Du {0} au {1} ({2}) {3}</value>
+  </data>
+  <data name="InterventionPreviousHelp" xml:space="preserve">
+    <value>Ctrl+clic ou Maj+clic pour en choisir plusieurs : un seul rapport les réunit (une intervention sur la nuit et le matin, par exemple).</value>
+  </data>
+  <data name="InterventionDeleteManyHeading" xml:space="preserve">
+    <value>Supprimer ces {0} journaux d'intervention ?</value>
+  </data>
+  <data name="InterventionDeleteManyDetail" xml:space="preserve">
+    <value>Ils ne pourront pas être récupérés.</value>
+  </data>
+  <data name="InterventionResumedEntry" xml:space="preserve">
+    <value>Enregistrement repris par {0} sur {1}, ZillaTerm {2}, {3} : ZillaTerm s'était arrêté pendant l'intervention, rien n'a été gardé depuis {4}.</value>
+  </data>
+  <data name="InterventionClosedEntry" xml:space="preserve">
+    <value>Enregistrement clos au redémarrage de ZillaTerm ({0}) : ZillaTerm s'était arrêté pendant l'intervention.</value>
+  </data>
+  <data name="InterventionResumeTitle" xml:space="preserve">
+    <value>Intervention interrompue</value>
+  </data>
+  <data name="InterventionResumeHeading" xml:space="preserve">
+    <value>L'enregistrement de l'intervention s'est arrêté avec ZillaTerm</value>
+  </data>
+  <data name="InterventionResumeDetail" xml:space="preserve">
+    <value>Commencé le {0}, dernier événement à {1}.</value>
+  </data>
+  <data name="InterventionResumeBullet" xml:space="preserve">
+    <value>Reprendre : la suite s'ajoute au même journal, pour un seul rapport ; l'interruption y est notée.</value>
+  </data>
+  <data name="InterventionCloseBullet" xml:space="preserve">
+    <value>Clore : l'intervention se termine telle quelle ; son rapport dit quand ZillaTerm s'est arrêté.</value>
+  </data>
+  <data name="InterventionResumeAction" xml:space="preserve">
+    <value>Reprendre l'enregistrement</value>
+  </data>
+  <data name="InterventionCloseAction" xml:space="preserve">
+    <value>Clore l'intervention</value>
+  </data>
+  <data name="InterventionResumeLater" xml:space="preserve">
+    <value>Plus tard</value>
+  </data>
+  <data name="InterventionResumeFailed" xml:space="preserve">
+    <value>Reprise de l'intervention impossible : {0}</value>
+  </data>
+  <data name="InterventionResumed" xml:space="preserve">
+    <value>Intervention reprise : la suite s'ajoute au même journal.</value>
+  </data>
+  <data name="InterventionReminderEntry" xml:space="preserve">
+    <value>Rappel à {0} min : {1}</value>
+  </data>
+  <data name="InterventionReminderSeenEntry" xml:space="preserve">
+    <value>Rappel vu : {0}</value>
+  </data>
+  <data name="InterventionReminderSeen" xml:space="preserve">
+    <value>_Vu</value>
+  </data>
+  <data name="InterventionReminderSeenTip" xml:space="preserve">
+    <value>Masque le rappel et note au journal que vous l'avez vu.</value>
+  </data>
+  <data name="InterventionNextReminder" xml:space="preserve">
+    <value>{0} dans {1:# min|# min}</value>
+  </data>
+  <data name="InterventionReminderStatus" xml:space="preserve">
+    <value>Rappel ({0} min depuis le début) : {1}</value>
+  </data>
+  <data name="RemindersLabel" xml:space="preserve">
+    <value>Rappels _pendant l'intervention :</value>
+  </data>
+  <data name="RemindersHelp" xml:space="preserve">
+    <value>Une ligne par rappel : les minutes depuis le début de l'enregistrement, puis le texte (« 30 Escalader au N3 »). 10 au plus. À l'heure dite, ZillaTerm le montre dans l'onglet Intervention et la barre d'état, et le note au journal.</value>
+  </data>
+  <data name="InvalidReminder" xml:space="preserve">
+    <value>Rappels, ligne {0} : des minutes (1 à 1440), une espace, puis un texte de 200 caractères au plus (10 rappels au plus).</value>
+  </data>
+  <data name="EnvInterventionReminders" xml:space="preserve">
+    <value>Rappels pendant l'intervention</value>
+  </data>
+  <data name="EnvInvalidReminder" xml:space="preserve">
+    <value>Rappel invalide (minutes de 1 à 1440, texte de 1 à 200 caractères visibles, 10 rappels au plus) : {0}</value>
+  </data>
 </root>

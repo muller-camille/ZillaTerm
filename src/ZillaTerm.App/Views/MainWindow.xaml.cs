@@ -178,6 +178,8 @@ public partial class MainWindow : Window
             }
 
             _ = CheckForUpdateAsync();
+            // Intervention interrompue par l'arrêt de ZillaTerm : la reprendre, ou la clore (après l'affichage de la fenêtre).
+            _ = Dispatcher.BeginInvoke(OfferInterventionResume, DispatcherPriority.ApplicationIdle);
             if (!IsOffline)
             {
                 await LoadAccountsAsync();

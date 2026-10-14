@@ -7,6 +7,7 @@ using System.Windows.Media;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Terminal;
 using ZillaTerm.Core;
+using ZillaTerm.Core.Interventions;
 using ZillaTerm.Core.KeePass;
 using ZillaTerm.Core.Localization;
 using ZillaTerm.Core.Ssh;
@@ -66,6 +67,7 @@ public partial class SettingsDialog : Window
         X11DisplayBox.Text = settings.X11Display;
         DutyTextBox.Text = settings.DutyText;
         DutyFileBox.Text = settings.DutyTextFile;
+        RemindersBox.Text = InterventionReminder.Format(settings.InterventionReminders).Replace("\n", Environment.NewLine, StringComparison.Ordinal);
         EditorBox.Text = settings.TextEditor;
         CompareToolBox.Text = settings.CompareTool;
         ThemeBox.ItemsSource = TerminalTheme.All;
@@ -229,6 +231,12 @@ public partial class SettingsDialog : Window
             return;
         }
 
+        if (!InterventionReminder.TryParse(RemindersBox.Text, out var reminders, out int badReminder))
+        {
+            ShowError(Text.Format(Strings.InvalidReminder, badReminder), RemindersBox);
+            return;
+        }
+
         if (ReadTags() is not { } tags)
         {
             return;
@@ -281,6 +289,7 @@ public partial class SettingsDialog : Window
         _settings.X11Display = x11Display;
         _settings.DutyText = EnvironmentProfile.NormalizeDutyText(DutyTextBox.Text);
         _settings.DutyTextFile = dutyFile;
+        _settings.InterventionReminders = reminders;
         _settings.ReplaceServerTags(tags.Tags, tags.Renamed);
         _settings.KeepPvwaSessionAlive = KeepAliveBox.IsChecked == true;
         _settings.CheckForUpdates = UpdateCheckBox.IsChecked == true;
