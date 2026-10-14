@@ -8,9 +8,9 @@ namespace ZillaTerm.App.Services.KeePass;
 /// <see cref="ProtectedData"/> vient du paquet System.Security.Cryptography.ProtectedData (Windows seulement).
 /// </summary>
 /// <remarks>
-/// Sous Linux et macOS, cette protection passerait par le trousseau du système, pas encore relié : <see cref="IsAvailable"/>
-/// est faux, et les fonctions qui en ont besoin (mémoriser un mot de passe maître KeePass) n'apparaissent pas. Rien n'est
-/// alors écrit sans cette protection : <see cref="Protect"/> et <see cref="Unprotect"/> refusent.
+/// Windows seulement : ailleurs, la protection passe par le trousseau du système (voir
+/// <see cref="Secrets.SecretProtectors"/>, qui ne crée ce protecteur que sous Windows). Créé quand même hors de Windows,
+/// il refuse (<see cref="Protect"/> et <see cref="Unprotect"/>) : rien n'est écrit sans protection.
 /// </remarks>
 internal sealed class DpapiProtector : ISecretProtector
 {
@@ -40,5 +40,5 @@ internal sealed class DpapiProtector : ISecretProtector
         : throw Unavailable();
 
     private static PlatformNotSupportedException Unavailable() =>
-        new("Protection DPAPI disponible sous Windows seulement : trousseau du système non relié sous Linux et macOS.");
+        new("Protection DPAPI disponible sous Windows seulement (trousseau du système ailleurs).");
 }

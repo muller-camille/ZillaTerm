@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Path = Avalonia.Controls.Shapes.Path;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;

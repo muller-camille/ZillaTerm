@@ -170,7 +170,7 @@ public partial class MainWindow
         string? message = null;
         if (folder.RememberPassword && folder.UsesPassword)
         {
-            if (!_keePass.Store.IsUnlocked && _keePass.Store.Exists)
+            if (!_keePass.Store.IsUnlocked && _keePass.Store.Exists && await PrepareLocalStoreProtectionAsync())
             {
                 await new LocalStoreDialog(_keePass.Store, LocalStoreDialog.Mode.Unlock, SettingsDialog.RememberedFolderIds(_settings)).ShowDialogAsync(this);
             }
@@ -235,10 +235,38 @@ public partial class MainWindow
             return true;
         }
 
+        if (!await PrepareLocalStoreProtectionAsync())
+        {
+            return false;
+        }
+
         var owner = (Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?
             .Windows.FirstOrDefault(w => w.IsActive) ?? this;
         var mode = store.Exists ? LocalStoreDialog.Mode.Unlock : LocalStoreDialog.Mode.Create;
         return await new LocalStoreDialog(store, mode, SettingsDialog.RememberedFolderIds(_settings)).ShowDialogAsync(owner);
+    }
+
+    /// <summary>
+    /// Hors de Windows, la protection du coffre local passe par le trousseau du bureau : il est ouvert (et déverrouillé
+    /// au besoin, par sa propre fenêtre) avant de créer ou de déverrouiller le coffre, sans bloquer l'interface. Faux,
+    /// avec la raison dans la barre d'état, si le trousseau manque ou refuse.
+    /// </summary>
+    private async Task<bool> PrepareLocalStoreProtectionAsync()
+    {
+        try
+        {
+            await Services.Secrets.SecretProtectors.PrepareAsync(_keePass.Protector, create: !_keePass.Store.Exists, _lifetime.Token);
+            return true;
+        }
+        catch (Services.Secrets.SecretProtectorUnavailableException ex)
+        {
+            SetStatus(ex.Message, isError: true);
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
     }
 
     private void OnKeePassFolderMenuOpened(object? sender, RoutedEventArgs e)

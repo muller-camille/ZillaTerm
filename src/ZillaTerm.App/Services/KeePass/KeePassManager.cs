@@ -18,11 +18,24 @@ internal sealed class KeePassManager : IDisposable
     private long _generation;
 
     public KeePassManager()
+        : this(new DpapiProtector())
+    {
+    }
+
+    /// <param name="protector">
+    /// Protection du fichier du coffre local liée au compte de l'utilisateur : DPAPI sous Windows, trousseau du système
+    /// ailleurs (application multiplateforme).
+    /// </param>
+    public KeePassManager(ISecretProtector protector)
     {
         var directory = Path.GetDirectoryName(AppSettings.DefaultPath)!;
-        Store = new LocalSecretStore(Path.Combine(directory, "coffre-local.dat"), new DpapiProtector());
+        Protector = protector;
+        Store = new LocalSecretStore(Path.Combine(directory, "coffre-local.dat"), protector);
         Log = new EmergencyLog(Path.Combine(directory, "urgence.log"));
     }
+
+    /// <summary>Protection du fichier du coffre local (à préparer avant de le créer ou de le déverrouiller hors de Windows).</summary>
+    public ISecretProtector Protector { get; }
 
     /// <summary>Un coffre a été déverrouillé ou verrouillé.</summary>
     public event Action? Changed;

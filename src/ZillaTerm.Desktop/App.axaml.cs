@@ -94,7 +94,8 @@ public partial class App : Application
         RemoteEditor.CleanupStale();
         FileBrowserPanel.CleanupDragFolders();
         PrivateTemp.CleanupLegacy();
-        _keePass = new KeePassManager();
+        // Coffre local des mots de passe maîtres : DPAPI sous Windows, trousseau du bureau sous Linux.
+        _keePass = new KeePassManager(Services.Secrets.SecretProtectors.CreateForLocalStore());
         // Verrouillage du poste : coffres verrouillés, maintien de la session PVWA suspendu, partage arrêté.
         SessionLock.Start();
         UiLanguage.Apply(UiLanguage.Resolve(_settings.Language, _systemCulture));
