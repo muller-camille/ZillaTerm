@@ -84,6 +84,33 @@ public sealed partial class ScreenTilesTests : IDisposable
     }
 
     /// <summary>
+    /// Écran partagé en direct : un seul pixel changé (le caractère tapé, le curseur) part tout de suite, et se décode au
+    /// pixel près ; une image clé demandée (nouvelle personne qui regarde) repart de zéro.
+    /// </summary>
+    [Fact]
+    public void LiveEncoderSendsEveryChangeAtOnce()
+    {
+        const int width = 128, height = 64;
+        var screen = Screen(width, height, (_, _) => (12, 12, 12));
+        var encoder = new ScreenTileEncoder(stream: 1, live: true);
+        var decoder = new ScreenTileDecoder();
+        Assert.True(decoder.Apply(encoder.Encode(T0, screen, width, height, width * 4)!.Data));
+        Paint(screen, width, 70, 10, 1, 1, 200);
+        var frame = encoder.Encode(T0.AddMilliseconds(250), screen, width, height, width * 4);
+        Assert.NotNull(frame);
+        Assert.False(frame.Header.Key);
+        Assert.Equal(1, frame.Header.Placements);
+        Assert.True(decoder.Apply(frame.Data));
+        Assert.Equal(Rgb565(screen), decoder.Pixels);
+
+        var key = encoder.Encode(T0.AddSeconds(1), screen, width, height, width * 4, key: true)!;
+        Assert.True(key.Header.Key);
+        var newcomer = new ScreenTileDecoder();
+        Assert.True(newcomer.Apply(key.Data));
+        Assert.Equal(Rgb565(screen), newcomer.Pixels);
+    }
+
+    /// <summary>
     /// Seuil de bruit : quelques pixels changés (curseur) ne sont pas gardés, mais ils comptent quand d'autres s'y ajoutent ;
     /// une boîte de dialogue ne garde que les tuiles qu'elle touche, et sa fermeture reprend les tuiles du cache.
     /// </summary>

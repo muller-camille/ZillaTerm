@@ -154,7 +154,17 @@ public sealed class ScreenTileEncoder
     private long _sinceKey;
 
     /// <param name="stream">Numéro de l'enregistrement d'écran (une session), écrit dans chaque image.</param>
-    public ScreenTileEncoder(int stream) => _stream = stream;
+    /// <param name="live">
+    /// Écran partagé en direct : tout changement part tout de suite, même un caractère tapé (pas de seuil de bruit ni
+    /// de rattrapage différé).
+    /// </param>
+    public ScreenTileEncoder(int stream, bool live = false)
+    {
+        _stream = stream;
+        _noise = live ? 0 : NoiseThreshold;
+    }
+
+    private readonly int _noise;
 
     /// <summary>
     /// Encode une capture (pixels BGRA 32 bits, de haut en bas) ; null si rien n'a changé de façon visible, qu'aucun reste
@@ -212,7 +222,7 @@ public sealed class ScreenTileEncoder
         {
             int origin = (index / _columns * TileSize * pitch) + (index % _columns * TileSize);
             int differences = first ? TilePixels : Differences(_current, shown, origin, pitch);
-            bool visible = differences > NoiseThreshold;
+            bool visible = differences > _noise;
             bool catchUp = false;
             if (differences == 0 || visible)
             {
