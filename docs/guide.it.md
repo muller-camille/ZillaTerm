@@ -916,9 +916,9 @@ reperibilità o no:
   interpretato, e i caratteri invisibili di un file (che potrebbero invertire l'ordine delle cifre di un numero)
   vengono rimossi.
 - **«Registra l'intervento»**: da quel momento ZillaTerm conserva tutto ciò che accade, fino a «Interrompi la
-  registrazione» o alla chiusura di ZillaTerm. La registrazione continua dopo la disconnessione da CyberArk e in
-  accesso di emergenza. Un pallino rosso sul pulsante e «● Intervento registrato» nella barra di stato lo ricordano.
-  Vengono conservati:
+  registrazione» (o «Termina l'intervento» nella scheda Intervento) o alla chiusura di ZillaTerm. La registrazione
+  continua dopo la disconnessione da CyberArk e in accesso di emergenza. Un pallino rosso sul pulsante e «● Intervento
+  registrato» nella barra di stato lo ricordano. Vengono conservati:
   - il **testo dei terminali SSH** (comandi digitati e il loro risultato, riga per riga, con l'ora; non la schermata
     di vim, less o top, né il comando che ZillaTerm digita da sé per seguire la cartella);
   - le **connessioni**: apertura, errore e chiusura delle sessioni SSH, file, desktop remoto e VNC, e le sessioni
@@ -959,8 +959,10 @@ reperibilità o no:
     eventi finché è in fondo. La cronologia è conservata solo in memoria; il suo testo dei terminali è limitato a 8
     milioni di caratteri (oltre, un messaggio lo dice, e il testo resta nel rapporto).
 
-  All'interruzione della registrazione l'inserimento è in grigio e la cronologia resta visibile fino a **«Chiudi la
-  cronologia»** (la scheda scompare) o alla registrazione successiva; il rapporto si esporta dalla finestra Intervento.
+  **«■ Termina l'intervento»**, in fondo alla scheda, interrompe la registrazione dopo una conferma (`Invio` conferma,
+  `Esc` o «Continua l'intervento» annulla); una nota in corso di scrittura viene prima aggiunta al registro.
+  All'interruzione, da qui o dalla finestra Intervento, la scheda scompare e la finestra Intervento mostra l'intervento
+  in «Interventi registrati», pronto per «Esporta il rapporto…».
 - **Avvisi a tempo** (Impostazioni › Generale, o file di ambiente del team): una riga per avviso, i minuti dall'inizio
   della registrazione poi il testo («30 Scalare al livello 3»), al massimo 10. La barra di stato mostra il prossimo («●
   Intervento registrato · Scalare al livello 3 tra 12 min»); all'ora indicata un banner appare in cima alla scheda

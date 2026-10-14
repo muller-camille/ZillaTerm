@@ -5641,14 +5641,8 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="InterventionJournalItemTitled" xml:space="preserve">
     <value>{0} — {1}  ({2})</value>
   </data>
-  <data name="InterventionNotesStopped" xml:space="preserve">
-    <value>Enregistrement arrêté. Le rapport s'exporte depuis la fenêtre Intervention.</value>
-  </data>
   <data name="TabInterventionTip" xml:space="preserve">
     <value>Titre, notes et historique de l'intervention en cours (Ctrl+4)</value>
-  </data>
-  <data name="InterventionCloseHistory" xml:space="preserve">
-    <value>Fermer l'_historique</value>
   </data>
   <data name="InterventionKindScreen" xml:space="preserve">
     <value>Écran</value>
@@ -6414,5 +6408,32 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="TabModeWatched" xml:space="preserve">
     <value>Session de {0} (poste {1}), regardée par le partage de sessions</value>
+  </data>
+  <data name="InterventionEnd" xml:space="preserve">
+    <value>Ter_miner l'intervention</value>
+  </data>
+  <data name="InterventionEndTip" xml:space="preserve">
+    <value>Arrête l'enregistrement et ferme cet onglet ; le rapport s'exporte ensuite depuis la fenêtre Intervention.</value>
+  </data>
+  <data name="InterventionEndTitle" xml:space="preserve">
+    <value>Terminer l'intervention</value>
+  </data>
+  <data name="InterventionEndHeading" xml:space="preserve">
+    <value>Terminer l'intervention ?</value>
+  </data>
+  <data name="InterventionEndBulletStop" xml:space="preserve">
+    <value>L'enregistrement s'arrête et l'onglet « Intervention » se ferme.</value>
+  </data>
+  <data name="InterventionEndBulletReport" xml:space="preserve">
+    <value>Le journal reste dans « Interventions enregistrées » : la fenêtre Intervention s'ouvre pour en exporter le rapport.</value>
+  </data>
+  <data name="InterventionEndBulletNote" xml:space="preserve">
+    <value>La note en cours de saisie est d'abord ajoutée au journal.</value>
+  </data>
+  <data name="InterventionEndAction" xml:space="preserve">
+    <value>Terminer l'intervention</value>
+  </data>
+  <data name="InterventionEndCancel" xml:space="preserve">
+    <value>Continuer l'intervention</value>
   </data>
 </root>

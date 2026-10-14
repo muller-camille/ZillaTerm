@@ -26,6 +26,7 @@ public partial class InterventionWindow : Window
     private readonly string _who;
     private readonly string _mode;
     private readonly Action? _showNotes;
+    private readonly Action? _beforeStop;
     private readonly DispatcherTimer _timer;
     private CancellationTokenSource? _reminderRead;
 
@@ -41,13 +42,16 @@ public partial class InterventionWindow : Window
     /// <param name="who">Utilisateur, écrit au début de l'enregistrement.</param>
     /// <param name="mode">Session CyberArk ou accès d'urgence, écrit au début de l'enregistrement.</param>
     /// <param name="showNotes">Montre l'onglet « Intervention » de la fenêtre principale (titre, notes, historique).</param>
-    public InterventionWindow(string teamText, string teamFile, InterventionRecorder recorder, string who, string mode, Action? showNotes = null)
+    /// <param name="beforeStop">Juste avant l'arrêt : la note en cours de saisie dans l'onglet part au journal.</param>
+    public InterventionWindow(string teamText, string teamFile, InterventionRecorder recorder, string who, string mode, Action? showNotes = null,
+        Action? beforeStop = null)
     {
         InitializeComponent();
         _recorder = recorder;
         _who = who;
         _mode = mode;
         _showNotes = showNotes;
+        _beforeStop = beforeStop;
         _ = ShowReminderAsync(teamText, teamFile);
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += (_, _) => UpdateState();
@@ -262,13 +266,10 @@ public partial class InterventionWindow : Window
     {
         if (_recorder.IsRecording)
         {
-            // L'intervention arrêtée reste sélectionnée : son rapport s'exporte tout de suite.
+            _beforeStop?.Invoke();
             var path = _recorder.JournalPath;
             _recorder.Stop(Strings.InterventionStoppedByUser);
-            JournalList.SelectedItems.Clear();
-            JournalList.SelectedItem = JournalList.Items.OfType<ListBoxItem>()
-                .FirstOrDefault(item => item.Tag is InterventionFile file && string.Equals(file.Path, path, StringComparison.OrdinalIgnoreCase));
-            ShowMessage(Strings.InterventionStoppedHint);
+            ShowStopped(path);
             return;
         }
 
@@ -281,6 +282,15 @@ public partial class InterventionWindow : Window
         {
             ShowMessage(Text.Format(Strings.InterventionStartFailed, ex.Message), error: true);
         }
+    }
+
+    /// <summary>Intervention qui vient de s'arrêter : sélectionnée, son rapport s'exporte tout de suite.</summary>
+    public void ShowStopped(string? path)
+    {
+        JournalList.SelectedItems.Clear();
+        JournalList.SelectedItem = JournalList.Items.OfType<ListBoxItem>()
+            .FirstOrDefault(item => item.Tag is InterventionFile file && string.Equals(file.Path, path, StringComparison.OrdinalIgnoreCase));
+        ShowMessage(Strings.InterventionStoppedHint);
     }
 
     /// <summary>Titre, notes, captures et historique de l'intervention en cours (onglet du panneau de gauche).</summary>

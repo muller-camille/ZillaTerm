@@ -37,7 +37,7 @@ public partial class MainWindow
         // Enregistrement commencé avant cette fenêtre (reconnexion, accès d'urgence) : son onglet est là, sans être choisi.
         _interventionWasRecording = Intervention.IsRecording;
         InterventionView.Attach(Intervention);
-        InterventionView.CloseRequested += (_, _) => UpdateInterventionTab();
+        InterventionView.EndRequested += (_, _) => EndInterventionFromTab();
         Intervention.Changed += UpdateInterventionIndicator;
         InterventionView.ReminderSeen += reminder => Intervention.ReminderSeen(reminder);
         _reminderTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
@@ -210,12 +210,12 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Onglet « Intervention » du panneau de gauche : pendant l'enregistrement, et après l'arrêt tant que son historique
-    /// n'est pas fermé. S'il était affiché en disparaissant, « Mes serveurs » prend sa place.
+    /// Onglet « Intervention » du panneau de gauche : seulement pendant l'enregistrement. S'il était affiché en
+    /// disparaissant, « Mes serveurs » prend sa place.
     /// </summary>
     private void UpdateInterventionTab()
     {
-        bool visible = Intervention.IsRecording || InterventionView.HasHistory;
+        bool visible = Intervention.IsRecording;
         InterventionTab.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         InterventionTabDot.Visibility = Intervention.IsRecording ? Visibility.Visible : Visibility.Collapsed;
         if (!visible && InterventionTab.IsSelected)
@@ -234,9 +234,48 @@ public partial class MainWindow
         }
 
         _interventionWindow = new InterventionWindow(_settings.DutyText, _settings.DutyTextFile, Intervention, _sessionUser, InterventionMode,
-            () => ShowSideTab(InterventionTab)) { Owner = this };
+            () => ShowSideTab(InterventionTab), InterventionView.CommitPendingNote) { Owner = this };
         _interventionWindow.Closed += (_, _) => _interventionWindow = null;
         _interventionWindow.Show();
+    }
+
+    /// <summary>
+    /// « Terminer l'intervention » de l'onglet : après confirmation, la note en cours part au journal, l'enregistrement
+    /// s'arrête (l'onglet se retire) et la fenêtre Intervention s'ouvre sur l'intervention terminée, pour son rapport.
+    /// </summary>
+    private void EndInterventionFromTab()
+    {
+        if (!Intervention.IsRecording)
+        {
+            return;
+        }
+
+        var bullets = new List<string> { Strings.InterventionEndBulletStop, Strings.InterventionEndBulletReport };
+        if (InterventionView.HasPendingNote)
+        {
+            bullets.Insert(0, Strings.InterventionEndBulletNote);
+        }
+
+        int choice = ConfirmDialog.Ask(this, new ConfirmRequest
+        {
+            Title = Strings.InterventionEndTitle,
+            Heading = Strings.InterventionEndHeading,
+            Subject = string.IsNullOrWhiteSpace(Intervention.Title) ? null : Intervention.Title,
+            Bullets = bullets,
+            Actions = [Strings.InterventionEndAction],
+            DefaultAction = 0,
+            CancelLabel = Strings.InterventionEndCancel,
+        });
+        if (choice != 0 || !Intervention.IsRecording)
+        {
+            return;
+        }
+
+        InterventionView.CommitPendingNote();
+        var path = Intervention.JournalPath;
+        Intervention.Stop(Strings.InterventionStoppedByUser);
+        ShowIntervention();
+        _interventionWindow?.ShowStopped(path);
     }
 
     /// <summary>Événement du journal d'intervention (sans effet hors enregistrement).</summary>

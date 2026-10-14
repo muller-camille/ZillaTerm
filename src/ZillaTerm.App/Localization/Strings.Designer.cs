@@ -16824,14 +16824,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Recording stopped. The report is exported from the Intervention window..
-        /// </summary>
-        public static string InterventionNotesStopped {
-            get {
-                return ResourceManager.GetString("InterventionNotesStopped", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to Title, notes and history of the current intervention (Ctrl+4).
@@ -16842,14 +16834,6 @@ namespace ZillaTerm.App.Localization {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Close the _history.
-        /// </summary>
-        public static string InterventionCloseHistory {
-            get {
-                return ResourceManager.GetString("InterventionCloseHistory", resourceCulture);
-            }
-        }
 
         /// <summary>
         ///   Looks up a localized string similar to Screen.
@@ -19143,6 +19127,87 @@ namespace ZillaTerm.App.Localization {
         public static string TabModeWatched {
             get {
                 return ResourceManager.GetString("TabModeWatched", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _End the intervention.
+        /// </summary>
+        public static string InterventionEnd {
+            get {
+                return ResourceManager.GetString("InterventionEnd", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Stops the recording and closes this tab; the report is then exported from the Intervention window..
+        /// </summary>
+        public static string InterventionEndTip {
+            get {
+                return ResourceManager.GetString("InterventionEndTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to End the intervention.
+        /// </summary>
+        public static string InterventionEndTitle {
+            get {
+                return ResourceManager.GetString("InterventionEndTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to End the intervention?.
+        /// </summary>
+        public static string InterventionEndHeading {
+            get {
+                return ResourceManager.GetString("InterventionEndHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Recording stops and the "Intervention" tab closes..
+        /// </summary>
+        public static string InterventionEndBulletStop {
+            get {
+                return ResourceManager.GetString("InterventionEndBulletStop", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The journal stays in "Recorded interventions": the Intervention window opens to export its report..
+        /// </summary>
+        public static string InterventionEndBulletReport {
+            get {
+                return ResourceManager.GetString("InterventionEndBulletReport", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The note being typed is added to the journal first..
+        /// </summary>
+        public static string InterventionEndBulletNote {
+            get {
+                return ResourceManager.GetString("InterventionEndBulletNote", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to End the intervention.
+        /// </summary>
+        public static string InterventionEndAction {
+            get {
+                return ResourceManager.GetString("InterventionEndAction", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keep recording.
+        /// </summary>
+        public static string InterventionEndCancel {
+            get {
+                return ResourceManager.GetString("InterventionEndCancel", resourceCulture);
             }
         }
     }

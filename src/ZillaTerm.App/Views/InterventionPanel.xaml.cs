@@ -16,8 +16,8 @@ namespace ZillaTerm.App.Views;
 /// Onglet « Intervention » du panneau de gauche, affiché au début de l'enregistrement : le titre de l'intervention, une
 /// note, la capture d'un Bureau à distance, et l'historique de ce qui s'est passé (connexions, actions, transferts, notes,
 /// captures, texte des terminaux), à côté de la session. Une commande d'un terminal et son retour forment un bloc ; un
-/// long bloc est réduit à ses premières lignes et se déplie en entier. À l'arrêt, l'historique reste jusqu'à « Fermer
-/// l'historique » ou au prochain enregistrement.
+/// long bloc est réduit à ses premières lignes et se déplie en entier. « Terminer l'intervention » arrête
+/// l'enregistrement ; à l'arrêt, d'où qu'il vienne, l'onglet se vide et la fenêtre principale le retire.
 /// </summary>
 public partial class InterventionPanel : UserControl
 {
@@ -63,8 +63,8 @@ public partial class InterventionPanel : UserControl
         UpdateState();
     }
 
-    /// <summary>« Fermer l'historique » d'un enregistrement arrêté : l'onglet n'a plus rien à montrer.</summary>
-    public event EventHandler? CloseRequested;
+    /// <summary>« Terminer l'intervention » : la fenêtre principale confirme, puis arrête l'enregistrement.</summary>
+    public event EventHandler? EndRequested;
 
     /// <summary>Rappel vu (« Vu ») : à noter au journal.</summary>
     public event Action<InterventionReminder>? ReminderSeen;
@@ -103,8 +103,35 @@ public partial class InterventionPanel : UserControl
         ShowNextReminder();
     }
 
-    /// <summary>Quelque chose à montrer : l'enregistrement en cours, ou l'historique d'un enregistrement arrêté.</summary>
-    public bool HasHistory => _history is not null;
+    /// <summary>Note tapée, ou modification d'une note, pas encore au journal.</summary>
+    public bool HasPendingNote
+    {
+        get
+        {
+            var text = NoteBox.Text.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
+            bool typed = text.Length > 0 && (_editing is null || text != _editing.AllText);
+            return typed || _draft.Trim().Length > 0;
+        }
+    }
+
+    /// <summary>
+    /// Avant l'arrêt de l'enregistrement : la note en cours de saisie (ou la modification d'une note) part au journal,
+    /// puis la note mise de côté pendant une modification, pour ne rien perdre en fermant l'onglet.
+    /// </summary>
+    public void CommitPendingNote()
+    {
+        AddNote();
+        if (_editing is not null)
+        {
+            // Modification vidée : abandonnée, la note mise de côté revient dans le champ.
+            EndEdit();
+        }
+
+        if (NoteBox.Text.Trim().Length > 0)
+        {
+            AddNote();
+        }
+    }
 
     /// <summary>Suit les enregistrements de <paramref name="recorder"/> (celui en cours depuis son début).</summary>
     public void Attach(InterventionRecorder recorder)
@@ -149,11 +176,14 @@ public partial class InterventionPanel : UserControl
             TitleBox.Text = "";
             ShowMessage("");
         }
-        else if (_recorder.History is null && _history is not null && _shownRecording)
+        else if (_recorder.History is null && _history is not null)
         {
-            // Arrêt : ses derniers événements ; l'historique reste affiché.
-            ReadHistory();
-            ShowMessage(Strings.InterventionNotesStopped);
+            // Arrêt : l'onglet n'a plus rien à montrer (la fenêtre principale le retire) ; le rapport s'exporte depuis la
+            // fenêtre Intervention.
+            Follow(null);
+            TitleBox.Clear();
+            NoteBox.Clear();
+            ShowMessage("");
         }
 
         if (_recorder.IsRecording && !TitleBox.IsKeyboardFocusWithin)
@@ -278,7 +308,7 @@ public partial class InterventionPanel : UserControl
 
         RecordingDot.Visibility = keeping ? Visibility.Visible : Visibility.Collapsed;
         ScreenThrottledText.Visibility = active is { ScreenThrottled: true } ? Visibility.Visible : Visibility.Collapsed;
-        CloseHistoryButton.Visibility = !recording && _history is not null ? Visibility.Visible : Visibility.Collapsed;
+        EndButton.Visibility = recording ? Visibility.Visible : Visibility.Collapsed;
         var status = active is not null ? InterventionWindow.RecordingStatus(active) : Strings.InterventionNotRecording;
         bool interrupted = active is { FailedAt: not null };
         if (recording == _shownRecording && interrupted == _shownInterrupted)
@@ -517,20 +547,12 @@ public partial class InterventionPanel : UserControl
     }
 
     /// <summary>Enregistrement arrêté : l'historique est oublié et l'onglet se retire.</summary>
-    private void OnCloseHistory(object sender, RoutedEventArgs e)
+    private void OnEnd(object sender, RoutedEventArgs e)
     {
         if (Active is not null)
         {
-            return;
+            EndRequested?.Invoke(this, EventArgs.Empty);
         }
-
-        _history = null;
-        _read = 0;
-        _blocks = new InterventionBlockBuilder();
-        _items.Clear();
-        ShowMessage("");
-        UpdateState();
-        CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 }
 

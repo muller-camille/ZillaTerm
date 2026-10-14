@@ -8,9 +8,14 @@
     <DockPanel Margin="8">
         <StackPanel DockPanel.Dock="Bottom" Margin="0,6,0,0">
             <views:AnnouncedText x:Name="MessageText" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" />
-            <!-- Enregistrement arrêté : l'historique reste jusqu'à ce bouton (ou au prochain enregistrement). -->
-            <Button x:Name="CloseHistoryButton" Click="OnCloseHistory" HorizontalAlignment="Left" Margin="0,6,0,0" Visibility="Collapsed">
-                <AccessText Text="{x:Static loc:Strings.InterventionCloseHistory}" />
+            <!-- Fin de l'intervention depuis l'onglet : l'enregistrement s'arrête (après confirmation) et l'onglet se ferme. -->
+            <Button x:Name="EndButton" Click="OnEnd" HorizontalAlignment="Left" Margin="0,6,0,0" Visibility="Collapsed"
+                    ToolTip="{x:Static loc:Strings.InterventionEndTip}" AutomationProperties.HelpText="{x:Static loc:Strings.InterventionEndTip}">
+                <StackPanel Orientation="Horizontal">
+                    <Rectangle Width="9" Height="9" Margin="0,0,7,0" VerticalAlignment="Center"
+                               Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                    <AccessText Text="{x:Static loc:Strings.InterventionEnd}" VerticalAlignment="Center" />
+                </StackPanel>
             </Button>
         </StackPanel>
 
