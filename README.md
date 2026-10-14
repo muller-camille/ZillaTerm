@@ -59,6 +59,10 @@ and opens your sessions with a double-click: remote desktop through **PSM**, or 
 <td><img src="docs/captures/en/terminal-menu.png" alt="Right-click menu of the terminal"><br><sub>Right-click in the terminal: copy, paste, search, tab actions</sub></td>
 <td><img src="docs/captures/en/keepass-vault.png" alt="Emergency access with KeePass"><br><sub>Emergency access: direct SSH from a KeePass database</sub></td>
 </tr>
+<tr>
+<td><img src="docs/captures/en/intervention.png" alt="Intervention tab"><br><sub>Intervention: recording, notes and history next to the session</sub></td>
+<td><img src="docs/captures/en/parallel-view.png" alt="Parallel view"><br><sub>Parallel view: one command on several servers</sub></td>
+</tr>
 </table>
 
 ## Installation

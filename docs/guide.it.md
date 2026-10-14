@@ -383,6 +383,8 @@ usato.
     trascina la scheda fuori dalla finestra. Chiuderla riporta la vista nella sua scheda senza chiudere le sessioni.
   - **Inviare file** alle sessioni della vista: pulsante «Invia file…» (vedi la scheda File).
 
+![Vista parallela: lo stesso comando inviato a tre server con la digitazione simultanea](captures/it/parallel-view.png)
+
 ## 5. Sfogliare e inviare file: scheda «File»
 
 La scheda **File** del pannello laterale (`Ctrl+3`) segue la scheda SSH attiva e passa in primo piano all'apertura di
@@ -896,6 +898,8 @@ non riapre mai i database memorizzati senza password), alla chiusura e al blocco
 
 ## 8. Intervento: registrazione e promemoria di reperibilità
 
+<img src="captures/it/intervention-window.png" alt="Finestra Intervento: promemoria di reperibilità, registrazione e interventi registrati" width="34%"> <img src="captures/it/intervention.png" alt="Scheda Intervento durante la registrazione: titolo, nota e cronologia accanto alla sessione" width="64%">
+
 Il pulsante **«Intervento»** della barra degli strumenti apre una finestra utile a qualsiasi intervento, in
 reperibilità o no:
 
@@ -1033,6 +1037,8 @@ gli altri ti raggiungono:
    6 cifre**: la persona vede lo stesso dalla sua parte. Confrontalo con lei (telefono, chat), spunta «Ho verificato il
    codice con questa persona», poi «Accetta». Un codice diverso significa che qualcun altro si è interposto: rifiuta.
    Senza risposta, la richiesta scade dopo 3 minuti.
+
+<img src="captures/it/share-request.png" alt="Una persona chiede di guardare una sessione condivisa, con il codice di verifica" width="554">
 
 Finché la sessione è condivisa, il suo banner dice chi guarda, chi ha il controllo e fino a quando, con «Gestisci…» e
 «Interrompi la condivisione»; la barra di stato conta le sessioni condivise e guardate e le richieste in attesa.

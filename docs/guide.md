@@ -362,6 +362,8 @@ each PSMP is checked on its first connection. The tab tooltip names the PSMP use
     of the window. Closing it brings the view back to its tab without closing the sessions.
   - **Send files** to the sessions of the view: "Send files…" button (see the Files tab).
 
+![Parallel view: the same command sent to three servers with simultaneous typing](captures/en/parallel-view.png)
+
 ## 5. Browse and upload files: "Files" tab
 
 The **Files** tab of the side panel (`Ctrl+3`) follows the active SSH tab and comes to the front when an SSH session
@@ -844,6 +846,8 @@ says its master password was not remembered. Manage it in the **Settings**, Secu
 
 ## 8. Intervention: recording and on-call duty reminder
 
+<img src="captures/en/intervention-window.png" alt="Intervention window: on-call duty reminder, recording and recorded interventions" width="34%"> <img src="captures/en/intervention.png" alt="Intervention tab while recording: title, note and history next to the session" width="64%">
+
 The **"Intervention"** button in the toolbar opens a window for any intervention, on call or not:
 
 - **The on-call duty reminder**: good practices, emergency numbers, contacts… It comes:
@@ -972,6 +976,8 @@ another person's session works without it). Then, how others reach you:
    same one on their side. Compare it with them (phone, chat), tick "I checked the code with this person", then
    "Accept". A different code means someone else is in between: refuse. Without an answer, the request expires after
    3 minutes.
+
+<img src="captures/en/share-request.png" alt="A person asks to watch a shared session, with the verification code" width="554">
 
 While the session is shared, its banner says who is watching, who has control and until when, with "Manage…" and
 "Stop sharing"; the status bar counts the shared and watched sessions and the waiting requests.

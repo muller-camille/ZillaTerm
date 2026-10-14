@@ -59,6 +59,10 @@ e apre le sessioni con un doppio clic: desktop remoto tramite **PSM**, oppure un
 <td><img src="docs/captures/it/terminal-menu.png" alt="Menu del clic destro nel terminale"><br><sub>Clic destro nel terminale: copia, incolla, cerca, azioni della scheda</sub></td>
 <td><img src="docs/captures/it/keepass-vault.png" alt="Accesso di emergenza con KeePass"><br><sub>Accesso di emergenza: SSH diretto da un database KeePass</sub></td>
 </tr>
+<tr>
+<td><img src="docs/captures/it/intervention.png" alt="Scheda Intervento"><br><sub>Intervento: registrazione, note e cronologia accanto alla sessione</sub></td>
+<td><img src="docs/captures/it/parallel-view.png" alt="Vista parallela"><br><sub>Vista parallela: un comando su più server</sub></td>
+</tr>
 </table>
 
 ## Installazione

@@ -59,6 +59,10 @@ avez accès et ouvre vos sessions en un double-clic : bureau à distance via **P
 <td><img src="docs/captures/fr/terminal-menu.png" alt="Menu du clic droit dans le terminal"><br><sub>Clic droit dans le terminal : copier, coller, rechercher, actions de l'onglet</sub></td>
 <td><img src="docs/captures/fr/keepass-vault.png" alt="Accès d'urgence avec KeePass"><br><sub>Accès d'urgence : SSH direct depuis une base KeePass</sub></td>
 </tr>
+<tr>
+<td><img src="docs/captures/fr/intervention.png" alt="Onglet Intervention"><br><sub>Intervention : enregistrement, notes et historique à côté de la session</sub></td>
+<td><img src="docs/captures/fr/parallel-view.png" alt="Vue parallèle"><br><sub>Vue parallèle : une commande sur plusieurs serveurs</sub></td>
+</tr>
 </table>
 
 ## Installation
