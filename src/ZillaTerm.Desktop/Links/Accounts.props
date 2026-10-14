@@ -1,0 +1,15 @@
+<Project>
+  <!-- Comptes et safes CyberArk : création et modification de comptes, connexion, serveur d'un compte de domaine,
+       membres d'un safe, import de comptes (CSV) et propriétés d'un serveur de « Mes serveurs ». -->
+  <ItemGroup>
+    <!-- Tableaux (membres d'un safe, aperçu et résultat de l'import) : DataGrid d'Avalonia. Son thème est inclus par
+         chaque fenêtre qui s'en sert (Window.Styles), en attendant d'aller dans App.axaml. -->
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Code sans interface de ZillaTerm.App, partagé tel quel. -->
+    <Compile Include="..\ZillaTerm.App\ConnectRequest.cs" Link="Shared\ConnectRequest.cs" />
+    <Compile Include="..\ZillaTerm.App\SafePermissionText.cs" Link="Shared\SafePermissionText.cs" />
+  </ItemGroup>
+</Project>

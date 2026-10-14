@@ -1,0 +1,58 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.SafeMembersDialog"
+                    Title="{x:Static loc:Strings.SafeMembersTitle}" Width="1000" Height="560" MinWidth="600" MinHeight="320">
+    <Window.Styles>
+        <!-- Thème du tableau (Avalonia.Controls.DataGrid) : à déplacer dans App.axaml, pour toutes les fenêtres. -->
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <!-- Densité des tableaux de l'application WPF, lignes alternées. -->
+        <StyleInclude Source="avares://ZillaTerm/Themes/AccountsDataGrid.axaml" />
+        <!-- Droits en colonnes : « ✓ » centré. -->
+        <Style Selector="DataGridCell.Check">
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+    </Window.Styles>
+    <DockPanel Margin="16">
+        <TextBlock x:Name="HeadingText" DockPanel.Dock="Top" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" />
+        <TextBlock x:Name="StatusText" DockPanel.Dock="Top" Classes="Muted" TextWrapping="Wrap" Margin="0,2,0,8"
+                   Text="{x:Static loc:Strings.SafeMembersLoading}" />
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.CloseButton}" IsCancel="True" MinWidth="90"
+                    HorizontalContentAlignment="Center" />
+            <StackPanel x:Name="ManagePanel" DockPanel.Dock="Left" Orientation="Horizontal" Margin="0,0,12,0" Spacing="8" IsVisible="False"
+                        Classes="DialogButtons">
+                <Button x:Name="AddButton" Content="{x:Static loc:Strings.SafeMembersAdd}" Click="OnAddMember" />
+                <Button x:Name="EditButton" Content="{x:Static loc:Strings.SafeMembersEdit}" Click="OnEditMember" IsEnabled="False" />
+                <Button x:Name="RemoveButton" Content="{x:Static loc:Strings.SafeMembersRemove}" Click="OnRemoveMember" IsEnabled="False" />
+            </StackPanel>
+            <TextBlock x:Name="HintText" Text="{x:Static loc:Strings.SafeMembersHint}" Classes="Muted" TextWrapping="Wrap"
+                       VerticalAlignment="Center" Margin="0,0,12,0" IsVisible="False" />
+        </DockPanel>
+        <TextBlock x:Name="RightsText" DockPanel.Dock="Bottom" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+        <StackPanel x:Name="SummaryPanel" DockPanel.Dock="Top" IsVisible="False" Margin="0,0,0,8">
+            <TextBlock x:Name="CanAddText" TextWrapping="Wrap" Margin="0,0,0,6" />
+            <CheckBox x:Name="OnlyAddBox" Click="OnOnlyAddClick">
+                <AccessText Text="{x:Static loc:Strings.SafeMembersOnlyAdd}" />
+            </CheckBox>
+        </StackPanel>
+
+        <Grid>
+            <!-- Chargement, puis erreur avec « Réessayer » : au centre, à la place du tableau. -->
+            <StackPanel x:Name="StatePanel" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="560">
+                <ProgressBar x:Name="LoadingBar" IsIndeterminate="True" Width="220" MinWidth="220" Height="6" MinHeight="6" Margin="0,0,0,10" />
+                <views:ErrorLine x:Name="ErrorMessage" TextAlignment="Center" IsVisible="False" />
+                <Button x:Name="RetryButton" Content="{x:Static loc:Strings.Retry}" HorizontalAlignment="Center" Margin="0,12,0,0"
+                        MinWidth="90" HorizontalContentAlignment="Center" IsVisible="False" Click="OnRetry" />
+            </StackPanel>
+            <DataGrid x:Name="MembersGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
+                      HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
+                      ClipboardCopyMode="IncludeHeader" CanUserReorderColumns="True" BorderThickness="1"
+                      BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                      SelectionChanged="OnSelectionChanged" DoubleTapped="OnGridDoubleClick" LoadingRow="OnLoadingRow" IsVisible="False" />
+        </Grid>
+    </DockPanel>
+</views:DialogWindow>

@@ -1,0 +1,74 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.AccountDialog"
+                    Title="{x:Static loc:Strings.AddAccountTitle}" Width="560" SizeToContent="Height" CanResize="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image Source="{DynamicResource IconPermissions}" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="HeadingText" Text="{x:Static loc:Strings.AddAccountTitle}" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock x:Name="IntroText" Text="{x:Static loc:Strings.AddAccountIntro}" Classes="Muted" TextWrapping="Wrap" Margin="0,2,0,0" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="16,4,16,16">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" Classes="DialogButtons">
+                <Button x:Name="CreateButton" Content="{x:Static loc:Strings.AddAccountCreate}" IsDefault="True" Click="OnCreate" />
+                <Button x:Name="CancelButton" Content="{x:Static loc:Strings.Cancel}" IsCancel="True" />
+            </StackPanel>
+            <TextBlock x:Name="StatusText" Text="{x:Static loc:Strings.AddAccountCreating}" Classes="Muted"
+                       VerticalAlignment="Center" IsVisible="False" />
+        </DockPanel>
+
+        <Grid Margin="16,12,16,8" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+            <!-- 170 px, élargie si un libellé est plus long (police de Linux et macOS plus large que celle de Windows). -->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="170" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Label Content="{x:Static loc:Strings.AddAccountSafe}" Target="{Binding #SafeBox}" Margin="0,0,8,8" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1" x:Name="SafeBox" IsEditable="True" Margin="0,0,0,8" HorizontalAlignment="Stretch" />
+            <Label Grid.Row="1" Content="{x:Static loc:Strings.AddAccountPlatform}" Target="{Binding #PlatformBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" x:Name="PlatformBox" IsEditable="True" Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                      ToolTip.Tip="{x:Static loc:Strings.AddAccountPlatformTip}" />
+            <Label Grid.Row="2" Content="{x:Static loc:Strings.AddAccountAddress}" Target="{Binding #AddressBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <TextBox Grid.Row="2" Grid.Column="1" x:Name="AddressBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            <Label Grid.Row="3" Content="{x:Static loc:Strings.AddAccountUser}" Target="{Binding #UserBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <TextBox Grid.Row="3" Grid.Column="1" x:Name="UserBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            <Label Grid.Row="4" Content="{x:Static loc:Strings.AddAccountDomain}" Target="{Binding #DomainBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <TextBox Grid.Row="4" Grid.Column="1" x:Name="DomainBox" Margin="0,0,0,8" VerticalContentAlignment="Center"
+                     ToolTip.Tip="{x:Static loc:Strings.AddAccountDomainTip}" />
+            <Label Grid.Row="5" Content="{x:Static loc:Strings.AddAccountName}" Target="{Binding #NameBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <TextBox Grid.Row="5" Grid.Column="1" x:Name="NameBox" Margin="0,0,0,8" VerticalContentAlignment="Center"
+                     ToolTip.Tip="{x:Static loc:Strings.AddAccountNameTip}" />
+            <Label Grid.Row="6" x:Name="PasswordLabel" Content="{x:Static loc:Strings.AddAccountPassword}" Target="{Binding #PasswordBox}"
+                   Margin="0,0,8,8" VerticalAlignment="Center" />
+            <views:PasswordBox Grid.Row="6" Grid.Column="1" x:Name="PasswordBox" Margin="0,0,0,8" VerticalContentAlignment="Center"
+                               ToolTip.Tip="{x:Static loc:Strings.AddAccountPasswordTip}" />
+            <Label Grid.Row="7" x:Name="ConfirmLabel" Content="{x:Static loc:Strings.AddAccountConfirm}" Target="{Binding #ConfirmBox}"
+                   Margin="0,0,8,8" VerticalAlignment="Center" />
+            <views:PasswordBox Grid.Row="7" Grid.Column="1" x:Name="ConfirmBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            <Label Grid.Row="8" Content="{x:Static loc:Strings.AddAccountMachines}" Target="{Binding #MachinesBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <TextBox Grid.Row="8" Grid.Column="1" x:Name="MachinesBox" Margin="0,0,0,8" VerticalContentAlignment="Center"
+                     ToolTip.Tip="{x:Static loc:Strings.AddAccountMachinesTip}" />
+            <CheckBox Grid.Row="9" Grid.Column="1" x:Name="CpmBox" IsChecked="True" Margin="0,2,0,8">
+                <AccessText Text="{x:Static loc:Strings.AddAccountCpm}" />
+            </CheckBox>
+            <Label Grid.Row="10" Content="{x:Static loc:Strings.AddAccountReason}" Target="{Binding #ReasonBox}" Margin="0,0,8,8"
+                   VerticalAlignment="Center" />
+            <TextBox Grid.Row="10" Grid.Column="1" x:Name="ReasonBox" Margin="0,0,0,8" VerticalContentAlignment="Center" IsEnabled="False" />
+            <views:ErrorLine Grid.Row="11" Grid.ColumnSpan="2" x:Name="ErrorMessage" IsVisible="False" Margin="0,0,0,4" />
+        </Grid>
+    </DockPanel>
+</views:DialogWindow>

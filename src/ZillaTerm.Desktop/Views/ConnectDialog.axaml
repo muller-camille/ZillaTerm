@@ -1,0 +1,94 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.ConnectDialog"
+                    Title="{x:Static loc:Strings.ConnectTitle}"
+                    Width="520" SizeToContent="Height" CanResize="False">
+    <DockPanel>
+        <!-- En-tête : le compte ciblé -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image x:Name="KindIcon" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleText" FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="DetailsText" Classes="Muted" Margin="0,2,0,0" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,4,16,16" Spacing="8" Classes="DialogButtons">
+            <Button Content="{x:Static loc:Strings.Connect}" IsDefault="True" Click="OnConnect" />
+            <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" />
+        </StackPanel>
+
+        <StackPanel Margin="16,12,16,8">
+            <Border x:Name="ErrorPanel" Classes="ErrorBanner" Margin="0,0,0,12" IsVisible="False">
+                <views:ErrorLine x:Name="ErrorText" />
+            </Border>
+
+            <TextBlock x:Name="ModeTitle" Text="{x:Static loc:Strings.ConnectionType}" Classes="SectionTitle" />
+            <WrapPanel Margin="0,0,0,12">
+                <RadioButton x:Name="PsmRadio" Content="{x:Static loc:Strings.ModePsm}" GroupName="Mode" Margin="0,0,24,4"
+                             IsCheckedChanged="OnModeChanged" AutomationProperties.LabeledBy="{Binding #ModeTitle}" />
+                <RadioButton x:Name="SshRadio" Content="{x:Static loc:Strings.ModeSsh}" GroupName="Mode" Margin="0,0,24,4"
+                             IsCheckedChanged="OnModeChanged" AutomationProperties.LabeledBy="{Binding #ModeTitle}" />
+                <RadioButton x:Name="SftpRadio" Content="{x:Static loc:Strings.ModeSftp}" GroupName="Mode" Margin="0,0,0,4"
+                             IsCheckedChanged="OnModeChanged" AutomationProperties.LabeledBy="{Binding #ModeTitle}" />
+            </WrapPanel>
+
+            <!-- Étiquettes à la largeur du plus long texte (« Macchina di destinazione: » en italien). -->
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" MinWidth="140" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Row="0" Content="{x:Static loc:Strings.ComponentLabel}" Target="{Binding #ComponentBox}" Margin="0,0,8,8"
+                       VerticalAlignment="Center" />
+                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="ComponentBox" IsEditable="True" Margin="0,0,0,8" HorizontalAlignment="Stretch" />
+
+                <Label Grid.Row="1" Content="{x:Static loc:Strings.TargetMachineLabel}" Target="{Binding #MachineBox}" Margin="0,0,8,8"
+                       VerticalAlignment="Center" />
+                <ComboBox Grid.Row="1" Grid.Column="1" x:Name="MachineBox" IsEditable="True" Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                          ToolTip.Tip="{x:Static loc:Strings.TargetMachineTip}" />
+
+                <Label Grid.Row="2" Content="{x:Static loc:Strings.ReasonLabel}" Target="{Binding #ReasonBox}" Margin="0,0,8,8"
+                       VerticalAlignment="Center" />
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="ReasonBox" Margin="0,0,0,8"
+                         ToolTip.Tip="{x:Static loc:Strings.ReasonTip}" />
+
+                <Label Grid.Row="3" Content="{x:Static loc:Strings.TicketLabel}" Target="{Binding #TicketSystemBox}" Margin="0,0,8,8"
+                       VerticalAlignment="Center" />
+                <Grid Grid.Row="3" Grid.Column="1" Margin="0,0,0,8" ColumnDefinitions="*,8,*">
+                    <!-- Deux champs pour une étiquette : chacun son nom pour les lecteurs d'écran. -->
+                    <TextBox x:Name="TicketSystemBox" ToolTip.Tip="{x:Static loc:Strings.TicketSystemTip}"
+                             AutomationProperties.Name="{x:Static loc:Strings.TicketSystemTip}"
+                             PlaceholderText="{x:Static loc:Strings.TicketSystemPlaceholder}" />
+                    <TextBox Grid.Column="2" x:Name="TicketIdBox" ToolTip.Tip="{x:Static loc:Strings.TicketIdTip}"
+                             AutomationProperties.Name="{x:Static loc:Strings.TicketIdTip}"
+                             PlaceholderText="{x:Static loc:Strings.TicketIdPlaceholder}" />
+                </Grid>
+
+                <CheckBox Grid.Row="4" Grid.Column="1" x:Name="RememberBox" Margin="0,0,0,10" />
+            </Grid>
+
+            <CheckBox x:Name="X11Box" Margin="0,0,0,10" ToolTip.Tip="{x:Static loc:Strings.X11ForwardingTip}" ToolTip.ShowOnDisabled="True">
+                <AccessText Text="{x:Static loc:Strings.X11Forwarding}" TextWrapping="Wrap" />
+            </CheckBox>
+            <!-- Conséquence de l'option, affichée dès que sa case est cochée et active : visible au clavier, pas seulement
+                 au survol. -->
+            <TextBlock x:Name="X11Effect" Classes="OptionEffect" Margin="20,-8,0,10" Text="{x:Static loc:Strings.X11ForwardingEffect}">
+                <TextBlock.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding ElementName="X11Box" Path="IsChecked" />
+                        <Binding ElementName="X11Box" Path="IsEffectivelyEnabled" />
+                    </MultiBinding>
+                </TextBlock.IsVisible>
+            </TextBlock>
+
+            <TextBlock x:Name="SshHint" Classes="Muted" TextWrapping="Wrap" Margin="0,0,0,4" />
+        </StackPanel>
+    </DockPanel>
+</views:DialogWindow>

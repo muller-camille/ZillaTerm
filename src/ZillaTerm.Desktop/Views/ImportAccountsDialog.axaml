@@ -1,0 +1,73 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.ImportAccountsDialog"
+                    Title="{x:Static loc:Strings.ImportTitle}" Width="760" SizeToContent="Height" MinWidth="520">
+    <Window.Styles>
+        <!-- Thème du tableau (Avalonia.Controls.DataGrid) : à déplacer dans App.axaml, pour toutes les fenêtres. -->
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <!-- Densité des tableaux de l'application WPF, lignes alternées. -->
+        <StyleInclude Source="avares://ZillaTerm/Themes/AccountsDataGrid.axaml" />
+        <!-- Ligne en erreur : texte de la couleur des erreurs (le texte de la colonne « État » dit l'erreur). -->
+        <Style Selector="DataGridRow.Error">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+        </Style>
+    </Window.Styles>
+    <StackPanel Margin="16">
+        <TextBlock Text="{x:Static loc:Strings.ImportIntro}" Classes="Muted" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+        <DockPanel Margin="0,0,0,8">
+            <Button x:Name="ChooseButton" DockPanel.Dock="Left" Content="{x:Static loc:Strings.ImportChooseFile}" Click="OnChooseFile"
+                    MinWidth="90" />
+            <Button x:Name="TemplateButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.ImportTemplate}" Click="OnSaveTemplate"
+                    MinWidth="90" />
+            <TextBlock x:Name="FileText" Text="{x:Static loc:Strings.ImportNoFile}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       Margin="10,0,10,0" />
+        </DockPanel>
+
+        <Grid Margin="0,0,0,8" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+            <Label Content="{x:Static loc:Strings.ImportDefaultSafe}" Target="{Binding #SafeBox}" Margin="0,0,8,6" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1" x:Name="SafeBox" IsEditable="True" Margin="0,0,0,6" HorizontalAlignment="Stretch"
+                      ToolTip.Tip="{x:Static loc:Strings.ImportDefaultsTip}" />
+            <Label Grid.Row="1" Content="{x:Static loc:Strings.ImportDefaultPlatform}" Target="{Binding #PlatformBox}" Margin="0,0,8,0"
+                   VerticalAlignment="Center" />
+            <ComboBox Grid.Row="1" Grid.Column="1" x:Name="PlatformBox" IsEditable="True" HorizontalAlignment="Stretch"
+                      ToolTip.Tip="{x:Static loc:Strings.ImportDefaultsTip}" />
+        </Grid>
+
+        <DockPanel Margin="0,4,0,4">
+            <CheckBox x:Name="OnlyErrorsBox" DockPanel.Dock="Right" VerticalAlignment="Center" IsVisible="False" Click="OnOnlyErrors">
+                <AccessText Text="{x:Static loc:Strings.ImportOnlyErrors}" />
+            </CheckBox>
+            <TextBlock x:Name="SummaryText" TextWrapping="Wrap" FontWeight="SemiBold" IsVisible="False" VerticalAlignment="Center" />
+        </DockPanel>
+        <!-- Aperçu de toutes les lignes avant de créer quoi que ce soit (mots de passe jamais affichés). Liaisons à sens
+             unique : le DataGrid d'Avalonia lie ses cellules dans les deux sens par défaut (voir GridBinding). -->
+        <DataGrid x:Name="PreviewGrid" x:DataType="views:ImportPreviewRow" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}" MaxHeight="240" MinHeight="80"
+                  CanUserReorderColumns="True" BorderThickness="1" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                  Margin="0,0,0,6" IsVisible="False" AutomationProperties.Name="{x:Static loc:Strings.ImportPreview}" LoadingRow="OnLoadingRow">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{x:Static loc:Strings.ImportColLine}" Binding="{Binding Line, Mode=OneWay}" Width="50" />
+                <DataGridTextColumn Header="{x:Static loc:Strings.ImportColStatus}" Binding="{Binding Status, Mode=OneWay}" Width="2*" />
+                <DataGridTextColumn Header="{x:Static loc:Strings.ImportColSafe}" Binding="{Binding Safe, Mode=OneWay}" Width="*" />
+                <DataGridTextColumn Header="{x:Static loc:Strings.ImportColPlatform}" Binding="{Binding Platform, Mode=OneWay}" Width="*" />
+                <DataGridTextColumn Header="{x:Static loc:Strings.ImportColAccount}" Binding="{Binding Account, Mode=OneWay}" Width="2*" />
+                <DataGridTextColumn Header="{x:Static loc:Strings.ImportColPassword}" Binding="{Binding Password, Mode=OneWay}" Width="95" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <TextBlock x:Name="PasswordWarning" Text="{x:Static loc:Strings.ImportPasswordsWarning}" Foreground="{DynamicResource WarningBrush}"
+                   TextWrapping="Wrap" IsVisible="False" Margin="0,0,0,4" />
+        <views:ErrorLine x:Name="ErrorMessage" IsVisible="False" Margin="0,0,0,4" />
+
+        <DockPanel Margin="0,12,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="8" Classes="DialogButtons">
+                <Button x:Name="ImportButton" Content="{x:Static loc:Strings.ImportButton}" IsDefault="True" IsEnabled="False" Click="OnImport" />
+                <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" />
+            </StackPanel>
+            <TextBlock Text="{x:Static loc:Strings.ImportConfirmHint}" Classes="Muted" TextWrapping="Wrap"
+                       VerticalAlignment="Center" Margin="0,0,12,0" />
+        </DockPanel>
+    </StackPanel>
+</views:DialogWindow>

@@ -1,0 +1,68 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.ServerPromptDialog"
+                    Title="{x:Static loc:Strings.ServerPromptTitle}"
+                    Width="500" SizeToContent="Height" CanResize="False">
+    <!-- Compte de domaine : il est enregistré pour son domaine, pas pour un serveur ; on demande sur lequel ouvrir la
+         session, et s'il faut le garder dans « Mes serveurs » (dossier, étiquette). Sert aussi à « Ajouter à Mes
+         serveurs » : dossier et étiquette, et serveur pour un compte de domaine. -->
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image x:Name="KindIcon" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleText" FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="DetailsText" Classes="Muted" Margin="0,2,0,0" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Classes="DialogFooter">
+            <DockPanel>
+                <Button x:Name="AdvancedButton" DockPanel.Dock="Left" Content="{x:Static loc:Strings.ServerPromptAdvanced}"
+                        ToolTip.Tip="{x:Static loc:Strings.ServerPromptAdvancedTip}" Click="OnAdvanced" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                    <Button x:Name="OkButton" Content="{x:Static loc:Strings.Connect}" IsDefault="True" Click="OnOk" />
+                    <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <StackPanel Margin="16,12,16,8">
+            <TextBlock x:Name="QuestionText" Classes="SectionTitle" TextWrapping="Wrap" />
+            <TextBlock x:Name="HintText" Classes="Muted" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+            <StackPanel x:Name="ServerPanel">
+                <Label Content="{x:Static loc:Strings.ServerLabel}" Target="{Binding #ServerBox}" Padding="0,0,0,4" />
+                <ComboBox x:Name="ServerBox" IsEditable="True" IsTextSearchEnabled="False" HorizontalAlignment="Stretch" />
+                <TextBlock x:Name="ServerHint" Classes="OptionHelp" Margin="0,4,0,0" />
+            </StackPanel>
+
+            <StackPanel x:Name="KeepPanel" Margin="0,10,0,0">
+                <CheckBox x:Name="KeepBox" Content="{x:Static loc:Strings.ServerPromptKeep}" IsCheckedChanged="OnKeepChanged" />
+                <!-- Dossier et étiquette du serveur gardé (ou ajouté) dans « Mes serveurs ». -->
+                <Grid x:Name="SavePanel" Margin="20,6,0,0" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+                    <Label Content="{x:Static loc:Strings.ServerPromptFolder}" Target="{Binding #FolderBox}" VerticalAlignment="Center"
+                           Margin="0,0,8,0" />
+                    <ComboBox x:Name="FolderBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch"
+                              ToolTip.Tip="{x:Static loc:Strings.ServerPromptFolderTip}" />
+                    <Label x:Name="TagLabel" Grid.Row="1" Content="{x:Static loc:Strings.ServerPromptTag}" Margin="0,13,8,0"
+                           VerticalAlignment="Top" ToolTip.Tip="{x:Static loc:Strings.TagPromptHelp}" />
+                    <!-- Une case par étiquette (pastille de sa couleur), puis « Aucune étiquette ». -->
+                    <StackPanel x:Name="TagPanel" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0">
+                        <WrapPanel x:Name="TagChoices" AutomationProperties.Name="{x:Static loc:Strings.TagPromptTitle}" />
+                        <TextBlock x:Name="GuessText" Text="{x:Static loc:Strings.TagPromptGuessed}" Classes="OptionHelp"
+                                   IsVisible="False" Margin="0,2,0,0" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+            <TextBlock x:Name="AlreadySavedText" Classes="OptionHelp" Margin="0,10,0,0" IsVisible="False"
+                       Text="{x:Static loc:Strings.ServerPromptAlreadySaved}" />
+
+            <views:ErrorLine x:Name="ErrorText" IsVisible="False" Margin="0,10,0,0" />
+        </StackPanel>
+    </DockPanel>
+</views:DialogWindow>
