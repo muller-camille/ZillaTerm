@@ -79,12 +79,19 @@ internal static class Pickers
         {
             types.Add(new FilePickerFileType(parts[i])
             {
-                Patterns = parts[i + 1].Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+                Patterns = parts[i + 1].Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(AllFiles).ToList(),
             });
         }
 
         return types;
     }
+
+    /// <summary>
+    /// Hors de Windows, le motif « *.* » ne retient que les noms qui contiennent un point : un fichier sans extension
+    /// (config d'OpenSSH, consignes) serait caché ; il y devient « * ».
+    /// </summary>
+    private static string AllFiles(string pattern) => pattern == "*.*" && !OperatingSystem.IsWindows() ? "*" : pattern;
 
     private static async Task<IStorageFolder?> Folder(Window owner, string? path) =>
         string.IsNullOrWhiteSpace(path) || !Directory.Exists(path) ? null : await owner.StorageProvider.TryGetFolderFromPathAsync(path);

@@ -468,7 +468,7 @@ public partial class SettingsDialog : DialogWindow
 
     private async void OnBrowseDutyFile(object? sender, RoutedEventArgs e)
     {
-        if (await Pickers.OpenFileAsync(this, SystemFileFilter.Adapt(Strings.TerminalSaveFilter)) is { } path)
+        if (await Pickers.OpenFileAsync(this, Strings.TerminalSaveFilter) is { } path)
         {
             DutyFileBox.Text = path;
         }

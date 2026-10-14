@@ -186,7 +186,7 @@ public partial class SessionImportWindow : DialogWindow
         };
         var filter = (pattern.Length > 0 ? $"{choice.Label} ({pattern})|{pattern}|" : "") + Strings.SessionImportAllFiles + " (*.*)|*.*";
         // Le fichier config d'OpenSSH n'a pas d'extension : « tous les fichiers » doit le montrer hors de Windows aussi.
-        return await Pickers.OpenFileAsync(this, SystemFileFilter.Adapt(filter), title, directory);
+        return await Pickers.OpenFileAsync(this, filter, title, directory);
     }
 
     /// <summary>Extensions citées dans un libellé (« .abc ou .ini » → « *.abc;*.ini ») ; vide s'il n'en cite pas.</summary>
