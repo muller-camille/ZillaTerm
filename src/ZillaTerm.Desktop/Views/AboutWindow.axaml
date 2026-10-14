@@ -1,0 +1,63 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.AboutWindow"
+                    Title="{x:Static loc:Strings.AboutTitle}" Width="560" SizeToContent="Height" CanResize="False">
+    <views:DialogWindow.Styles>
+        <!-- Boutons de largeur commune, comme dans les autres fenêtres. -->
+        <Style Selector="Button">
+            <Setter Property="MinWidth" Value="90" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="HyperlinkButton">
+            <Setter Property="Padding" Value="0" />
+        </Style>
+    </views:DialogWindow.Styles>
+    <StackPanel Margin="18">
+        <DockPanel Margin="0,0,0,12">
+            <!-- Source choisie selon l'échelle de l'écran (AboutWindow.ShowLogo) ; réduction lissée. -->
+            <Image x:Name="LogoImage" DockPanel.Dock="Left" Width="56" Height="56" Margin="0,0,14,0" VerticalAlignment="Top"
+                   RenderOptions.BitmapInterpolationMode="HighQuality" />
+            <StackPanel>
+                <TextBlock Text="ZillaTerm" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock x:Name="VersionText" Classes="Muted" Margin="0,2,0,6" />
+                <TextBlock Text="{x:Static loc:Strings.AboutDescription}" TextWrapping="Wrap" />
+            </StackPanel>
+        </DockPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,0,0,4">
+            <HyperlinkButton Content="{x:Static loc:Strings.AboutProject}" Click="OnProject" />
+            <HyperlinkButton Content="{x:Static loc:Strings.AboutReleases}" Click="OnReleases" />
+        </StackPanel>
+        <TextBlock x:Name="LicenseText" Classes="Muted" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+        <Border BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="0,1,0,1" Padding="0,8" Margin="0,0,0,10">
+            <StackPanel>
+                <TextBlock x:Name="SystemText" Classes="Muted" TextWrapping="Wrap" />
+                <DockPanel Margin="0,6,0,0">
+                    <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.AboutOpenFolder}" Click="OnOpenSettingsFolder" Margin="8,0,0,0" />
+                    <TextBlock x:Name="FolderText" Classes="Muted" TextWrapping="Wrap" VerticalAlignment="Center" />
+                </DockPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Nouvelle version : recherche à la demande, téléchargement vérifié, jamais installé automatiquement. -->
+        <TextBlock Text="{x:Static loc:Strings.AboutUpdates}" Classes="SectionTitle" />
+        <DockPanel Margin="0,0,0,6">
+            <Button x:Name="CheckButton" DockPanel.Dock="Left" Content="{x:Static loc:Strings.AboutCheck}" Click="OnCheck" Margin="0,0,10,0" />
+            <TextBlock x:Name="UpdateText" TextWrapping="Wrap" VerticalAlignment="Center" />
+        </DockPanel>
+        <StackPanel x:Name="UpdatePanel" Orientation="Horizontal" Spacing="8" IsVisible="False" Margin="0,0,0,6">
+            <Button x:Name="DownloadButton" Content="{x:Static loc:Strings.AboutDownload}" Click="OnDownload" ToolTip.Tip="{x:Static loc:Strings.AboutDownloadTip}" />
+            <Button Content="{x:Static loc:Strings.AboutReleasePage}" Click="OnReleasePage" />
+            <Button x:Name="ShowFileButton" Content="{x:Static loc:Strings.AboutShowFile}" Click="OnShowFile" IsVisible="False" />
+        </StackPanel>
+        <ProgressBar x:Name="DownloadProgress" Height="8" MinHeight="8" Maximum="1" IsVisible="False" Margin="0,0,0,6" />
+        <!-- Réglage de la recherche automatique : dans les Paramètres seulement (page Général). -->
+        <TextBlock x:Name="AutoCheckText" Classes="Muted" TextWrapping="Wrap" Margin="0,4,0,4" />
+        <TextBlock x:Name="UpdateNoteText" Text="{x:Static loc:Strings.AboutUpdateNote}" Classes="Muted" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+        <Button Content="{x:Static loc:Strings.CloseButton}" IsCancel="True" IsDefault="True" HorizontalAlignment="Right" />
+    </StackPanel>
+</views:DialogWindow>

@@ -1,0 +1,29 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.LocalStoreDialog"
+                    Title="{x:Static loc:Strings.LocalStoreTitle}" Width="460" SizeToContent="Height" CanResize="False">
+    <StackPanel Margin="16">
+        <DockPanel Margin="0,0,0,12">
+            <Image Source="{DynamicResource IconPermissions}" Width="32" Height="32" Margin="0,0,12,0" VerticalAlignment="Top" />
+            <TextBlock x:Name="IntroText" TextWrapping="Wrap" />
+        </DockPanel>
+        <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto">
+            <Label Content="{x:Static loc:Strings.LocalStorePasswordLabel}" Target="{Binding #PasswordBox}" VerticalAlignment="Center" Margin="0,0,0,2" />
+            <views:PasswordBox Grid.Column="1" x:Name="PasswordBox" Margin="0,0,0,2" VerticalContentAlignment="Center" />
+            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="MinLengthText" Classes="Muted" Margin="0,0,0,8" />
+            <Label Grid.Row="2" x:Name="ConfirmLabel" Content="{x:Static loc:Strings.LocalStoreConfirmLabel}" Target="{Binding #ConfirmBox}"
+                   VerticalAlignment="Center" Margin="0,0,0,8" />
+            <views:PasswordBox Grid.Row="2" Grid.Column="1" x:Name="ConfirmBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+        </Grid>
+        <ProgressBar x:Name="Progress" Height="6" MinHeight="6" IsIndeterminate="True" Margin="0,4,0,4" IsVisible="False" />
+        <views:AnnouncedText x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}" Margin="0,0,0,6"
+                             IsVisible="False" />
+        <views:ErrorLine x:Name="ErrorText" Margin="0,0,0,8" IsVisible="False" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Classes="DialogButtons">
+            <Button x:Name="OkButton" IsDefault="True" Click="OnOk" />
+            <Button x:Name="CancelButton" Content="{x:Static loc:Strings.Cancel}" IsCancel="True" />
+        </StackPanel>
+    </StackPanel>
+</views:DialogWindow>

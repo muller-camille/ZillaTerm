@@ -1,0 +1,44 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.ReconnectDialog"
+                    Title="{x:Static loc:Strings.ReconnectTitle}" Width="480" SizeToContent="Height" CanResize="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ToolbarBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <DockPanel>
+                <Image Source="{DynamicResource IconKey}" Width="36" Height="36" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static loc:Strings.ReconnectTitle}" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock x:Name="WhoText" Classes="Muted" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,4,16,16" Spacing="8"
+                    Classes="DialogButtons">
+            <Button x:Name="ReconnectButton" Content="{x:Static loc:Strings.ReconnectButton}" IsDefault="True" Click="OnReconnect" />
+            <Button Content="{x:Static loc:Strings.ReconnectLater}" IsCancel="True"
+                    ToolTip.Tip="{x:Static loc:Strings.ReconnectLaterTip}" />
+        </StackPanel>
+
+        <StackPanel Margin="16,12,16,8">
+            <TextBlock Text="{x:Static loc:Strings.ReconnectIntro}" TextWrapping="Wrap" Margin="0,0,0,12" />
+            <Grid x:Name="CredentialsPanel" ColumnDefinitions="120,*">
+                <Label Content="{x:Static loc:Strings.LoginPassword}" Target="{Binding #PasswordBox}" Margin="0,0,0,8" VerticalAlignment="Center" />
+                <views:PasswordBox Grid.Column="1" x:Name="PasswordBox" Margin="0,0,0,8" VerticalContentAlignment="Center" />
+            </Grid>
+            <!-- Challenge RADIUS : la question du PVWA, puis la réponse. -->
+            <StackPanel x:Name="ChallengePanel" IsVisible="False">
+                <TextBlock x:Name="ChallengeText" TextWrapping="Wrap" Margin="0,0,0,8" />
+                <views:PasswordBox x:Name="ChallengeBox" Margin="0,0,0,8" AutomationProperties.LabeledBy="{Binding #ChallengeText}" />
+            </StackPanel>
+            <!-- Toujours à sa place (WPF : Visibility.Hidden) : la fenêtre ne change pas de hauteur pendant la demande. -->
+            <ProgressBar x:Name="Busy" Height="6" MinHeight="6" IsIndeterminate="True" Margin="0,4,0,4" Opacity="0" />
+            <views:ErrorLine x:Name="ErrorMessage" IsVisible="False" />
+            <views:AnnouncedText x:Name="CapsLockText" Text="{x:Static loc:Strings.CapsLockOn}" Foreground="{DynamicResource WarningBrush}"
+                                 Margin="0,4,0,0" IsVisible="False" />
+        </StackPanel>
+    </DockPanel>
+</views:DialogWindow>

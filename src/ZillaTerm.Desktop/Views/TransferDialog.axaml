@@ -1,0 +1,15 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.TransferDialog"
+                    Width="440" SizeToContent="Height" CanResize="False">
+    <StackPanel Margin="16">
+        <TextBlock x:Name="ItemText" TextTrimming="CharacterEllipsis" Margin="0,0,0,8" />
+        <ProgressBar x:Name="Bar" Height="12" MinHeight="12" Maximum="100" />
+        <TextBlock x:Name="SummaryText" Classes="Muted" Margin="0,6,0,12" />
+        <StackPanel HorizontalAlignment="Right" Classes="DialogButtons">
+            <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Click="OnCancel" />
+        </StackPanel>
+    </StackPanel>
+</views:DialogWindow>

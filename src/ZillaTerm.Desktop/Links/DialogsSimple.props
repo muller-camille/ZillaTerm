@@ -1,0 +1,15 @@
+<Project>
+  <!--
+    Dialogues simples (saisie, question du PSMP, archive, transfert, reconnexion, À propos, coffre local, copie d'un mot de
+    passe) : code sans WPF de ZillaTerm.App qu'ils utilisent.
+  -->
+  <ItemGroup>
+    <!-- Recherche de nouvelle version (« À propos ») : client HTTP vers GitHub. Chaque fichier est retiré puis ajouté, pour
+         n'être jamais compté deux fois si une autre partie du portage le lie aussi. -->
+    <Compile Remove="..\ZillaTerm.App\Services\UpdateService.cs" />
+    <Compile Include="..\ZillaTerm.App\Services\UpdateService.cs" Link="Shared\Services\UpdateService.cs" />
+    <!-- Explorateur de Windows (« Afficher le fichier » téléchargé, sous Windows). -->
+    <Compile Remove="..\ZillaTerm.App\Services\WindowsExplorer.cs" />
+    <Compile Include="..\ZillaTerm.App\Services\WindowsExplorer.cs" Link="Shared\Services\WindowsExplorer.cs" />
+  </ItemGroup>
+</Project>
