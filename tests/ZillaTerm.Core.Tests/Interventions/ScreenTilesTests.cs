@@ -504,7 +504,11 @@ public sealed partial class ScreenTilesTests : IDisposable
 
         var scripts = ScriptBlocks().Matches(html);
         var code = Assert.Single(scripts, m => m.Groups["type"].Value.Length == 0).Groups["body"].Value;
-        var hash = "'sha256-" + Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(code))) + "'";
+        // Empreinte du script tel que le navigateur le lit : l'analyse HTML ramène CRLF et CR à LF avant de la calculer
+        // (script compilé sous Windows, source en CRLF : l'empreinte ne correspondait plus et le lecteur était bloqué).
+        Assert.DoesNotContain('\r', code);
+        var seen = code.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+        var hash = "'sha256-" + Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(seen))) + "'";
         Assert.Contains("default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src " + hash + "\"", html, StringComparison.Ordinal);
         var frames = Assert.Single(scripts, m => m.Groups["type"].Value.Contains("octet-stream", StringComparison.Ordinal)).Groups["body"].Value;
         Assert.Matches("^[A-Za-z0-9+/=]+$", frames);
