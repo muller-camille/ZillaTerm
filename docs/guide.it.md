@@ -90,6 +90,15 @@ subito nella lingua scelta, conservando l'indirizzo e il nome utente inseriti.
 - Al posto di un elenco vuoto, la scheda dice cosa succede: caricamento degli account, caricamento non riuscito con
   il suo messaggio e «Riprova», nessun account disponibile per il tuo utente CyberArk, o nessun account
   corrispondente al filtro, con «Cancella il filtro».
+- **Caricamento degli account**: il PVWA li fornisce a pagine di 1.000. Dal secondo accesso in poi, l'elenco
+  dell'accesso precedente appare subito («Elenco del 15/10/2026 08:12: aggiornamento 12.000 / 50.000»): ricerca,
+  connessioni e sessioni recenti funzionano subito; l'elenco riletto dal PVWA lo sostituisce in un colpo solo quando è
+  completo, mantenendo selezione, cartelle aperte e scorrimento, e la barra di stato dice cosa è cambiato («14 nuovi,
+  3 rimossi»). Un account eliminato nel frattempo viene rifiutato dal PVWA alla connessione. Se l'aggiornamento non
+  riesce, l'elenco resta con la sua data («non aggiornato») e `F5` lo rilancia. Senza elenco precedente (primo accesso,
+  altro PVWA o utente), l'elenco si riempie pagina dopo pagina. La copia dell'elenco non contiene alcuna password; è
+  cifrata per il tuo account Windows, una per PVWA e utente, ed eliminata dopo 30 giorni (opzione delle
+  [Impostazioni](#impostazioni-e-file-di-configurazione)).
 - «Raggruppa per» ordina gli account per safe, piattaforma o tipo di destinazione.
 - Clic destro su un account → «Esporta gli account visualizzati (CSV)…» salva in CSV gli account mostrati
   (filtrati dalla ricerca).
@@ -144,7 +153,7 @@ subito nella lingua scelta, conservando l'indirizzo e il nome utente inseriti.
   digiti: Invio per connetterti. Dice quando nessun account corrisponde e mostra solo i primi 50 risultati («Primi 50
   account su N: precisa la ricerca.»). Le **sessioni recenti** sono datate («Oggi 09:28», «Ieri 18:02»); clic
   destro → «Rimuovi dall'elenco» (o `Canc`) ne toglie una. Restano in grigio finché gli account non sono caricati
-  dal PVWA («in attesa degli account del PVWA…»); sono quelle del PVWA a cui sei connesso: su un altro PVWA lo
+  dal PVWA («in attesa degli account del PVWA…»), tranne quando è mostrato l'elenco dell'accesso precedente; sono quelle del PVWA a cui sei connesso: su un altro PVWA lo
   stesso ID di account indica un altro account.
 
 ## 3. Aprire una sessione PSM (desktop remoto)
@@ -1170,6 +1179,7 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | Generale | File centrale | File di ambiente del team su una condivisione di rete, riletto a ogni avvio; le sue modifiche vengono mostrate prima di essere applicate (vedi [Ambiente condiviso](#ambiente-condiviso)) | vuoto |
 | Generale | Cercare una nuova versione all'avvio | Una richiesta a GitHub al massimo una volta al giorno; un link nella barra di stato se esiste una versione più recente (la finestra «Informazioni» ricorda questa impostazione) | no |
 | CyberArk | Mantenere aperta la sessione CyberArk | Richiesta leggera ogni 4 minuti mentre usi il computer; sospesa quando Windows è bloccato o dopo 15 minuti senza tastiera né mouse (la sessione CyberArk scade allora secondo il suo timeout di inattività) | sì |
+| CyberArk | Mostrare subito l'elenco degli account all'accesso | Copia cifrata (account Windows) dell'ultimo elenco completo, una per PVWA e utente, senza alcuna password, eliminata dopo 30 giorni: mostrata subito, poi sostituita dall'elenco riletto dal PVWA. Non selezionata: le copie vengono eliminate. Diffusa dal file d'ambiente | sì |
 | CyberArk | PSMP predefinito, porta | Server PSM for SSH; se impostato (o un PSMP per dominio), gli account Unix si aprono in SSH per impostazione predefinita (in soli file per una piattaforma «SFTP»); senza alcun PSMP, SSH e SFTP sono disattivati | vuoto, 22 |
 | CyberArk | PSMP per dominio | Altri PSMP (indirizzo, porta, dominio servito); ogni server passa da quello del dominio più vicino al suo (vedi [PSMP per dominio](#psmp-per-dominio)); «Quale PSMP per il server» per verificare | nessuno |
 | CyberArk | Componente degli account Windows | Componente PSM degli account Windows (di dominio o locali) senza componente memorizzato per la loro piattaforma, ad esempio `WIN-PSM` | vuoto = `PSM-RDP` |

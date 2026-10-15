@@ -164,6 +164,19 @@ public sealed class AppSettingsTests : IDisposable
         Assert.False(AppSettings.Load(path).PauseRdpDisplay);
     }
 
+    /// <summary>Copie chiffrée de la liste des comptes : par défaut, y compris pour des réglages plus anciens ; le choix gardé.</summary>
+    [Fact]
+    public void KeepAccountListCopyIsOnByDefaultAndKept()
+    {
+        Assert.True(new AppSettings().KeepAccountListCopy);
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "copy.json");
+        File.WriteAllText(path, "{}");
+        Assert.True(AppSettings.Load(path).KeepAccountListCopy);
+        new AppSettings { KeepAccountListCopy = false }.Save(path);
+        Assert.False(AppSettings.Load(path).KeepAccountListCopy);
+    }
+
     /// <summary>Thème de l'interface : celui de Windows par défaut, le choix gardé, une valeur inconnue ramenée au défaut.</summary>
     [Fact]
     public void ThemeDefaultsToWindowsAndIsKept()

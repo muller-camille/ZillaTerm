@@ -32,6 +32,7 @@ public partial class SettingsDialog : Window
         _settings = settings;
         _store = store;
         KeepAliveBox.IsChecked = settings.KeepPvwaSessionAlive;
+        KeepAccountListCopyBox.IsChecked = settings.KeepAccountListCopy;
         UpdateCheckBox.IsChecked = settings.CheckForUpdates;
         CentralFileBox.Text = settings.EnvironmentFile;
         UpdateStore();
@@ -327,6 +328,7 @@ public partial class SettingsDialog : Window
         _settings.InterventionReminders = reminders;
         _settings.ReplaceServerTags(tags.Tags, tags.Renamed);
         _settings.KeepPvwaSessionAlive = KeepAliveBox.IsChecked == true;
+        _settings.KeepAccountListCopy = KeepAccountListCopyBox.IsChecked == true;
         _settings.CheckForUpdates = UpdateCheckBox.IsChecked == true;
         _settings.PreferredUploadProtocol = ScpRadio.IsChecked == true ? TransferProtocol.Scp : TransferProtocol.Sftp;
         _settings.OfferArchive = ArchiveBox.IsChecked == true;

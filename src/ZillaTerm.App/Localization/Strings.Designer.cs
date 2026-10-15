@@ -19309,5 +19309,68 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("InterventionReportPauseMarker", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show the account list at once when you log in (_encrypted copy of the last list on this computer).
+        /// </summary>
+        public static string KeepAccountListCopy {
+            get {
+                return ResourceManager.GetString("KeepAccountListCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The list from the last login shows at once, then it is read again from the PVWA in the background and replaced in one go. The copy holds no password; it is encrypted for your Windows account, one per PVWA and user, and deleted after 30 days. Unchecked: the copies are deleted..
+        /// </summary>
+        public static string KeepAccountListCopyHelp {
+            get {
+                return ResourceManager.GetString("KeepAccountListCopyHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show the account list at once (encrypted copy on the computer).
+        /// </summary>
+        public static string EnvKeepAccountListCopy {
+            get {
+                return ResourceManager.GetString("EnvKeepAccountListCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to List from {0}: updating….
+        /// </summary>
+        public static string AccountsFromCopy {
+            get {
+                return ResourceManager.GetString("AccountsFromCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to List from {0}: updating {1:N0} / {2:N0}.
+        /// </summary>
+        public static string AccountsFromCopyProgress {
+            get {
+                return ResourceManager.GetString("AccountsFromCopyProgress", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Accounts: {0:N0} (list from {1}, not updated).
+        /// </summary>
+        public static string AccountCountFromCopy {
+            get {
+                return ResourceManager.GetString("AccountCountFromCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Account list updated: {0:# new|# new}, {1:# removed|# removed}..
+        /// </summary>
+        public static string AccountListUpdated {
+            get {
+                return ResourceManager.GetString("AccountListUpdated", resourceCulture);
+            }
+        }
     }
 }

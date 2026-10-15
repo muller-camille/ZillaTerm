@@ -86,6 +86,14 @@ away in the chosen language, keeping the address and user name you typed.
   safe or their name in CyberArk. Screen readers read it with the name of the account.
 - Instead of an empty list, the tab says what is going on: accounts loading, loading failed with its message and
   "Retry", no account available to your CyberArk user, or no account matching the filter, with "Clear the filter".
+- **Loading the accounts**: the PVWA gives them in pages of 1,000. From the second login on, the list from the
+  previous login shows at once ("List from 10/15/2026 8:12 AM: updating 12,000 / 50,000"): search, connections and
+  recent sessions work right away; the list read again from the PVWA replaces it in one go once complete, keeping the
+  selection, the open folders and the scroll position, and the status bar says what changed ("14 new, 3 removed"). An
+  account deleted in the meantime is refused by the PVWA when you connect. If the update fails, the list stays with
+  its date ("not updated") and `F5` tries again. Without a previous list (first login, another PVWA or user), the list
+  fills in page by page. The copy of the list holds no password; it is encrypted for your Windows account, one per
+  PVWA and user, and deleted after 30 days (option in the [Settings](#settings-and-configuration-file)).
 - "Group by" sorts accounts by safe, platform or target type.
 - Right-click an account → "Export the displayed accounts (CSV)…" saves the accounts shown (filtered by the
   search) to CSV.
@@ -136,7 +144,7 @@ away in the chosen language, keeping the address and user name you typed.
   Enter to connect. It says when no account matches, and only shows the first 50 results ("First 50 of N accounts:
   type more to narrow the search."). The **recent sessions** are dated ("Today 09:28", "Yesterday 18:02");
   right-click → "Remove from the list" (or `Del`) removes one. They stay greyed out until the accounts are loaded
-  from the PVWA ("waiting for the PVWA accounts…"); they are those of the PVWA you are signed in to: the same account
+  from the PVWA ("waiting for the PVWA accounts…"), unless the list from the previous login is shown; they are those of the PVWA you are signed in to: the same account
   ID means another account on another PVWA.
 
 ## 3. Open a PSM session (remote desktop)
@@ -1103,6 +1111,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | General | Central file | Team environment file on a network share, read at each start; its changes are shown before being applied (see [Shared environment](#shared-environment)) | empty |
 | General | Look for a new version at startup | One request to GitHub at most once a day; a link in the status bar when a newer version exists (the "About" window recalls this setting) | no |
 | CyberArk | Keep the CyberArk session open | Light request every 4 minutes while you use the computer; paused while Windows is locked or after 15 minutes without keyboard or mouse (the CyberArk session then expires after its idle timeout) | yes |
+| CyberArk | Show the account list at once when you log in | Encrypted copy (Windows account) of the last complete list, one per PVWA and user, without any password, deleted after 30 days: shown at once, then replaced by the list read again from the PVWA. Unchecked: the copies are deleted. Spread by the environment file | yes |
 | CyberArk | Default PSMP, port | PSM for SSH server; when set (or a PSMP by domain), Unix accounts open over SSH by default (as files only for an "SFTP" platform); without any PSMP, SSH and SFTP are disabled | empty, 22 |
 | CyberArk | PSMP by domain | Other PSMPs (address, port, domain served); each server goes through the one of the domain closest to its own (see [PSMP by domain](#psmp-by-domain)); "Which PSMP for the server" to check | none |
 | CyberArk | Windows accounts component | PSM component of Windows accounts (domain or local) without a component remembered for their platform, for example `WIN-PSM` | empty = `PSM-RDP` |

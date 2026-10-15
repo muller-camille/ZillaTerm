@@ -191,6 +191,7 @@ internal static class EnvironmentImport
             EnvironmentSetting.HostKey => Text.Format(Strings.EnvHostKey, change.Detail),
             EnvironmentSetting.CentralFile => Strings.EnvCentralFile,
             EnvironmentSetting.KeepPvwaSessionAlive => Strings.EnvKeepAlive,
+            EnvironmentSetting.KeepAccountListCopy => Strings.EnvKeepAccountListCopy,
             EnvironmentSetting.SshInApp => Strings.EnvSshInApp,
             EnvironmentSetting.PsmDesktopInTab => Strings.EnvPsmDesktopInTab,
             EnvironmentSetting.PsmRedirectDrives => Strings.EnvPsmRedirectDrives,

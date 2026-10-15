@@ -88,6 +88,15 @@ aussitôt dans la langue choisie, sans perdre l'adresse ni l'identifiant saisis.
 - À la place d'une liste vide, l'onglet dit ce qui se passe : chargement des comptes, échec du chargement avec son
   message et « Réessayer », aucun compte accessible à votre utilisateur CyberArk, ou aucun compte ne correspondant
   au filtre, avec « Effacer le filtre ».
+- **Chargement des comptes** : le PVWA les donne par pages de 1 000. Dès la deuxième connexion, la liste de la
+  connexion précédente s'affiche aussitôt (« Liste du 15/10/2026 08:12 : mise à jour 12 000 / 50 000 ») : recherche,
+  connexions et sessions récentes servent tout de suite ; la liste relue au PVWA la remplace d'un coup une fois
+  complète, sélection, dossiers ouverts et défilement gardés, et la barre d'état dit ce qui a changé (« 14 nouveaux,
+  3 retirés »). Un compte supprimé entre-temps est refusé par le PVWA à la connexion. Si la mise à jour échoue, la
+  liste reste affichée avec sa date (« pas mise à jour ») et `F5` la relance. Sans liste précédente (première
+  connexion, autre PVWA ou utilisateur), la liste se remplit au fur et à mesure des pages. La copie de la liste ne
+  contient aucun mot de passe ; elle est chiffrée pour votre compte Windows, une par PVWA et utilisateur, supprimée
+  après 30 jours (option des [Paramètres](#paramètres-et-fichier-de-configuration)).
 - « Grouper par » range les comptes par safe, plateforme ou type de cible.
 - Clic droit sur un compte → « Exporter les comptes affichés (CSV)… » enregistre en CSV les comptes affichés
   (filtrés par la recherche).
@@ -143,7 +152,8 @@ aussitôt dans la langue choisie, sans perdre l'adresse ni l'identifiant saisis.
   frappe : Entrée pour s'y connecter. Elle dit quand aucun compte ne correspond, et n'affiche que les 50 premiers
   résultats (« 50 premiers comptes sur N : précisez la recherche. »). Les **sessions récentes** sont datées
   (« Aujourd'hui 09:28 », « Hier 18:02 ») ; clic droit → « Retirer de la liste » (ou `Suppr`) en retire une. Elles
-  restent grisées tant que les comptes ne sont pas chargés depuis le PVWA (« en attente des comptes du PVWA… ») ; ce
+  restent grisées tant que les comptes ne sont pas chargés depuis le PVWA (« en attente des comptes du PVWA… »), sauf
+  quand la liste de la connexion précédente est affichée ; ce
   sont celles du PVWA où vous êtes connecté (sur un autre PVWA, le même ID de compte désigne un autre compte).
 
 ## 3. Ouvrir une session PSM (bureau à distance)
@@ -1170,6 +1180,7 @@ leur case (« ⚠ Effet : … »).
 | Général | Fichier central | Fichier d'environnement de l'équipe sur un partage réseau, relu à chaque démarrage ; ses changements sont montrés avant d'être appliqués (voir [Environnement partagé](#environnement-partagé)) | vide |
 | Général | Rechercher une nouvelle version au démarrage | Une requête vers GitHub au plus une fois par jour ; lien dans la barre d'état si une version plus récente existe (la fenêtre « À propos » rappelle ce réglage) | non |
 | CyberArk | Garder la session CyberArk ouverte | Requête légère toutes les 4 minutes, tant que vous utilisez le poste ; suspendue quand Windows est verrouillé ou après 15 minutes sans clavier ni souris (la session CyberArk expire alors selon son délai d'inactivité) | oui |
+| CyberArk | Afficher tout de suite la liste des comptes à la connexion | Copie chiffrée (compte Windows) de la dernière liste complète, une par PVWA et utilisateur, sans mot de passe, supprimée après 30 jours : affichée aussitôt, puis remplacée par la liste relue au PVWA. Décochée : les copies sont supprimées. Diffusé par le fichier d'environnement | oui |
 | CyberArk | PSMP par défaut, port | Serveur PSM for SSH ; renseigné (ou un PSMP par domaine), les comptes Unix s'ouvrent en SSH par défaut (en fichiers seuls pour une plateforme « SFTP ») ; sans aucun PSMP, SSH et SFTP sont désactivés | vide, 22 |
 | CyberArk | PSMP par domaine | Autres PSMP (adresse, port, domaine servi) ; chaque serveur passe par celui du domaine le plus proche du sien (voir [PSMP par domaine](#psmp-par-domaine)) ; « Quel PSMP pour le serveur » pour vérifier | aucun |
 | CyberArk | Composant des comptes Windows | Composant PSM des comptes Windows (domaine ou locaux) sans composant mémorisé pour leur plateforme, par exemple `WIN-PSM` | vide = `PSM-RDP` |

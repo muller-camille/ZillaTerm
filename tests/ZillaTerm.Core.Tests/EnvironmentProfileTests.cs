@@ -24,6 +24,7 @@ public sealed class EnvironmentProfileTests : IDisposable
             PsmDesktopInTab = true,
             PsmRedirectDrives = false,
             PauseRdpDisplay = false,
+            KeepAccountListCopy = false,
         };
         settings.PsmpServers.Add(new PsmpServer { Address = "psmp.paris.corp.com", Port = 22 });
         settings.ComponentByPlatform["UnixSSH"] = "PSM-SSH";
@@ -86,10 +87,14 @@ public sealed class EnvironmentProfileTests : IDisposable
         // Affichage des sessions Bureau à distance gardé quand personne ne les regarde : choix d'équipe aussi.
         Assert.Contains(changes, c => c is { Setting: EnvironmentSetting.PauseRdpDisplay, Current: "true", New: "false", Sensitive: false });
 
+        // Pas de copie de la liste des comptes sur les postes : choix d'équipe aussi.
+        Assert.Contains(changes, c => c is { Setting: EnvironmentSetting.KeepAccountListCopy, Current: "true", New: "false", Sensitive: false });
+
         profile.ApplyTo(fresh);
         Assert.True(fresh.PsmDesktopInTab);
         Assert.False(fresh.PsmRedirectDrives);
         Assert.False(fresh.PauseRdpDisplay);
+        Assert.False(fresh.KeepAccountListCopy);
         Assert.Equal(("pvwa.corp.com", AuthMethod.LDAP, "psmp.corp.com", 2222, "WIN-PSM"),
             (fresh.PvwaUrl, fresh.AuthMethod, fresh.PsmpAddress, fresh.PsmpPort, fresh.WindowsComponent));
         Assert.Equal("", fresh.UserName);

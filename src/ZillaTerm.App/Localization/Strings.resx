@@ -6469,4 +6469,25 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="InterventionReportPauseMarker" xml:space="preserve">
     <value>Display paused from {0} to {1} ({2})</value>
   </data>
+  <data name="KeepAccountListCopy" xml:space="preserve">
+    <value>Show the account list at once when you log in (_encrypted copy of the last list on this computer)</value>
+  </data>
+  <data name="KeepAccountListCopyHelp" xml:space="preserve">
+    <value>The list from the last login shows at once, then it is read again from the PVWA in the background and replaced in one go. The copy holds no password; it is encrypted for your Windows account, one per PVWA and user, and deleted after 30 days. Unchecked: the copies are deleted.</value>
+  </data>
+  <data name="EnvKeepAccountListCopy" xml:space="preserve">
+    <value>Show the account list at once (encrypted copy on the computer)</value>
+  </data>
+  <data name="AccountsFromCopy" xml:space="preserve">
+    <value>List from {0}: updating…</value>
+  </data>
+  <data name="AccountsFromCopyProgress" xml:space="preserve">
+    <value>List from {0}: updating {1:N0} / {2:N0}</value>
+  </data>
+  <data name="AccountCountFromCopy" xml:space="preserve">
+    <value>Accounts: {0:N0} (list from {1}, not updated)</value>
+  </data>
+  <data name="AccountListUpdated" xml:space="preserve">
+    <value>Account list updated: {0:# new|# new}, {1:# removed|# removed}.</value>
+  </data>
 </root>

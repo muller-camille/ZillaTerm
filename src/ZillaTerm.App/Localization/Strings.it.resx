@@ -6469,4 +6469,25 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="InterventionReportPauseMarker" xml:space="preserve">
     <value>Visualizzazione in pausa dalle {0} alle {1} ({2})</value>
   </data>
+  <data name="KeepAccountListCopy" xml:space="preserve">
+    <value>Mostrare subito l'elenco degli account all'accesso (copia _cifrata dell'ultimo elenco su questo computer)</value>
+  </data>
+  <data name="KeepAccountListCopyHelp" xml:space="preserve">
+    <value>L'elenco dell'ultimo accesso appare subito, poi viene riletto dal PVWA in background e sostituito in un colpo solo. La copia non contiene alcuna password; è cifrata per il tuo account Windows, una per PVWA e utente, ed eliminata dopo 30 giorni. Non selezionata: le copie vengono eliminate.</value>
+  </data>
+  <data name="EnvKeepAccountListCopy" xml:space="preserve">
+    <value>Mostrare subito l'elenco degli account (copia cifrata sul computer)</value>
+  </data>
+  <data name="AccountsFromCopy" xml:space="preserve">
+    <value>Elenco del {0}: aggiornamento…</value>
+  </data>
+  <data name="AccountsFromCopyProgress" xml:space="preserve">
+    <value>Elenco del {0}: aggiornamento {1:N0} / {2:N0}</value>
+  </data>
+  <data name="AccountCountFromCopy" xml:space="preserve">
+    <value>Account: {0:N0} (elenco del {1}, non aggiornato)</value>
+  </data>
+  <data name="AccountListUpdated" xml:space="preserve">
+    <value>Elenco degli account aggiornato: {0:# nuovo|# nuovi}, {1:# rimosso|# rimossi}.</value>
+  </data>
 </root>
