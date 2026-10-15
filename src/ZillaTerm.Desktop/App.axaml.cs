@@ -26,7 +26,12 @@ public partial class App : Application
     // fichiers en cours de modification. Même nom que l'application WPF : elles ne tournent pas en même temps.
     private Mutex? _instance;
 
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        // Nom des boutons et onglets à touche d'accès pour les lecteurs d'écran (« Valider », pas « _Valider »).
+        AccessKeyNames.Register();
+        AvaloniaXamlLoader.Load(this);
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {

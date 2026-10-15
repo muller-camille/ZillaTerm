@@ -48,6 +48,7 @@ depuis `ZillaTerm.App` (WPF), qui reste l'application publiée pour Windows tant
 | `menu.PlacementTarget = x; menu.IsOpen = true` | `menu.Open(x)` |
 | Rappel synchrone d'une bibliothèque qui pose une question (`Dispatcher.Invoke(() => dialog.ShowDialog())`) | `UiWait.Run(() => QuestionAsync(…))` |
 | `InputManager.Current.MostRecentInputDevice` | indicateur tenu par la fenêtre (gestionnaires `KeyDown` / `PointerPressed` en tunnel) |
+| Nom accessible d'un bouton ou d'un onglet à touche d'accès (WPF retire le « _ ») | automatique (`AccessKeyNames`, enregistré par App) ; un `AutomationProperties.Name` explicite est gardé |
 | `Process.Start("explorer.exe", …)` (WindowsExplorer) | `FileManager.ShowFile` / `FileManager.OpenFolder` (Explorateur, Finder, gestionnaire du bureau) |
 
 Les modèles de données (`DataTemplate`) déclarent leur type (`x:DataType`) : les liaisons sont compilées.
