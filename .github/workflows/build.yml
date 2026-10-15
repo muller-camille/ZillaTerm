@@ -1,9 +1,9 @@
 name: build
 
-# Compilation, tests et exécutable à chaque PR et sur main ; sessions Bureau à distance réelles (job rdp) quand une PR
-# touche au Bureau à distance, ou à la demande. Rien n'est compilé depuis les forks : le client FreeRDP et SSH.NET
-# patché sont les binaires publiés par leurs releases, vérifiés (somme SHA-256 figée, attestation de provenance).
-# Un nouveau commit sur une PR annule le passage en cours.
+# Compilation, tests et exécutable à chaque PR et sur main ; interface Avalonia compilée et testée sous Linux (job linux) ;
+# sessions Bureau à distance réelles (job rdp) quand une PR touche au Bureau à distance, ou à la demande. Rien n'est
+# compilé depuis les forks : le client FreeRDP et SSH.NET patché sont les binaires publiés par leurs releases, vérifiés
+# (somme SHA-256 figée, attestation de provenance). Un nouveau commit sur une PR annule le passage en cours.
 on:
   push:
     branches: [main]
@@ -82,6 +82,34 @@ jobs:
         with:
           name: ZillaTerm-win-x64
           path: publish/ZillaTerm.exe
+
+  # Interface Avalonia (ZillaTerm.Desktop) sous Linux : compilation, tests du cœur et tests de l'interface sans écran
+  # (fenêtres dans chaque langue et chaque thème, ressources, touches d'accès, textes propres à Windows).
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+
+      # SSH.NET patché : release du fork. Pas de client FreeRDP embarqué sous Linux (celui du système sert).
+      - name: SSH.NET patché
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/sshnet-patched.sh
+
+      - name: Compilation de l'interface Avalonia
+        run: dotnet build src/ZillaTerm.Desktop -c Release
+
+      - name: Tests (cœur et interface sans écran)
+        run: |
+          dotnet test tests/ZillaTerm.Core.Tests -c Release
+          dotnet test tests/ZillaTerm.Desktop.Tests -c Release
 
   # Sessions Bureau à distance réelles sur le poste de CI (connexion à 127.0.0.2) : bureau dans un onglet, taille et
   # clics d'une session réglée comme une session PSM dans l'onglet, avec le contrôle de Windows et avec le client

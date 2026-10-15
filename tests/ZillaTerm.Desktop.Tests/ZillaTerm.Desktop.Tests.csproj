@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Tests de l'interface Avalonia (ZillaTerm.Desktop) sans écran (Avalonia.Headless) : fenêtres ouvertes dans chaque langue
+    et chaque thème, ressources de thème, touches d'accès, textes propres à Windows. S'exécutent sous Linux comme sous Windows.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <!-- Même version qu'Avalonia dans ZillaTerm.Desktop. -->
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ZillaTerm.Desktop\ZillaTerm.Desktop.csproj" />
+  </ItemGroup>
+
+</Project>

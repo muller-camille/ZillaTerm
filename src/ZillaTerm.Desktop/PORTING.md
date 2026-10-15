@@ -76,6 +76,8 @@ la fenêtre principale) est créé dès `InitializeComponent`, avant le premier 
 
 ```sh
 dotnet build src/ZillaTerm.Desktop
+# Fenêtres dans chaque langue et chaque thème, ressources, touches d'accès, textes propres à Windows (sans écran) :
+dotnet test tests/ZillaTerm.Desktop.Tests
 # Sous Linux sans écran : Xvfb :99 &, puis
 DISPLAY=:99 dotnet src/ZillaTerm.Desktop/bin/Debug/net10.0/ZillaTerm.dll
 ```

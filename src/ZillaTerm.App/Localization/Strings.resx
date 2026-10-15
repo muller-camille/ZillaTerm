@@ -6502,8 +6502,11 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="TailNotifyTipUnix" xml:space="preserve">
     <value>Also show a desktop notification when the window is not in front (at most one every 30 seconds). It gives the number of lines and the file name, never the content of the lines.</value>
   </data>
-  <data name="X11NoServerUnix" xml:space="preserve">
+  <data name="X11NoServerSocket" xml:space="preserve">
     <value>X11 forwarding active, but no X server answers on display {0} of this computer ({1}): open a graphical session, or set its display in the Settings.</value>
+  </data>
+  <data name="X11NoServerUnix" xml:space="preserve">
+    <value>X11 forwarding active, but no X server is listening on {0} (port {1}): start an X server that accepts local TCP connections, or set the display of your graphical session in the Settings.</value>
   </data>
   <data name="X11ForwardingTipUnix" xml:space="preserve">
     <value>Graphical applications started on the server (xclock, installers…) show on this computer's desktop. Only for trusted servers: a compromised server could see the other X windows on this computer and send keystrokes to them.</value>

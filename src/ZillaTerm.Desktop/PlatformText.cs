@@ -36,5 +36,8 @@ public static class PlatformText
 
     public static string X11DisplayHelp => Windows ? Strings.X11DisplayHelp : Strings.X11DisplayHelpUnix;
 
+    /// <summary>Serveur X absent sur un affichage TCP : VcXsrv, X410 ou Xming sous Windows, un serveur X quelconque ailleurs.</summary>
+    public static string X11NoServer => Windows ? Strings.X11NoServer : Strings.X11NoServerUnix;
+
     public static string SettingsShareDirectHelp => Windows ? Strings.SettingsShareDirectHelp : Strings.SettingsShareDirectHelpUnix;
 }

@@ -6502,8 +6502,11 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="TailNotifyTipUnix" xml:space="preserve">
     <value>Mostra anche una notifica del desktop quando la finestra non è in primo piano (al massimo una ogni 30 secondi). Indica il numero di righe e il nome del file, mai il contenuto delle righe.</value>
   </data>
-  <data name="X11NoServerUnix" xml:space="preserve">
+  <data name="X11NoServerSocket" xml:space="preserve">
     <value>Inoltro X11 attivo, ma nessun server X risponde sullo schermo {0} di questo computer ({1}): apri una sessione grafica o indica il suo schermo nelle Impostazioni.</value>
+  </data>
+  <data name="X11NoServerUnix" xml:space="preserve">
+    <value>Inoltro X11 attivo, ma nessun server X è in ascolto su {0} (porta {1}): avvia un server X che consenta le connessioni TCP locali, o indica lo schermo della tua sessione grafica nelle Impostazioni.</value>
   </data>
   <data name="X11ForwardingTipUnix" xml:space="preserve">
     <value>Le applicazioni grafiche avviate sul server (xclock, programmi di installazione…) si aprono sul desktop di questo computer. Solo per server attendibili: un server compromesso potrebbe vedere le altre finestre X di questo computer e inviarvi dei tasti.</value>

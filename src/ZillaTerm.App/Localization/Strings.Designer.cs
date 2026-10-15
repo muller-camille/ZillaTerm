@@ -19412,6 +19412,15 @@ namespace ZillaTerm.App.Localization {
         /// <summary>
         ///   Looks up a localized string similar to X11 forwarding active, but no X server answers on display {0} of this computer ({1}): open a graphical session, or set its display in the Settings..
         /// </summary>
+        public static string X11NoServerSocket {
+            get {
+                return ResourceManager.GetString("X11NoServerSocket", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to X11 forwarding active, but no X server is listening on {0} (port {1}): start an X server that accepts local TCP connections, or set the display of your graphical session in the Settings..
+        /// </summary>
         public static string X11NoServerUnix {
             get {
                 return ResourceManager.GetString("X11NoServerUnix", resourceCulture);

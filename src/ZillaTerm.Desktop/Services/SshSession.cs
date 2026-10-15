@@ -247,8 +247,8 @@ public sealed class SshSession : RemoteSession
         DebugLog.Write("x11", $"{Label} : transfert X11 vers {display} {(shell.IsX11ForwardingAccepted ? "accepté" : "refusé")}, serveur X {(listening ? "présent" : "absent")}");
         string message = !shell.IsX11ForwardingAccepted ? Strings.X11Refused
             : listening ? Text.Format(Strings.X11Active, display)
-            : unixSocket ? Text.Format(Strings.X11NoServerUnix, display, display.UnixSocketPath)
-            : Text.Format(Strings.X11NoServer, display, display.EndPoint.Port);
+            : unixSocket ? Text.Format(Strings.X11NoServerSocket, display, display.UnixSocketPath)
+            : Text.Format(PlatformText.X11NoServer, display, display.EndPoint.Port);
         Emulator.Feed("\x1b[90m" + message + "\x1b[0m\r\n");
         return shell;
     }
