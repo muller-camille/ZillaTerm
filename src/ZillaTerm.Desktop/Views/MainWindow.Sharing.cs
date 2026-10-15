@@ -99,7 +99,7 @@ public partial class MainWindow
             _sharesWindow = new SharesWindow(new SharesWindowCommands(Commands, ShowInvitation, JoinShare, ShowWatched, LeaveWatched),
                 _settings.SessionSharing);
             _sharesWindow.Closed += (_, _) => _sharesWindow = null;
-            _sharesWindow.Show();
+            _sharesWindow.Show(this);
         }
         else
         {
