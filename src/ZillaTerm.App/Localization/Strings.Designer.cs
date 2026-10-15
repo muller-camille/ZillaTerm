@@ -19221,7 +19221,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never while the session is shared. During an intervention recording, the pause is marked in the recording: &quot;Display paused&quot; on the screen and a grey band on the timeline of the report..
+        ///   Looks up a localized string similar to Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared. During a recording, the pause of a tab in the background is marked in it: &quot;Display paused&quot; on the screen and a grey band on the timeline of the report..
         /// </summary>
         public static string PauseRdpDisplayHelp {
             get {

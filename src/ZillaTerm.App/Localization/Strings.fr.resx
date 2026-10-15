@@ -6440,7 +6440,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>_Suspendre l'affichage des sessions Bureau à distance que personne ne regarde (la session reste ouverte)</value>
   </data>
   <data name="PauseRdpDisplayHelp" xml:space="preserve">
-    <value>Sessions Bureau à distance dans un onglet (client intégré) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image : ni trafic d'affichage, ni encodage de l'image par le PSM, pour une session que personne ne voit. La session reste ouverte ; l'image revient dès le retour sur l'onglet ou au premier mouvement de souris. Jamais pendant le partage de la session. Pendant l'enregistrement d'une intervention, la pause est marquée dans l'enregistrement : « Affichage en pause » sur l'écran et une bande grise sur la frise du rapport.</value>
+    <value>Sessions Bureau à distance dans un onglet (client intégré) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image : ni trafic d'affichage, ni encodage de l'image par le PSM, pour une session que personne ne voit. La session reste ouverte ; l'image revient dès le retour sur l'onglet ou au premier mouvement de souris. Jamais pour l'onglet affiché pendant l'enregistrement d'une intervention ou le partage de la session. Pendant un enregistrement, la pause d'un onglet en arrière-plan y est marquée : « Affichage en pause » sur l'écran et une bande grise sur la frise du rapport.</value>
   </data>
   <data name="RdpPaused" xml:space="preserve">
     <value>Affichage en pause</value>

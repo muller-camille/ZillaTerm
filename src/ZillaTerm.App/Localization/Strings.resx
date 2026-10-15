@@ -6440,7 +6440,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Pause the d_isplay of Remote Desktop sessions nobody is watching (the session stays open)</value>
   </data>
   <data name="PauseRdpDisplayHelp" xml:space="preserve">
-    <value>Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never while the session is shared. During an intervention recording, the pause is marked in the recording: "Display paused" on the screen and a grey band on the timeline of the report.</value>
+    <value>Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared. During a recording, the pause of a tab in the background is marked in it: "Display paused" on the screen and a grey band on the timeline of the report.</value>
   </data>
   <data name="RdpPaused" xml:space="preserve">
     <value>Display paused</value>
