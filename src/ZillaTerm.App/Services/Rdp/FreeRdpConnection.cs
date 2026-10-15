@@ -26,6 +26,10 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private const int WmKillFocus = 0x0008;
     private const int WmClose = 0x0010;
     private const uint SmtoAbortIfHung = 0x0002;
+    private const int GwlStyle = -16;
+    private const long WsVisible = 0x1000_0000;
+    private const int SwHide = 0;
+    private const int SwShowNoActivate = 8;
 
     // Refus du certificat (TLS) ou de la clé (sécurité RDP) par le client : un autre serveur a pu répondre.
     private const uint TlsConnectFailed = 0x0002_0008;
@@ -80,6 +84,32 @@ internal sealed class FreeRdpConnection : IRdpConnection
     public bool CanFullScreen => false;
 
     public bool HasWindow => _window != IntPtr.Zero;
+
+    public bool CanPauseDisplay => true;
+
+    /// <summary>
+    /// Affichage en pause : la fenêtre du client est masquée, et le client demande alors au serveur de ne plus envoyer
+    /// l'image (« Suppress Output », correctif du fork) ; montrée de nouveau, l'image entière revient. Sans attendre le
+    /// client (ShowWindowAsync) ; refait si le client a remontré sa fenêtre (il la montre à sa première image).
+    /// </summary>
+    public void PauseDisplay(bool paused)
+    {
+        var window = _window;
+        if (_released || window == IntPtr.Zero)
+        {
+            return;
+        }
+
+        // Visibilité de la fenêtre elle-même (pas celle de l'emplacement, masqué avec un onglet en arrière-plan).
+        bool visible = (GetWindowLongPtr(window, GwlStyle).ToInt64() & WsVisible) != 0;
+        if (visible != paused)
+        {
+            return;
+        }
+
+        DebugLog.Write("freerdp", $"{_label} : affichage {(paused ? "en pause (fenêtre masquée)" : "repris (fenêtre affichée)")}");
+        ShowWindowAsync(window, paused ? SwHide : SwShowNoActivate);
+    }
 
     public async Task StartAsync(IntPtr slot, (int Width, int Height) pixels)
     {
@@ -653,4 +683,11 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
     [DllImport("user32.dll")]
     private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out int processId);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static extern IntPtr GetWindowLongPtr(IntPtr hwnd, int index);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindowAsync(IntPtr hwnd, int command);
 }

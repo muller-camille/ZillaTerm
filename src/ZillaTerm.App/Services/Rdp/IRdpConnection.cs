@@ -33,6 +33,15 @@ internal interface IRdpConnection
     /// <summary>Retire la fenêtre de l'onglet et libère la connexion (déconnectée si <paramref name="disconnect"/>).</summary>
     void Release(bool disconnect);
 
+    /// <summary>Affichage de la session mis en pause possible, connexion gardée (client FreeRDP seulement).</summary>
+    bool CanPauseDisplay { get; }
+
+    /// <summary>
+    /// Met l'affichage de la session en pause (le serveur n'envoie plus l'image, la connexion reste ouverte) ou le reprend
+    /// (l'image entière revient). Sans effet avant que la fenêtre de la session existe : redit tant que la pause dure.
+    /// </summary>
+    void PauseDisplay(bool paused);
+
     /// <summary>Appelle <paramref name="pong"/> (thread de l'interface) dès que la connexion répond.</summary>
     void Ping(Action pong);
 

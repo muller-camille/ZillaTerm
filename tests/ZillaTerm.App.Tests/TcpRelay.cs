@@ -25,6 +25,11 @@ internal sealed class TcpRelay : IAsyncDisposable
 
     public int Port => ((IPEndPoint)_listener.LocalEndpoint).Port;
 
+    /// <summary>Octets reçus du serveur et transmis au client (affichage de la session, pour l'essentiel).</summary>
+    public long BytesToClient => Interlocked.Read(ref _bytesToClient);
+
+    private long _bytesToClient;
+
     public void Cut()
     {
         _cut = true;
@@ -95,7 +100,7 @@ internal sealed class TcpRelay : IAsyncDisposable
         }
 
         // Un côté fermé : l'autre aussi, comme une connexion directe.
-        await Task.WhenAny(CopyAsync(client, server), CopyAsync(server, client));
+        await Task.WhenAny(CopyAsync(client, server, toClient: false), CopyAsync(server, client, toClient: true));
         lock (_open)
         {
             _open.Remove(client);
@@ -106,7 +111,7 @@ internal sealed class TcpRelay : IAsyncDisposable
         Reset(server);
     }
 
-    private async Task CopyAsync(Socket from, Socket to)
+    private async Task CopyAsync(Socket from, Socket to, bool toClient)
     {
         var buffer = new byte[64 * 1024];
         try
@@ -122,6 +127,11 @@ internal sealed class TcpRelay : IAsyncDisposable
                 for (int sent = 0; sent < read;)
                 {
                     sent += await to.SendAsync(buffer.AsMemory(sent, read - sent), SocketFlags.None, _stop.Token);
+                }
+
+                if (toClient)
+                {
+                    Interlocked.Add(ref _bytesToClient, read);
                 }
             }
         }

@@ -3,6 +3,7 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services.Rdp;
+using ZillaTerm.Core.Rdp;
 
 namespace ZillaTerm.App.Views;
 
@@ -21,8 +22,23 @@ public partial class RdpSessionView : UserControl
         _screen = new RdpScreenRecorder(session, Services.InterventionRecorder.Current);
         _ = session.Closed.ContinueWith(_ => _screen.Dispose(), TaskScheduler.Default);
         IsVisibleChanged += (_, _) => ShowScreen();
+        // Affichage en pause, poste inactif : le premier geste sur l'onglet le reprend tout de suite.
+        PreviewMouseMove += (_, _) => Wake();
+        PreviewMouseDown += (_, _) => Wake();
+        PreviewKeyDown += (_, _) => Wake();
         session.StateChanged += Update;
         Update();
+    }
+
+    /// <summary>Geste sur l'onglet pendant une pause pour inactivité : l'affichage est à reprendre sans attendre.</summary>
+    internal event Action? WakeRequested;
+
+    private void Wake()
+    {
+        if (Session.DisplayPause == RdpDisplayPauseReason.Idle)
+        {
+            WakeRequested?.Invoke();
+        }
     }
 
     private readonly RdpScreenRecorder _screen;
@@ -64,11 +80,14 @@ public partial class RdpSessionView : UserControl
     private void Update()
     {
         var session = Session;
-        CaptureButton.Visibility = _interventionRecording && session.ShowsDesktop ? Visibility.Visible : Visibility.Collapsed;
+        bool paused = session.DisplayPause != RdpDisplayPauseReason.None;
+        CaptureButton.Visibility = _interventionRecording && session.ShowsDesktop && !paused ? Visibility.Visible : Visibility.Collapsed;
         ScreenRecorded.Visibility = CaptureButton.Visibility;
         ScreenRecorded.Text = Services.InterventionRecorder.Current.ScreenThrottled ? Strings.RdpScreenThrottled : Strings.RdpScreenRecorded;
         ShowScreen();
-        Overlay.Visibility = session.ShowsDesktop ? Visibility.Collapsed : Visibility.Visible;
+        Overlay.Visibility = session.ShowsDesktop && !paused ? Visibility.Collapsed : Visibility.Visible;
+        // Message affiché d'abord : le clavier peut alors y aller.
+        UpdatePauseFocus(paused);
         FullScreenButton.IsEnabled = session.IsConnected && session.CanFullScreen;
         // Client FreeRDP : pas de plein écran ; le bouton grisé dit pourquoi, et quoi faire à la place.
         var fullScreenTip = session.UsesFreeRdp ? Strings.RdpFullScreenFreeRdpTip : Strings.RdpFullScreenTip;
@@ -94,6 +113,16 @@ public partial class RdpSessionView : UserControl
                     ? Text.Format(Strings.RdpReconnectAttempt, session.ReconnectAttempt, session.ReconnectAttempts)
                     : Strings.RdpReconnectWaiting;
                 OverlayProgress.Visibility = Visibility.Visible;
+                ReconnectButton.Visibility = Visibility.Collapsed;
+                break;
+            case RdpSessionState.Connected when paused:
+                // Session ouverte, image suspendue : l'onglet dit pourquoi et comment la reprendre.
+                StatusLine.Text = Text.Format(Strings.RdpPausedStatus, session.Label);
+                OverlayText.Text = Strings.RdpPaused;
+                OverlayDetail.Text = session.DisplayPause == RdpDisplayPauseReason.Idle
+                    ? Text.Format(Strings.RdpPausedIdle, (int)RdpDisplayPause.IdleDelay.TotalMinutes)
+                    : Strings.RdpPausedHidden;
+                OverlayProgress.Visibility = Visibility.Collapsed;
                 ReconnectButton.Visibility = Visibility.Collapsed;
                 break;
             case RdpSessionState.Connected:
@@ -133,10 +162,34 @@ public partial class RdpSessionView : UserControl
         }
     }
 
+    /// <summary>
+    /// Pause de l'affichage : le clavier quitte la session (le geste qui la reprend n'y est pas envoyé), sur le message de
+    /// l'onglet ; à la reprise, il y revient s'il n'est pas allé ailleurs entre-temps.
+    /// </summary>
+    private void UpdatePauseFocus(bool paused)
+    {
+        if (paused == _paused)
+        {
+            return;
+        }
+
+        _paused = paused;
+        if (paused && (IsKeyboardFocusWithin || Session.Host.HasKeyboardFocus))
+        {
+            Overlay.Focus();
+        }
+        else if (!paused && Overlay.IsKeyboardFocused)
+        {
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, Session.Focus);
+        }
+    }
+
+    private bool _paused;
+
     /// <summary>Bureau affiché dans l'onglet visible : son écran est capturé (s'il y a un enregistrement en cours ou un partage).</summary>
     private void ShowScreen()
     {
-        bool showing = IsVisible && Session.ShowsDesktop;
+        bool showing = IsVisible && Session.ShowsDesktop && Session.DisplayPause == RdpDisplayPauseReason.None;
         _screen.Show(showing, Session.Host.SlotHandle);
         Interlocked.Exchange(ref _shownSlot, showing ? Session.Host.SlotHandle : IntPtr.Zero);
     }

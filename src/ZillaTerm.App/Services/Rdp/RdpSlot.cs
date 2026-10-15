@@ -47,6 +47,9 @@ internal sealed class RdpSlot : HwndHost
     /// <summary>Fenêtre de l'emplacement (parent des fenêtres du contrôle), ou zéro tant qu'elle n'existe pas.</summary>
     public IntPtr SlotHandle => _window?.Handle ?? IntPtr.Zero;
 
+    /// <summary>Vrai si l'emplacement a le focus clavier (le client FreeRDP prend alors le clavier).</summary>
+    public bool HasKeyboardFocus => SlotHandle is var handle && handle != IntPtr.Zero && GetFocus() == handle;
+
     /// <summary>
     /// Taille de l'emplacement, en pixels de l'écran : celle de sa fenêtre, ou celle que la mise en page lui donne tant
     /// que WPF n'a pas encore placé la fenêtre (emplacement tout juste affiché, juste avant la création du contrôle).
@@ -121,6 +124,9 @@ internal sealed class RdpSlot : HwndHost
 
     [DllImport("user32.dll")]
     private static extern IntPtr SetFocus(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetFocus();
 
     [DllImport("gdi32.dll")]
     private static extern IntPtr GetStockObject(int index);

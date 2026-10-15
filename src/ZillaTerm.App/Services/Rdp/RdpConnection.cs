@@ -74,6 +74,13 @@ internal sealed class RdpConnection : IRdpConnection
 
     public bool HasWindow => true;
 
+    /// <summary>Le contrôle de Windows ne propose pas de suspendre l'affichage : il reste reçu.</summary>
+    public bool CanPauseDisplay => false;
+
+    public void PauseDisplay(bool paused)
+    {
+    }
+
     /// <summary>Terminée quand la fenêtre du contrôle a quitté l'onglet (ou n'y est plus : thread arrêté).</summary>
     public Task Detached => _detachedTask.Task;
 

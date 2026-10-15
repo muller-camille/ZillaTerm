@@ -6436,4 +6436,25 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="InterventionEndCancel" xml:space="preserve">
     <value>Continuer l'intervention</value>
   </data>
+  <data name="PauseRdpDisplay" xml:space="preserve">
+    <value>_Suspendre l'affichage des sessions Bureau à distance que personne ne regarde (la session reste ouverte)</value>
+  </data>
+  <data name="PauseRdpDisplayHelp" xml:space="preserve">
+    <value>Sessions Bureau à distance dans un onglet (client intégré) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image : ni trafic d'affichage, ni encodage de l'image par le PSM, pour une session que personne ne voit. La session reste ouverte ; l'image revient dès le retour sur l'onglet ou au premier mouvement de souris. Jamais pendant l'enregistrement d'une intervention ou le partage de la session.</value>
+  </data>
+  <data name="RdpPaused" xml:space="preserve">
+    <value>Affichage en pause</value>
+  </data>
+  <data name="RdpPausedIdle" xml:space="preserve">
+    <value>Ni clavier ni souris depuis {0} minutes : le serveur n'envoie plus l'image. La session reste ouverte ; bougez la souris ou appuyez sur une touche pour reprendre.</value>
+  </data>
+  <data name="RdpPausedHidden" xml:space="preserve">
+    <value>Session non affichée : le serveur n'envoie plus l'image. La session reste ouverte ; l'image revient dès qu'elle est affichée.</value>
+  </data>
+  <data name="RdpPausedStatus" xml:space="preserve">
+    <value>{0} : affichage en pause, session ouverte</value>
+  </data>
+  <data name="EnvPauseRdpDisplay" xml:space="preserve">
+    <value>Suspendre l'affichage des sessions Bureau à distance que personne ne regarde</value>
+  </data>
 </root>

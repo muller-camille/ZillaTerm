@@ -23,6 +23,7 @@ public sealed class EnvironmentProfileTests : IDisposable
             EnvironmentFile = @"\\srv\partage\zillaterm\prod.env.json",
             PsmDesktopInTab = true,
             PsmRedirectDrives = false,
+            PauseRdpDisplay = false,
         };
         settings.PsmpServers.Add(new PsmpServer { Address = "psmp.paris.corp.com", Port = 22 });
         settings.ComponentByPlatform["UnixSSH"] = "PSM-SSH";
@@ -82,9 +83,13 @@ public sealed class EnvironmentProfileTests : IDisposable
         // Disques du poste non partagés avec les sessions PSM : choix d'équipe aussi.
         Assert.Contains(changes, c => c is { Setting: EnvironmentSetting.PsmRedirectDrives, Current: "true", New: "false" });
 
+        // Affichage des sessions Bureau à distance gardé quand personne ne les regarde : choix d'équipe aussi.
+        Assert.Contains(changes, c => c is { Setting: EnvironmentSetting.PauseRdpDisplay, Current: "true", New: "false", Sensitive: false });
+
         profile.ApplyTo(fresh);
         Assert.True(fresh.PsmDesktopInTab);
         Assert.False(fresh.PsmRedirectDrives);
+        Assert.False(fresh.PauseRdpDisplay);
         Assert.Equal(("pvwa.corp.com", AuthMethod.LDAP, "psmp.corp.com", 2222, "WIN-PSM"),
             (fresh.PvwaUrl, fresh.AuthMethod, fresh.PsmpAddress, fresh.PsmpPort, fresh.WindowsComponent));
         Assert.Equal("", fresh.UserName);

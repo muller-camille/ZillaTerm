@@ -196,6 +196,14 @@ fenêtre à part.
   et ils apparaissent dans la session (Explorateur › Ce PC), dans l'onglet comme dans la Connexion Bureau à distance.
   Option décochée, aucun disque n'est partagé dans l'onglet, même si le PVWA le demande (choix gardé dans le PVWA,
   réglage du composant) ; la Connexion Bureau à distance suit le fichier signé du PVWA, qui ne peut pas être modifié.
+- **Affichage en pause** : l'option « Suspendre l'affichage des sessions Bureau à distance que personne ne regarde »
+  (Paramètres › CyberArk, cochée par défaut) demande au serveur de ne plus envoyer l'image d'une session dans un
+  onglet quand l'onglet est en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou quand ni le
+  clavier ni la souris n'ont servi depuis 15 minutes ; l'onglet affiche alors « Affichage en pause ». La session reste
+  ouverte : l'image revient dès le retour sur l'onglet ou au premier mouvement de souris, et le clavier n'est rendu à
+  la session qu'ensuite (la touche qui réveille l'onglet ne lui est pas envoyée). Ni trafic d'affichage, ni encodage
+  de l'image par le PSM, pour une session que personne ne voit. Jamais pendant l'enregistrement d'une intervention ou
+  le partage de la session.
 - **Reconnecter**, « Dupliquer l'onglet » : nouvelle demande au PVWA (le jeton d'une session PSM ne sert qu'une
   fois) ; motif et ticket restent ceux de la première connexion. Si la session CyberArk a expiré entre-temps, la
   fenêtre d'identification est proposée, puis la demande repart.
@@ -1163,6 +1171,7 @@ leur case (« ⚠ Effet : … »).
 | CyberArk | Sessions PSM Windows dans un onglet | Session PSM (bureau ou application distante) dans un onglet de ZillaTerm, avec le client FreeRDP embarqué, à la taille de l'onglet (voir [Ouvrir une session PSM](#3-ouvrir-une-session-psm-bureau-à-distance)) ; diffusé par le fichier d'environnement | non |
 | CyberArk | Partager les disques de ce poste avec les sessions PSM Windows | Demande les disques du poste au PVWA (case « Map local drives » de sa fenêtre de connexion, `AllowMappingLocalDrives`) ; s'ils sont permis par le composant, ils apparaissent dans la session (Explorateur › Ce PC). Diffusé par le fichier d'environnement | oui |
 | CyberArk | Adapter la résolution du bureau distant à la taille de l'onglet | Sessions PSM dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine. Pour les nouvelles sessions | oui |
+| CyberArk | Suspendre l'affichage des sessions Bureau à distance que personne ne regarde | Sessions dans un onglet (client FreeRDP) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image ; la session reste ouverte, l'image revient au retour sur l'onglet ou au premier mouvement de souris. Jamais pendant l'enregistrement d'une intervention ou un partage. Diffusé par le fichier d'environnement | oui |
 | CyberArk | Composant par plateforme | Tableau Plateforme (ID du PVWA, par exemple `WinDomain`) / Composant PSM : « Ajouter un composant », « Enlever la ligne », cellules modifiables ; prioritaire sur le composant des comptes Windows. « Mémoriser ce composant pour la plateforme » (fenêtre de connexion) y ajoute une ligne | vide |
 | Terminal | SSH dans ZillaTerm | Terminal et onglet Fichiers intégrés ; sinon Windows Terminal | oui |
 | Terminal | Couleurs du terminal, taille de police | Palette (Campbell, One Half, Solarized…) et taille de police des terminaux SSH | Campbell, 14 |
@@ -1513,7 +1522,10 @@ masquée et ZillaTerm reste utilisable (les tentatives se font à côté de la f
 réapparaît dès qu'elle est reprise. Si c'est un autre serveur qui répond à la même adresse, la
 tentative est refusée (identité non vérifiée) et s'arrête aussitôt : la session est perdue, et ZillaTerm refait une
 demande au PVWA (nouveau jeton), puis vérifie le serveur qui répond avant de s'y connecter (question s'il est inconnu ;
-deux fois au plus avant une nouvelle ouverture de session).
+deux fois au plus avant une nouvelle ouverture de session). Affichage en pause : ZillaTerm masque la fenêtre du
+client, qui envoie alors au serveur le message « Suppress Output » du protocole RDP (comme mstsc quand sa fenêtre est
+réduite) ; montrée de nouveau, le client autorise l'affichage et le serveur renvoie l'image entière. Après une
+reconnexion automatique, la pause est redemandée au serveur.
 
 Durcissement : aucune bibliothèque chargée hors de son dossier et de System32 (les canaux virtuels sont compilés dans
 l'exécutable), OpenSSL sans module, moteur ni fichier de configuration chargés à l'exécution, ses dossiers compilés

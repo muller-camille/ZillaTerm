@@ -53,8 +53,17 @@ public partial class MainWindow
                 e.Handled = true;
             }
         };
+        // Dit une fois par changement d'état ou nouvelle erreur : la pause de l'affichage, les étapes ou la reconnexion
+        // automatique ne redisent pas « session ouverte » (barre d'état, journal d'une intervention).
+        (RdpSessionState State, string? Error) reported = (session.State, session.Error);
         session.StateChanged += () =>
         {
+            if ((session.State, session.Error) == reported)
+            {
+                return;
+            }
+
+            reported = (session.State, session.Error);
             switch (session.State)
             {
                 case RdpSessionState.Connected:
@@ -68,6 +77,7 @@ public partial class MainWindow
 
         RdpLayer.Children.Add(view);
         _rdpViews.Add(view);
+        WatchRdpDisplayPause(view);
         MainTabs.Items.Add(tab);
         MainTabs.SelectedItem = tab;
         return session;
