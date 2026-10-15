@@ -66,6 +66,12 @@ public sealed class AppSettings
     /// <summary>Requête légère régulière pour que la session PVWA n'expire pas par inactivité.</summary>
     public bool KeepPvwaSessionAlive { get; set; } = true;
 
+    /// <summary>
+    /// Copie chiffrée de la dernière liste des comptes (<see cref="AccountListCopy"/>), affichée aussitôt à la connexion
+    /// suivante pendant la mise à jour ; activée par défaut. Désactivée : les copies sont supprimées.
+    /// </summary>
+    public bool KeepAccountListCopy { get; set; } = true;
+
     /// <summary>Coffres KeePass affichés comme dossiers de « Mes serveurs » (accès d'urgence hors CyberArk).</summary>
     public List<KeePassFolder> KeePassFolders { get; set; } = [];
 

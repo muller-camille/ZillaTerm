@@ -160,10 +160,10 @@ public sealed class PvwaClient : IDisposable
     /// Charge tous les comptes visibles par l'utilisateur connecté (safes sur lesquels il a le droit « List »),
     /// page par page.
     /// </summary>
-    /// <param name="progress">Reçoit (comptes chargés, total annoncé par le PVWA) après chaque page.</param>
+    /// <param name="progress">Reçoit chaque page (ses comptes, comptes chargés, total annoncé par le PVWA).</param>
     /// <exception cref="PvwaException">Refus du PVWA, ou liste anormalement longue (voir <see cref="MaxPages"/>).</exception>
-    public Task<List<PvwaAccount>> GetAccountsAsync(IProgress<(int Loaded, int Total)>? progress = null, CancellationToken ct = default) =>
-        GetAllPagesAsync<PvwaAccount>("API/Accounts", a => a.Id, progress, ct);
+    public Task<List<PvwaAccount>> GetAccountsAsync(IProgress<ListPage<PvwaAccount>>? progress = null, CancellationToken ct = default) =>
+        GetAllPagesAsync("API/Accounts", a => a.Id, progress, ct);
 
     /// <summary>
     /// Membres d'un safe (utilisateurs et groupes) avec leurs droits, page par page. Le PVWA ne les donne qu'à un
@@ -188,12 +188,16 @@ public sealed class PvwaClient : IDisposable
     /// (<c>count</c>), ou, sans total, quand il n'y a plus de page suivante (<c>nextLink</c>) ; et aussi sur une page vide
     /// ou qui n'apporte aucun élément nouveau (<paramref name="key"/> : identifiant ; même page renvoyée en boucle).
     /// </summary>
+    /// <remarks>
+    /// Journal de débogage : durée de chaque page (requête, réponse et lecture), puis de la liste entière.
+    /// </remarks>
     /// <exception cref="PvwaException">Plus de <see cref="MaxPages"/> pages, ou d'éléments que ces pages n'en contiennent.</exception>
-    private async Task<List<T>> GetAllPagesAsync<T>(string path, Func<T, string?> key, IProgress<(int Loaded, int Total)>? progress,
+    private async Task<List<T>> GetAllPagesAsync<T>(string path, Func<T, string?> key, IProgress<ListPage<T>>? progress,
         CancellationToken ct)
     {
         var all = new List<T>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var whole = System.Diagnostics.Stopwatch.StartNew();
         for (int pages = 0; ; pages++)
         {
             if (pages == MaxPages || all.Count > MaxPages * PageSize)
@@ -202,8 +206,11 @@ public sealed class PvwaClient : IDisposable
                 throw new PvwaException(HttpStatusCode.OK, null, string.Format(CultureInfo.CurrentCulture, CoreStrings.PvwaTooManyPages, MaxPages));
             }
 
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             var page = await GetAsync<Page<T>>($"{path}?offset={all.Count}&limit={PageSize}", ct).ConfigureAwait(false);
             var items = page.Value ?? [];
+            DebugLog.Write("pvwa", string.Create(CultureInfo.InvariantCulture,
+                $"{path} : page {pages + 1}, {items.Count} éléments à l'offset {all.Count} sur {page.Count}, {watch.ElapsedMilliseconds} ms (réponse et lecture)"));
             // Count (et non Any) : chaque identifiant de la page est noté.
             if (items.Count > 0 && items.Count(i => seen.Add((i is null ? null : key(i)) ?? "")) == 0)
             {
@@ -212,11 +219,13 @@ public sealed class PvwaClient : IDisposable
             }
 
             all.AddRange(items);
-            progress?.Report((all.Count, Math.Max(page.Count, all.Count)));
+            progress?.Report(new ListPage<T>(items, all.Count, Math.Max(page.Count, all.Count)));
 
             bool more = page.Count > 0 ? all.Count < page.Count : page.NextLink is not null;
             if (items.Count == 0 || !more)
             {
+                DebugLog.Write("pvwa", string.Create(CultureInfo.InvariantCulture,
+                    $"{path} : {all.Count} éléments en {pages + 1} pages, {whole.ElapsedMilliseconds} ms"));
                 return all;
             }
         }
@@ -712,3 +721,6 @@ public sealed class PvwaClient : IDisposable
         public string? NextLink { get; set; }
     }
 }
+
+/// <summary>Page d'une liste du PVWA : ses éléments, le nombre d'éléments chargés jusque-là et le total annoncé.</summary>
+public sealed record ListPage<T>(IReadOnlyList<T> Items, int Loaded, int Total);

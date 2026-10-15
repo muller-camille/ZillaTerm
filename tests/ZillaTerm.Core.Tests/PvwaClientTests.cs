@@ -208,9 +208,9 @@ public class PvwaClientTests
         });
         using var client = pvwa.CreateClient();
         await client.LogonAsync(AuthMethod.CyberArk, "jdoe", "pw");
-        var reports = new List<(int, int)>();
+        var reports = new List<ListPage<PvwaAccount>>();
 
-        var accounts = await client.GetAccountsAsync(new SyncProgress<(int, int)>(reports.Add));
+        var accounts = await client.GetAccountsAsync(new SyncProgress<ListPage<PvwaAccount>>(reports.Add));
 
         Assert.Equal(total, accounts.Count);
         Assert.Equal("srv2499.corp.local", accounts[^1].Address);
@@ -221,7 +221,10 @@ public class PvwaClientTests
              "/PasswordVault/API/Accounts?offset=2000&limit=1000"],
             pages.Select(p => p.PathAndQuery));
         Assert.All(pages, p => Assert.Equal("tok", p.Authorization));
-        Assert.Equal([(1000, total), (2000, total), (total, total)], reports);
+        Assert.Equal([(1000, total), (2000, total), (total, total)], reports.Select(r => (r.Loaded, r.Total)));
+        // Chaque page avec ses comptes, dans l'ordre : de quoi remplir la liste au fur et à mesure.
+        Assert.Equal([1000, 1000, 500], reports.Select(r => r.Items.Count));
+        Assert.Equal(accounts.Select(a => a.Id), reports.SelectMany(r => r.Items).Select(a => a.Id));
     }
 
     /// <summary>Réponse du PVWA (valeurs fictives) : utilisateur, groupe avec date de fin, pagination sur le total.</summary>

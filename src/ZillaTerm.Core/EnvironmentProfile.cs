@@ -33,6 +33,7 @@ public enum EnvironmentSetting
     PsmDesktopInTab,
     PsmRedirectDrives,
     PauseRdpDisplay,
+    KeepAccountListCopy,
 }
 
 /// <summary>
@@ -131,6 +132,9 @@ public sealed class EnvironmentProfile
 
     public bool? KeepPvwaSessionAlive { get; set; }
 
+    /// <summary>Copie chiffrée de la liste des comptes, affichée aussitôt à la connexion suivante.</summary>
+    public bool? KeepAccountListCopy { get; set; }
+
     public bool? SshInApp { get; set; }
 
     /// <summary>Sessions PSM Windows (bureau) dans un onglet de ZillaTerm plutôt que dans Connexion Bureau à distance.</summary>
@@ -211,6 +215,7 @@ public sealed class EnvironmentProfile
             HostKeys = hostKeys.Count == 0 ? null : hostKeys,
             CentralFile = NullIfEmpty(settings.EnvironmentFile),
             KeepPvwaSessionAlive = settings.KeepPvwaSessionAlive,
+            KeepAccountListCopy = settings.KeepAccountListCopy,
             SshInApp = settings.SshInApp,
             PsmDesktopInTab = settings.PsmDesktopInTab,
             PsmRedirectDrives = settings.PsmRedirectDrives,
@@ -504,6 +509,7 @@ public sealed class EnvironmentProfile
         }
 
         AddFlag(EnvironmentSetting.KeepPvwaSessionAlive, settings.KeepPvwaSessionAlive, KeepPvwaSessionAlive);
+        AddFlag(EnvironmentSetting.KeepAccountListCopy, settings.KeepAccountListCopy, KeepAccountListCopy);
         AddFlag(EnvironmentSetting.SshInApp, settings.SshInApp, SshInApp);
         AddFlag(EnvironmentSetting.PsmDesktopInTab, settings.PsmDesktopInTab, PsmDesktopInTab);
         AddFlag(EnvironmentSetting.PsmRedirectDrives, settings.PsmRedirectDrives, PsmRedirectDrives);
@@ -630,6 +636,7 @@ public sealed class EnvironmentProfile
         }
 
         settings.KeepPvwaSessionAlive = KeepPvwaSessionAlive ?? settings.KeepPvwaSessionAlive;
+        settings.KeepAccountListCopy = KeepAccountListCopy ?? settings.KeepAccountListCopy;
         settings.SshInApp = SshInApp ?? settings.SshInApp;
         settings.PsmDesktopInTab = PsmDesktopInTab ?? settings.PsmDesktopInTab;
         settings.PsmRedirectDrives = PsmRedirectDrives ?? settings.PsmRedirectDrives;
