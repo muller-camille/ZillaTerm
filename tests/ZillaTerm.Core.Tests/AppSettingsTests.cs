@@ -151,6 +151,19 @@ public sealed class AppSettingsTests : IDisposable
         Assert.False(AppSettings.Load(path).PsmRedirectDrives);
     }
 
+    /// <summary>Affichage des sessions Bureau à distance en pause quand personne ne les regarde : par défaut, y compris pour des réglages plus anciens.</summary>
+    [Fact]
+    public void PauseRdpDisplayIsOnByDefaultAndKept()
+    {
+        Assert.True(new AppSettings().PauseRdpDisplay);
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "pause.json");
+        File.WriteAllText(path, "{}");
+        Assert.True(AppSettings.Load(path).PauseRdpDisplay);
+        new AppSettings { PauseRdpDisplay = false }.Save(path);
+        Assert.False(AppSettings.Load(path).PauseRdpDisplay);
+    }
+
     /// <summary>Thème de l'interface : celui de Windows par défaut, le choix gardé, une valeur inconnue ramenée au défaut.</summary>
     [Fact]
     public void ThemeDefaultsToWindowsAndIsKept()

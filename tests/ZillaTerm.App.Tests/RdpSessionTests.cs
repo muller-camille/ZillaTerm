@@ -80,6 +80,22 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>
+    /// Pause de l'affichage : rien sans session ouverte, l'onglet garde son message (connexion en cours, fin, erreur).
+    /// </summary>
+    [Fact]
+    public async Task DisplayPauseNeedsAnOpenSession()
+    {
+        var request = new RdpConnectionRequest(RdpConnectionSettings.Direct("127.0.0.1", 1, "jdoe"), null);
+        await RunOnStaAsync(request, session =>
+        {
+            session.SetDisplayPause(RdpDisplayPauseReason.Idle);
+            Assert.Equal(RdpDisplayPauseReason.None, session.DisplayPause);
+            Assert.Equal(RdpSessionState.Connecting, session.State);
+            return Task.CompletedTask;
+        });
+    }
+
+    /// <summary>
     /// Vraie session sur ce poste (127.0.0.2) avec le compte de test créé par le job « rdp » du workflow « build » :
     /// ouverture de session dans l'onglet, puis déconnexion. Ignoré sans RDP_TEST_USER / RDP_TEST_PASSWORD.
     /// </summary>
@@ -758,6 +774,125 @@ public class RdpSessionTests(ITestOutputHelper output)
             Assert.Equal(RdpSessionState.Ended,
                 await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30)));
         }, Content);
+    }
+
+    /// <summary>
+    /// Affichage en pause (session que personne ne regarde) : la fenêtre de FreeRDP est masquée et le serveur n'envoie plus
+    /// l'image, alors que l'écran distant change sans cesse (horloge de la fenêtre de test) ; la connexion reste ouverte.
+    /// Reprise : l'image revient et la session reçoit de nouveau les clics.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpDisplayPauseStopsTheDisplayTraffic()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        var log = Environment.GetEnvironmentVariable("RDP_TEST_CLICKS");
+        if (string.IsNullOrEmpty(log) || Core.Diagnostics.DebugLog.FilePath is not { } debugLog)
+        {
+            output.WriteLine("Pas de fenêtre de test des clics ou de journal de débogage : test ignoré.");
+            return;
+        }
+
+        await CheckDisplayPauseAsync(port => RdpConnectionSettings.Direct("127.0.0.1", port, account.User).ForPsmTab(),
+            account.Password, log, debugLog);
+    }
+
+    /// <summary>
+    /// Même pause pour une application distante (RemoteApp, comme une session PSM) : dans l'onglet, elle est dessinée dans
+    /// la fenêtre de la session, masquée de même.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpRemoteAppDisplayPauseStopsTheDisplayTraffic()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        var user = Environment.GetEnvironmentVariable("RDP_TEST_REMOTEAPP_USER");
+        var log = Environment.GetEnvironmentVariable("RDP_TEST_REMOTEAPP_CLICKS");
+        var script = Environment.GetEnvironmentVariable("RDP_TEST_REMOTEAPP_SCRIPT");
+        if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(log) || string.IsNullOrEmpty(script)
+            || Core.Diagnostics.DebugLog.FilePath is not { } debugLog)
+        {
+            output.WriteLine("Pas de compte pour les applications distantes ou de journal de débogage : test ignoré.");
+            return;
+        }
+
+        var powershell = Path.Combine(Environment.SystemDirectory, @"WindowsPowerShell\v1.0\powershell.exe");
+        await CheckDisplayPauseAsync(port => RdpConnectionSettings.Direct("127.0.0.1", port, $"{Environment.MachineName}\\{user}").ForPsmTab() with
+        {
+            IsRemoteApp = true,
+            RemoteApplicationProgram = powershell,
+            RemoteApplicationName = "ZillaTerm test",
+            RemoteApplicationCmdLine = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File {script}",
+        }, account.Password, log, debugLog);
+    }
+
+    /// <summary>
+    /// Session ouverte par un relais compté (octets envoyés par le serveur au client : l'affichage pour l'essentiel),
+    /// affichage mesuré, mis en pause, mesuré, repris, mesuré ; clics reçus avant et après.
+    /// </summary>
+    private async Task CheckDisplayPauseAsync(Func<int, RdpConnectionSettings> settings, string password, string log, string debugLog)
+    {
+        await using var relay = new TcpRelay(new IPEndPoint(IPAddress.Parse("127.0.0.2"), 3389));
+        var request = new RdpConnectionRequest(settings(relay.Port), password)
+        {
+            FreeRdp = true,
+            VerifyCertificate = (_, _, _) => Task.FromResult(RdpTrust.Trusted),
+        };
+        async Task<long> TrafficAsync(string what)
+        {
+            long before = relay.BytesToClient;
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            long bytes = relay.BytesToClient - before;
+            output.WriteLine($"{what} : {bytes} octets du serveur en 5 s");
+            return bytes;
+        }
+
+        await RunOnStaAsync(request, async (session, window) =>
+        {
+            await session.ConnectAsync();
+            Assert.Equal(RdpSessionState.Connected,
+                await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90)));
+            var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+            var bounds = Win32Input.ScreenBounds(session.Host.SlotHandle);
+            var desktop = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
+            await WaitForLineAsync(log, 0, line => line == $"size {desktop.Width}x{desktop.Height}", TimeSpan.FromSeconds(150));
+            await ClickAndCheckAsync(log, host, bounds, (0.5, 0.5), desktop);
+            long shown = await TrafficAsync("Affichage reçu");
+
+            int logged = Lines(debugLog).Count;
+            session.SetDisplayPause(RdpDisplayPauseReason.Idle);
+            Assert.Equal(RdpDisplayPauseReason.Idle, session.DisplayPause);
+            Assert.NotEqual(Visibility.Visible, session.Host.Visibility);
+            output.WriteLine(await WaitForLineAsync(debugLog, logged, l => l.Contains("display updates suppressed", StringComparison.Ordinal),
+                TimeSpan.FromSeconds(10)));
+            // Images déjà en route : arrivées avant la mesure.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            long paused = await TrafficAsync("Affichage en pause");
+            Assert.True(paused * 5 < shown, $"Le serveur envoie encore l'image : {paused} octets en pause, {shown} avant");
+            Assert.Equal(RdpSessionState.Connected, session.State);
+
+            logged = Lines(debugLog).Count;
+            session.SetDisplayPause(RdpDisplayPauseReason.None);
+            Assert.Equal(Visibility.Visible, session.Host.Visibility);
+            output.WriteLine(await WaitForLineAsync(debugLog, logged, l => l.Contains("display updates allowed", StringComparison.Ordinal),
+                TimeSpan.FromSeconds(10)));
+            long resumed = await TrafficAsync("Affichage repris");
+            Assert.True(resumed > paused * 5, $"L'image n'est pas revenue : {resumed} octets après la reprise, {paused} en pause");
+            await ClickAndCheckAsync(log, host, bounds, (0.25, 0.25), desktop);
+            Assert.Equal(RdpSessionState.Connected, session.State);
+
+            session.Disconnect();
+            Assert.Equal(RdpSessionState.Ended,
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30)));
+        });
     }
 
     /// <summary>

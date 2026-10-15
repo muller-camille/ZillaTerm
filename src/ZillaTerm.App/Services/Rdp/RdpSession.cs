@@ -179,6 +179,42 @@ internal sealed class RdpSession : IDisposable
     /// <summary>Vrai si la dernière connexion passe par le client FreeRDP de ZillaTerm (pas de plein écran).</summary>
     public bool UsesFreeRdp { get; private set; }
 
+    /// <summary>
+    /// Affichage en pause, connexion gardée, et pourquoi (voir <see cref="RdpDisplayPause"/>) : le serveur n'envoie plus
+    /// l'image ; <see cref="RdpDisplayPauseReason.None"/> sinon. Client FreeRDP seulement, session ouverte seulement.
+    /// </summary>
+    public RdpDisplayPauseReason DisplayPause { get; private set; }
+
+    /// <summary>
+    /// Met l'affichage en pause ou le reprend (thread de l'interface). Sans effet sans session ouverte, avec le contrôle de
+    /// Windows (rien pour suspendre son affichage), ou tant que le client ne répond plus (déplacer le clavier hors de sa
+    /// fenêtre attendrait le client) : la pause viendra quand il répondra.
+    /// </summary>
+    public void SetDisplayPause(RdpDisplayPauseReason reason)
+    {
+        if (reason != RdpDisplayPauseReason.None && DisplayPause == RdpDisplayPauseReason.None
+            && (_connection is not { CanPauseDisplay: true, HasWindow: true } || !IsConnected || IsNotResponding))
+        {
+            reason = RdpDisplayPauseReason.None;
+        }
+
+        if (_disposed || reason == DisplayPause)
+        {
+            return;
+        }
+
+        DebugLog.Write("rdp", reason switch
+        {
+            RdpDisplayPauseReason.Hidden => $"{Label} : affichage en pause (session invisible depuis {RdpDisplayPause.HiddenDelay.TotalMinutes:0} min)",
+            RdpDisplayPauseReason.Idle => $"{Label} : affichage en pause (poste inactif depuis {RdpDisplayPause.IdleDelay.TotalMinutes:0} min)",
+            _ => $"{Label} : affichage repris",
+        });
+        DisplayPause = reason;
+        _connection?.PauseDisplay(reason != RdpDisplayPauseReason.None);
+        UpdateHost();
+        StateChanged?.Invoke();
+    }
+
     /// <summary>Ouverture de la session (fin de l'ouverture de session Windows), ou null.</summary>
     public DateTime? ConnectedAt { get; private set; }
 
@@ -610,6 +646,7 @@ internal sealed class RdpSession : IDisposable
         IsNotResponding = false;
         IsReconnecting = false;
         IsAuthenticationWarningOpen = false;
+        DisplayPause = RdpDisplayPauseReason.None;
         UpdateHost();
         StateChanged?.Invoke();
     }
@@ -640,6 +677,7 @@ internal sealed class RdpSession : IDisposable
         _pingPending = false;
         IsNotResponding = false;
         IsReconnecting = false;
+        DisplayPause = RdpDisplayPauseReason.None;
         connection.Release(disconnect);
         UpdateHost();
     }
@@ -654,6 +692,12 @@ internal sealed class RdpSession : IDisposable
         {
             _watchdog.Stop();
             return;
+        }
+
+        if (DisplayPause != RdpDisplayPauseReason.None && !IsNotResponding)
+        {
+            // Fenêtre remontrée par le client (à sa première image) : masquée de nouveau.
+            connection.PauseDisplay(true);
         }
 
         var now = Environment.TickCount64;
@@ -699,7 +743,8 @@ internal sealed class RdpSession : IDisposable
     {
         if (!IsNotResponding)
         {
-            bool visible = _starting || ShowsDesktop;
+            // Affichage en pause : le message de l'onglet (WPF) remplace le bureau, qui ne se met plus à jour.
+            bool visible = _starting || (ShowsDesktop && DisplayPause == RdpDisplayPauseReason.None);
             Host.Visibility = visible ? Visibility.Visible : Visibility.Hidden;
             if (visible)
             {

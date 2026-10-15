@@ -32,6 +32,7 @@ public enum EnvironmentSetting
     ServerTags,
     PsmDesktopInTab,
     PsmRedirectDrives,
+    PauseRdpDisplay,
 }
 
 /// <summary>
@@ -138,6 +139,9 @@ public sealed class EnvironmentProfile
     /// <summary>Disques du poste partagés avec les sessions PSM Windows.</summary>
     public bool? PsmRedirectDrives { get; set; }
 
+    /// <summary>Affichage des sessions Bureau à distance en pause quand personne ne les regarde.</summary>
+    public bool? PauseRdpDisplay { get; set; }
+
     public bool? CheckForUpdates { get; set; }
 
     public TransferProtocol? UploadProtocol { get; set; }
@@ -210,6 +214,7 @@ public sealed class EnvironmentProfile
             SshInApp = settings.SshInApp,
             PsmDesktopInTab = settings.PsmDesktopInTab,
             PsmRedirectDrives = settings.PsmRedirectDrives,
+            PauseRdpDisplay = settings.PauseRdpDisplay,
             CheckForUpdates = settings.CheckForUpdates,
             UploadProtocol = settings.PreferredUploadProtocol,
             DutyText = string.IsNullOrWhiteSpace(settings.DutyText) ? null : NormalizeDutyText(settings.DutyText),
@@ -502,6 +507,7 @@ public sealed class EnvironmentProfile
         AddFlag(EnvironmentSetting.SshInApp, settings.SshInApp, SshInApp);
         AddFlag(EnvironmentSetting.PsmDesktopInTab, settings.PsmDesktopInTab, PsmDesktopInTab);
         AddFlag(EnvironmentSetting.PsmRedirectDrives, settings.PsmRedirectDrives, PsmRedirectDrives);
+        AddFlag(EnvironmentSetting.PauseRdpDisplay, settings.PauseRdpDisplay, PauseRdpDisplay);
         AddFlag(EnvironmentSetting.CheckForUpdates, settings.CheckForUpdates, CheckForUpdates);
         if (UploadProtocol is { } protocol)
         {
@@ -627,6 +633,7 @@ public sealed class EnvironmentProfile
         settings.SshInApp = SshInApp ?? settings.SshInApp;
         settings.PsmDesktopInTab = PsmDesktopInTab ?? settings.PsmDesktopInTab;
         settings.PsmRedirectDrives = PsmRedirectDrives ?? settings.PsmRedirectDrives;
+        settings.PauseRdpDisplay = PauseRdpDisplay ?? settings.PauseRdpDisplay;
         settings.CheckForUpdates = CheckForUpdates ?? settings.CheckForUpdates;
         settings.PreferredUploadProtocol = UploadProtocol ?? settings.PreferredUploadProtocol;
         if (DutyText is not null)

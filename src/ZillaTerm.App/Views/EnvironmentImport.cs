@@ -194,6 +194,7 @@ internal static class EnvironmentImport
             EnvironmentSetting.SshInApp => Strings.EnvSshInApp,
             EnvironmentSetting.PsmDesktopInTab => Strings.EnvPsmDesktopInTab,
             EnvironmentSetting.PsmRedirectDrives => Strings.EnvPsmRedirectDrives,
+            EnvironmentSetting.PauseRdpDisplay => Strings.EnvPauseRdpDisplay,
             EnvironmentSetting.CheckForUpdates => Strings.EnvCheckForUpdates,
             EnvironmentSetting.DutyText => Strings.EnvDutyText,
             EnvironmentSetting.DutyTextFile => change.Detail is { } dutyServer ? Text.Format(Strings.EnvDutyFileNetwork, dutyServer) : Strings.EnvDutyFile,

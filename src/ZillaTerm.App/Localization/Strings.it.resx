@@ -5663,7 +5663,7 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
     <value>Schermi registrati</value>
   </data>
   <data name="InterventionReportScreenHelp" xml:space="preserve">
-    <value>Sessioni desktop remoto in una scheda: sono conservate solo le zone modificate dello schermo, al massimo un'immagine al secondo. Il grafico sotto il cursore mostra la parte dello schermo modificata: un clic su un picco porta lì. I segni arancioni sotto sono le note: un clic porta al loro orario.</value>
+    <value>Sessioni desktop remoto in una scheda: sono conservate solo le zone modificate dello schermo, al massimo un'immagine al secondo. Il grafico sotto il cursore mostra la parte dello schermo modificata: un clic su un picco porta lì. I segni arancioni sotto sono le note: un clic porta al loro orario. Le bande grigie sono le pause della visualizzazione (il server non inviava più l'immagine): lo schermo mostra «Visualizzazione in pausa»; un clic porta lì.</value>
   </data>
   <data name="InterventionReportScreenHeading" xml:space="preserve">
     <value>{0}: dal {1} al {2} ({3})</value>
@@ -6435,5 +6435,38 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   </data>
   <data name="InterventionEndCancel" xml:space="preserve">
     <value>Continua l'intervento</value>
+  </data>
+  <data name="PauseRdpDisplay" xml:space="preserve">
+    <value>Sospendi la visualizzazione delle sessioni Desktop remoto che _nessuno guarda (la sessione resta aperta)</value>
+  </data>
+  <data name="PauseRdpDisplayHelp" xml:space="preserve">
+    <value>Sessioni Desktop remoto in una scheda (client integrato): con la scheda in secondo piano, ZillaTerm ridotto a icona o Windows bloccato da 1 minuto, oppure senza tastiera né mouse da 15 minuti, il server smette di inviare l'immagine: nessun traffico di visualizzazione e nessuna codifica dell'immagine da parte del PSM per una sessione che nessuno vede. La sessione resta aperta; l'immagine torna appena si ritorna sulla scheda o si muove il mouse. Mai per la scheda visualizzata durante la registrazione di un intervento o la condivisione della sessione. Durante una registrazione, la pausa di una scheda in secondo piano vi è segnata: «Visualizzazione in pausa» sullo schermo e una banda grigia sulla linea del tempo del rapporto.</value>
+  </data>
+  <data name="RdpPaused" xml:space="preserve">
+    <value>Visualizzazione in pausa</value>
+  </data>
+  <data name="RdpPausedIdle" xml:space="preserve">
+    <value>Nessun uso di tastiera o mouse da {0} minuti: il server non invia più l'immagine. La sessione resta aperta; muovi il mouse o premi un tasto per riprendere.</value>
+  </data>
+  <data name="RdpPausedHidden" xml:space="preserve">
+    <value>Sessione non visualizzata: il server non invia più l'immagine. La sessione resta aperta; l'immagine torna appena viene visualizzata.</value>
+  </data>
+  <data name="RdpPausedStatus" xml:space="preserve">
+    <value>{0}: visualizzazione in pausa, sessione aperta</value>
+  </data>
+  <data name="EnvPauseRdpDisplay" xml:space="preserve">
+    <value>Sospendi la visualizzazione delle sessioni Desktop remoto che nessuno guarda</value>
+  </data>
+  <data name="InterventionReportPaused" xml:space="preserve">
+    <value>Visualizzazione in pausa</value>
+  </data>
+  <data name="InterventionReportPausedIdle" xml:space="preserve">
+    <value>computer inattivo</value>
+  </data>
+  <data name="InterventionReportPausedHidden" xml:space="preserve">
+    <value>sessione non visualizzata</value>
+  </data>
+  <data name="InterventionReportPauseMarker" xml:space="preserve">
+    <value>Visualizzazione in pausa dalle {0} alle {1} ({2})</value>
   </data>
 </root>

@@ -5,6 +5,22 @@ using System.Security.Cryptography;
 
 namespace ZillaTerm.Core.Interventions;
 
+/// <summary>
+/// Affichage d'une session en pause (le serveur n'envoie plus l'image, la connexion reste ouverte), marqué dans son
+/// enregistrement d'écran (<see cref="ScreenTileEncoder.Mark"/>).
+/// </summary>
+public enum ScreenPause
+{
+    /// <summary>Affichage reçu (ou repris).</summary>
+    None,
+
+    /// <summary>Session que personne ne pouvait voir : onglet en arrière-plan, ZillaTerm réduit, Windows verrouillé.</summary>
+    Hidden,
+
+    /// <summary>Session affichée, poste inactif (ni clavier ni souris).</summary>
+    Idle,
+}
+
 /// <summary>En-tête d'une image d'écran enregistrée (<see cref="ScreenTileEncoder"/>).</summary>
 /// <param name="Stream">Enregistrement d'écran (une session Bureau à distance) auquel l'image appartient.</param>
 /// <param name="Sequence">
@@ -12,8 +28,14 @@ namespace ZillaTerm.Core.Interventions;
 /// n'est repris qu'à l'image clé suivante.
 /// </param>
 /// <param name="Activity">Part de l'écran modifiée depuis l'image précédente, en millièmes.</param>
+/// <param name="Pause">
+/// Affichage en pause depuis cette image (sans tuile), jusqu'à l'image suivante ; <see cref="ScreenPause.None"/> pour
+/// une image ordinaire. Dans l'octet des drapeaux, après celui de l'image clé : un lecteur qui ne le connaît pas y voit une
+/// image sans changement.
+/// </param>
 public readonly record struct ScreenFrameHeader(
-    int Stream, int Sequence, int Width, int Height, bool Key, int TileSize, int Activity, int FirstNewTile, int NewTiles, int Placements)
+    int Stream, int Sequence, int Width, int Height, bool Key, int TileSize, int Activity, int FirstNewTile, int NewTiles, int Placements,
+    ScreenPause Pause = ScreenPause.None)
 {
     /// <summary>« ZTS2 » : image d'écran, format 2.</summary>
     public static ReadOnlySpan<byte> Magic => "ZTS2"u8;
@@ -42,13 +64,16 @@ public readonly record struct ScreenFrameHeader(
             BinaryPrimitives.ReadUInt16LittleEndian(data[18..]),
             (int)BinaryPrimitives.ReadUInt32LittleEndian(data[20..]),
             (int)BinaryPrimitives.ReadUInt32LittleEndian(data[24..]),
-            (int)BinaryPrimitives.ReadUInt32LittleEndian(data[28..]));
+            (int)BinaryPrimitives.ReadUInt32LittleEndian(data[28..]),
+            (ScreenPause)((data[16] >> 1) & 3));
         // Écran pas plus grand que ce que l'encodeur accepte ; chaque tuile nouvelle est posée au moins une fois, et une image
-        // ne pose pas plus de tuiles que la grille n'en a.
+        // ne pose pas plus de tuiles que la grille n'en a. Une pause n'est ni une image clé, ni une image avec des tuiles.
         return header.Width is > 0 and <= ScreenTileEncoder.MaxSide && header.Height is > 0 and <= ScreenTileEncoder.MaxSide
                && header.TileSize == ScreenTileEncoder.TileSize && header.Activity <= 1000
                && header.Sequence >= 0 && header.FirstNewTile >= 0 && header.NewTiles >= 0 && header.Placements >= 0
-               && header.NewTiles <= header.Placements && header.Placements <= header.Tiles;
+               && header.NewTiles <= header.Placements && header.Placements <= header.Tiles
+               && header.Pause is ScreenPause.None or ScreenPause.Hidden or ScreenPause.Idle
+               && (header.Pause == ScreenPause.None || (!header.Key && header.Placements == 0));
     }
 
     internal void Write(Span<byte> data)
@@ -58,7 +83,7 @@ public readonly record struct ScreenFrameHeader(
         BinaryPrimitives.WriteUInt32LittleEndian(data[8..], (uint)Sequence);
         BinaryPrimitives.WriteUInt16LittleEndian(data[12..], (ushort)Width);
         BinaryPrimitives.WriteUInt16LittleEndian(data[14..], (ushort)Height);
-        data[16] = (byte)(Key ? 1 : 0);
+        data[16] = (byte)((Key ? 1 : 0) | ((int)Pause << 1));
         data[17] = (byte)TileSize;
         BinaryPrimitives.WriteUInt16LittleEndian(data[18..], (ushort)Activity);
         BinaryPrimitives.WriteUInt32LittleEndian(data[20..], (uint)FirstNewTile);
@@ -153,6 +178,13 @@ public sealed class ScreenTileEncoder
     private long _lastKeyBytes;
     private long _sinceKey;
 
+    /// <summary>Flux zlib d'un contenu vide : en-tête, bloc final vide, somme Adler-32 de rien (1).</summary>
+    private static ReadOnlySpan<byte> EmptyZlib => [0x78, 0xDA, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01];
+
+    // Pause de l'affichage marquée : la capture suivante est une image clé (l'écran revient entier).
+    private ScreenPause _paused;
+    private bool _keyAfterPause;
+
     /// <param name="stream">Numéro de l'enregistrement d'écran (une session), écrit dans chaque image.</param>
     /// <param name="live">
     /// Écran partagé en direct : tout changement part tout de suite, même un caractère tapé (pas de seuil de bruit ni
@@ -212,7 +244,9 @@ public sealed class ScreenTileEncoder
 
         bool first = _shown is null;
         var shown = _shown ??= new ushort[_current.Length];
-        key |= first || KeyDue(time);
+        key |= first || KeyDue(time) || _keyAfterPause;
+        _keyAfterPause = false;
+        _paused = ScreenPause.None;
 
         // Tuiles à garder : modifiées au-delà du seuil, ou dont le reste sous le seuil est à rattraper (toutes pour une
         // image clé).
@@ -356,6 +390,32 @@ public sealed class ScreenTileEncoder
     }
 
     /// <summary>
+    /// Pause de l'affichage de la session (<paramref name="pause"/>), ou sa fin (<see cref="ScreenPause.None"/>), à
+    /// <paramref name="time"/> : image sans tuile, marquée, qui fige l'écran dans le lecteur et y dit « pause » jusqu'à
+    /// l'image suivante. La capture suivante est une image clé. Null avant la première image (rien n'est encore
+    /// enregistré) ou si rien ne change (déjà dans cet état).
+    /// </summary>
+    public ScreenFrame? Mark(DateTime time, ScreenPause pause)
+    {
+        if (_shown is null || pause == _paused)
+        {
+            return null;
+        }
+
+        var header = new ScreenFrameHeader(_stream, _sequence, _width, _height, false, TileSize, 0, _nextId, 0, 0, pause);
+        // Ni position, ni tuile : un flux zlib vide, écrit tel quel (ZLibStream n'écrit rien sans données, et un navigateur
+        // refuse de décompresser un corps vide).
+        var data = new byte[ScreenFrameHeader.Length + EmptyZlib.Length];
+        EmptyZlib.CopyTo(data.AsSpan(ScreenFrameHeader.Length));
+        header.Write(data);
+        // Pas un changement de l'écran : ne compte pas pour l'image clé suivante.
+        _sequence++;
+        _paused = pause;
+        _keyAfterPause = true;
+        return new ScreenFrame(data, header);
+    }
+
+    /// <summary>
     /// Image clé due : l'écran a changé depuis la précédente, et les images depuis pèsent assez lourd (au plus tôt après
     /// <see cref="KeyFrameMinInterval"/>) ou <see cref="KeyFrameMaxInterval"/> est passé.
     /// </summary>
@@ -442,6 +502,9 @@ public sealed class ScreenTileDecoder
 
     /// <summary>Écran (RGB565, ligne par ligne) ; vide avant la première image clé.</summary>
     public ushort[] Pixels { get; private set; } = [];
+
+    /// <summary>Affichage en pause depuis la dernière image appliquée (<see cref="ScreenTileEncoder.Mark"/>), et pourquoi.</summary>
+    public ScreenPause Pause { get; private set; }
 
     /// <summary>Applique une image ; faux si elle est illisible, ne suit pas la précédente ou arrive avant une image clé.</summary>
     public bool Apply(byte[] data)
@@ -531,6 +594,7 @@ public sealed class ScreenTileDecoder
         }
 
         _next = header.Sequence + 1;
+        Pause = header.Pause;
         return true;
     }
 

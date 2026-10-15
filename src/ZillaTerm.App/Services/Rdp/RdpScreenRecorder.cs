@@ -14,7 +14,9 @@ namespace ZillaTerm.App.Services.Rdp;
 /// <remarks>
 /// Les captures et leur encodage se font sur un fil à part, pas sur celui de l'interface. Seul l'onglet affiché est
 /// capturé (<see cref="Show"/>) : un onglet en arrière-plan ou une fenêtre réduite n'a rien à montrer. De retour sur
-/// l'onglet, ce qui a changé entre-temps est gardé comme tout autre changement.
+/// l'onglet, ce qui a changé entre-temps est gardé comme tout autre changement. Une pause de l'affichage
+/// (<see cref="SetPause"/>) est marquée dans l'enregistrement, avec sa raison : le lecteur du rapport l'affiche sur l'écran
+/// et sur la frise ; l'écran revient entier à la reprise.
 /// </remarks>
 internal sealed class RdpScreenRecorder : IDisposable
 {
@@ -28,6 +30,7 @@ internal sealed class RdpScreenRecorder : IDisposable
 
     // Fil des captures seulement.
     private ScreenTileEncoder? _encoder;
+    private ScreenPause _marked;
     private string? _journal;
     private DateTime _lastCapture;
     private byte[]? _buffer;
@@ -44,6 +47,11 @@ internal sealed class RdpScreenRecorder : IDisposable
     /// fenêtre de son emplacement (fil de l'interface).
     /// </summary>
     public void Show(bool showing, IntPtr slot) => Interlocked.Exchange(ref _slot, showing ? slot : IntPtr.Zero);
+
+    /// <summary>Affichage de la session en pause, et pourquoi, ou repris (fil de l'interface) : marqué à la capture suivante.</summary>
+    public void SetPause(ScreenPause pause) => Volatile.Write(ref _pause, (int)pause);
+
+    private int _pause;
 
     public void Dispose()
     {
@@ -81,15 +89,29 @@ internal sealed class RdpScreenRecorder : IDisposable
 
     private void Capture()
     {
+        var journal = _recorder.JournalPath;
+        var now = DateTime.UtcNow;
+        // Pause de l'affichage, ou sa fin : marquée dans l'enregistrement de ce journal (pas de bridage : une marque ne
+        // pèse rien), même onglet en arrière-plan.
+        var pause = (ScreenPause)Volatile.Read(ref _pause);
+        if (pause != _marked)
+        {
+            if (journal is not null && journal == _journal && _encoder?.Mark(now, pause) is { } mark)
+            {
+                _recorder.RecordScreen(journal, _session.Label, mark, now);
+            }
+
+            _marked = pause;
+        }
+
         var slot = Volatile.Read(ref _slot);
         // Plein écran du contrôle Bureau à distance : l'emplacement de l'onglet est vide, le bureau est ailleurs. Session
-        // qui ne répond plus : sa fenêtre pourrait bloquer la capture.
-        if (slot == IntPtr.Zero || _session.IsFullScreen || _session.IsNotResponding || _recorder.JournalPath is not { } journal)
+        // qui ne répond plus : sa fenêtre pourrait bloquer la capture. Affichage en pause : rien à capturer.
+        if (slot == IntPtr.Zero || _session.IsFullScreen || _session.IsNotResponding || journal is null || pause != ScreenPause.None)
         {
             return;
         }
 
-        var now = DateTime.UtcNow;
         if (_recorder.UpdateScreenThrottle() && now - _lastCapture < InterventionRecorder.ScreenThrottledInterval)
         {
             return;

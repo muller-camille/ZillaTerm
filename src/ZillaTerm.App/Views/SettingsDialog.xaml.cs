@@ -62,6 +62,7 @@ public partial class SettingsDialog : Window
         SshInAppBox.IsChecked = settings.SshInApp;
         PsmDesktopInTabBox.IsChecked = settings.PsmDesktopInTab;
         PsmDynamicResolutionBox.IsChecked = settings.PsmDynamicResolution;
+        PauseRdpDisplayBox.IsChecked = settings.PauseRdpDisplay;
         PsmRedirectDrivesBox.IsChecked = settings.PsmRedirectDrives;
         FollowBox.IsChecked = settings.FollowTerminalFolder;
         X11DisplayBox.Text = settings.X11Display;
@@ -313,6 +314,7 @@ public partial class SettingsDialog : Window
         _settings.SshInApp = SshInAppBox.IsChecked == true;
         _settings.PsmDesktopInTab = PsmDesktopInTabBox.IsChecked == true;
         _settings.PsmDynamicResolution = PsmDynamicResolutionBox.IsChecked == true;
+        _settings.PauseRdpDisplay = PauseRdpDisplayBox.IsChecked == true;
         _settings.PsmRedirectDrives = PsmRedirectDrivesBox.IsChecked == true;
         _settings.FollowTerminalFolder = FollowBox.IsChecked == true;
         _settings.X11Display = x11Display;

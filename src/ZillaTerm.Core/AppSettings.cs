@@ -88,6 +88,12 @@ public sealed class AppSettings
     public bool PsmDynamicResolution { get; set; } = true;
 
     /// <summary>
+    /// Sessions Bureau à distance dans un onglet (client FreeRDP) : affichage en pause, connexion gardée, quand personne
+    /// ne la regarde (voir <see cref="Rdp.RdpDisplayPause"/>), activé par défaut.
+    /// </summary>
+    public bool PauseRdpDisplay { get; set; } = true;
+
+    /// <summary>
     /// Sessions PSM Windows (onglet et Connexion Bureau à distance) : disques de ce poste demandés au PVWA (paramètre
     /// <c>AllowMappingLocalDrives</c>, case « Map local drives » de sa fenêtre de connexion), activé par défaut. Le PVWA
     /// les écrit dans le fichier RDP si le composant de connexion le permet.

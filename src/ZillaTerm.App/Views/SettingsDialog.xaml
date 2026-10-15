@@ -266,6 +266,11 @@
                             <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmRedirectDrives}" />
                         </CheckBox>
                         <TextBlock Style="{StaticResource OptionHelp}" Margin="22,0,0,10" Text="{x:Static loc:Strings.PsmRedirectDrivesHelp}" />
+                        <!-- Toute session Bureau à distance dans un onglet (PSM, KeePass) avec le client FreeRDP : jamais grisée. -->
+                        <CheckBox x:Name="PauseRdpDisplayBox" Margin="0,0,0,2">
+                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PauseRdpDisplay}" />
+                        </CheckBox>
+                        <TextBlock Style="{StaticResource OptionHelp}" Margin="22,0,0,10" Text="{x:Static loc:Strings.PauseRdpDisplayHelp}" />
                         <!-- Composant par plateforme : prioritaire sur celui des comptes Windows (voir AppSettings.ResolveComponent). -->
                         <TextBlock Text="{x:Static loc:Strings.PlatformComponentsSection}" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,6" Text="{x:Static loc:Strings.PlatformComponentsHelp}" />

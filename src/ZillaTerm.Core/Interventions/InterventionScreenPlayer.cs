@@ -9,7 +9,8 @@ namespace ZillaTerm.Core.Interventions;
 /// <summary>
 /// Écrans enregistrés dans le rapport d'intervention : un lecteur par session Bureau à distance, qui recompose l'écran à
 /// partir des images en tuiles (<see cref="ScreenTileEncoder"/>), avec sous le curseur de position un graphique de
-/// l'activité (part de l'écran modifiée) : un clic sur un pic y mène.
+/// l'activité (part de l'écran modifiée) : un clic sur un pic y mène. Les pauses de l'affichage (le serveur n'envoyait
+/// plus l'image) sont des bandes grises sur la frise, et l'écran figé y porte « pause ».
 /// </summary>
 /// <remarks>
 /// Le seul script de la page est <see cref="Script"/>, écrit ici et autorisé par son empreinte SHA-256 dans la politique
@@ -99,7 +100,7 @@ internal static class InterventionScreenPlayer
                 .Append("<div class=\"track\"><canvas class=\"activity\" height=\"40\"></canvas>")
                 .Append("<input type=\"range\" class=\"seek\" min=\"0\" max=\"0\" step=\"1000\" value=\"0\" aria-label=\"")
                 .Append(Encode(text.Activity)).Append("\" title=\"").Append(Encode(text.Activity)).Append("\"></div>\n");
-            AppendMarks(html, notes.Where(n => n.Time >= first && n.Time <= last), first, duration, text, zone, culture);
+            AppendMarks(html, notes.Where(n => n.Time >= first && n.Time <= last), Pauses(recording, last), first, duration, text, zone, culture);
             html.Append("<noscript><p class=\"note warn\">").Append(Encode(text.ScriptNeeded)).Append("</p></noscript>\n")
                 .Append("<script type=\"application/octet-stream\" class=\"frames\">")
                 .Append(Convert.ToBase64String(container.GetBuffer(), 0, (int)container.Length))
@@ -108,7 +109,14 @@ internal static class InterventionScreenPlayer
 
         // Textes du lecteur : JSON dont « < », « > » et « & » sont échappés, il ne peut pas fermer son bloc.
         html.Append("<script type=\"application/json\" id=\"zt-player\">")
-            .Append(JsonSerializer.Serialize(new Dictionary<string, string> { ["play"] = text.Play, ["pause"] = text.Pause }))
+            .Append(JsonSerializer.Serialize(new Dictionary<string, string>
+            {
+                ["play"] = text.Play,
+                ["pause"] = text.Pause,
+                ["paused"] = text.Paused,
+                ["idle"] = text.PausedIdle,
+                ["hidden"] = text.PausedHidden,
+            }))
             .Append("</script>\n<script>").Append(Script).Append("</script>\n");
     }
 
@@ -126,26 +134,59 @@ internal static class InterventionScreenPlayer
     }
 
     /// <summary>
-    /// Repères des notes sous le curseur, à leur heure : un clic y mène, le texte s'affiche au survol et est lu par les
-    /// lecteurs d'écran. Le texte est échappé (attribut).
+    /// Pauses de l'affichage de la session : de chaque image de pause à l'image suivante (ou à la fin de sa ligne de
+    /// temps), avec leur raison.
     /// </summary>
-    private static void AppendMarks(StringBuilder html, IEnumerable<InterventionEntry> notes, DateTime first, long duration,
+    internal static List<(DateTime From, DateTime To, ScreenPause Reason)> Pauses(Recording recording, DateTime end)
+    {
+        var pauses = new List<(DateTime, DateTime, ScreenPause)>();
+        var frames = recording.Frames;
+        for (int i = 0; i < frames.Count; i++)
+        {
+            if (ScreenFrameHeader.TryRead(frames[i].Image, out var header) && header.Pause != ScreenPause.None)
+            {
+                pauses.Add((frames[i].Time, i + 1 < frames.Count ? frames[i + 1].Time : end, header.Pause));
+            }
+        }
+
+        return pauses;
+    }
+
+    /// <summary>
+    /// Repères sous le curseur : les pauses de l'affichage (bandes grises, de leur début à leur fin) et les notes, à leur
+    /// heure. Un clic y mène, le texte s'affiche au survol et est lu par les lecteurs d'écran. Le texte est échappé
+    /// (attribut).
+    /// </summary>
+    private static void AppendMarks(StringBuilder html, IEnumerable<InterventionEntry> notes,
+        List<(DateTime From, DateTime To, ScreenPause Reason)> pauses, DateTime first, long duration,
         InterventionReportText text, TimeZoneInfo zone, CultureInfo culture)
     {
         var marks = notes.ToList();
-        if (marks.Count == 0)
+        if (marks.Count == 0 && pauses.Count == 0)
         {
             return;
         }
 
+        string Time(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), zone).ToString("T", culture);
+        long Ms(DateTime utc) => (long)Math.Floor((utc - first).TotalSeconds) * 1000;
+        string Percent(double ms) => (ms * 100.0 / duration).ToString("0.###", CultureInfo.InvariantCulture);
         html.Append("<div class=\"marks\">");
+        foreach (var (from, to, reason) in pauses)
+        {
+            long start = Ms(from);
+            var label = Encode(string.Format(culture, text.PauseMarker, Time(from), Time(to),
+                reason == ScreenPause.Idle ? text.PausedIdle : text.PausedHidden));
+            html.Append("<button type=\"button\" class=\"mark pause\" data-ms=\"").Append(start.ToString(CultureInfo.InvariantCulture))
+                .Append("\" style=\"left:").Append(Percent(start)).Append("%;width:").Append(Percent(Math.Max(Ms(to) - start, 1000)))
+                .Append("%\" title=\"").Append(label).Append("\" aria-label=\"").Append(label).Append("\"></button>");
+        }
+
         foreach (var note in marks)
         {
-            long ms = (long)Math.Floor((note.Time - first).TotalSeconds) * 1000;
-            var time = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(note.Time, DateTimeKind.Utc), zone).ToString("T", culture);
-            var label = Encode(string.Format(culture, text.NoteMarker, time, note.Text));
+            long ms = Ms(note.Time);
+            var label = Encode(string.Format(culture, text.NoteMarker, Time(note.Time), note.Text));
             html.Append("<button type=\"button\" class=\"mark\" data-ms=\"").Append(ms.ToString(CultureInfo.InvariantCulture))
-                .Append("\" style=\"left:").Append((ms * 100.0 / duration).ToString("0.###", CultureInfo.InvariantCulture))
+                .Append("\" style=\"left:").Append(Percent(ms))
                 .Append("%\" title=\"").Append(label).Append("\" aria-label=\"").Append(label).Append("\"></button>");
         }
 
@@ -167,7 +208,9 @@ internal static class InterventionScreenPlayer
         + ".track input:focus-visible{outline:2px solid #1565c0;outline-offset:2px}.help{color:#57606a}"
         + ".marks{position:relative;height:16px;margin-top:2px}.mark{position:absolute;top:0;width:12px;height:14px;margin-left:-6px;"
         + "padding:0;border:0;background:#e65100;cursor:pointer;clip-path:polygon(50% 0,100% 100%,0 100%)}"
-        + ".mark:hover,.mark:focus-visible{background:#1565c0;outline:none}";
+        + ".mark:hover,.mark:focus-visible{background:#1565c0;outline:none}"
+        + ".mark.pause{margin-left:0;min-width:3px;height:10px;top:2px;background:#8c959f;clip-path:none}"
+        + ".mark.pause:hover,.mark.pause:focus-visible{background:#57606a;outline:2px solid #1565c0}";
 
     /// <summary>
     /// Lecteur : décode le conteneur d'images d'une session, rejoue depuis l'image clé précédente pour aller à une heure,
@@ -202,7 +245,7 @@ internal static class InterventionScreenPlayer
       o += n;
       if (p.length < 32 || p[0] !== 90 || p[1] !== 84 || p[2] !== 83 || p[3] !== 50) continue;
       const h = new DataView(p.buffer, p.byteOffset, p.byteLength);
-      frames.push({ t, p, seq: h.getUint32(8, true), w: h.getUint16(12, true), h: h.getUint16(14, true), key: (p[16] & 1) === 1,
+      frames.push({ t, p, seq: h.getUint32(8, true), w: h.getUint16(12, true), h: h.getUint16(14, true), key: (p[16] & 1) === 1, pause: (p[16] >> 1) & 3,
         size: p[17], activity: h.getUint16(18, true), first: h.getUint32(20, true), count: h.getUint32(24, true), places: h.getUint32(28, true) });
     }
     if (!frames.length) continue;
@@ -213,6 +256,9 @@ internal static class InterventionScreenPlayer
     const start = Number(section.dataset.start) || 0;
     const duration = Math.max(frames[frames.length - 1].t + 1000, Number(section.dataset.duration) || 0);
     seek.max = String(duration);
+    // Pauses de l'affichage : d'une image de pause à l'image suivante (ou à la fin).
+    const pauses = [];
+    frames.forEach((f, i) => { if (f.pause) pauses.push({ from: f.t, to: i + 1 < frames.length ? frames[i + 1].t : duration, kind: f.pause }); });
     let tiles = new Map(), image = null, width = 0, height = 0, current = -1, wanted = -1, running = false;
     let playing = false, position = 0, last = 0;
 
@@ -264,6 +310,20 @@ internal static class InterventionScreenPlayer
       }
     };
 
+    // Affichage en pause : écran assombri, « pause » et sa raison par-dessus (l'image d'avant la pause reste dessous).
+    const veil = kind => {
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const size = Math.max(16, Math.round(canvas.height / 10)), x = canvas.width / 2, y = canvas.height / 2;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold ' + size + 'px sans-serif';
+      ctx.fillText(words.paused, x, y - size * 0.4);
+      ctx.font = Math.round(size / 2.5) + 'px sans-serif';
+      ctx.fillText(kind === 2 ? words.idle : words.hidden, x, y + size * 0.5);
+    };
+
     const indexAt = ms => {
       let lo = 0, hi = frames.length - 1, found = -1;
       while (lo <= hi) { const mid = (lo + hi) >> 1; if (frames[mid].t <= ms) { found = mid; lo = mid + 1; } else hi = mid - 1; }
@@ -286,6 +346,7 @@ internal static class InterventionScreenPlayer
           }
           current = target;
           if (image) ctx.putImageData(image, 0, 0);
+          if (image && frames[target].pause) veil(frames[target].pause);
           gap.hidden = valid;
         }
       } finally { running = false; }
@@ -308,6 +369,11 @@ internal static class InterventionScreenPlayer
         peaks[i] = Math.max(peaks[i], f.activity / 1000);
       }
       g.clearRect(0, 0, w, h);
+      g.fillStyle = 'rgba(140,149,159,0.45)';
+      for (const p of pauses) {
+        const x = Math.floor(p.from / duration * w);
+        g.fillRect(x, 0, Math.max(2, Math.ceil(p.to / duration * w) - x), h);
+      }
       g.fillStyle = '#1565c0';
       for (let i = 0; i < w; i++) {
         if (peaks[i] > 0) { const bar = Math.max(2, Math.round(peaks[i] * (h - 4))); g.fillRect(i, h - 2 - bar, 2, bar); }

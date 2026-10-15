@@ -187,6 +187,15 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   file and they appear in the session (File Explorer › This PC), in the tab and in Remote Desktop Connection alike.
   With the option off, no drive is shared in the tab, even if the PVWA asks for it (choice kept in the PVWA, component
   setting); Remote Desktop Connection follows the PVWA's signed file, which cannot be modified.
+- **Display paused**: the option "Pause the display of Remote Desktop sessions nobody is watching" (Settings ›
+  CyberArk, checked by default) asks the server to stop sending the picture of a session in a tab when the tab has
+  been in the background, ZillaTerm minimized or Windows locked for 1 minute, or when nobody has used the keyboard or
+  mouse for 15 minutes; the tab then shows "Display paused". The session stays open: the picture comes back as soon as
+  you return to the tab or move the mouse, and the keyboard goes back to the session only afterwards (the key that
+  wakes the tab is not sent to it). No display traffic, and no picture encoding by the PSM, for a session nobody sees.
+  Never for the tab shown while an intervention is being recorded or the session is shared. During a recording, the
+  pause of a tab in the background is marked in it: the report's player shows "Display paused" on the screen and a grey
+  band on the timeline (see [Intervention](#8-intervention-recording-and-on-call-duty-reminder)).
 - **Reconnect**, "Duplicate tab": new request to the PVWA (a PSM session token is used only once); reason and ticket
   stay those of the first connection. If the CyberArk session has expired in the meantime, the sign-in window is
   offered, then the request starts again.
@@ -925,7 +934,10 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   "Speed" (1× to 60×) and a position slider, under which a graph shows the screen activity (share changed at each
   moment): click a peak to go there. The notes are placed there at their time (orange marks): click one to go there,
   hover it to read it; the timeline runs until the last trace of the session (tab closed…), so a note taken in front of
-  a still screen is on it. The player is the only script of the page, allowed by its hash; it needs a recent browser
+  a still screen is on it. The display pauses (tab in the background, ZillaTerm minimized, Windows locked: the server no
+  longer sent the picture) are grey bands there, from their start to their end, with their reason on hover: click one to go there, and
+  the frozen screen then shows "Display paused". The player is the only script of the page, allowed by its hash; it
+  needs a recent browser
   (Edge, Chrome, Firefox). A missing image (damaged journal) freezes the screen until the next full image, with a
   notice. **"Delete…"** erases a finished recording.
 
@@ -1097,6 +1109,7 @@ field concerned, with the cursor in it. Options with a side effect say so under 
 | CyberArk | PSM Windows sessions in a tab | PSM session (desktop or remote application) in a ZillaTerm tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); spread by the environment file | no |
 | CyberArk | Share this computer's drives with PSM Windows sessions | Asks the PVWA for this computer's drives ("Map local drives" box of its connection window, `AllowMappingLocalDrives`); when the component allows them, they appear in the session (File Explorer › This PC). Spread by the environment file | yes |
 | CyberArk | Resize the remote desktop with the tab | PSM sessions in a tab: the resolution follows the size of the tab instead of a scaled picture; the connection from the PSM to the target may keep its original size. For new sessions | yes |
+| CyberArk | Pause the display of Remote Desktop sessions nobody is watching | Sessions in a tab (FreeRDP client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture; the session stays open, the picture comes back when you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared; during a recording, the pause of a tab in the background is marked in it (screen and timeline of the report). Spread by the environment file | yes |
 | CyberArk | Component per platform | Platform (PVWA ID, for example `WinDomain`) / PSM component table: "Add a component", "Remove the line", editable cells; takes precedence over the Windows accounts component. "Remember this component for platform" (connection window) adds a line to it | empty |
 | Terminal | SSH in ZillaTerm | Built-in terminal and Files tab; otherwise Windows Terminal | yes |
 | Terminal | Terminal colours, font size | Palette (Campbell, One Half, Solarized…) and font size of the SSH terminals | Campbell, 14 |
@@ -1425,7 +1438,10 @@ shows "Connection lost: reconnecting…" with the current attempt, the session b
 it is resumed. If another
 server answers at the same address, the attempt is refused (identity not checked) and stops at once: the session is
 lost, and ZillaTerm makes a new request to the PVWA (new token), then checks the server that answers before connecting
-to it (question if it is unknown; twice at most before the next session opening).
+to it (question if it is unknown; twice at most before the next session opening). Display paused: ZillaTerm hides
+the client's window, which then sends the RDP "Suppress Output" message to the server (as mstsc does when its window
+is minimized); shown again, the client allows the display and the server sends the whole picture again. After an
+automatic reconnection, the pause is asked of the server again.
 
 Hardening: no library loaded from outside its folder and System32 (the virtual channels are compiled into the
 executable), OpenSSL with no module, engine or configuration file loaded at run time, its compiled-in folders being

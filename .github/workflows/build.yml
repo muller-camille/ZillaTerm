@@ -160,7 +160,8 @@ jobs:
 
       # Fenêtre plein écran lancée à l'ouverture de session du premier compte (argument « run »), ou comme application
       # distante pour le second : elle note la taille de l'écran de la session (« size LxH »), chaque clic reçu
-      # (« click x,y ») et chaque touche (« key Z »), dans un journal par compte lu par les tests.
+      # (« click x,y ») et chaque touche (« key Z »), dans un journal par compte lu par les tests. Une horloge en haut à
+      # gauche change l'écran sans cesse : il y a toujours une image à envoyer (pause de l'affichage).
       - name: Fenêtre de test des clics
         shell: pwsh
         run: |
@@ -186,6 +187,16 @@ jobs:
             if ($text -ne $script:last) { $script:last = $text; Add-Content -Path $log -Value $text }
           }
           $form.Add_Shown($fit)
+          $clock = New-Object System.Windows.Forms.Label
+          $clock.AutoSize = $true
+          $clock.Location = New-Object System.Drawing.Point(8, 8)
+          $clock.ForeColor = [System.Drawing.Color]::White
+          $clock.Font = New-Object System.Drawing.Font('Consolas', 20)
+          $form.Controls.Add($clock)
+          $ticker = New-Object System.Windows.Forms.Timer
+          $ticker.Interval = 100
+          $ticker.Add_Tick({ $clock.Text = [DateTime]::Now.ToString('HH:mm:ss.f') })
+          $ticker.Start()
           $timer = New-Object System.Windows.Forms.Timer
           $timer.Interval = 300
           $timer.Add_Tick($fit)

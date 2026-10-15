@@ -29,7 +29,8 @@
         <Border x:Name="TagFrame" BorderThickness="0">
         <Grid x:Name="Body" Background="#0C0C0C">
             <!-- Le contrôle Bureau à distance (fenêtre Windows) est inséré ici ; rien de WPF ne peut s'afficher par-dessus. -->
-            <Border x:Name="Overlay" Background="#0C0C0C">
+            <!-- Focusable : pendant une pause de l'affichage, le clavier vient ici plutôt que dans la session. -->
+            <Border x:Name="Overlay" Background="#0C0C0C" Focusable="True" KeyboardNavigation.IsTabStop="False" FocusVisualStyle="{x:Null}">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
                     <Image Source="{DynamicResource IconWindows}" Width="44" Height="44" Margin="0,0,0,12" />
                     <TextBlock x:Name="OverlayText" Foreground="White" FontSize="15" TextAlignment="Center" TextWrapping="Wrap" />
