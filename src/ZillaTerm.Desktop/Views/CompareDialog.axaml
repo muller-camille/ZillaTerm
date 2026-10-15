@@ -1,0 +1,48 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:services="clr-namespace:ZillaTerm.App.Services"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.CompareDialog"
+                    Title="{x:Static loc:Strings.CompareTitle}" Width="560" SizeToContent="Height" CanResize="False">
+    <StackPanel Margin="16">
+        <TextBlock x:Name="IntroText" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+        <RadioButton x:Name="ServerRadio" GroupName="Target" IsChecked="True" Margin="0,0,0,6">
+            <AccessText Text="{x:Static loc:Strings.CompareOnServer}" />
+        </RadioButton>
+        <Grid Margin="20,0,0,10" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" IsEnabled="{Binding #ServerRadio.IsChecked}">
+            <Label Content="{x:Static loc:Strings.CompareServer}" Target="{Binding #SessionBox}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ComboBox Grid.Column="1" x:Name="SessionBox" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="services:RemoteSession">
+                        <TextBlock Text="{Binding Label}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Label Grid.Row="1" Content="{x:Static loc:Strings.ComparePath}" Target="{Binding #RemotePathBox}" VerticalAlignment="Center"
+                   Margin="0,4,8,0" />
+            <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,4,0,0">
+                <Button x:Name="BrowseServerButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.CompareBrowseServer}"
+                        ToolTip.Tip="{x:Static loc:Strings.CompareBrowseServerTip}" Click="OnBrowseServer" Margin="8,0,0,0" />
+                <TextBox x:Name="RemotePathBox" FontFamily="{StaticResource MonospaceFont}" VerticalContentAlignment="Center"
+                         ToolTip.Tip="{x:Static loc:Strings.ComparePathTip}" />
+            </DockPanel>
+        </Grid>
+
+        <RadioButton x:Name="LocalRadio" GroupName="Target" Margin="0,0,0,6">
+            <AccessText Text="{x:Static loc:Strings.CompareLocal}" />
+        </RadioButton>
+        <DockPanel Margin="20,0,0,12" IsEnabled="{Binding #LocalRadio.IsChecked}">
+            <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.Browse}" Click="OnBrowse" Margin="8,0,0,0" />
+            <TextBox x:Name="LocalPathBox" VerticalContentAlignment="Center" AutomationProperties.LabeledBy="{Binding #LocalRadio}" />
+        </DockPanel>
+
+        <TextBlock Text="{x:Static loc:Strings.CompareNote}" Classes="Muted" TextWrapping="Wrap" Margin="0,0,0,10" />
+        <views:ErrorLine x:Name="ErrorText" IsVisible="False" Margin="0,0,0,8" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Classes="DialogButtons">
+            <Button x:Name="CompareButton" Content="{x:Static loc:Strings.CompareButton}" IsDefault="True" Click="OnCompare" />
+            <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Margin="8,0,0,0" />
+        </StackPanel>
+    </StackPanel>
+</views:DialogWindow>

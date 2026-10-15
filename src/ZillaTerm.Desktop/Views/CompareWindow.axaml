@@ -1,0 +1,108 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:app="clr-namespace:ZillaTerm.App"
+        xmlns:views="clr-namespace:ZillaTerm.App.Views"
+        xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+        xmlns:ssh="clr-namespace:ZillaTerm.Core.Ssh;assembly=ZillaTerm.Core"
+        x:Class="ZillaTerm.App.Views.CompareWindow"
+        Width="1200" Height="760" MinWidth="640" MinHeight="320" ShowInTaskbar="True" Background="{DynamicResource ContentBrush}">
+    <Window.Resources>
+        <app:TextFormatConverter x:Key="TextFormat" />
+    </Window.Resources>
+    <Window.Styles>
+        <!-- Lignes côte à côte, sans marge ; toute la largeur. -->
+        <Style Selector="ListBox#RowsList ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="TextBlock.Number">
+            <Setter Property="Foreground" Value="{DynamicResource LineNumberBrush}" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+        </Style>
+        <!-- Ligne retirée : rouge à gauche, vide à droite. -->
+        <Style Selector="Grid.Removed > Border.LeftBack, Grid.Changed > Border.LeftBack">
+            <Setter Property="Background" Value="{DynamicResource DiffRemovedBrush}" />
+        </Style>
+        <Style Selector="Grid.Removed > Border.RightBack, Grid.Added > Border.LeftBack">
+            <Setter Property="Background" Value="{DynamicResource DiffEmptyBrush}" />
+        </Style>
+        <!-- Ligne ajoutée : vert à droite, vide à gauche. Modifiée : les deux côtés. -->
+        <Style Selector="Grid.Added > Border.RightBack, Grid.Changed > Border.RightBack">
+            <Setter Property="Background" Value="{DynamicResource DiffAddedBrush}" />
+        </Style>
+        <!-- Texte d'une ligne différente : couleur lisible sur le fond, ligne entière dans l'info-bulle (elle peut être tronquée). -->
+        <Style Selector="Grid.Removed > TextBlock.LeftText, Grid.Changed > TextBlock.LeftText" x:DataType="ssh:DiffRow">
+            <Setter Property="Foreground" Value="{DynamicResource DiffTextBrush}" />
+            <Setter Property="ToolTip.Tip" Value="{Binding Left}" />
+        </Style>
+        <Style Selector="Grid.Added > TextBlock.RightText, Grid.Changed > TextBlock.RightText" x:DataType="ssh:DiffRow">
+            <Setter Property="Foreground" Value="{DynamicResource DiffTextBrush}" />
+            <Setter Property="ToolTip.Tip" Value="{Binding Right}" />
+        </Style>
+        <!-- Lignes identiques cachées (seulement les différences) : « n lignes identiques ». -->
+        <Style Selector="TextBlock.GapText">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="Grid.Gap > TextBlock.GapText">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+    </Window.Styles>
+
+    <DockPanel Margin="10">
+        <!-- Actions -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+            <TextBlock x:Name="SummaryText" DockPanel.Dock="Right" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0" />
+            <WrapPanel>
+                <Button Content="{x:Static loc:Strings.ComparePrevious}" Margin="0,0,6,4" Click="OnPrevious" ToolTip.Tip="{x:Static loc:Strings.ComparePreviousTip}" />
+                <Button Content="{x:Static loc:Strings.CompareNext}" Margin="0,0,12,4" Click="OnNext" ToolTip.Tip="{x:Static loc:Strings.CompareNextTip}" />
+                <CheckBox x:Name="WhitespaceBox" VerticalAlignment="Center" Margin="0,0,12,4" Click="OnOptionChanged">
+                    <AccessText Text="{x:Static loc:Strings.CompareIgnoreWhitespace}" />
+                </CheckBox>
+                <CheckBox x:Name="OnlyDiffBox" VerticalAlignment="Center" Margin="0,0,12,4" Click="OnOptionChanged">
+                    <AccessText Text="{x:Static loc:Strings.CompareOnlyDifferences}" />
+                </CheckBox>
+                <Button x:Name="SaveButton" Content="{x:Static loc:Strings.CompareSave}" Margin="0,0,6,4" Click="OnSave" ToolTip.Tip="{x:Static loc:Strings.CompareSaveTip}" />
+                <Button x:Name="ToolButton" Margin="0,0,6,4" Click="OnExternalTool" IsVisible="False" ToolTip.Tip="{x:Static loc:Strings.CompareToolTip}" />
+            </WrapPanel>
+        </DockPanel>
+
+        <!-- Fichiers comparés -->
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,4" ColumnDefinitions="*,*">
+            <TextBlock x:Name="LeftTitle" FontWeight="SemiBold" Foreground="{DynamicResource DiffRemovedForeground}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
+            <TextBlock Grid.Column="1" x:Name="RightTitle" FontWeight="SemiBold" Foreground="{DynamicResource DiffAddedForeground}" TextTrimming="CharacterEllipsis" />
+        </Grid>
+
+        <TextBlock x:Name="NoteText" DockPanel.Dock="Bottom" Classes="Muted" TextWrapping="Wrap" Margin="0,6,0,0" />
+
+        <!-- Fichiers binaires ou trop grands : tailles et sommes SHA-256 seulement. -->
+        <Border x:Name="BinaryPanel" DockPanel.Dock="Top" IsVisible="False" BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="1"
+                Padding="12" Background="{DynamicResource SidePanelBrush}">
+            <TextBlock x:Name="BinaryText" TextWrapping="Wrap" FontFamily="{StaticResource MonospaceFont}" />
+        </Border>
+
+        <ListBox x:Name="RowsList" FontFamily="{StaticResource MonospaceFont}" FontSize="12" Background="{DynamicResource ContentBrush}"
+                 BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="1"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="ssh:DiffRow">
+                    <Grid ColumnDefinitions="46,*,46,*" Classes.Removed="{Binding Kind, Converter={x:Static views:CompareWindow.IsKind}, ConverterParameter={x:Static ssh:DiffKind.Removed}}"
+                          Classes.Added="{Binding Kind, Converter={x:Static views:CompareWindow.IsKind}, ConverterParameter={x:Static ssh:DiffKind.Added}}"
+                          Classes.Changed="{Binding Kind, Converter={x:Static views:CompareWindow.IsKind}, ConverterParameter={x:Static ssh:DiffKind.Changed}}"
+                          Classes.Gap="{Binding Kind, Converter={x:Static views:CompareWindow.IsKind}, ConverterParameter={x:Static ssh:DiffKind.Gap}}">
+                        <Border Classes="LeftBack" Grid.Column="0" Grid.ColumnSpan="2" />
+                        <Border Classes="RightBack" Grid.Column="2" Grid.ColumnSpan="2" />
+                        <TextBlock Classes="Number" Text="{Binding LeftNumber}" />
+                        <TextBlock Grid.Column="1" Classes="LeftText" Text="{Binding Left}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="2" Classes="Number" Text="{Binding RightNumber}" />
+                        <TextBlock Grid.Column="3" Classes="RightText" Text="{Binding Right}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Classes="GapText" Grid.ColumnSpan="4" HorizontalAlignment="Center" FontStyle="Italic"
+                                   Foreground="{DynamicResource MutedBrush}"
+                                   Text="{Binding Hidden, Converter={StaticResource TextFormat}, ConverterParameter={x:Static loc:Strings.CompareHiddenLines}}" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</Window>
