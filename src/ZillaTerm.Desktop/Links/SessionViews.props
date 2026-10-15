@@ -1,0 +1,6 @@
+<Project>
+  <!--
+    Vues du terminal, VNC et partage : SshSessionView, ParallelView, ShareBanner, SharedSessionView, SharesWindow et
+    VncSessionView. Rien d'autre à lier : VncSession (Services.props) et TerminalAppearance (Terminal.props) le sont déjà.
+  -->
+</Project>

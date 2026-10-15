@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+             xmlns:views="clr-namespace:ZillaTerm.App.Views"
+             x:Class="ZillaTerm.App.Views.VncSessionView"
+             Focusable="True" FocusAdorner="{x:Null}" KeyboardNavigation.TabNavigation="None">
+    <UserControl.Styles>
+        <!-- Boutons opaques sur le noir du terminal (classe OnDark). -->
+        <StyleInclude Source="avares://ZillaTerm/Themes/SessionButtons.axaml" />
+    </UserControl.Styles>
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource MainTabBrush}" BorderBrush="{DynamicResource MainTabBorderBrush}" BorderThickness="0,0,0,1" Padding="8,3">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="CtrlAltDelButton" Content="{x:Static loc:Strings.VncCtrlAltDel}" ToolTip.Tip="{x:Static loc:Strings.VncCtrlAltDelTip}"
+                            Click="OnCtrlAltDel" Padding="10,1" Margin="0,0,6,0" Focusable="False" />
+                    <Button x:Name="SendClipboardButton" Content="{x:Static loc:Strings.VncSendClipboard}" ToolTip.Tip="{x:Static loc:Strings.VncSendClipboardTip}"
+                            Click="OnSendClipboard" Padding="10,1" Margin="0,0,6,0" Focusable="False" />
+                    <Button x:Name="CopyRemoteButton" Content="{x:Static loc:Strings.VncCopyRemote}" ToolTip.Tip="{x:Static loc:Strings.VncCopyRemoteTip}"
+                            Click="OnCopyRemote" Padding="10,1" Margin="0,0,6,0" Focusable="False" IsEnabled="False" />
+                    <ToggleButton x:Name="FitButton" Content="{x:Static loc:Strings.VncFit}" ToolTip.Tip="{x:Static loc:Strings.VncFitTip}"
+                                  IsChecked="True" Click="OnFitChanged" Padding="10,1" Focusable="False" />
+                </StackPanel>
+                <Image Source="{DynamicResource IconConnect}" Width="16" Height="16" Margin="0,0,6,0" />
+                <TextBlock x:Name="StatusLine" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+        <views:ShareBanner x:Name="ShareBar" DockPanel.Dock="Top" />
+        <!-- Le flux VNC n'est pas chiffré : rappel permanent. -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource WarningBackgroundBrush}" BorderBrush="{DynamicResource WarningBorderBrush}" BorderThickness="0,0,0,1" Padding="8,2">
+            <TextBlock x:Name="WarningText" Text="{x:Static loc:Strings.VncUnencrypted}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" />
+        </Border>
+        <Panel Background="#0C0C0C">
+            <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled" Focusable="False">
+                <Image x:Name="Screen" Stretch="Uniform" StretchDirection="DownOnly" RenderOptions.BitmapInterpolationMode="HighQuality" Cursor="Arrow"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       PointerMoved="OnMouseMove" PointerPressed="OnMouseDown" PointerReleased="OnMouseUp" PointerWheelChanged="OnMouseWheel" />
+            </ScrollViewer>
+            <Border x:Name="Overlay" Background="#0C0C0C">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
+                    <Image Source="{DynamicResource IconConnect}" Width="44" Height="44" Margin="0,0,0,12" />
+                    <TextBlock x:Name="OverlayText" Foreground="White" FontSize="15" TextAlignment="Center" TextWrapping="Wrap" />
+                    <TextBlock x:Name="OverlayDetail" Foreground="#9AA5B1" TextAlignment="Center" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <Button x:Name="ReconnectButton" Classes="OnDark" Content="{x:Static loc:Strings.Reconnect}" HorizontalAlignment="Center"
+                            Padding="12,2" Margin="0,16,0,0" Click="OnReconnect" IsVisible="False" />
+                </StackPanel>
+            </Border>
+        </Panel>
+    </DockPanel>
+</UserControl>

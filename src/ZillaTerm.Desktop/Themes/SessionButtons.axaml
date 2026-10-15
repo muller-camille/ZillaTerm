@@ -1,0 +1,51 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Boutons posés sur le terminal, un voile ou un bandeau sombres (« Revenir à la fin », « Reconnecter », en-têtes de
+         la vue parallèle) : opaques, comme les boutons de l'application WPF. Ceux de Fluent sont translucides, donc
+         invisibles sur le noir du terminal en thème clair. Classe « OnDark », incluse par les vues de session. -->
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="OnDarkButtonBrush" Color="#E1E1E1" />
+                    <SolidColorBrush x:Key="OnDarkButtonHoverBrush" Color="#E5F1FB" />
+                    <SolidColorBrush x:Key="OnDarkButtonPressedBrush" Color="#CCE4F7" />
+                    <SolidColorBrush x:Key="OnDarkButtonBorderBrush" Color="#ADADAD" />
+                    <SolidColorBrush x:Key="OnDarkButtonHoverBorderBrush" Color="#1565C0" />
+                    <SolidColorBrush x:Key="OnDarkButtonForeground" Color="#1F2933" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="OnDarkButtonBrush" Color="#343B44" />
+                    <SolidColorBrush x:Key="OnDarkButtonHoverBrush" Color="#3E4651" />
+                    <SolidColorBrush x:Key="OnDarkButtonPressedBrush" Color="#2A3038" />
+                    <SolidColorBrush x:Key="OnDarkButtonBorderBrush" Color="#6E7884" />
+                    <SolidColorBrush x:Key="OnDarkButtonHoverBorderBrush" Color="#8FA3B8" />
+                    <SolidColorBrush x:Key="OnDarkButtonForeground" Color="#E3E8ED" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <Style Selector="Button.OnDark, ToggleButton.OnDark">
+        <Setter Property="Background" Value="{DynamicResource OnDarkButtonBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OnDarkButtonBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource OnDarkButtonForeground}" />
+    </Style>
+    <Style Selector="Button.OnDark:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.OnDark:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource OnDarkButtonHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OnDarkButtonHoverBorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnDarkButtonForeground}" />
+    </Style>
+    <Style Selector="Button.OnDark:pressed /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.OnDark:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource OnDarkButtonPressedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OnDarkButtonHoverBorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnDarkButtonForeground}" />
+    </Style>
+    <!-- Bouton d'agrandissement enfoncé (une seule session à l'écran) : l'accent, comme un bouton bascule. -->
+    <Style Selector="ToggleButton.OnDark:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+</Styles>

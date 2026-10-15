@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+             x:Class="ZillaTerm.App.Views.ParallelView">
+    <UserControl.Styles>
+        <!-- Boutons opaques sur le noir du terminal (classe OnDark). -->
+        <StyleInclude Source="avares://ZillaTerm/Themes/SessionButtons.axaml" />
+    </UserControl.Styles>
+    <DockPanel Background="#1B1F24">
+        <!-- Barre de la vue : nombre de sessions, saisie simultanée, choix des sessions, fermeture. -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource SidePanelBrush}" BorderBrush="{DynamicResource ToolbarBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="8,4">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Padding="8,2" Margin="0,0,8,0" Click="OnSendFiles" ToolTip.Tip="{x:Static loc:Strings.ParallelSendFilesTip}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{DynamicResource IconUploadMany}" Width="16" Height="16" Margin="0,0,6,0" />
+                            <AccessText Text="{x:Static loc:Strings.ParallelSendFiles}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Content="{x:Static loc:Strings.ParallelChoose}" Padding="8,2" Click="OnChoose" />
+                    <Button x:Name="DetachButton" Content="{x:Static loc:Strings.ParallelDetach}" Padding="8,2" Margin="8,0,0,0" Click="OnDetach"
+                            ToolTip.Tip="{x:Static loc:Strings.ParallelDetachTip}" />
+                    <Button Content="{x:Static loc:Strings.ParallelClose}" Padding="8,2" Margin="8,0,0,0" Click="OnClose"
+                            ToolTip.Tip="{x:Static loc:Strings.ParallelCloseTip}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="{DynamicResource IconParallel}" Width="18" Height="18" Margin="0,0,6,0" VerticalAlignment="Center" />
+                    <TextBlock x:Name="TitleText" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <!-- Active : fond ambre et « ACTIVE (n) », comme le bandeau. -->
+                    <ToggleButton x:Name="BroadcastToggle" Margin="16,0,0,0" Padding="0" Click="OnBroadcast"
+                                  ToolTip.Tip="{x:Static loc:Strings.ParallelBroadcastTip}">
+                        <Border x:Name="BroadcastFace" Padding="8,2" CornerRadius="3">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⌨" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <AccessText Text="{x:Static loc:Strings.ParallelBroadcast}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="BroadcastState" Margin="6,0,0,0" FontWeight="Bold" IsVisible="False" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </ToggleButton>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Saisie simultanée active : bien visible, avec le nombre et le nom des sessions qui reçoivent la saisie. -->
+        <Border x:Name="BroadcastBanner" DockPanel.Dock="Top" Background="{DynamicResource BroadcastBrush}" Padding="10,5" IsVisible="False">
+            <TextBlock x:Name="BroadcastText" Foreground="{DynamicResource BroadcastForeground}" FontWeight="SemiBold" TextWrapping="Wrap" />
+        </Border>
+
+        <Grid x:Name="PanesGrid" Margin="2" />
+    </DockPanel>
+</UserControl>

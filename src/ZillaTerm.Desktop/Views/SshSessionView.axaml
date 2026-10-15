@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+             xmlns:views="clr-namespace:ZillaTerm.App.Views"
+             xmlns:term="clr-namespace:ZillaTerm.App.Terminal"
+             x:Class="ZillaTerm.App.Views.SshSessionView">
+    <UserControl.Styles>
+        <!-- Boutons opaques sur le noir du terminal (classe OnDark). -->
+        <StyleInclude Source="avares://ZillaTerm/Themes/SessionButtons.axaml" />
+    </UserControl.Styles>
+    <!-- Étiquette du serveur (PROD, QA…) : cadre de sa couleur autour de la session, qui la suit (vue parallèle, fenêtre
+         détachée) ; le nom de l'étiquette est sur l'onglet. -->
+    <Border x:Name="TagFrame" BorderThickness="0">
+        <Grid x:Name="RootGrid" Background="#0C0C0C" RowDefinitions="Auto,*" ColumnDefinitions="*,Auto">
+            <StackPanel Grid.ColumnSpan="2">
+                <!-- Session partagée : qui regarde, qui a la main, demandes en attente (voir ShareBanner). -->
+                <views:ShareBanner x:Name="ShareBar" />
+                <!-- Fin de session : bandeau au-dessus du terminal, qui reste lisible, sélectionnable et copiable. -->
+                <Border x:Name="EndBanner" Background="{DynamicResource StatusBrush}" Padding="10,6" IsVisible="False">
+                    <DockPanel>
+                        <Button x:Name="BannerReconnectButton" Classes="OnDark" DockPanel.Dock="Right" Content="{x:Static loc:Strings.Reconnect}" Click="OnReconnect"
+                                VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <views:AnnouncedText x:Name="EndText" Foreground="{DynamicResource StatusForeground}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                             AutomationProperties.LiveSetting="Assertive" />
+                    </DockPanel>
+                </Border>
+            </StackPanel>
+            <term:TerminalView Grid.Row="1" x:Name="Terminal" />
+            <!-- Historique : la barre montre où l'on est et permet d'y aller ; masquée sans historique. Toujours en pleine
+                 largeur (pas la barre fine qui ne s'élargit qu'au survol). -->
+            <ScrollBar Grid.Row="1" Grid.Column="1" x:Name="HistoryBar" Orientation="Vertical" Width="14" Visibility="Disabled" AllowAutoHide="False"
+                       SmallChange="1" AutomationProperties.Name="{x:Static loc:Strings.TerminalHistory}" />
+            <!-- Remonté dans l'historique : le dire, et y revenir d'un clic (ou en tapant). -->
+            <Button Grid.Row="1" x:Name="BottomButton" Classes="OnDark" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,12,10"
+                    Content="{x:Static loc:Strings.TerminalBackToBottom}" Click="OnBackToBottom" IsVisible="False" Focusable="False"
+                    ZIndex="1" />
+            <!-- Recherche dans le terminal (Ctrl+Maj+F), historique compris. -->
+            <Border x:Name="SearchBar" Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,22,0" Padding="6,4"
+                    Background="{DynamicResource CodeBrush}" BorderBrush="{DynamicResource MainTabBorderBrush}" BorderThickness="1" CornerRadius="3" IsVisible="False" ZIndex="1">
+                <StackPanel Orientation="Horizontal">
+                    <Panel Width="200" VerticalAlignment="Center">
+                        <TextBox x:Name="SearchBox" Padding="4,2,22,2" MinHeight="0" TextChanged="OnSearchChanged"
+                                 ToolTip.Tip="{x:Static loc:Strings.TerminalSearchTip}" AutomationProperties.Name="{x:Static loc:Strings.A11yTerminalSearch}" />
+                        <views:ClearFieldButton Target="{Binding #SearchBox}" Margin="0,0,1,0" />
+                    </Panel>
+                    <!-- Boutons atteignables au clavier, nommés par leur infobulle. -->
+                    <Button Content="↑" Width="26" MinWidth="0" Padding="0" Margin="6,0,0,0" HorizontalContentAlignment="Center" Click="OnSearchOlder"
+                            ToolTip.Tip="{x:Static loc:Strings.TerminalSearchOlderTip}" AutomationProperties.Name="{x:Static loc:Strings.TerminalSearchOlderTip}" />
+                    <Button Content="↓" Width="26" MinWidth="0" Padding="0" Margin="4,0,0,0" HorizontalContentAlignment="Center" Click="OnSearchNewer"
+                            ToolTip.Tip="{x:Static loc:Strings.TerminalSearchNewerTip}" AutomationProperties.Name="{x:Static loc:Strings.TerminalSearchNewerTip}" />
+                    <views:AnnouncedText x:Name="SearchCount" Margin="8,0,0,0" MinWidth="64" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}"
+                                         AutomationProperties.LiveSetting="Polite" />
+                    <Button Content="✕" Width="24" MinWidth="0" Padding="0" Margin="4,0,0,0" HorizontalContentAlignment="Center" Click="OnSearchClose"
+                            ToolTip.Tip="{x:Static loc:Strings.TerminalSearchCloseTip}" AutomationProperties.Name="{x:Static loc:Strings.TerminalSearchCloseTip}" />
+                </StackPanel>
+            </Border>
+            <!-- Pendant la connexion, ou si la session n'a jamais pu s'ouvrir : voile plein (rien à lire dessous). -->
+            <Border x:Name="Overlay" Grid.RowSpan="2" Grid.ColumnSpan="2" Background="#D80C0C0C" IsVisible="False">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
+                    <Image Source="{DynamicResource IconSsh}" Width="44" Height="44" Margin="0,0,0,12" />
+                    <TextBlock x:Name="OverlayText" Foreground="White" FontSize="15" TextAlignment="Center" TextWrapping="Wrap" />
+                    <TextBlock x:Name="OverlayDetail" Foreground="#9AA5B1" TextAlignment="Center" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <!-- Pendant la connexion (clé MFA du PVWA, PSMP, serveur cible) : quelque chose est en cours. -->
+                    <ProgressBar x:Name="OverlayProgress" IsIndeterminate="True" Height="4" MinHeight="4" Width="260" Margin="0,16,0,0" IsVisible="False"
+                                 AutomationProperties.LabeledBy="{Binding #OverlayText}" />
+                    <Button x:Name="ReconnectButton" Classes="OnDark" Content="{x:Static loc:Strings.Reconnect}" Margin="0,16,0,0" HorizontalAlignment="Center"
+                            Click="OnReconnect" IsVisible="False" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

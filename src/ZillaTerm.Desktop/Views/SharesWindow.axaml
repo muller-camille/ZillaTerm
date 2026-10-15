@@ -1,0 +1,78 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+        x:Class="ZillaTerm.App.Views.SharesWindow"
+        Title="{x:Static loc:Strings.SharesTitle}" Width="720" Height="620" MinWidth="560" MinHeight="460"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Classes="DialogFooter">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.CloseButton}" IsCancel="True" Click="OnClose" Margin="8,0,0,0" />
+                <Button DockPanel.Dock="Left" Click="OnJoin" HorizontalAlignment="Left">
+                    <AccessText Text="{x:Static loc:Strings.SharesJoin}" />
+                </Button>
+            </DockPanel>
+        </Border>
+
+        <Grid Margin="16,12,16,12" RowDefinitions="Auto,*,Auto,*,Auto,*">
+            <!-- Mes sessions partagées. -->
+            <StackPanel Grid.Row="0">
+                <TextBlock x:Name="MySharesTitle" Text="{x:Static loc:Strings.SharesMine}" Classes="SectionTitle" />
+                <TextBlock x:Name="DisabledText" Text="{x:Static loc:Strings.SharesDisabled}" Classes="Muted" TextWrapping="Wrap"
+                           Margin="0,0,0,6" IsVisible="False" />
+            </StackPanel>
+            <DockPanel Grid.Row="1">
+                <StackPanel DockPanel.Dock="Right" Margin="8,0,0,0" MinWidth="150">
+                    <Button x:Name="InvitationButton" Click="OnInvitation" ToolTip.Tip="{x:Static loc:Strings.SharesInvitationTip}" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.SharesInvitation}" />
+                    </Button>
+                    <Button x:Name="StopButton" Click="OnStop" Margin="0,6,0,0" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.SharesStop}" />
+                    </Button>
+                </StackPanel>
+                <ListBox x:Name="SharesList" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionChanged="OnShareSelected" AutomationProperties.LabeledBy="{Binding #MySharesTitle}"
+                         BorderThickness="1" BorderBrush="{DynamicResource TextControlBorderBrush}" />
+            </DockPanel>
+            <TextBlock Grid.Row="1" x:Name="NoSharesText" Text="{x:Static loc:Strings.SharesNone}" Classes="Muted"
+                       Margin="8,6,170,0" TextWrapping="Wrap" IsHitTestVisible="False" />
+
+            <!-- Personnes du partage choisi : demandes, qui regarde, qui a la main. -->
+            <TextBlock Grid.Row="2" x:Name="PeopleTitle" Text="{x:Static loc:Strings.SharesPeople}" Classes="SectionTitle" Margin="0,14,0,6" />
+            <DockPanel Grid.Row="3">
+                <StackPanel DockPanel.Dock="Right" Margin="8,0,0,0" MinWidth="150">
+                    <Button x:Name="AnswerButton" Click="OnAnswer" ToolTip.Tip="{x:Static loc:Strings.ShareAnswerTip}" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.SharesAnswer}" />
+                    </Button>
+                    <Button x:Name="GiveButton" Click="OnGive" Margin="0,6,0,0" ToolTip.Tip="{x:Static loc:Strings.ShareGiveControlTip}" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.SharesGive}" />
+                    </Button>
+                    <Button x:Name="TakeButton" Click="OnTake" Margin="0,6,0,0" ToolTip.Tip="{x:Static loc:Strings.ShareTakeBackTip}" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.SharesTake}" />
+                    </Button>
+                    <Button x:Name="ExcludeButton" Click="OnExclude" Margin="0,6,0,0" ToolTip.Tip="{x:Static loc:Strings.SharesExcludeTip}" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.SharesExclude}" />
+                    </Button>
+                </StackPanel>
+                <ListBox x:Name="PeopleList" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionChanged="OnPersonSelected" AutomationProperties.LabeledBy="{Binding #PeopleTitle}"
+                         BorderThickness="1" BorderBrush="{DynamicResource TextControlBorderBrush}" />
+            </DockPanel>
+
+            <!-- Sessions des autres regardées ici. -->
+            <TextBlock Grid.Row="4" x:Name="WatchedTitle" Text="{x:Static loc:Strings.SharesWatched}" Classes="SectionTitle" Margin="0,14,0,6" />
+            <DockPanel Grid.Row="5">
+                <StackPanel DockPanel.Dock="Right" Margin="8,0,0,0" MinWidth="150">
+                    <Button x:Name="ShowButton" Click="OnShow" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.SharesShow}" />
+                    </Button>
+                    <Button x:Name="LeaveButton" Click="OnLeave" Margin="0,6,0,0" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.SharesLeave}" />
+                    </Button>
+                </StackPanel>
+                <ListBox x:Name="WatchedList" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionChanged="OnWatchedSelected" DoubleTapped="OnWatchedDoubleClick"
+                         AutomationProperties.LabeledBy="{Binding #WatchedTitle}" BorderThickness="1" BorderBrush="{DynamicResource TextControlBorderBrush}" />
+            </DockPanel>
+            <TextBlock Grid.Row="5" x:Name="NoWatchedText" Text="{x:Static loc:Strings.SharesNoneWatched}" Classes="Muted"
+                       Margin="8,6,170,0" TextWrapping="Wrap" IsHitTestVisible="False" />
+        </Grid>
+    </DockPanel>
+</Window>
