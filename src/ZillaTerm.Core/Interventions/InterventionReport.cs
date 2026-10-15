@@ -42,7 +42,8 @@ public sealed class InterventionReportText
     public string ScreenHelp { get; init; } =
         "Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. "
         + "The graph under the cursor shows the share of the screen that changed: click a peak to go there. "
-        + "The orange marks below are the notes: click one to go to its time.";
+        + "The orange marks below are the notes: click one to go to its time. "
+        + "The grey bands are the display pauses (the server no longer sent the picture): the screen shows \"Display paused\".";
 
     /// <summary>{0} = session, {1} = début, {2} = fin, {3} = taille.</summary>
     public string ScreenHeading { get; init; } = "{0}: {1} to {2} ({3})";
@@ -62,6 +63,18 @@ public sealed class InterventionReportText
 
     /// <summary>Repère d'une note sous le lecteur d'écran : {0} = heure, {1} = texte.</summary>
     public string NoteMarker { get; init; } = "Note at {0}: {1}";
+
+    /// <summary>Écran pendant une pause de l'affichage (le serveur n'envoyait plus l'image).</summary>
+    public string Paused { get; init; } = "Display paused";
+
+    /// <summary>Raison d'une pause : poste inactif.</summary>
+    public string PausedIdle { get; init; } = "computer idle";
+
+    /// <summary>Raison d'une pause : session que personne ne pouvait voir.</summary>
+    public string PausedHidden { get; init; } = "session not shown";
+
+    /// <summary>Repère d'une pause sous le lecteur d'écran : {0} = début, {1} = fin, {2} = raison.</summary>
+    public string PauseMarker { get; init; } = "Display paused from {0} to {1} ({2})";
 
     /// <summary>Images d'écran manquantes (bloc du journal abîmé) : l'écran reste figé jusqu'à l'image clé suivante.</summary>
     public string ScreenGap { get; init; } = "Images missing here (damaged journal): the screen resumes at the next full image.";

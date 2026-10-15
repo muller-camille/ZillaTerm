@@ -64,8 +64,9 @@ public partial class MainWindow
                 _rdpHiddenSince[session] = now;
             }
 
-            // Écran gardé pour une intervention ou montré à quelqu'un : jamais en pause tant qu'il est affiché.
-            bool watched = view.InterventionRecording || Sharing.ShareOf(session) is not null;
+            // Écran montré en direct à quelqu'un (partage) : jamais en pause tant qu'il est affiché. Pendant l'enregistrement
+            // d'une intervention, la pause est marquée dans l'enregistrement (écran et frise du rapport).
+            bool watched = Sharing.ShareOf(session) is not null;
             session.SetDisplayPause(_settings.PauseRdpDisplay
                 ? RdpDisplayPause.Decide(shown, hiddenFor, idle, watched)
                 : RdpDisplayPauseReason.None);

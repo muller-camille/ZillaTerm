@@ -5663,7 +5663,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Recorded screens</value>
   </data>
   <data name="InterventionReportScreenHelp" xml:space="preserve">
-    <value>Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. The graph under the cursor shows the share of the screen that changed: click a peak to go there. The orange marks below are the notes: click one to go to its time.</value>
+    <value>Remote desktop sessions in a tab: only the changed areas of the screen are kept, one image per second at most. The graph under the cursor shows the share of the screen that changed: click a peak to go there. The orange marks below are the notes: click one to go to its time. The grey bands are the display pauses (the server no longer sent the picture): the screen shows "Display paused"; click one to go there.</value>
   </data>
   <data name="InterventionReportScreenHeading" xml:space="preserve">
     <value>{0}: {1} to {2} ({3})</value>
@@ -6440,7 +6440,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Pause the d_isplay of Remote Desktop sessions nobody is watching (the session stays open)</value>
   </data>
   <data name="PauseRdpDisplayHelp" xml:space="preserve">
-    <value>Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never while an intervention is being recorded or the session is shared.</value>
+    <value>Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never while the session is shared. During an intervention recording, the pause is marked in the recording: "Display paused" on the screen and a grey band on the timeline of the report.</value>
   </data>
   <data name="RdpPaused" xml:space="preserve">
     <value>Display paused</value>
@@ -6456,5 +6456,17 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="EnvPauseRdpDisplay" xml:space="preserve">
     <value>Pause the display of Remote Desktop sessions nobody is watching</value>
+  </data>
+  <data name="InterventionReportPaused" xml:space="preserve">
+    <value>Display paused</value>
+  </data>
+  <data name="InterventionReportPausedIdle" xml:space="preserve">
+    <value>computer idle</value>
+  </data>
+  <data name="InterventionReportPausedHidden" xml:space="preserve">
+    <value>session not shown</value>
+  </data>
+  <data name="InterventionReportPauseMarker" xml:space="preserve">
+    <value>Display paused from {0} to {1} ({2})</value>
   </data>
 </root>

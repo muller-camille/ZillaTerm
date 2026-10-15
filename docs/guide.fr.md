@@ -202,8 +202,9 @@ fenêtre à part.
   clavier ni la souris n'ont servi depuis 15 minutes ; l'onglet affiche alors « Affichage en pause ». La session reste
   ouverte : l'image revient dès le retour sur l'onglet ou au premier mouvement de souris, et le clavier n'est rendu à
   la session qu'ensuite (la touche qui réveille l'onglet ne lui est pas envoyée). Ni trafic d'affichage, ni encodage
-  de l'image par le PSM, pour une session que personne ne voit. Jamais pendant l'enregistrement d'une intervention ou
-  le partage de la session.
+  de l'image par le PSM, pour une session que personne ne voit. Jamais pendant le partage de la session. Pendant
+  l'enregistrement d'une intervention, la pause est marquée dans l'enregistrement : le lecteur du rapport montre
+  « Affichage en pause » sur l'écran et une bande grise sur la frise (voir [Intervention](#8-intervention--enregistrement-et-consignes-dastreinte)).
 - **Reconnecter**, « Dupliquer l'onglet » : nouvelle demande au PVWA (le jeton d'une session PSM ne sert qu'une
   fois) ; motif et ticket restent ceux de la première connexion. Si la session CyberArk a expiré entre-temps, la
   fenêtre d'identification est proposée, puis la demande repart.
@@ -991,7 +992,10 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   enregistrés y ont chacun leur lecteur : « Lecture », « Vitesse » (1× à 60×) et un curseur de position, sous lequel un
   graphique montre l'activité de l'écran (part modifiée à chaque instant) : un clic sur un pic y mène. Les notes y sont
   posées à leur heure (repères orange) : un clic y mène, le survol montre leur texte ; la ligne de temps va jusqu'à la
-  dernière trace de la session (fermeture de l'onglet…), si bien qu'une note prise devant un écran immobile y figure. Le
+  dernière trace de la session (fermeture de l'onglet…), si bien qu'une note prise devant un écran immobile y figure.
+  Les pauses de l'affichage (onglet en arrière-plan, poste inactif : le serveur n'envoyait plus l'image) y sont des
+  bandes grises, de leur début à leur fin, avec leur raison au survol : un clic y mène, et l'écran figé porte alors
+  « Affichage en pause ». Le
   lecteur est le seul script de la page, autorisé par son empreinte ; il demande un navigateur récent (Edge, Chrome,
   Firefox). Une image manquante (journal abîmé) fige l'écran jusqu'à la prochaine image complète, avec un avis.
   **« Supprimer… »** efface un enregistrement terminé.
@@ -1171,7 +1175,7 @@ leur case (« ⚠ Effet : … »).
 | CyberArk | Sessions PSM Windows dans un onglet | Session PSM (bureau ou application distante) dans un onglet de ZillaTerm, avec le client FreeRDP embarqué, à la taille de l'onglet (voir [Ouvrir une session PSM](#3-ouvrir-une-session-psm-bureau-à-distance)) ; diffusé par le fichier d'environnement | non |
 | CyberArk | Partager les disques de ce poste avec les sessions PSM Windows | Demande les disques du poste au PVWA (case « Map local drives » de sa fenêtre de connexion, `AllowMappingLocalDrives`) ; s'ils sont permis par le composant, ils apparaissent dans la session (Explorateur › Ce PC). Diffusé par le fichier d'environnement | oui |
 | CyberArk | Adapter la résolution du bureau distant à la taille de l'onglet | Sessions PSM dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine. Pour les nouvelles sessions | oui |
-| CyberArk | Suspendre l'affichage des sessions Bureau à distance que personne ne regarde | Sessions dans un onglet (client FreeRDP) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image ; la session reste ouverte, l'image revient au retour sur l'onglet ou au premier mouvement de souris. Jamais pendant l'enregistrement d'une intervention ou un partage. Diffusé par le fichier d'environnement | oui |
+| CyberArk | Suspendre l'affichage des sessions Bureau à distance que personne ne regarde | Sessions dans un onglet (client FreeRDP) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image ; la session reste ouverte, l'image revient au retour sur l'onglet ou au premier mouvement de souris. Jamais pendant un partage ; pendant l'enregistrement d'une intervention, la pause y est marquée (écran et frise du rapport). Diffusé par le fichier d'environnement | oui |
 | CyberArk | Composant par plateforme | Tableau Plateforme (ID du PVWA, par exemple `WinDomain`) / Composant PSM : « Ajouter un composant », « Enlever la ligne », cellules modifiables ; prioritaire sur le composant des comptes Windows. « Mémoriser ce composant pour la plateforme » (fenêtre de connexion) y ajoute une ligne | vide |
 | Terminal | SSH dans ZillaTerm | Terminal et onglet Fichiers intégrés ; sinon Windows Terminal | oui |
 | Terminal | Couleurs du terminal, taille de police | Palette (Campbell, One Half, Solarized…) et taille de police des terminaux SSH | Campbell, 14 |

@@ -81,6 +81,13 @@ public partial class RdpSessionView : UserControl
     {
         var session = Session;
         bool paused = session.DisplayPause != RdpDisplayPauseReason.None;
+        // Pause marquée dans l'enregistrement de l'écran (lecteur du rapport : écran et frise).
+        _screen.SetPause(session.DisplayPause switch
+        {
+            RdpDisplayPauseReason.Idle => Core.Interventions.ScreenPause.Idle,
+            RdpDisplayPauseReason.Hidden => Core.Interventions.ScreenPause.Hidden,
+            _ => Core.Interventions.ScreenPause.None,
+        });
         CaptureButton.Visibility = _interventionRecording && session.ShowsDesktop && !paused ? Visibility.Visible : Visibility.Collapsed;
         ScreenRecorded.Visibility = CaptureButton.Visibility;
         ScreenRecorded.Text = Services.InterventionRecorder.Current.ScreenThrottled ? Strings.RdpScreenThrottled : Strings.RdpScreenRecorded;

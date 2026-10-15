@@ -5663,7 +5663,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>Écrans enregistrés</value>
   </data>
   <data name="InterventionReportScreenHelp" xml:space="preserve">
-    <value>Sessions Bureau à distance dans un onglet : seules les zones modifiées de l'écran sont gardées, une image par seconde au plus. Le graphique sous le curseur montre la part de l'écran modifiée : un clic sur un pic y mène. Les repères orange en dessous sont les notes : un clic mène à leur heure.</value>
+    <value>Sessions Bureau à distance dans un onglet : seules les zones modifiées de l'écran sont gardées, une image par seconde au plus. Le graphique sous le curseur montre la part de l'écran modifiée : un clic sur un pic y mène. Les repères orange en dessous sont les notes : un clic mène à leur heure. Les bandes grises sont les pauses de l'affichage (le serveur n'envoyait plus l'image) : l'écran porte « Affichage en pause » ; un clic y mène.</value>
   </data>
   <data name="InterventionReportScreenHeading" xml:space="preserve">
     <value>{0} : du {1} au {2} ({3})</value>
@@ -6440,7 +6440,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>_Suspendre l'affichage des sessions Bureau à distance que personne ne regarde (la session reste ouverte)</value>
   </data>
   <data name="PauseRdpDisplayHelp" xml:space="preserve">
-    <value>Sessions Bureau à distance dans un onglet (client intégré) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image : ni trafic d'affichage, ni encodage de l'image par le PSM, pour une session que personne ne voit. La session reste ouverte ; l'image revient dès le retour sur l'onglet ou au premier mouvement de souris. Jamais pendant l'enregistrement d'une intervention ou le partage de la session.</value>
+    <value>Sessions Bureau à distance dans un onglet (client intégré) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image : ni trafic d'affichage, ni encodage de l'image par le PSM, pour une session que personne ne voit. La session reste ouverte ; l'image revient dès le retour sur l'onglet ou au premier mouvement de souris. Jamais pendant le partage de la session. Pendant l'enregistrement d'une intervention, la pause est marquée dans l'enregistrement : « Affichage en pause » sur l'écran et une bande grise sur la frise du rapport.</value>
   </data>
   <data name="RdpPaused" xml:space="preserve">
     <value>Affichage en pause</value>
@@ -6456,5 +6456,17 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="EnvPauseRdpDisplay" xml:space="preserve">
     <value>Suspendre l'affichage des sessions Bureau à distance que personne ne regarde</value>
+  </data>
+  <data name="InterventionReportPaused" xml:space="preserve">
+    <value>Affichage en pause</value>
+  </data>
+  <data name="InterventionReportPausedIdle" xml:space="preserve">
+    <value>poste inactif</value>
+  </data>
+  <data name="InterventionReportPausedHidden" xml:space="preserve">
+    <value>session non affichée</value>
+  </data>
+  <data name="InterventionReportPauseMarker" xml:space="preserve">
+    <value>Affichage en pause de {0} à {1} ({2})</value>
   </data>
 </root>

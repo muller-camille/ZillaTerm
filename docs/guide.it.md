@@ -205,7 +205,9 @@ nessuna finestra separata.
   «Visualizzazione in pausa». La sessione resta aperta: l'immagine torna appena si ritorna sulla scheda o si muove il
   mouse, e la tastiera torna alla sessione solo dopo (il tasto che risveglia la scheda non le viene inviato). Nessun
   traffico di visualizzazione e nessuna codifica dell'immagine da parte del PSM per una sessione che nessuno vede. Mai
-  durante la registrazione di un intervento o la condivisione della sessione.
+  durante la condivisione della sessione. Durante la registrazione di un intervento, la pausa è segnata nella
+  registrazione: il lettore del rapporto mostra «Visualizzazione in pausa» sullo schermo e una banda grigia sulla linea
+  del tempo (vedi [Intervento](#8-intervento-registrazione-e-promemoria-di-reperibilità)).
 - **Riconnetti**, «Duplica scheda»: nuova richiesta al PVWA (il token di una sessione PSM vale una sola volta);
   motivo e ticket restano quelli della prima connessione. Se nel frattempo la sessione CyberArk è scaduta, viene
   proposta la finestra di accesso, poi la richiesta riparte.
@@ -989,7 +991,10 @@ reperibilità o no:
   grafico mostra l'attività dello schermo (parte modificata in ogni istante): un clic su un picco porta lì. Le note vi
   sono poste alla loro ora (segni arancioni): un clic porta lì, il passaggio del mouse ne mostra il testo; la linea del
   tempo arriva fino all'ultima traccia della sessione (chiusura della scheda…), così una nota presa davanti a uno
-  schermo immobile vi figura. Il lettore è l'unico script della pagina, autorizzato dalla sua impronta; richiede un
+  schermo immobile vi figura. Le pause della visualizzazione (scheda in secondo piano, computer inattivo: il server non
+  inviava più l'immagine) vi sono bande grigie, dal loro inizio alla loro fine, con la ragione al passaggio del mouse:
+  un clic porta lì, e lo schermo fermo mostra allora «Visualizzazione in pausa». Il lettore è l'unico script della
+  pagina, autorizzato dalla sua impronta; richiede un
   browser recente (Edge, Chrome, Firefox). Un'immagine mancante (registro danneggiato) blocca lo schermo fino alla
   prossima immagine completa, con un avviso. **«Elimina…»** cancella una registrazione terminata.
 
@@ -1170,7 +1175,7 @@ dicono sotto la loro casella («⚠ Effetto: …»).
 | CyberArk | Sessioni PSM Windows in una scheda | Sessione PSM (desktop o applicazione remota) in una scheda di ZillaTerm, con il client FreeRDP integrato, alla dimensione della scheda (vedi [Aprire una sessione PSM](#3-aprire-una-sessione-psm-desktop-remoto)); diffusa dal file d'ambiente | no |
 | CyberArk | Condividi i dischi di questo computer con le sessioni PSM Windows | Chiede al PVWA i dischi di questo computer (casella «Map local drives» della sua finestra di connessione, `AllowMappingLocalDrives`); se il componente li consente, compaiono nella sessione (Esplora file › Questo PC). Diffusa dal file d'ambiente | sì |
 | CyberArk | Adatta la risoluzione del desktop remoto alla dimensione della scheda | Sessioni PSM in una scheda: la risoluzione segue la dimensione della scheda invece di un'immagine adattata; la connessione dal PSM alla destinazione può mantenere la dimensione originale. Per le nuove sessioni | sì |
-| CyberArk | Sospendi la visualizzazione delle sessioni Desktop remoto che nessuno guarda | Sessioni in una scheda (client FreeRDP): con la scheda in secondo piano, ZillaTerm ridotto a icona o Windows bloccato da 1 minuto, oppure senza tastiera né mouse da 15 minuti, il server smette di inviare l'immagine; la sessione resta aperta, l'immagine torna quando si ritorna sulla scheda o si muove il mouse. Mai durante la registrazione di un intervento o una condivisione. Diffusa dal file d'ambiente | sì |
+| CyberArk | Sospendi la visualizzazione delle sessioni Desktop remoto che nessuno guarda | Sessioni in una scheda (client FreeRDP): con la scheda in secondo piano, ZillaTerm ridotto a icona o Windows bloccato da 1 minuto, oppure senza tastiera né mouse da 15 minuti, il server smette di inviare l'immagine; la sessione resta aperta, l'immagine torna quando si ritorna sulla scheda o si muove il mouse. Mai durante una condivisione; durante la registrazione di un intervento, la pausa vi è segnata (schermo e linea del tempo del rapporto). Diffusa dal file d'ambiente | sì |
 | CyberArk | Componente per piattaforma | Tabella Piattaforma (ID del PVWA, ad esempio `WinDomain`) / Componente PSM: «Aggiungi un componente», «Rimuovi la riga», celle modificabili; ha la precedenza sul componente degli account Windows. «Memorizza questo componente per la piattaforma» (finestra di connessione) vi aggiunge una riga | vuoto |
 | Terminale | SSH in ZillaTerm | Terminale e scheda File integrati; altrimenti Windows Terminal | sì |
 | Terminale | Colori del terminale, dimensione carattere | Tavolozza (Campbell, One Half, Solarized…) e dimensione del carattere dei terminali SSH | Campbell, 14 |

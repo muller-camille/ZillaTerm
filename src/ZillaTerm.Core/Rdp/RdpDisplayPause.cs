@@ -38,8 +38,8 @@ public static class RdpDisplayPause
     /// <param name="hiddenFor">Temps depuis lequel la session n'est plus visible (sans objet si <paramref name="shown"/>).</param>
     /// <param name="idle">Temps depuis la dernière action au clavier ou à la souris sur le poste.</param>
     /// <param name="watched">
-    /// Écran gardé ou montré à quelqu'un (enregistrement d'une intervention, partage) : jamais en pause tant que la session
-    /// est affichée, même poste inactif.
+    /// Écran montré en direct à quelqu'un (partage) : jamais en pause tant que la session est affichée, même poste inactif.
+    /// L'enregistrement d'une intervention n'empêche pas la pause : elle y est marquée (écran et frise du rapport).
     /// </param>
     public static RdpDisplayPauseReason Decide(bool shown, TimeSpan hiddenFor, TimeSpan idle, bool watched)
     {

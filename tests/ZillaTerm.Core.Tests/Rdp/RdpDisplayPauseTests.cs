@@ -4,7 +4,7 @@ namespace ZillaTerm.Core.Tests.Rdp;
 
 /// <summary>
 /// Pause de l'affichage d'une session Bureau à distance : session invisible depuis une minute, ou poste inactif depuis
-/// 15 minutes (session affichée, ni enregistrée ni partagée) ; reprise aussitôt.
+/// 15 minutes (session affichée et pas partagée) ; reprise aussitôt.
 /// </summary>
 public class RdpDisplayPauseTests
 {
@@ -28,7 +28,7 @@ public class RdpDisplayPauseTests
     [Fact]
     public void HiddenSessionIsPausedEvenWhenWatched()
     {
-        // Enregistrement et partage ne gardent que l'onglet affiché : rien à garder d'une session invisible.
+        // Le partage ne montre que l'onglet affiché : rien à montrer d'une session invisible.
         Assert.Equal(RdpDisplayPauseReason.Hidden, RdpDisplayPause.Decide(false, TimeSpan.FromMinutes(5), TimeSpan.Zero, watched: true));
     }
 
@@ -40,7 +40,7 @@ public class RdpDisplayPauseTests
     }
 
     [Fact]
-    public void RecordedOrSharedSessionIsNotPausedWhileShown()
+    public void SharedSessionIsNotPausedWhileShown()
     {
         Assert.Equal(RdpDisplayPauseReason.None, RdpDisplayPause.Decide(true, TimeSpan.Zero, TimeSpan.FromHours(2), watched: true));
     }

@@ -19221,7 +19221,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never while an intervention is being recorded or the session is shared..
+        ///   Looks up a localized string similar to Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never while the session is shared. During an intervention recording, the pause is marked in the recording: &quot;Display paused&quot; on the screen and a grey band on the timeline of the report..
         /// </summary>
         public static string PauseRdpDisplayHelp {
             get {
@@ -19271,6 +19271,42 @@ namespace ZillaTerm.App.Localization {
         public static string EnvPauseRdpDisplay {
             get {
                 return ResourceManager.GetString("EnvPauseRdpDisplay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Display paused.
+        /// </summary>
+        public static string InterventionReportPaused {
+            get {
+                return ResourceManager.GetString("InterventionReportPaused", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to computer idle.
+        /// </summary>
+        public static string InterventionReportPausedIdle {
+            get {
+                return ResourceManager.GetString("InterventionReportPausedIdle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to session not shown.
+        /// </summary>
+        public static string InterventionReportPausedHidden {
+            get {
+                return ResourceManager.GetString("InterventionReportPausedHidden", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Display paused from {0} to {1} ({2}).
+        /// </summary>
+        public static string InterventionReportPauseMarker {
+            get {
+                return ResourceManager.GetString("InterventionReportPauseMarker", resourceCulture);
             }
         }
     }
