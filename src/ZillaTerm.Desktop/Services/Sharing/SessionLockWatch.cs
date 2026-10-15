@@ -1,10 +1,12 @@
 using Tmds.DBus.Protocol;
+using ZillaTerm.App.Services;
 using ZillaTerm.Core.Diagnostics;
 
 namespace ZillaTerm.App.Services.Sharing;
 
 /// <summary>
-/// Verrouillage de la session hors de Windows (où <c>SystemEvents.SessionSwitch</c> le signale), pour arrêter les partages
+/// Verrouillage de la session hors de Windows (où <c>SystemEvents.SessionSwitch</c> le signale), suivi une fois pour toute
+/// l'application (<see cref="SessionLock"/>) : coffres verrouillés, maintien de la session PVWA suspendu, partages arrêtés,
 /// comme au verrouillage de Windows. Sous Linux : logind (bus système) — signal « Lock » de la session, « LockedHint » qui
 /// passe à vrai (bureau verrouillé), session qui n'est plus active (changement d'utilisateur, autre console), mise en
 /// veille (« PrepareForSleep ») — et l'économiseur d'écran du bureau (bus de session, « ActiveChanged »). Sur demande,
@@ -15,7 +17,7 @@ namespace ZillaTerm.App.Services.Sharing;
 /// <para><c>locked</c> et <c>unlocked</c> sont appelés depuis un fil de D-Bus, une fois par évènement.</para>
 /// <para>
 /// Sans D-Bus (macOS, conteneur sans bus système, logind absent) rien n'est suivi : <see cref="IsWatching"/> reste faux et
-/// le journal de débogage le dit. Les partages continuent alors pendant le verrouillage.
+/// le journal de débogage le dit. Rien ne réagit alors au verrouillage (les partages continuent).
 /// </para>
 /// </remarks>
 internal sealed class SessionLockWatch : IDisposable
@@ -56,7 +58,7 @@ internal sealed class SessionLockWatch : IDisposable
         }
         else
         {
-            DebugLog.Write("partage", "Verrouillage de la session non suivi sur ce système : les partages continuent pendant le verrouillage.");
+            DebugLog.Write("session", "Verrouillage de la session non suivi sur ce système : coffres, maintien de la session PVWA et partages ne réagissent pas au verrouillage.");
         }
 
         return watch;
@@ -69,8 +71,8 @@ internal sealed class SessionLockWatch : IDisposable
             var system = await ConnectAsync(DBusAddress.System);
             // Session de ce processus ; inconnue (lancé hors d'une session logind) : celles de tous les utilisateurs du poste.
             var path = await SessionPathAsync(system);
-            DebugLog.Write("partage", path is null
-                ? "Session logind de ZillaTerm inconnue : le verrouillage de toute session du poste arrête les partages."
+            DebugLog.Write("session", path is null
+                ? "Session logind de ZillaTerm inconnue : le verrouillage de toute session du poste compte."
                 : $"Verrouillage de la session suivi (logind, {path}).");
             _watches.Add(await system.WatchSignalAsync(Login1, path, SessionInterface, "Lock",
                 (Notification n) => OnSignal(n.IsCompletion, "verrouillage (logind)"), ObserverFlags.None, emitOnCapturedContext: false));
@@ -110,7 +112,7 @@ internal sealed class SessionLockWatch : IDisposable
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            DebugLog.Write("partage", "logind injoignable : le verrouillage de la session n'arrête pas les partages", ex);
+            DebugLog.Write("session", "logind injoignable : verrouillage de la session non suivi (coffres, maintien de la session PVWA, partages)", ex);
         }
 
         try
@@ -131,7 +133,7 @@ internal sealed class SessionLockWatch : IDisposable
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            DebugLog.Write("partage", "Économiseur d'écran du bureau non suivi (bus de session injoignable)", ex);
+            DebugLog.Write("session", "Économiseur d'écran du bureau non suivi (bus de session injoignable)", ex);
         }
     }
 
@@ -162,7 +164,7 @@ internal sealed class SessionLockWatch : IDisposable
         }
         catch (DBusErrorReplyException ex)
         {
-            DebugLog.Write("partage", $"logind : session du processus inconnue ({ex.ErrorName})");
+            DebugLog.Write("session", $"logind : session du processus inconnue ({ex.ErrorName})");
         }
 
         if (Environment.GetEnvironmentVariable("XDG_SESSION_ID") is { Length: > 0 } id)
@@ -173,7 +175,7 @@ internal sealed class SessionLockWatch : IDisposable
             }
             catch (DBusErrorReplyException ex)
             {
-                DebugLog.Write("partage", $"logind : session XDG_SESSION_ID inconnue ({ex.ErrorName})");
+                DebugLog.Write("session", $"logind : session XDG_SESSION_ID inconnue ({ex.ErrorName})");
             }
         }
 
@@ -226,14 +228,14 @@ internal sealed class SessionLockWatch : IDisposable
             return;
         }
 
-        DebugLog.Write("partage", $"Session : {cause}");
+        DebugLog.Write("session", $"Session : {cause}");
         try
         {
             _unlocked(cause);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            DebugLog.Write("partage", "Reprise au déverrouillage", ex);
+            DebugLog.Write("session", "Reprise au déverrouillage", ex);
         }
     }
 
@@ -244,7 +246,7 @@ internal sealed class SessionLockWatch : IDisposable
             return;
         }
 
-        DebugLog.Write("partage", $"Session : {cause}");
+        DebugLog.Write("session", $"Session : {cause}");
         try
         {
             _locked(cause);
@@ -252,7 +254,7 @@ internal sealed class SessionLockWatch : IDisposable
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             // Un gestionnaire de D-Bus ne doit pas lever d'exception (la connexion serait fermée).
-            DebugLog.Write("partage", "Arrêt des partages au verrouillage", ex);
+            DebugLog.Write("session", "Réaction au verrouillage", ex);
         }
     }
 

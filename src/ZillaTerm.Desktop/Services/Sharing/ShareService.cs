@@ -119,15 +119,14 @@ internal sealed class WatchedShare(IShareConnection viewer, ShareInfo info, Shar
 /// <remarks>
 /// <para>Les listes et l'évènement <see cref="Changed"/> sont sur le fil de l'interface.</para>
 /// <para>
-/// Hors de Windows, le verrouillage est suivi par <see cref="SessionLockWatch"/> (Linux : logind et économiseur d'écran) ;
-/// là où il ne peut pas l'être (macOS, pas de D-Bus), <see cref="StopsOnLock"/> est faux et les partages continuent
-/// pendant le verrouillage.
+/// Hors de Windows, le verrouillage est celui que suit l'application (<see cref="SessionLock"/> : sous Linux, logind et
+/// l'économiseur d'écran) ; là où il ne peut pas l'être (macOS, pas de D-Bus), <see cref="StopsOnLock"/> est faux et les
+/// partages continuent pendant le verrouillage.
 /// </para>
 /// </remarks>
 internal sealed class ShareService
 {
     private Dispatcher? _dispatcher;
-    private SessionLockWatch? _lockWatch;
     private bool _ended;
 
     private ShareService()
@@ -146,10 +145,10 @@ internal sealed class ShareService
     public event Action? Changed;
 
     /// <summary>
-    /// Vrai si le verrouillage de la session arrête les partages sur ce poste : toujours sous Windows, sous Linux une fois
-    /// logind suivi (voir <see cref="SessionLockWatch"/>).
+    /// Vrai si le verrouillage de la session arrête les partages sur ce poste : toujours sous Windows, sous Linux quand
+    /// logind est suivi (<see cref="SessionLock.Supported"/>, suivi dès le démarrage de l'application).
     /// </summary>
-    public bool StopsOnLock => OperatingSystem.IsWindows() || _lockWatch is { IsWatching: true };
+    public bool StopsOnLock => OperatingSystem.IsWindows() || SessionLock.Supported;
 
     /// <summary>Réglages des prochains partages ; au premier appel, suit le verrouillage de Windows.</summary>
     public void Configure(AppSettings settings, Dispatcher dispatcher)
@@ -169,8 +168,9 @@ internal sealed class ShareService
             }
             else
             {
-                // Linux : logind et économiseur d'écran (appelé depuis un fil de D-Bus, comme SessionSwitch depuis le sien).
-                _lockWatch = SessionLockWatch.Start(_ => Host.StopAll(ShareEndReason.Locked));
+                // Linux : logind et économiseur d'écran, suivis par l'application (appelé depuis un fil de D-Bus, comme
+                // SessionSwitch depuis le sien).
+                SessionLock.LockedNow += OnLocked;
             }
 
             dispatcher.ShutdownStarted += (_, _) => Shutdown();
@@ -196,7 +196,11 @@ internal sealed class ShareService
             SystemEvents.SessionSwitch -= OnSessionSwitch;
         }
 
-        _lockWatch?.Dispose();
+        else
+        {
+            SessionLock.LockedNow -= OnLocked;
+        }
+
         EndAll(ShareEndReason.ApplicationClosed);
     }
 
@@ -270,6 +274,9 @@ internal sealed class ShareService
     }
 
     private void Post(Action action) => _dispatcher?.Post(action);
+
+    /// <summary>Session verrouillée (Linux) : plus rien de ce poste n'est montré.</summary>
+    private void OnLocked() => Host.StopAll(ShareEndReason.Locked);
 
     /// <summary>Windows verrouillé : plus rien de ce poste n'est montré.</summary>
     private void OnSessionSwitch(object sender, SessionSwitchEventArgs e)

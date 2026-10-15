@@ -18,6 +18,12 @@ internal static class SessionLock
     /// <summary>Session verrouillée (ou poste mis en veille). Levé sur le fil de l'interface.</summary>
     public static event Action? Locked;
 
+    /// <summary>
+    /// Session verrouillée, levé tout de suite sur le fil qui l'apprend (D-Bus, événements de session de Windows) : pour
+    /// ce qui doit s'arrêter sans attendre le fil de l'interface, occupé ou figé (partages de session).
+    /// </summary>
+    public static event Action? LockedNow;
+
     /// <summary>Session déverrouillée. Levé sur le fil de l'interface.</summary>
     public static event Action? Unlocked;
 
@@ -50,7 +56,15 @@ internal static class SessionLock
         _watch = null;
     }
 
-    private static void Raise(bool locked) => Dispatcher.UIThread.Post(() => (locked ? Locked : Unlocked)?.Invoke());
+    private static void Raise(bool locked)
+    {
+        if (locked)
+        {
+            LockedNow?.Invoke();
+        }
+
+        Dispatcher.UIThread.Post(() => (locked ? Locked : Unlocked)?.Invoke());
+    }
 
     [SupportedOSPlatform("windows")]
     private static void StartWindows()
