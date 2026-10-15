@@ -628,7 +628,7 @@ public partial class MainWindow
             return;
         }
 
-        Control target = item ?? SavedTree;
+        Control target = item is null ? SavedTree : item;
         menu.PlacementTarget = target;
         menu.Open(target);
     }

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using ZillaTerm.App.Services;
 
 namespace ZillaTerm.App.Views;
@@ -54,6 +55,19 @@ public partial class MainWindow
             default:
                 return false;
         }
+    }
+
+    /// <summary>
+    /// Bouton Historique : envois et téléchargements de l'onglet Fichiers, même sans session ; seulement les échecs et
+    /// transferts non vérifiés quand un échec est signalé (« ! ») et pas encore vu.
+    /// </summary>
+    private void OnTransferHistory(object? sender, RoutedEventArgs e)
+    {
+        bool problems = FilesPanel.UnseenProblems > 0;
+        // L'historique montre les transferts en échec : ils sont vus.
+        FilesPanel.MarkTransfersSeen();
+        UpdateFilesBadge();
+        FilesPanel.ShowHistory(problemsOnly: problems);
     }
 
     /// <summary>« Terminal » de l'onglet Fichiers : la session est affichée là où est son terminal.</summary>

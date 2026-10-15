@@ -351,5 +351,5 @@ public partial class MainWindow
     }
 
     /// <summary>Efface du presse-papiers un mot de passe copié (déconnexion, fermeture, verrouillage de Windows).</summary>
-    private void ClearPasswordClipboard() => _passwordClipboard?.Clear();
+    private void ClearPasswordClipboard() => _ = _passwordClipboard?.ClearAsync();
 }

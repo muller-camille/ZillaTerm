@@ -10,6 +10,7 @@ using Avalonia.VisualTree;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using ZillaTerm.App.Localization;
+using ZillaTerm.App.Services;
 using ZillaTerm.Core;
 
 namespace ZillaTerm.App.Views;

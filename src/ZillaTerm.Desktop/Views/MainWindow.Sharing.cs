@@ -153,7 +153,7 @@ public partial class MainWindow
                     CancelLabel = Strings.CloseButton,
                 }) == 0)
             {
-                OpenSettings(sharing: true);
+                await OpenSettingsAsync(sharing: true);
             }
 
             return;
@@ -167,7 +167,7 @@ public partial class MainWindow
 
         var kind = tab.Tag is SshSession ? ShareKind.Terminal : ShareKind.Screen;
         var label = TabLabel(tab);
-        await new ShareSessionDialog(label, kind, (duration, control) => StartShare(tab, kind, label, duration, control)).ShowDialogAsync(owner);
+        await new ShareSessionDialog(label, kind, (duration, control) => StartShare(tab, kind, label, duration, control).Share).ShowDialogAsync(owner);
     }
 
     private ActiveShare StartShare(TabItem tab, ShareKind kind, string label, TimeSpan duration, bool control)
@@ -390,7 +390,7 @@ public partial class MainWindow
     /// <summary>Invitation d'un partage en cours, à renvoyer (fenêtre « Partage de sessions »).</summary>
     private async void ShowInvitation(ActiveShare share)
     {
-        var dialog = new ShareSessionDialog(share.Label, share.Share.Info.Kind, (_, _) => share);
+        var dialog = new ShareSessionDialog(share.Label, share.Share.Info.Kind, (_, _) => share.Share);
         dialog.ShowInvitation(share.Share);
         await dialog.ShowDialogAsync(_sharesWindow ?? (Window)this);
     }
@@ -407,9 +407,9 @@ public partial class MainWindow
     private async void JoinShare()
     {
         var dialog = new JoinShareDialog(JoinIdentity());
-        if (await dialog.ShowDialogAsync(_sharesWindow ?? (Window)this) && dialog.Joined is { } watched)
+        if (await dialog.ShowDialogAsync(_sharesWindow ?? (Window)this) && dialog.Joined is { } joined)
         {
-            OpenWatchedTab(watched);
+            OpenWatchedTab(new WatchedShare(joined.Viewer, joined.Info, joined.Invitation));
         }
     }
 
