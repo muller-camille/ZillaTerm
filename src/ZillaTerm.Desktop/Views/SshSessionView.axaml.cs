@@ -1,3 +1,4 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -45,6 +46,8 @@ public partial class SshSessionView : UserControl
         Target = target;
         _connectingText = connectingText;
         Terminal.Emulator = session.Emulator;
+        // Nom pour les lecteurs d'écran : la session, pour distinguer les terminaux des onglets.
+        AutomationProperties.SetName(Terminal, Text.Format(Strings.A11yTerminal, target));
         Terminal.Input += OnInput;
         Terminal.TerminalResized += session.Resize;
         session.ScreenUpdated += Terminal.Refresh;

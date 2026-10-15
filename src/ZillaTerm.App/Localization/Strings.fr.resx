@@ -3960,6 +3960,9 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="CapsLockOn" xml:space="preserve">
     <value>Verr. Maj est activé.</value>
   </data>
+  <data name="A11yTerminal" xml:space="preserve">
+    <value>Terminal SSH : {0}</value>
+  </data>
   <data name="A11yTerminalSearch" xml:space="preserve">
     <value>Rechercher dans le terminal</value>
   </data>

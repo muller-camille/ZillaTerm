@@ -3,7 +3,9 @@ using Avalonia.Automation.Peers;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using ZillaTerm.App.Services;
 using ZillaTerm.App.Views;
+using ZillaTerm.Core.Ssh;
 
 namespace ZillaTerm.Desktop.Tests;
 
@@ -40,6 +42,18 @@ public sealed class AccessibilityTests
         window.Close();
     }
 
+    /// <summary>Terminal d'une session (non connectée ici) : nommé d'après la session, dans la langue de l'interface.</summary>
+    [AvaloniaFact]
+    public void TerminalIsNamedAfterItsSession()
+    {
+        using var _ = Language.Use("fr");
+        var connector = new SshConnector("srv01.corp.local", 22, "jdoe", new NoInteraction());
+        var session = new SshSession(null, "jdoe@srv01", connector, Dispatcher.UIThread, followTerminal: false, saved: null);
+        var view = new SshSessionView(session, "jdoe@srv01.corp.local", "Connexion…");
+
+        Assert.Equal("Terminal SSH : jdoe@srv01.corp.local", NameOf(view.Terminal));
+    }
+
     [Theory]
     [InlineData("_Valider", "Valider")]
     [InlineData("Mot de _passe", "Mot de passe")]
@@ -49,4 +63,12 @@ public sealed class AccessibilityTests
     public void MarkerRemoval(string text, string expected) => Assert.Equal(expected, AccessKeyNames.WithoutAccessKey(text));
 
     private static string NameOf(Control control) => ControlAutomationPeer.CreatePeerForElement(control).GetName();
+
+    /// <summary>Session jamais connectée : aucune question n'est posée.</summary>
+    private sealed class NoInteraction : ISshInteraction
+    {
+        public bool CheckHostKey(string host, int port, string algorithm, string sha256Fingerprint) => false;
+
+        public SshAnswer? Prompt(SshQuestion question) => null;
+    }
 }

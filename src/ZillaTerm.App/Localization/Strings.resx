@@ -3960,6 +3960,9 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="CapsLockOn" xml:space="preserve">
     <value>Caps Lock is on.</value>
   </data>
+  <data name="A11yTerminal" xml:space="preserve">
+    <value>SSH terminal: {0}</value>
+  </data>
   <data name="A11yTerminalSearch" xml:space="preserve">
     <value>Search the terminal</value>
   </data>

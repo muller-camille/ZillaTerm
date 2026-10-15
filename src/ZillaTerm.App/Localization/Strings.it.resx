@@ -3960,6 +3960,9 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="CapsLockOn" xml:space="preserve">
     <value>Bloc Maiusc è attivo.</value>
   </data>
+  <data name="A11yTerminal" xml:space="preserve">
+    <value>Terminale SSH: {0}</value>
+  </data>
   <data name="A11yTerminalSearch" xml:space="preserve">
     <value>Cerca nel terminale</value>
   </data>

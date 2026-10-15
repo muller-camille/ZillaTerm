@@ -9054,6 +9054,15 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to SSH terminal: {0}.
+        /// </summary>
+        public static string A11yTerminal {
+            get {
+                return ResourceManager.GetString("A11yTerminal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Search in the terminal, history included (Enter: older, Shift+Enter: newer, Esc: close).
         /// </summary>
         public static string TerminalSearchTip {

@@ -69,9 +69,8 @@ public sealed class SshSession : RemoteSession
     }
 
     /// <summary>
-    /// Entrée du journal d'intervention (<c>InterventionRecorder.Current.Record</c> de ZillaTerm.App : type, source, texte),
-    /// fournie au démarrage par l'application tant que le journal d'intervention n'est pas porté ici ; appelée depuis le fil
-    /// de la connexion X11. Null : rien n'est journalisé.
+    /// Entrée du journal d'intervention (type, source, texte), posée par <see cref="InterventionRecorder"/> dès son premier
+    /// usage ; appelée depuis le fil de la connexion X11. Null : rien n'est journalisé.
     /// </summary>
     internal static Action<InterventionKind, string, string>? RecordIntervention { get; set; }
 
