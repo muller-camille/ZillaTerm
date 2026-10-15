@@ -68,7 +68,7 @@
                    VerticalAlignment="Center" />
             <TextBox Grid.Row="9" Grid.Column="1" x:Name="StartDirBox" Margin="0,0,0,8"
                      ToolTip.Tip="{x:Static loc:Strings.StartDirTip}" />
-            <CheckBox Grid.Row="10" Grid.Column="1" x:Name="X11Box" Margin="0,0,0,8" ToolTip.Tip="{x:Static loc:Strings.X11ForwardingTip}"
+            <CheckBox Grid.Row="10" Grid.Column="1" x:Name="X11Box" Margin="0,0,0,8" ToolTip.Tip="{x:Static loc:PlatformText.X11ForwardingTip}"
                       ToolTip.ShowOnDisabled="True">
                 <AccessText Text="{x:Static loc:Strings.X11Forwarding}" TextWrapping="Wrap" />
             </CheckBox>

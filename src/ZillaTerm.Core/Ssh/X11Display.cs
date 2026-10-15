@@ -10,7 +10,8 @@ namespace ZillaTerm.Core.Ssh;
 /// </summary>
 /// <remarks>
 /// Ce poste seulement : le protocole X n'est pas chiffré, un serveur X sur une autre machine recevrait les fenêtres et
-/// les frappes en clair sur le réseau. L'affichage n sur TCP est le port 6000 + n.
+/// les frappes en clair sur le réseau. L'affichage n sur TCP est le port 6000 + n ; sans hôte (« :0 »), sous Linux et les
+/// autres Unix, c'est le socket local /tmp/.X11-unix/Xn (<see cref="HostOmitted"/>).
 /// </remarks>
 public sealed record X11Display(IPAddress Address, int Number, int Screen)
 {
@@ -20,6 +21,12 @@ public sealed record X11Display(IPAddress Address, int Number, int Screen)
     private const int MaxNumber = 59535;
 
     public IPEndPoint EndPoint => new(Address, 6000 + Number);
+
+    /// <summary>Affichage noté sans hôte (« :0 ») : sous Linux et les autres Unix, le socket local du serveur X.</summary>
+    public bool HostOmitted { get; init; }
+
+    /// <summary>Socket local du serveur X de cet affichage (Linux et autres Unix).</summary>
+    public string UnixSocketPath => $"/tmp/.X11-unix/X{Number.ToString(CultureInfo.InvariantCulture)}";
 
     /// <summary>
     /// Lit un affichage : hôte facultatif de ce poste (localhost, 127.0.0.1, ::1), « : », numéro, « .écran » facultatif.
@@ -61,7 +68,7 @@ public sealed record X11Display(IPAddress Address, int Number, int Screen)
             return false;
         }
 
-        display = new X11Display(address, n, s);
+        display = new X11Display(address, n, s) { HostOmitted = host.Length == 0 };
         return true;
     }
 

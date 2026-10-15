@@ -47,7 +47,7 @@ public partial class MainWindow
         {
             Psmp = psmp.Host,
             Request = request,
-            X11 = request.X11Forwarding && X11Display.TryParse(_settings.X11Display, out var display) ? display : null,
+            X11 = request.X11Forwarding && X11Display.TryParse(X11DisplaySetting(), out var display) ? display : null,
         };
         ShowSshTab(session, $"{login}@{psmp.Host}", Strings.ConnectingViaPsmp, "IconSsh",
             Text.Format(Strings.SshOpened, label, psmp.Host), duplicate);
@@ -803,4 +803,15 @@ public partial class MainWindow
 
     /// <summary>Session PVWA rouverte : la clé MFA peut de nouveau être demandée tout de suite.</summary>
     private void ForgetMfaRetryDelay() => _mfaRetryAfter = default;
+
+    /// <summary>
+    /// Serveur X vers lequel transférer X11 : le réglage ; sous Linux et les autres Unix, tant qu'il est celui par défaut
+    /// (« :0 »), l'affichage de la session (variable DISPLAY, s'il est sur ce poste).
+    /// </summary>
+    private string X11DisplaySetting() =>
+        !OperatingSystem.IsWindows() && _settings.X11Display == X11Display.Default
+        && Environment.GetEnvironmentVariable("DISPLAY") is { Length: > 0 } session
+        && X11Display.TryParse(session, out var display) && display.HostOmitted
+            ? session
+            : _settings.X11Display;
 }

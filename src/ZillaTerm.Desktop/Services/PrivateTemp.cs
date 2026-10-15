@@ -220,6 +220,16 @@ internal static class PrivateTemp
         OtherOwner,
     }
 
+    /// <summary>
+    /// Type et droits (st_mode) et propriétaire de <paramref name="path"/> sous Linux et macOS (lstat : un lien symbolique
+    /// n'est pas suivi) ; null s'il n'existe pas.
+    /// </summary>
+    /// <exception cref="IOException">Lecture impossible.</exception>
+    internal static (int Mode, uint Uid)? UnixStatus(string path) => UnixUser.LStat(path);
+
+    /// <summary>Identifiant de l'utilisateur de ce processus (Linux, macOS).</summary>
+    internal static uint UnixUserId => UnixUser.EffectiveId;
+
     /// <summary>Propriétaire, type et droits de <paramref name="path"/> (lstat : un lien symbolique n'est pas suivi).</summary>
     internal static Ownership Inspect(string path)
     {

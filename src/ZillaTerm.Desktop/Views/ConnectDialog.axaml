@@ -74,7 +74,7 @@
                 <CheckBox Grid.Row="4" Grid.Column="1" x:Name="RememberBox" Margin="0,0,0,10" />
             </Grid>
 
-            <CheckBox x:Name="X11Box" Margin="0,0,0,10" ToolTip.Tip="{x:Static loc:Strings.X11ForwardingTip}" ToolTip.ShowOnDisabled="True">
+            <CheckBox x:Name="X11Box" Margin="0,0,0,10" ToolTip.Tip="{x:Static loc:PlatformText.X11ForwardingTip}" ToolTip.ShowOnDisabled="True">
                 <AccessText Text="{x:Static loc:Strings.X11Forwarding}" TextWrapping="Wrap" />
             </CheckBox>
             <!-- Conséquence de l'option, affichée dès que sa case est cochée et active : visible au clavier, pas seulement

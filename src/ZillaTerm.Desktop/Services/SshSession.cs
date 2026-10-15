@@ -28,6 +28,9 @@ public sealed class SshSession : RemoteSession
     private Task _sending = Task.CompletedTask;
     private SshClient? _client;
     private ShellStream? _shell;
+
+    // Relais vers le socket local du serveur X (Linux et autres Unix) de la connexion en cours.
+    private X11UnixRelay? _x11Relay;
     private int _drainScheduled;
     private DateTime _lastData;
     private bool _userTyped;
@@ -210,9 +213,30 @@ public sealed class SshSession : RemoteSession
         }
 
         // Avant le shell : sa première sortie ne doit pas passer avant la ligne grise.
-        bool listening = await display.IsListeningAsync(TimeSpan.FromSeconds(1), Lifetime);
-        var x11 = new X11Forwarding(display.EndPoint, (uint)display.Screen);
         string label = Label;
+        X11Forwarding x11;
+        bool listening;
+        bool unixSocket = !OperatingSystem.IsWindows() && display.HostOmitted;
+        if (unixSocket)
+        {
+            // Serveur X du poste sur son socket local : par le relais, qui y met le cookie de la session.
+            listening = await X11UnixRelay.IsListeningAsync(display, TimeSpan.FromSeconds(1), Lifetime);
+            _x11Relay?.Dispose();
+            var relay = X11UnixRelay.Start(display, label);
+            _x11Relay = relay;
+            DebugLog.Write("x11", $"{label} : relais X11 vers {display.UnixSocketPath}, {(relay.HasCookie ? "cookie de la session trouvé" : "sans cookie")}");
+            x11 = new X11Forwarding(relay.EndPoint, (uint)display.Screen)
+            {
+                AuthenticationProtocol = XAuthority.MagicCookie,
+                AuthenticationData = relay.Token,
+            };
+        }
+        else
+        {
+            listening = await display.IsListeningAsync(TimeSpan.FromSeconds(1), Lifetime);
+            x11 = new X11Forwarding(display.EndPoint, (uint)display.Screen);
+        }
+
         x11.RequestReceived += (_, e) =>
         {
             DebugLog.Write("x11", $"{label} : fenêtre X11 ouverte par le serveur ({e.OriginatorHost})");
@@ -223,6 +247,7 @@ public sealed class SshSession : RemoteSession
         DebugLog.Write("x11", $"{Label} : transfert X11 vers {display} {(shell.IsX11ForwardingAccepted ? "accepté" : "refusé")}, serveur X {(listening ? "présent" : "absent")}");
         string message = !shell.IsX11ForwardingAccepted ? Strings.X11Refused
             : listening ? Text.Format(Strings.X11Active, display)
+            : unixSocket ? Text.Format(Strings.X11NoServerUnix, display, display.UnixSocketPath)
             : Text.Format(Strings.X11NoServer, display, display.EndPoint.Port);
         Emulator.Feed("\x1b[90m" + message + "\x1b[0m\r\n");
         return shell;
@@ -414,6 +439,8 @@ public sealed class SshSession : RemoteSession
         DisposeInBackground(_shell, _client);
         _shell = null;
         _client = null;
+        _x11Relay?.Dispose();
+        _x11Relay = null;
     }
 
     private void OnData(ReadOnlySpan<byte> data)

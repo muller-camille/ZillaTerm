@@ -116,7 +116,7 @@ public partial class SessionPropertiesDialog : DialogWindow
         ReasonBox.IsEnabled = PsmRadio.IsChecked == true;
         StartDirBox.IsEnabled = PsmRadio.IsChecked != true;
         X11Box.IsEnabled = SshRadio.IsChecked == true;
-        ToolTip.SetTip(X11Box, X11Box.IsEnabled ? Strings.X11ForwardingTip : Strings.X11SshOnly);
+        ToolTip.SetTip(X11Box, X11Box.IsEnabled ? PlatformText.X11ForwardingTip : Strings.X11SshOnly);
     }
 
     /// <summary>Transfert X11 choisi (sessions SSH seulement), une fois la fenêtre validée.</summary>

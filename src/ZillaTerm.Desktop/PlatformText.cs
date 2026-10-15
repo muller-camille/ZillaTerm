@@ -32,5 +32,9 @@ public static class PlatformText
 
     public static string TailNotifyTip => Windows ? Strings.TailNotifyTip : Strings.TailNotifyTipUnix;
 
+    public static string X11ForwardingTip => Windows ? Strings.X11ForwardingTip : Strings.X11ForwardingTipUnix;
+
+    public static string X11DisplayHelp => Windows ? Strings.X11DisplayHelp : Strings.X11DisplayHelpUnix;
+
     public static string SettingsShareDirectHelp => Windows ? Strings.SettingsShareDirectHelp : Strings.SettingsShareDirectHelpUnix;
 }

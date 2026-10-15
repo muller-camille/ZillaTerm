@@ -6502,4 +6502,13 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="TailNotifyTipUnix" xml:space="preserve">
     <value>Afficher aussi une notification du bureau quand la fenêtre n'est pas au premier plan (au plus une toutes les 30 secondes). Elle donne le nombre de lignes et le nom du fichier, jamais le contenu des lignes.</value>
   </data>
+  <data name="X11NoServerUnix" xml:space="preserve">
+    <value>Transfert X11 actif, mais aucun serveur X ne répond sur l'affichage {0} de ce poste ({1}) : ouvrez une session graphique, ou indiquez son affichage dans les Paramètres.</value>
+  </data>
+  <data name="X11ForwardingTipUnix" xml:space="preserve">
+    <value>Les applications graphiques lancées sur le serveur (xclock, installeurs…) s'affichent sur le bureau de ce poste. À réserver aux serveurs de confiance : un serveur compromis pourrait voir les autres fenêtres X de ce poste et y envoyer des frappes.</value>
+  </data>
+  <data name="X11DisplayHelpUnix" xml:space="preserve">
+    <value>Le serveur X de la session de ce poste : « :0 » (ou celui de la variable DISPLAY) est son socket local, avec le cookie de la session. Le transfert X11 se coche serveur par serveur (Propriétés ou Options avancées).</value>
+  </data>
 </root>

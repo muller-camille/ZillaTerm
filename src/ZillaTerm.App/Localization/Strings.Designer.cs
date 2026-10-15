@@ -19408,5 +19408,32 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("TailNotifyTipUnix", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to X11 forwarding active, but no X server answers on display {0} of this computer ({1}): open a graphical session, or set its display in the Settings..
+        /// </summary>
+        public static string X11NoServerUnix {
+            get {
+                return ResourceManager.GetString("X11NoServerUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Graphical applications started on the server (xclock, installers…) show on this computer's desktop. Only for trusted servers: a compromised server could see the other X windows on this computer and send keystrokes to them..
+        /// </summary>
+        public static string X11ForwardingTipUnix {
+            get {
+                return ResourceManager.GetString("X11ForwardingTipUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The X server of this computer's session: “:0” (or the one of the DISPLAY variable) is its local socket, with the session cookie. X11 forwarding is turned on server by server (Properties or Advanced options)..
+        /// </summary>
+        public static string X11DisplayHelpUnix {
+            get {
+                return ResourceManager.GetString("X11DisplayHelpUnix", resourceCulture);
+            }
+        }
     }
 }

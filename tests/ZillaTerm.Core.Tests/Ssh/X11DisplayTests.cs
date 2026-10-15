@@ -23,6 +23,19 @@ public class X11DisplayTests
         Assert.Equal(screen, display.Screen);
     }
 
+    /// <summary>Sans hôte, sous Linux et les autres Unix : le socket local du serveur X.</summary>
+    [Theory]
+    [InlineData(":0", true, "/tmp/.X11-unix/X0")]
+    [InlineData(":12.1", true, "/tmp/.X11-unix/X12")]
+    [InlineData("localhost:1", false, "/tmp/.X11-unix/X1")]
+    [InlineData("127.0.0.1:0", false, "/tmp/.X11-unix/X0")]
+    public void DisplaysWithoutHostUseTheLocalSocket(string text, bool omitted, string socket)
+    {
+        Assert.True(X11Display.TryParse(text, out var display));
+        Assert.Equal(omitted, display.HostOmitted);
+        Assert.Equal(socket, display.UnixSocketPath);
+    }
+
     /// <summary>
     /// Un serveur X sur une autre machine recevrait les fenêtres et les frappes en clair : refusé, comme une adresse
     /// incomplète ou un numéro hors des ports TCP.

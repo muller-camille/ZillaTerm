@@ -127,7 +127,7 @@ public partial class ConnectDialog : DialogWindow
 
         // Transfert X11 : sessions SSH seulement (ni PSM, ni fichiers seuls).
         X11Box.IsEnabled = SshRadio.IsChecked == true;
-        ToolTip.SetTip(X11Box, X11Box.IsEnabled ? Strings.X11ForwardingTip : Strings.X11SshOnly);
+        ToolTip.SetTip(X11Box, X11Box.IsEnabled ? PlatformText.X11ForwardingTip : Strings.X11SshOnly);
         UpdateSshHint();
     }
 

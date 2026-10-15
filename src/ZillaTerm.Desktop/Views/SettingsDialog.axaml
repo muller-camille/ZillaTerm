@@ -375,7 +375,7 @@
                             <Label Content="{x:Static loc:Strings.X11DisplayLabel}" Target="{Binding #X11DisplayBox}" />
                             <TextBox Grid.Column="1" x:Name="X11DisplayBox" VerticalContentAlignment="Center" />
                         </Grid>
-                        <TextBlock Classes="OptionHelp" Text="{x:Static loc:Strings.X11DisplayHelp}" />
+                        <TextBlock Classes="OptionHelp" Text="{x:Static loc:PlatformText.X11DisplayHelp}" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
