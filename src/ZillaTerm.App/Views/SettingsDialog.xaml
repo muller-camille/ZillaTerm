@@ -188,7 +188,11 @@
                         <CheckBox x:Name="KeepAliveBox" Margin="0,0,0,2">
                             <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.KeepAlive}" />
                         </CheckBox>
-                        <TextBlock Style="{StaticResource OptionEffect}" Text="{x:Static loc:Strings.SettingsKeepAliveEffect}" Margin="20,0,0,16" />
+                        <TextBlock Style="{StaticResource OptionEffect}" Text="{x:Static loc:Strings.SettingsKeepAliveEffect}" Margin="20,0,0,10" />
+                        <CheckBox x:Name="KeepAccountListCopyBox" Margin="0,0,0,2">
+                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.KeepAccountListCopy}" />
+                        </CheckBox>
+                        <TextBlock Style="{StaticResource OptionHelp}" Margin="22,0,0,16" Text="{x:Static loc:Strings.KeepAccountListCopyHelp}" />
 
                         <TextBlock Text="{x:Static loc:Strings.SettingsSshSection}" Style="{StaticResource SectionTitle}" />
                         <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,10"

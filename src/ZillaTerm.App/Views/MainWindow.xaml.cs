@@ -56,6 +56,9 @@ public partial class MainWindow : Window
 
     // Comptes du PVWA chargés au moins une fois : avant, un compte absent n'est pas encore un compte disparu.
     private bool _accountsLoaded;
+
+    /// <summary>Rechargement demandé pendant un chargement : fait une fois celui-ci terminé.</summary>
+    private bool _reloadQueued;
     private bool _connecting;
 
     // Session en cours d'ouverture (« compte@serveur ») : nommée quand une autre connexion doit attendre.
@@ -275,53 +278,97 @@ public partial class MainWindow : Window
 
     // ===================== Chargement et filtre =====================
 
+    /// <summary>
+    /// Charge les comptes du PVWA. À la première fois, la copie de la dernière liste (<see cref="AccountListCopy"/>) est
+    /// affichée aussitôt, puis remplacée d'un coup par la liste relue ; sans copie, la liste se remplit page par page
+    /// (redessinée au plus une fois par seconde). Une liste déjà affichée (copie, F5) reste en place jusqu'à la nouvelle,
+    /// sélection, dossiers ouverts et défilement gardés. Seule une liste complète devient la nouvelle copie.
+    /// </summary>
     private async Task LoadAccountsAsync()
     {
-        if (_loading || IsOffline)
+        if (IsOffline)
         {
+            return;
+        }
+
+        if (_loading)
+        {
+            // Compte créé ou modifié pendant une mise à jour (longue sur un gros coffre) : la liste est relue ensuite.
+            _reloadQueued = true;
             return;
         }
 
         _loading = true;
         _loadFailed = false;
-        RefreshRecent();
+        _loadError = null;
+        var loadWatch = System.Diagnostics.Stopwatch.StartNew();
         CommandManager.InvalidateRequerySuggested();
         LoadProgress.Value = 0;
         LoadProgress.IsIndeterminate = true;
         LoadProgress.Visibility = Visibility.Visible;
-        CountText.Text = Strings.LoadingAccounts;
-        _loadError = null;
+        SetLoadingText(0, 0);
         UpdateAvailableState();
-
-        bool reload = false;
-        var progress = new Progress<(int Loaded, int Total)>(p =>
+        ApplyAccountCopySetting();
+        if (!_accountsLoaded && _accounts.Count == 0 && _settings.KeepAccountListCopy
+            && await ReadAccountCopyAsync() is { } copy && !_accountsLoaded && _accounts.Count == 0)
         {
+            _listFromCopy = copy.SavedUtc;
+            ShowAccounts(copy.Accounts, keepView: false);
+            SetLoadingText(0, 0);
+            RefreshSaved();
+            RefreshQuickResults();
+        }
+
+        RefreshRecent();
+
+        // Rien d'affiché : la liste se remplit au fur et à mesure des pages.
+        bool progressive = _accounts.Count == 0;
+        var partial = new List<PvwaAccount>();
+        var sinceShown = System.Diagnostics.Stopwatch.StartNew();
+        bool reload = false, received = false, loaded = false;
+        var progress = new Progress<ListPage<PvwaAccount>>(p =>
+        {
+            // Avis d'une page arrivé après la liste complète : elle ne doit pas être remplacée par une liste partielle.
+            if (!_loading || received)
+            {
+                return;
+            }
+
             LoadProgress.IsIndeterminate = false;
             LoadProgress.Maximum = Math.Max(p.Total, 1);
             LoadProgress.Value = p.Loaded;
-            CountText.Text = Text.Format(Strings.LoadingAccountsProgress, p.Loaded, p.Total);
+            if (progressive)
+            {
+                partial.AddRange(p.Items);
+                // Dernière page : la liste complète est affichée juste après.
+                if (p.Loaded < p.Total && (partial.Count == p.Items.Count || sinceShown.Elapsed >= ProgressiveRedraw))
+                {
+                    ShowAccounts([.. partial], keepView: true);
+                    sinceShown.Restart();
+                }
+            }
+
+            SetLoadingText(p.Loaded, p.Total);
         });
 
+        var previous = _accounts;
         try
         {
             var accounts = await Client.GetAccountsAsync(progress, _lifetime.Token);
-            accounts.Sort((a, b) =>
+            received = true;
+            _listFromCopy = null;
+            _accountsLoaded = true;
+            ShowAccounts(accounts, keepView: true);
+            // Liste déjà affichée (copie, F5) remplacée : ce qui a changé, dit une fois.
+            if (!progressive && previous.Count > 0)
             {
-                int c = StringComparer.OrdinalIgnoreCase.Compare(a.Address, b.Address);
-                return c != 0 ? c : StringComparer.OrdinalIgnoreCase.Compare(a.UserName, b.UserName);
-            });
-            _accounts = accounts;
-            _domains = KnownDomains.From(accounts.Select(a => a.Address).Append(PvwaHost), WorkstationDomains(),
-                accounts.Where(AccountClassifier.TargetsServer).Select(a => a.Address).Append(PvwaHost));
-            _byId = [];
-            foreach (var a in accounts)
-            {
-                _byId.TryAdd(a.Id, a);
+                var (added, removed) = AccountListCopy.Difference(previous, accounts);
+                if (added + removed > 0)
+                {
+                    SetStatus(Text.Format(Strings.AccountListUpdated, added, removed));
+                }
             }
 
-            _current = null;
-            _accountsLoaded = true;
-            ApplyFilter();
             SessionLibrary.MigrateFavorites(_settings, _byId, Client.BaseUri.Host);
             SaveSettings();
             RefreshSaved();
@@ -329,6 +376,10 @@ public partial class MainWindow : Window
             RefreshQuickResults();
             UpdateWelcome();
             UpdateActions();
+            SaveAccountCopy(accounts);
+            loaded = true;
+            DebugLog.Write("comptes", string.Create(CultureInfo.InvariantCulture,
+                $"{accounts.Count} comptes chargés en {loadWatch.ElapsedMilliseconds} ms ({(progressive ? "page par page" : "liste déjà affichée remplacée")})"));
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
@@ -336,11 +387,11 @@ public partial class MainWindow : Window
         }
         catch (PvwaException ex) when (ex.IsUnauthorized)
         {
+            DropPartialList(progressive);
             reload = Reconnect(userAction: true);
             if (!reload)
             {
                 // Plus tard : la liste le dit, « Réessayer » (ou F5) propose à nouveau de se reconnecter.
-                CountText.Text = Strings.LoadFailedShort;
                 _loadFailed = true;
                 RefreshRecent();
                 _loadError = Strings.KeepAliveExpired;
@@ -348,11 +399,12 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            CountText.Text = Strings.LoadFailedShort;
+            DropPartialList(progressive);
             // Un clic sur une connexion récente expliquera alors que les comptes n'ont pas pu être chargés.
             _loadFailed = true;
             RefreshRecent();
-            // Dit sur place, dans la liste, avec « Réessayer » ; et dans la barre d'état si l'on est ailleurs.
+            // Dit sur place, dans la liste, avec « Réessayer » ; et dans la barre d'état si l'on est ailleurs. Une liste
+            // déjà affichée (copie, F5) reste en place.
             _loadError = ErrorText.Describe(ex);
             SetStatus(Text.Format(Strings.AvailableLoadFailed, _loadError), isError: true);
         }
@@ -361,45 +413,123 @@ public partial class MainWindow : Window
             _loading = false;
             LoadProgress.Visibility = Visibility.Collapsed;
             CommandManager.InvalidateRequerySuggested();
+            UpdateCount();
             UpdateAvailableState();
             UpdateCountVisibility();
         }
 
-        if (reload)
+        // Rechargement demandé entre-temps : seulement après un chargement réussi (un échec attend « Réessayer » ou F5).
+        bool queued = _reloadQueued && loaded;
+        _reloadQueued = false;
+        if (reload || queued)
         {
             await LoadAccountsAsync();
         }
     }
 
-    private void ApplyFilter()
+    /// <summary>Liste remplie page par page, au plus une fois par cet intervalle (une page de 1 000 comptes = une requête).</summary>
+    private static readonly TimeSpan ProgressiveRedraw = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// Chargement page par page interrompu : la liste incomplète n'est pas gardée (un compte manquant passerait pour
+    /// disparu) ; elle redevient vide, avec l'erreur et « Réessayer ».
+    /// </summary>
+    private void DropPartialList(bool progressive)
+    {
+        if (progressive && _accounts.Count > 0)
+        {
+            ShowAccounts([], keepView: false);
+        }
+    }
+
+    /// <summary>
+    /// Affiche <paramref name="accounts"/> (triés ici) dans « Disponibles » et la connexion rapide. La cible des boutons
+    /// suit le même compte dans la nouvelle liste (ou disparaît avec lui) ; <paramref name="keepView"/> : sélection,
+    /// dossiers ouverts et défilement de l'arbre gardés.
+    /// </summary>
+    private void ShowAccounts(List<PvwaAccount> accounts, bool keepView)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        accounts.Sort((a, b) =>
+        {
+            int c = StringComparer.OrdinalIgnoreCase.Compare(a.Address, b.Address);
+            return c != 0 ? c : StringComparer.OrdinalIgnoreCase.Compare(a.UserName, b.UserName);
+        });
+        _accounts = accounts;
+        _domains = KnownDomains.From(accounts.Select(a => a.Address).Append(PvwaHost), WorkstationDomains(),
+            accounts.Where(AccountClassifier.TargetsServer).Select(a => a.Address).Append(PvwaHost));
+        _byId = [];
+        foreach (var a in accounts)
+        {
+            _byId.TryAdd(a.Id, a);
+        }
+
+        if (_current is { } current && !ReferenceEquals(_byId.GetValueOrDefault(current.Id), current))
+        {
+            SetCurrent(_byId.GetValueOrDefault(current.Id), _currentSaved);
+        }
+
+        ApplyFilter(keepView);
+        UpdateWelcome();
+        DebugLog.Write("comptes", string.Create(CultureInfo.InvariantCulture,
+            $"{accounts.Count} comptes affichés en {watch.ElapsedMilliseconds} ms (tri, domaines, filtre, arbre)"));
+    }
+
+    private void ApplyFilter() => ApplyFilter(keepView: false);
+
+    private void ApplyFilter(bool keepView)
     {
         _query = SearchBox.Text;
         _shown = _accounts.Where(a => AccountFilter.Matches(a, _query)).ToList();
-        RebuildTree();
+        RebuildTree(keepView);
         UpdateCount();
         UpdateAvailableState();
     }
 
-    private void RebuildTree()
+    private void RebuildTree(bool keepView = false)
     {
         var groups = AccountGrouping.Group(_shown, _settings.GroupBy);
         bool expand = _query.Trim().Length > 0 || groups.Count == 1;
+        var view = keepView ? TreeViewState.Save(SessionTree, _pendingTreeView) : null;
         // Comptes du même nom dans un dossier : ce qui les distingue ; pendant une recherche, le champ caché qui correspond.
-        SessionTree.ItemsSource = groups
+        var folders = groups
             .Select(g =>
             {
                 var distinctions = AccountGrouping.Distinctions(g.Accounts);
-                return new FolderNode(g.Name, g.Accounts.Select(a => new AccountNode(a, distinctions.GetValueOrDefault(a), _query, g.Name)).ToList(), expand);
+                return new FolderNode(g.Name, g.Accounts.Select(a => new AccountNode(a, distinctions.GetValueOrDefault(a), _query, g.Name)).ToList(),
+                    expand || view?.Expanded.Contains(g.Name) == true);
             })
             .ToList();
+        if (view is null)
+        {
+            _pendingTreeView = null;
+            SessionTree.ItemsSource = folders;
+            return;
+        }
+
+        // Liste remplacée sous les yeux : la sélection qui disparaît de l'arbre ne change pas la cible des boutons.
+        _pendingTreeView = view;
+        _keepingTreeView = true;
+        try
+        {
+            SessionTree.ItemsSource = folders;
+        }
+        finally
+        {
+            _keepingTreeView = false;
+        }
+
+        _ = Dispatcher.BeginInvoke(() => RestoreTreeView(view, folders), DispatcherPriority.Loaded);
     }
 
     private void UpdateCount()
     {
         int shown = _shown.Count;
-        CountText.Text = shown == _accounts.Count
-            ? Text.Format(Strings.AccountCount, _accounts.Count)
-            : Text.Format(Strings.AccountCountFiltered, shown, _accounts.Count);
+        CountText.Text = _loading ? _loadingText
+            : _accounts.Count == 0 && _loadFailed ? Strings.LoadFailedShort
+            : shown != _accounts.Count ? Text.Format(Strings.AccountCountFiltered, shown, _accounts.Count)
+            : _listFromCopy is { } saved ? Text.Format(Strings.AccountCountFromCopy, _accounts.Count, CopyDateText(saved))
+            : Text.Format(Strings.AccountCount, _accounts.Count);
     }
 
     /// <summary>Message à la place de la liste vide : chargement, échec, aucun compte, aucun résultat pour le filtre.</summary>
@@ -460,7 +590,8 @@ public partial class MainWindow : Window
     /// </summary>
     private void RefreshRecent()
     {
-        bool usable = _accountsLoaded || _loadFailed;
+        // Liste de la dernière connexion affichée : les connexions récentes s'y retrouvent déjà.
+        bool usable = _accountsLoaded || _loadFailed || _listFromCopy is not null;
         // Seulement celles de ce PVWA : ailleurs, le même ID de compte désigne un autre compte.
         var recent = _settings.Recent.Where(r => r.IsForHost(PvwaHost)).ToList();
         RecentList.ItemsSource = recent;
@@ -489,6 +620,8 @@ public partial class MainWindow : Window
         QuickResults.ItemsSource = results;
         QuickResults.Visibility = results.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         QuickInfo.Text = !_accountsLoaded && _accounts.Count == 0 ? (_loading ? Strings.LoadingAccounts : Strings.LoadFailedShort)
+            // Liste encore incomplète (page par page) ou en cours de mise à jour : le compte peut encore arriver.
+            : results.Count == 0 && _loading && !_accountsLoaded ? Strings.LoadingAccounts
             : results.Count == 0 ? Text.Format(Strings.AvailableNoMatch, text.Trim())
             : matches.Count > results.Count ? Text.Format(Strings.QuickFirstResults, results.Count, matches.Count)
             : "";
@@ -685,7 +818,13 @@ public partial class MainWindow : Window
     /// <summary>Infobulle d'un bouton grisé : ce qu'il fait, puis ce qui manque pour qu'il soit actif.</summary>
     private static string WithReason(string tip, string reason) => tip + "\n" + reason;
 
-    private void OnTreeSelectionChanged(object sender, RoutedPropertyChangedEventArgs<object> e) => SetCurrentFrom(e.NewValue);
+    private void OnTreeSelectionChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    {
+        if (!_keepingTreeView)
+        {
+            SetCurrentFrom(e.NewValue);
+        }
+    }
 
     private void OnListSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -1686,6 +1825,7 @@ public partial class MainWindow : Window
             Palette.Choose(Application.Current, _settings.Theme);
             UpdateActions();
             StartKeepAlive();
+            ApplyAccountCopySetting();
             ApplySharingSettings();
             SetStatus(_settings.Language == language ? Strings.SettingsSaved : Strings.SettingsSavedLanguage);
             // Nouveau fichier central : proposé tout de suite plutôt qu'au prochain démarrage.

@@ -6469,4 +6469,25 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="InterventionReportPauseMarker" xml:space="preserve">
     <value>Affichage en pause de {0} à {1} ({2})</value>
   </data>
+  <data name="KeepAccountListCopy" xml:space="preserve">
+    <value>Afficher tout de suite la liste des comptes à la connexion (copie _chiffrée de la dernière liste sur ce poste)</value>
+  </data>
+  <data name="KeepAccountListCopyHelp" xml:space="preserve">
+    <value>La liste de la dernière connexion s'affiche aussitôt, puis elle est relue au PVWA en arrière-plan et remplacée d'un coup. La copie ne contient aucun mot de passe ; elle est chiffrée pour votre compte Windows, propre à chaque PVWA et utilisateur, et supprimée après 30 jours. Décochée : les copies sont supprimées.</value>
+  </data>
+  <data name="EnvKeepAccountListCopy" xml:space="preserve">
+    <value>Afficher tout de suite la liste des comptes (copie chiffrée sur le poste)</value>
+  </data>
+  <data name="AccountsFromCopy" xml:space="preserve">
+    <value>Liste du {0} : mise à jour…</value>
+  </data>
+  <data name="AccountsFromCopyProgress" xml:space="preserve">
+    <value>Liste du {0} : mise à jour {1:N0} / {2:N0}</value>
+  </data>
+  <data name="AccountCountFromCopy" xml:space="preserve">
+    <value>Comptes : {0:N0} (liste du {1}, pas mise à jour)</value>
+  </data>
+  <data name="AccountListUpdated" xml:space="preserve">
+    <value>Liste des comptes à jour : {0:# nouveau|# nouveaux}, {1:# retiré|# retirés}.</value>
+  </data>
 </root>
