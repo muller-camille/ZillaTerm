@@ -9,13 +9,6 @@ using ZillaTerm.Core.Ssh;
 namespace ZillaTerm.App.Services;
 
 /// <summary>
-/// Question du serveur pendant l'authentification, telle que la fenêtre de question (PromptDialog) la reçoit : les
-/// paramètres de son constructeur, dans le même ordre, et son titre (null : celui par défaut).
-/// </summary>
-internal sealed record SshPromptRequest(string Instruction, string Prompt, bool Echo, string? Session, string? Hint, bool Direct,
-    string? Refused, bool OfferShare, string? Title);
-
-/// <summary>
 /// Questions posées par SSH.NET pendant la connexion (clé d'hôte, mot de passe, code MFA), relayées sur le thread de
 /// l'interface. <paramref name="direct"/> : serveur joint directement (accès d'urgence) plutôt que le PSMP.
 /// <paramref name="context"/> : session qui pose la question (plusieurs peuvent s'ouvrir ensemble).
@@ -27,13 +20,6 @@ internal sealed record SshPromptRequest(string Instruction, string Prompt, bool 
 internal sealed class SshInteraction(Window owner, AppSettings settings, Action saveSettings, bool direct = false, string? context = null)
     : ISshInteraction
 {
-    /// <summary>
-    /// Affiche la question du serveur (PromptDialog, portée avec les autres dialogues) et rend la réponse, ou null si
-    /// l'utilisateur annule ; fournie au démarrage par l'application. Sans elle, la question est annulée (la connexion
-    /// échoue) : aucune réponse n'est inventée.
-    /// </summary>
-    internal static Func<Window, SshPromptRequest, Task<SshAnswer?>>? ShowPrompt { get; set; }
-
     /// <summary>Les mêmes questions, nommant la session <paramref name="session"/> (« compte → cible »).</summary>
     public SshInteraction For(string session) => new(owner, settings, saveSettings, direct, session);
 
@@ -149,14 +135,14 @@ internal sealed class SshInteraction(Window owner, AppSettings settings, Action 
             string? hint = SshConnector.IsPasswordPrompt(question.Prompt) && !question.Echo
                 ? (direct ? Strings.PromptHintPassword : Strings.PromptHintVaultPassword)
                 : !direct && LooksLikeOneTimeCode(question.Prompt) ? Strings.PromptHintMfa : null;
-            if (ShowPrompt is not { } show)
+            var dialog = new PromptDialog(question.Instruction, question.Prompt, question.Echo, context, hint, direct, question.Refused,
+                question.OfferShare);
+            if (direct)
             {
-                DebugLog.Write("ssh", "Question du serveur sans fenêtre pour y répondre (PromptDialog non fournie) : annulée");
-                return null;
+                dialog.Title = Strings.PromptTitleServer;
             }
 
-            return await show(owner, new SshPromptRequest(question.Instruction, question.Prompt, question.Echo, context, hint, direct,
-                question.Refused, question.OfferShare, direct ? Strings.PromptTitleServer : null));
+            return await dialog.ShowDialogAsync(owner) ? new SshAnswer(dialog.Answer, dialog.Share) : null;
         });
 
     private static bool LooksLikeOneTimeCode(string prompt) =>

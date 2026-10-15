@@ -5,9 +5,6 @@
                     x:Class="ZillaTerm.App.Views.TransferHistoryDialog"
                     Title="{x:Static loc:Strings.HistoryTitle}" Width="1100" Height="540" MinWidth="640" MinHeight="300">
     <views:DialogWindow.Styles>
-        <!-- Thème du DataGrid d'Avalonia et aspect des grilles de ZillaTerm : à déplacer dans App.axaml. -->
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-        <StyleInclude Source="avares://ZillaTerm/Themes/DataGridLook.axaml" />
         <!-- Texte tronqué (« … ») et complet dans l'infobulle : serveur, élément et destination peuvent être longs. -->
         <Style Selector="DataGrid#RecordsGrid DataGridCell TextBlock">
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -43,7 +40,7 @@
         </DockPanel>
 
         <Panel>
-            <DataGrid x:Name="RecordsGrid" SelectionMode="Single" DoubleTapped="OnRowDoubleClick" />
+            <DataGrid x:Name="RecordsGrid" Classes="Records" SelectionMode="Single" DoubleTapped="OnRowDoubleClick" />
             <TextBlock x:Name="EmptyText" Text="{x:Static loc:Strings.HistoryEmpty}" Classes="Muted"
                        HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False" />
         </Panel>

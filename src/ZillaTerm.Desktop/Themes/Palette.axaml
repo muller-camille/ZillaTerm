@@ -55,6 +55,11 @@
             <SolidColorBrush x:Key="DangerFocusBrush" Color="#1F2933" />
             <SolidColorBrush x:Key="GridLineBrush" Color="#E5E9EE" />
             <SolidColorBrush x:Key="AlternateRowBrush" Color="#F7F9FC" />
+            <!-- Tableaux (DataGrid) : en-têtes et cadre comme ceux de Windows sous WPF (thème clair). -->
+            <SolidColorBrush x:Key="FieldBorderBrush" Color="#ABADB3" />
+            <SolidColorBrush x:Key="HeaderBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="HeaderHoverBrush" Color="#E5F1FB" />
+            <SolidColorBrush x:Key="HeaderBorderBrush" Color="#D5D5D5" />
             <SolidColorBrush x:Key="CodeBrush" Color="#F3F5F7" />
             <SolidColorBrush x:Key="CodeBorderBrush" Color="#D5DCE3" />
             <SolidColorBrush x:Key="DiffRemovedBrush" Color="#FDE2E1" />

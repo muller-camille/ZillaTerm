@@ -5,10 +5,6 @@
                     x:Class="ZillaTerm.App.Views.SafeMembersDialog"
                     Title="{x:Static loc:Strings.SafeMembersTitle}" Width="1000" Height="560" MinWidth="600" MinHeight="320">
     <Window.Styles>
-        <!-- Thème du tableau (Avalonia.Controls.DataGrid) : à déplacer dans App.axaml, pour toutes les fenêtres. -->
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-        <!-- Densité des tableaux de l'application WPF, lignes alternées. -->
-        <StyleInclude Source="avares://ZillaTerm/Themes/AccountsDataGrid.axaml" />
         <!-- Droits en colonnes : « ✓ » centré. -->
         <Style Selector="DataGridCell.Check">
             <Setter Property="HorizontalContentAlignment" Value="Center" />

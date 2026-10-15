@@ -37,7 +37,7 @@ depuis `ZillaTerm.App` (WPF), qui reste l'application publiée pour Windows tant
 | `Loaded` (premier affichage d'une fenêtre) | `Opened` |
 | `FindResource("X")` | `this.TryFindResource("X", out var value)` |
 | `SetResourceReference(prop, "X")` | `control[!prop] = control.GetResourceObservable("X").ToBinding()` |
-| `ListView` + `GridView` | `DataGrid` (`Avalonia.Controls.DataGrid`) ou `ListBox` à modèle en colonnes |
+| `ListView` + `GridView` | `DataGrid` (`Avalonia.Controls.DataGrid`, thème commun `Themes/DataGrid.axaml` chargé par App.axaml ; `Classes="Records"` pour un historique en lecture seule ; colonnes liées en `Mode=OneWay` : le DataGrid lie dans les deux sens par défaut) ou `ListBox` à modèle en colonnes |
 | `x:Name` | `x:Name` (champ généré, comme en WPF) |
 | `Window.GetWindow(control)` | `TopLevel.GetTopLevel(control) as Window` |
 | `ActualWidth` / `ActualHeight` | `Bounds.Width` / `Bounds.Height` |

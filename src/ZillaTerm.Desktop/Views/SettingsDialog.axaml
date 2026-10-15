@@ -7,8 +7,6 @@
                     Title="{x:Static loc:Strings.SettingsTitle}"
                     Width="780" Height="560" MinWidth="640" MinHeight="420">
     <views:DialogWindow.Styles>
-        <!-- Tableaux : thème du paquet Avalonia.Controls.DataGrid (Fluent), resserré. -->
-        <StyleInclude Source="avares://ZillaTerm/Themes/CompactDataGrid.axaml" />
         <!-- Libellés des champs : alignés sur le champ, comme sous Windows. -->
         <Style Selector="Label">
             <Setter Property="Padding" Value="0,3,8,3" />

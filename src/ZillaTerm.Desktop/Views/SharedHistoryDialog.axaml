@@ -5,9 +5,6 @@
                     x:Class="ZillaTerm.App.Views.SharedHistoryDialog"
                     Width="900" Height="540" MinWidth="560" MinHeight="300">
     <views:DialogWindow.Styles>
-        <!-- Thème du DataGrid d'Avalonia et aspect des grilles de ZillaTerm : à déplacer dans App.axaml. -->
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-        <StyleInclude Source="avares://ZillaTerm/Themes/DataGridLook.axaml" />
         <!-- Onglets d'un dialogue (comme les pages des Paramètres sous WPF) : en-têtes à la taille du texte, contenu encadré. -->
         <Style Selector="TabControl#Tabs TabItem">
             <Setter Property="FontSize" Value="12" />
@@ -33,7 +30,7 @@
         <!-- Liaisons à sens unique : le DataGrid d'Avalonia lie ses colonnes dans les deux sens par défaut. -->
         <TabControl x:Name="Tabs">
             <TabItem Header="{x:Static loc:Strings.SharedHistoryChangesTab}">
-                <DataGrid x:Name="ChangesGrid" SelectionMode="Extended" x:CompileBindings="False">
+                <DataGrid x:Name="ChangesGrid" Classes="Records" SelectionMode="Extended" x:CompileBindings="False">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="{x:Static loc:Strings.SharedColRevision}" Binding="{Binding Revision, Mode=OneWay}" Width="70" />
                         <DataGridTextColumn Header="{x:Static loc:Strings.HistoryColTime}" Binding="{Binding Date, Mode=OneWay}" Width="130" />
@@ -47,7 +44,7 @@
             <TabItem x:Name="VersionsTab" Header="{x:Static loc:Strings.SharedHistoryVersionsTab}">
                 <DockPanel>
                     <TextBlock x:Name="VersionsNote" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="2,6,2,6" Classes="Muted" />
-                    <DataGrid x:Name="VersionsGrid" SelectionMode="Single" SelectionChanged="OnVersionSelected" x:CompileBindings="False">
+                    <DataGrid x:Name="VersionsGrid" Classes="Records" SelectionMode="Single" SelectionChanged="OnVersionSelected" x:CompileBindings="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="{x:Static loc:Strings.SharedColRevision}" Binding="{Binding Revision, Mode=OneWay}" Width="70" />
                             <DataGridTextColumn Header="{x:Static loc:Strings.SharedColSaved}" Binding="{Binding Date, Mode=OneWay}" Width="130" />

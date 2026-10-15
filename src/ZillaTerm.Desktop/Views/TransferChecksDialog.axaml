@@ -5,9 +5,6 @@
                     x:Class="ZillaTerm.App.Views.TransferChecksDialog"
                     Title="{x:Static loc:Strings.ChecksTitle}" Width="1240" Height="460" MinWidth="640" MinHeight="260">
     <views:DialogWindow.Styles>
-        <!-- Thème du DataGrid d'Avalonia et aspect des grilles de ZillaTerm : à déplacer dans App.axaml. -->
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-        <StyleInclude Source="avares://ZillaTerm/Themes/DataGridLook.axaml" />
         <!-- Vert si identique, rouge si différent, orange si non vérifié. -->
         <Style Selector="TextBlock.ResultText">
             <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
@@ -36,6 +33,6 @@
             <TextBlock x:Name="CopiedText" Classes="Muted" VerticalAlignment="Center" Margin="0,0,12,0" />
         </DockPanel>
 
-        <DataGrid x:Name="ChecksGrid" SelectionMode="Extended" />
+        <DataGrid x:Name="ChecksGrid" Classes="Records" SelectionMode="Extended" />
     </DockPanel>
 </views:DialogWindow>

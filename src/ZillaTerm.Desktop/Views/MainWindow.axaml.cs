@@ -1611,7 +1611,7 @@ public partial class MainWindow : Window
     {
         var language = _settings.Language;
         var centralFile = _settings.EnvironmentFile;
-        var dialog = new SettingsDialog(_settings, _keePass.Store);
+        var dialog = new SettingsDialog(_settings, _keePass.Store, ShowLocalStoreFromSettingsAsync);
         if (sharing)
         {
             dialog.ShowSharingPage();
@@ -1623,12 +1623,8 @@ public partial class MainWindow : Window
         if (accepted)
         {
             SaveSettings();
+            // Le thème de l'interface est appliqué par la fenêtre des paramètres elle-même.
             ApplyTerminalAppearance();
-            if (Application.Current is { } app)
-            {
-                Palette.Choose(app, _settings.Theme);
-            }
-
             UpdateActions();
             StartKeepAlive();
             ApplySharingSettings();

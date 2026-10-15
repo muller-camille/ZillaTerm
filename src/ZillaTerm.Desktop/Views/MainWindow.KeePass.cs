@@ -247,6 +247,27 @@ public partial class MainWindow
     }
 
     /// <summary>
+    /// Paramètres, page KeePass : créer, déverrouiller le coffre local ou changer son mot de passe (la protection du
+    /// fichier est préparée d'abord, trousseau compris hors de Windows).
+    /// </summary>
+    private async Task ShowLocalStoreFromSettingsAsync(Window owner, SettingsDialog.StoreAction action)
+    {
+        if (!await PrepareLocalStoreProtectionAsync())
+        {
+            return;
+        }
+
+        var mode = action switch
+        {
+            SettingsDialog.StoreAction.Create => LocalStoreDialog.Mode.Create,
+            SettingsDialog.StoreAction.Unlock => LocalStoreDialog.Mode.Unlock,
+            _ => LocalStoreDialog.Mode.ChangePassword,
+        };
+        await new LocalStoreDialog(_keePass.Store, mode, SettingsDialog.RememberedFolderIds(_settings)).ShowDialogAsync(owner);
+        RefreshSaved();
+    }
+
+    /// <summary>
     /// Hors de Windows, la protection du coffre local passe par le trousseau du bureau : il est ouvert (et déverrouillé
     /// au besoin, par sa propre fenêtre) avant de créer ou de déverrouiller le coffre, sans bloquer l'interface. Faux,
     /// avec la raison dans la barre d'état, si le trousseau manque ou refuse.

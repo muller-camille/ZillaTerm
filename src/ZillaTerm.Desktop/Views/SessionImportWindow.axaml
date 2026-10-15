@@ -7,8 +7,6 @@
                     x:Class="ZillaTerm.App.Views.SessionImportWindow"
                     Title="{x:Static loc:Strings.SessionImportTitle}" Width="1120" Height="700" MinWidth="720" MinHeight="460">
     <views:DialogWindow.Styles>
-        <!-- Tableau : thème du paquet Avalonia.Controls.DataGrid (Fluent), resserré. -->
-        <StyleInclude Source="avares://ZillaTerm/Themes/CompactDataGrid.axaml" />
         <Style Selector="Label">
             <Setter Property="Padding" Value="0,3,8,3" />
             <Setter Property="VerticalAlignment" Value="Center" />

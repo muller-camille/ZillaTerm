@@ -5,10 +5,6 @@
                     x:Class="ZillaTerm.App.Views.ImportProgressDialog"
                     Title="{x:Static loc:Strings.ImportTitle}" Width="1000" Height="620" MinWidth="640" MinHeight="400">
     <Window.Styles>
-        <!-- Thème du tableau (Avalonia.Controls.DataGrid) : à déplacer dans App.axaml, pour toutes les fenêtres. -->
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-        <!-- Densité des tableaux de l'application WPF, lignes alternées. -->
-        <StyleInclude Source="avares://ZillaTerm/Themes/AccountsDataGrid.axaml" />
         <!-- Couleur du résultat : vert si créé, rouge si refusé ou non importé, gris si non envoyé. -->
         <Style Selector="TextBlock.ResultText.Created">
             <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />

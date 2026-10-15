@@ -1,28 +1,21 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Grilles des dialogues (historiques, sommes de contrôle) : l'aspect des DataGrid de ZillaTerm.App (Theme.xaml,
-         ThemeDark.xaml) sur le thème Fluent du DataGrid d'Avalonia. Les fenêtres l'incluent après
-         avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml (à déplacer dans App.axaml avec lui). -->
-
+    <!-- Tableaux (DataGrid, paquet Avalonia.Controls.DataGrid) : son thème Fluent, à la densité et à l'aspect des tableaux
+         de l'application WPF (texte de 12, lignes d'environ 24 px, en-têtes et filets de Windows, une ligne sur deux
+         teintée). Inclus une fois dans App.axaml pour toutes les fenêtres.
+         Attention : le DataGrid lie ses colonnes dans les deux sens par défaut ; une donnée qui ne doit pas changer est liée
+         avec Mode=OneWay (GridBinding). -->
     <Styles.Resources>
         <ResourceDictionary>
-            <!-- Pas de place réservée à la flèche de tri tant que la colonne n'est pas triée : un titre court (« Révision »)
-                 tient dans sa colonne, comme sous WPF. -->
+            <!-- Pas de place réservée à la flèche de tri tant que la colonne n'est pas triée : un titre court (« Ligne »,
+                 « Révision ») tient dans sa colonne, comme sous WPF. -->
             <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
             <Thickness x:Key="DataGridTextColumnCellTextBlockMargin">6,0</Thickness>
-            <!-- Thème clair : Palette.axaml n'a ces couleurs que pour le thème sombre (sous WPF, le thème clair garde les
-                 en-têtes et le cadre de Windows) ; celles de Windows ici, le thème sombre prend celles de Palette.axaml. -->
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="FieldBorderBrush" Color="#ABADB3" />
-                    <SolidColorBrush x:Key="HeaderBrush" Color="#FFFFFF" />
-                    <SolidColorBrush x:Key="HeaderBorderBrush" Color="#D5D5D5" />
-                    <SolidColorBrush x:Key="HeaderHoverBrush" Color="#E5F1FB" />
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Styles.Resources>
+
+    <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
     <Style Selector="DataGrid">
         <Setter Property="Background" Value="{DynamicResource ContentBrush}" />
@@ -30,6 +23,10 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
         <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
+    </Style>
+
+    <!-- Historiques et listes de résultats (lecture seule, une ligne par enregistrement) : Classes="Records". -->
+    <Style Selector="DataGrid.Records">
         <Setter Property="GridLinesVisibility" Value="Horizontal" />
         <Setter Property="HeadersVisibility" Value="Column" />
         <Setter Property="IsReadOnly" Value="True" />
@@ -37,7 +34,7 @@
         <Setter Property="ClipboardCopyMode" Value="IncludeHeader" />
     </Style>
 
-    <!-- En-têtes de colonnes : fond et filets des en-têtes de WPF, texte à la taille de la grille. -->
+    <!-- En-têtes de colonnes : fond et filets des en-têtes de WPF, texte à la taille du tableau. -->
     <Style Selector="DataGridColumnHeader">
         <Setter Property="Background" Value="{DynamicResource HeaderBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource HeaderBorderBrush}" />
@@ -50,12 +47,16 @@
         <Setter Property="Background" Value="{DynamicResource HeaderHoverBrush}" />
     </Style>
 
-    <!-- Une ligne sur deux d'un autre fond (AlternatingRowBackground de WPF). -->
+    <!-- Une ligne sur deux d'un autre fond (AlternatingRowBackground de WPF) : selon sa place, ou la classe Alternate
+         posée par LoadingRow (fenêtres des comptes). -->
     <Style Selector="DataGridRow:nth-child(2n)">
         <Setter Property="Background" Value="{DynamicResource AlternateRowBrush}" />
     </Style>
+    <Style Selector="DataGridRow.Alternate">
+        <Setter Property="Background" Value="{DynamicResource AlternateRowBrush}" />
+    </Style>
 
-    <!-- Cellules : texte à la taille de la grille, marges serrées comme sous WPF. -->
+    <!-- Cellules : texte à la taille du tableau, marges serrées comme sous WPF. -->
     <Style Selector="DataGridCell">
         <Setter Property="FontSize" Value="12" />
         <Setter Property="MinHeight" Value="24" />

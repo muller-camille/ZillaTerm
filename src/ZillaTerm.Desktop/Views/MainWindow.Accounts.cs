@@ -102,7 +102,7 @@ public partial class MainWindow
             return;
         }
 
-        var progress = new ImportProgressDialog(import, client.AddAccountAsync) ;
+        var progress = new ImportProgressDialog(import, client.AddAccountAsync);
         try
         {
             await progress.ShowDialogAsync(this);
@@ -316,7 +316,7 @@ public partial class MainWindow
         });
         var reason = _currentSaved?.AccountId == account.Id ? _currentSaved.Reason : null;
         var dialog = new RetrievePasswordDialog(label, PasswordClipboardDelay, reason,
-            (options, ct) => client.RetrievePasswordAsync(account.Id, options, ct), _passwordClipboard.Copy, account.SafeName) ;
+            (options, ct) => client.RetrievePasswordAsync(account.Id, options, ct), _passwordClipboard.CopyAsync, account.SafeName);
         if (await dialog.ShowDialogAsync(this))
         {
             InterventionRecord(Core.Interventions.InterventionKind.Action, label, Strings.InterventionPasswordCopied);
