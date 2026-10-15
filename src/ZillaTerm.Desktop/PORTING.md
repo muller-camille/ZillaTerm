@@ -56,6 +56,13 @@ Les questions deviennent asynchrones : une méthode qui en posait une (`bool Con
 ConfirmXAsync()`, et ses appelants attendent la réponse. Après un `await`, l'état a pu changer (onglet fermé entre-temps,
 déconnexion) : il est revérifié avant d'agir.
 
+La langue de l'interface (`CultureInfo.CurrentUICulture`) suit le contexte d'exécution : changée dans une méthode `async`,
+elle est défaite dès que la méthode rend la main. Elle est donc posée aussi par une opération synchrone du fil de
+l'interface (`App.ApplyLanguage`), qu'Avalonia garde pour la suite.
+
+Un élément qui était dans le XAML WPF et que le code porté crée lui-même (panneaux « Fichiers » et « Intervention » de
+la fenêtre principale) est créé dès `InitializeComponent`, avant le premier code qui s'en sert.
+
 ## Règles
 
 - Aucune fonction ne fait semblant d'exister : ce qui n'est pas encore porté n'apparaît pas, ou dit qu'il ne l'est pas.

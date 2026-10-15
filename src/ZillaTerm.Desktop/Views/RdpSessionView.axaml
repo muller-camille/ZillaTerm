@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+             xmlns:views="clr-namespace:ZillaTerm.App.Views"
+             x:Class="ZillaTerm.App.Views.RdpSessionView">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{DynamicResource MainTabBrush}" BorderBrush="{DynamicResource MainTabBorderBrush}" BorderThickness="0,0,0,1" Padding="8,3">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <!-- Intervention en cours d'enregistrement : l'écran est gardé (zones modifiées) ; image du bureau ajoutée au journal. -->
+                    <TextBlock x:Name="ScreenRecorded" Text="{x:Static loc:Strings.RdpScreenRecorded}" ToolTip.Tip="{x:Static loc:Strings.RdpScreenRecordedTip}"
+                               AutomationProperties.HelpText="{x:Static loc:Strings.RdpScreenRecordedTip}" Foreground="{DynamicResource ErrorBrush}"
+                               VerticalAlignment="Center" Margin="0,0,10,0" IsVisible="False" />
+                    <Button x:Name="CaptureButton" Content="{x:Static loc:Strings.InterventionCaptureButton}" ToolTip.Tip="{x:Static loc:Strings.InterventionCaptureButtonTip}"
+                            AutomationProperties.HelpText="{x:Static loc:Strings.InterventionCaptureButtonTip}"
+                            Click="OnCapture" Padding="10,1" Margin="0,0,6,0" IsVisible="False" />
+                    <Button x:Name="FullScreenButton" Content="{x:Static loc:Strings.RdpFullScreen}" ToolTip.Tip="{x:Static loc:Strings.RdpFullScreenTip}"
+                            Click="OnFullScreen" Padding="10,1" Margin="0,0,6,0" />
+                    <Button x:Name="DisconnectButton" Content="{x:Static loc:Strings.RdpDisconnect}" ToolTip.Tip="{x:Static loc:Strings.RdpDisconnectTip}"
+                            Click="OnDisconnect" Padding="10,1" />
+                </StackPanel>
+                <Image Source="{DynamicResource IconWindows}" Width="16" Height="16" Margin="0,0,6,0" />
+                <TextBlock x:Name="StatusLine" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+        <!-- Session partagée : au-dessus du bureau (rien d'Avalonia ne peut s'afficher par-dessus la fenêtre du client). -->
+        <views:ShareBanner x:Name="ShareBar" DockPanel.Dock="Top" />
+        <!-- Cadre de la couleur de l'étiquette du serveur (PROD, QA…), autour du bureau distant. -->
+        <Border x:Name="TagFrame" BorderThickness="0">
+        <Grid x:Name="Body" Background="#0C0C0C">
+            <!-- La fenêtre du client Bureau à distance (RdpSlot) est insérée ici ; rien d'Avalonia ne peut s'afficher par-dessus. -->
+            <!-- Fond sombre dans les deux thèmes : bouton et barre de progression du thème sombre, lisibles dessus. -->
+            <Border x:Name="Overlay" Background="#0C0C0C">
+                <ThemeVariantScope RequestedThemeVariant="Dark">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560">
+                    <Image Source="{DynamicResource IconWindows}" Width="44" Height="44" Margin="0,0,0,12" />
+                    <TextBlock x:Name="OverlayText" Foreground="White" FontSize="15" TextAlignment="Center" TextWrapping="Wrap" />
+                    <TextBlock x:Name="OverlayDetail" Foreground="#9AA5B1" TextAlignment="Center" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <!-- Connexion en cours (demande au PVWA, connexion au PSM) : jusqu'à l'affichage du bureau. -->
+                    <ProgressBar x:Name="OverlayProgress" IsIndeterminate="True" Height="4" MinHeight="4" Width="260" Margin="0,16,0,0" IsVisible="False"
+                                 AutomationProperties.LabeledBy="{Binding #OverlayText}" />
+                    <Button x:Name="ReconnectButton" Content="{x:Static loc:Strings.Reconnect}" HorizontalAlignment="Center"
+                            Padding="12,2" Margin="0,16,0,0" Click="OnReconnect" IsVisible="False" />
+                </StackPanel>
+                </ThemeVariantScope>
+            </Border>
+        </Grid>
+        </Border>
+    </DockPanel>
+</UserControl>

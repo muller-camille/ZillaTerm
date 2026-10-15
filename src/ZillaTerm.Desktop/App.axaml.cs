@@ -44,7 +44,25 @@ public partial class App : Application
                 e.Handled = true;
                 _ = ConfirmDialog.ShowMessageAsync(null, ErrorText.Describe(e.Exception), ConfirmKind.Danger);
             };
-            Dispatcher.UIThread.Post(() => _ = StartAsync(desktop));
+            Dispatcher.UIThread.Post(() => _ = RunAsync(desktop));
+        }
+    }
+
+    /// <summary>
+    /// Démarrage et sessions successives ; une erreur imprévue (fenêtre qui ne s'ouvre pas) est notée, dite, puis
+    /// l'application s'arrête : sans fenêtre, elle resterait lancée sans rien montrer.
+    /// </summary>
+    private async Task RunAsync(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        try
+        {
+            await StartAsync(desktop);
+        }
+        catch (Exception ex)
+        {
+            DebugLog.Write("app", "Erreur au démarrage ou à l'ouverture d'une fenêtre", ex);
+            await ConfirmDialog.ShowMessageAsync(null, ErrorText.Describe(ex), ConfirmKind.Danger);
+            Quit(desktop);
         }
     }
 
@@ -98,7 +116,7 @@ public partial class App : Application
         _keePass = new KeePassManager(Services.Secrets.SecretProtectors.CreateForLocalStore());
         // Verrouillage du poste : coffres verrouillés, maintien de la session PVWA suspendu, partage arrêté.
         SessionLock.Start();
-        UiLanguage.Apply(UiLanguage.Resolve(_settings.Language, _systemCulture));
+        ApplyLanguage(UiLanguage.Resolve(_settings.Language, _systemCulture));
         if (_settings.SetAsideFile is { } aside)
         {
             await ConfirmDialog.ShowMessageAsync(null,
@@ -115,13 +133,25 @@ public partial class App : Application
         await StartSessionAsync(desktop);
     }
 
+    /// <summary>
+    /// Langue de l'interface, pour la suite de cette méthode et pour tout le fil de l'interface. La langue suit le contexte
+    /// d'exécution : posée seulement ici (méthode asynchrone), elle serait défaite dès que la méthode rend la main, et
+    /// les clics traités ensuite ouvriraient leurs fenêtres dans la langue du système. Une opération synchrone du fil
+    /// de l'interface la pose donc aussi (Avalonia garde la langue qu'une telle opération change).
+    /// </summary>
+    private static void ApplyLanguage(CultureInfo culture)
+    {
+        UiLanguage.Apply(culture);
+        Dispatcher.UIThread.Post(() => UiLanguage.Apply(culture), DispatcherPriority.Send);
+    }
+
     /// <summary>Affiche l'écran de connexion puis, en cas de succès, la fenêtre principale.</summary>
     private async Task StartSessionAsync(IClassicDesktopStyleApplicationLifetime desktop)
     {
         while (true)
         {
             // Langue choisie dans les préférences (ou celle du système) : appliquée à chaque retour à l'écran de connexion.
-            UiLanguage.Apply(UiLanguage.Resolve(_settings.Language, _systemCulture));
+            ApplyLanguage(UiLanguage.Resolve(_settings.Language, _systemCulture));
             var login = new LoginWindow(_settings);
             bool ok = await login.ShowDialogAsync(null) && (login.Client is not null || login.EmergencyRequested);
             if (login.LanguageChanged)

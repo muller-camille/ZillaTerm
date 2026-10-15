@@ -1,0 +1,41 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.MultiUploadDialog"
+                    Title="{x:Static loc:Strings.MultiUploadTitle}" Width="580" SizeToContent="Height" CanResize="False">
+    <StackPanel Margin="16">
+        <TextBlock Text="{x:Static loc:Strings.MultiUploadIntro}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+        <!-- Fichiers et dossiers locaux (ajoutés par les boutons ou glissés depuis le gestionnaire de fichiers). -->
+        <DockPanel Margin="0,0,0,4">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="{x:Static loc:Strings.MultiUploadAddFiles}" Click="OnAddFiles" />
+                <Button Content="{x:Static loc:Strings.MultiUploadAddFolder}" Click="OnAddFolder" Margin="6,0,0,0" />
+                <Button x:Name="RemoveButton" Content="{x:Static loc:Strings.MultiUploadRemove}" Click="OnRemove" Margin="6,0,0,0" />
+            </StackPanel>
+            <TextBlock Text="{x:Static loc:Strings.MultiUploadFiles}" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </DockPanel>
+        <ListBox x:Name="FilesList" Height="110" SelectionMode="Multiple" DragDrop.AllowDrop="True" Margin="0,0,0,10"
+                 BorderBrush="{DynamicResource FieldBorderBrush}" BorderThickness="1"
+                 AutomationProperties.Name="{x:Static loc:Strings.MultiUploadFiles}" />
+
+        <Label Content="{x:Static loc:Strings.MultiUploadDestination}" Target="{Binding #DestinationBox}" Padding="0,0,0,4" FontWeight="SemiBold" />
+        <TextBox x:Name="DestinationBox" FontFamily="{StaticResource MonospaceFont}" ToolTip.Tip="{x:Static loc:Strings.MultiUploadDestinationTip}"
+                 Margin="0,0,0,10" />
+
+        <TextBlock Text="{x:Static loc:Strings.MultiUploadServers}" FontWeight="SemiBold" Margin="0,0,0,4" />
+        <Border BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="1" Padding="8,6" Margin="0,0,0,6">
+            <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="ServersPanel" />
+            </ScrollViewer>
+        </Border>
+        <TextBlock x:Name="ProtocolText" Classes="Muted" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+        <views:ErrorLine x:Name="ErrorText" IsVisible="False" Margin="0,0,0,8" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{x:Static loc:Strings.MultiUploadSend}" IsDefault="True" Click="OnSend" />
+            <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Margin="8,0,0,0" />
+        </StackPanel>
+    </StackPanel>
+</views:DialogWindow>

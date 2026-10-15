@@ -89,6 +89,132 @@ public partial class MainWindow
         await session.ConnectAsync();
     }
 
+    /// <summary>
+    /// Session PSM dans un onglet : l'onglet s'ouvre tout de suite, la demande au PVWA puis la connexion s'y suivent avec
+    /// leur progression. Chaque connexion (reconnexions comprises) refait une demande au PVWA : un jeton PSM ne sert
+    /// qu'une fois. Fichier que l'onglet ne sait pas ouvrir (passerelle, application distante sans client qui l'intègre) :
+    /// l'onglet est retiré et la session part dans le client externe (mstsc, ou celui du système).
+    /// </summary>
+    private async Task OpenPsmTabAsync(PvwaAccount account, ConnectRequest request, PsmConnectOptions options, SavedSession? saved,
+        string label, bool freeRdp)
+    {
+        RdpSession? session = null;
+        byte[]? first = null;
+        Exception? firstError = null;
+        string? mstscReason = null;
+        bool toMstsc = false;
+        int attempts = 0;
+        // Même mode d'affichage pour toutes les connexions de l'onglet (reconnexions comprises), et mêmes disques partagés :
+        // option décochée, aucun, même si le fichier du PVWA les demande.
+        bool dynamicResolution = _settings.PsmDynamicResolution;
+        bool drives = options.MapLocalDrives;
+        session = AddRdpTab(label, async ct =>
+        {
+            bool initial = attempts++ == 0;
+            session!.ShowStep(Strings.PsmTabRequesting);
+            DebugLog.Write("psm", initial ? PsmRequestLog(account, request, label) : $"Nouvelle demande de connexion PSM pour {label} (reconnexion)");
+            byte[] file;
+            try
+            {
+                try
+                {
+                    file = await Client.PsmConnectAsync(account.Id, options, ct);
+                }
+                catch (PvwaException e) when (e.IsUnauthorized && !initial && !ct.IsCancellationRequested)
+                {
+                    // Session CyberArk expirée (veille, reconnexion) : identification proposée, puis une nouvelle demande.
+                    // À la première connexion, ConnectAsync s'en charge (onglet retiré, connexion relancée).
+                    if (!await ReconnectAsync(userAction: true))
+                    {
+                        throw;
+                    }
+
+                    file = await Client.PsmConnectAsync(account.Id, options, ct);
+                }
+            }
+            catch (Exception e) when (initial && !ct.IsCancellationRequested)
+            {
+                // Demande annulée (onglet fermé, autre tentative lancée par « Reconnecter ») : rien à rapporter.
+                firstError = e;
+                throw;
+            }
+
+            LogRdpFile(file);
+            RdpConnectionSettings settings;
+            if (initial)
+            {
+                first = file;
+                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, drives, out mstscReason) is not { } tab)
+                {
+                    toMstsc = true;
+                    throw new RdpHandedOffException("session PSM confiée à mstsc");
+                }
+
+                settings = tab;
+            }
+            else
+            {
+                settings = RdpConnectionSettings.FromRdpFile(file);
+                if (settings.UsesGateway)
+                {
+                    throw new InvalidOperationException(Text.Format(Strings.PsmTabGateway, label));
+                }
+
+                if (settings.IsRemoteApp && !(freeRdp && FreeRdpClient.EmbedsRemoteApp))
+                {
+                    throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
+                }
+
+                settings = settings.ForPsmTab(dynamicResolution, drives);
+            }
+
+            ShowPsmAddress(session, settings.Server);
+            session.ShowStep(Text.Format(Strings.PsmTabConnecting, settings.Server));
+            return new RdpConnectionRequest(settings, null)
+            {
+                FreeRdp = freeRdp,
+                VerifyCertificate = freeRdp ? VerifyFreeRdpCertificateAsync : null,
+                // Session PSM : un PSM qui n'accepte que l'ancienne sécurité RDP est permis, sa clé épinglée.
+                VerifyServerKey = freeRdp ? VerifyFreeRdpServerKeyAsync : null,
+                KnownFingerprints = freeRdp ? KnownFreeRdpFingerprints : null,
+            };
+        }, () => ConnectAsync(account, request, saved: saved), TagOf(account, saved, request.RemoteMachine), psm: "");
+        await ConnectRdpTabAsync(session);
+
+        if (!HasRdpTab(session) || session.IsDisposed || _loggedOff)
+        {
+            // Onglet fermé pendant la demande ou la connexion, déconnexion ou fermeture : rien d'autre à faire.
+            return;
+        }
+
+        if (firstError is not null)
+        {
+            await RemoveRdpTabAsync(session);
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(firstError).Throw();
+        }
+
+        AddRecent(account, label, request.Component, request.RemoteMachine);
+        if (toMstsc && first is not null)
+        {
+            await RemoveRdpTabAsync(session);
+            LaunchPsmInMstsc(request, label, first, mstscReason);
+            return;
+        }
+
+        if (session.ControlFailed && session.ConnectedAt is null && first is not null)
+        {
+            // Client Bureau à distance inutilisable sur ce poste : rien n'a été envoyé au PSM, mstsc prend le relais.
+            DebugLog.Write("psm", $"Client Bureau à distance inutilisable ({session.Error}) : session PSM ouverte avec mstsc.");
+            var error = session.Error;
+            await RemoveRdpTabAsync(session);
+            LaunchPsmInMstsc(request, label, first, Text.Format(Strings.PsmTabFallback, label, error));
+            return;
+        }
+
+        SetStatus(Text.Format(Strings.PsmStarted, label, request.Component));
+        InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: true));
+    }
+
     private bool HasRdpTab(RdpSession session) => MainTabs.Items.OfType<TabItem>().Any(t => t.Tag == session);
 
     /// <summary>Adresse du PSM donnée par le PVWA : dans l'infobulle de l'onglet.</summary>
@@ -126,7 +252,7 @@ public partial class MainWindow
         }
 
         reason = Text.Format(Strings.PsmTabNoControl, label);
-        DebugLog.Write("psm", "Contrôle Bureau à distance absent : session PSM ouverte avec mstsc.");
+        DebugLog.Write("psm", $"Contrôle Bureau à distance absent ({FreeRdpClient.UnavailableReason}) : session PSM ouverte avec mstsc.");
         return null;
     }
 
@@ -159,9 +285,11 @@ public partial class MainWindow
             return null;
         }
 
-        if (settings.IsRemoteApp && !freeRdp)
+        if (settings.IsRemoteApp && !(freeRdp && FreeRdpClient.EmbedsRemoteApp))
         {
-            DebugLog.Write("psm", "Composant en application distante (RemoteApp), client FreeRDP absent : ouvert avec mstsc.");
+            // Le client FreeRDP du système (Linux) ouvre les fenêtres d'une application distante sur le bureau, hors de
+            // l'onglet : la session va au client externe, comme sans client FreeRDP.
+            DebugLog.Write("psm", "Composant en application distante (RemoteApp), sans client FreeRDP qui l'intègre à un onglet : ouvert avec mstsc.");
             return null;
         }
 

@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Onglet Fichiers : FileBrowserPanel (liste du serveur, file des transferts, glisser-déposer), FilesSessionView,
+    MultiUploadDialog et VirtualFileDrag (fichiers virtuels de l'Explorateur, Windows). Tout le code sans interface qu'ils
+    utilisent est dans ZillaTerm.Core ; rien n'est lié depuis ZillaTerm.App.
+  -->
+  <ItemGroup>
+    <!-- Liste des fichiers du serveur : DataGrid d'Avalonia (thème commun Themes/DataGrid.axaml, chargé par App.axaml). Retiré
+         puis ajouté : une autre partie du portage le déclare aussi. -->
+    <PackageReference Remove="Avalonia.Controls.DataGrid" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+  </ItemGroup>
+</Project>

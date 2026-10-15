@@ -1,0 +1,25 @@
+<Project>
+  <!--
+    Bureau à distance dans un onglet (Services/Rdp, RdpSessionView, WindowCapture). Code sans WPF de ZillaTerm.App lié tel
+    quel ; chaque fichier est retiré puis ajouté, pour n'être jamais compté deux fois si une autre partie le lie aussi.
+  -->
+  <ItemGroup>
+    <Compile Remove="..\ZillaTerm.App\Services\Rdp\IRdpConnection.cs" />
+    <Compile Include="..\ZillaTerm.App\Services\Rdp\IRdpConnection.cs" Link="Shared\Services\Rdp\IRdpConnection.cs" />
+    <!-- Presse-papiers de Windows dans le journal de débogage (appelé sous Windows seulement). -->
+    <Compile Remove="..\ZillaTerm.App\Services\Rdp\ClipboardState.cs" />
+    <Compile Include="..\ZillaTerm.App\Services\Rdp\ClipboardState.cs" Link="Shared\Services\Rdp\ClipboardState.cs" />
+    <!-- Écran de la session gardé pendant l'enregistrement d'une intervention (capture par WindowCapture). -->
+    <Compile Remove="..\ZillaTerm.App\Services\Rdp\RdpScreenRecorder.cs" />
+    <Compile Include="..\ZillaTerm.App\Services\Rdp\RdpScreenRecorder.cs" Link="Shared\Services\Rdp\RdpScreenRecorder.cs" />
+  </ItemGroup>
+
+  <!--
+    Client Bureau à distance FreeRDP de ZillaTerm pour Windows (tools/freerdp-download.sh), embarqué s'il est là, comme
+    dans ZillaTerm.App : sessions PSM dans un onglet. Pas dans une publication pour Linux ou macOS (le client FreeRDP 3 du
+    système sert sous Linux).
+  -->
+  <ItemGroup Condition="Exists('..\..\local-packages\freerdp\wfreerdp.exe') And ('$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('win')))">
+    <EmbeddedResource Include="..\..\local-packages\freerdp\wfreerdp.exe" LogicalName="ZillaTerm.FreeRdp.wfreerdp.exe" Visible="false" />
+  </ItemGroup>
+</Project>

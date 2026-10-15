@@ -1,0 +1,418 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:app="clr-namespace:ZillaTerm.App"
+             xmlns:corel="clr-namespace:ZillaTerm.Core.Localization;assembly=ZillaTerm.Core"
+             xmlns:ssh="clr-namespace:ZillaTerm.Core.Ssh;assembly=ZillaTerm.Core"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+             xmlns:views="clr-namespace:ZillaTerm.App.Views"
+             x:Class="ZillaTerm.App.Views.FileBrowserPanel">
+    <UserControl.Styles>
+        <!-- Liste des fichiers : l'aspect de la liste à colonnes de WPF (ListView + GridView), sans cadre, sans filets entre
+             les lignes ni une ligne sur deux teintée, lignes serrées. -->
+        <Style Selector="DataGrid#FileList">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="GridLinesVisibility" Value="None" />
+            <Setter Property="RowHeight" Value="22" />
+        </Style>
+        <Style Selector="DataGrid#FileList DataGridRow:nth-child(2n)">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="DataGrid#FileList DataGridCell">
+            <Setter Property="MinHeight" Value="22" />
+        </Style>
+        <Style Selector="DataGrid#FileList DataGridCell TextBlock">
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style Selector="DataGrid#FileList DataGridColumnHeader">
+            <Setter Property="Padding" Value="5,3" />
+        </Style>
+        <!-- Dossier survolé pendant un dépôt de fichiers : il recevra les fichiers. -->
+        <Style Selector="DataGrid#FileList DataGridRow.drop /template/ Rectangle#BackgroundRectangle">
+            <Setter Property="Fill" Value="{DynamicResource AccentLightBrush}" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
+        <!-- Résultat d'un transfert de la file : vérifié (vert), non vérifié (orange), échec ou différent (rouge), sinon discret.
+             Couleur posée par les styles (une valeur locale l'emporterait sur eux). -->
+        <Style Selector="TextBlock.QueueState">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+        </Style>
+        <Style Selector="TextBlock.QueueState.Ok">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+        <Style Selector="TextBlock.QueueState.Warning">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="TextBlock.QueueState.Error">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.Resources>
+        <app:FileIconConverter x:Key="FileIcon" />
+        <!-- Transfert de la file : sens, élément → destination, état et avancement, bouton retirer / annuler. -->
+        <DataTemplate x:Key="TransferTemplate" x:DataType="ssh:TransferItem">
+            <Grid Margin="0,4,0,0" ColumnDefinitions="Auto,*,Auto">
+                <!-- Sens : flèche dessinée (⬆ envoi, ⬇ téléchargement), même rendu quelle que soit la police. -->
+                <Path Data="{Binding Upload, Converter={x:Static views:TransferStatusConverter.Arrow}}" Fill="{DynamicResource AccentBrush}"
+                      Width="10" Height="11" Stretch="Uniform" Margin="1,3,7,0" VerticalAlignment="Top" />
+                <StackPanel Grid.Column="1">
+                    <!-- Le serveur est nommé : la file peut mêler les transferts de plusieurs onglets. -->
+                    <TextBlock TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Route, Mode=OneWay}">
+                        <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" /><Run Text=" → " /><Run Text="{Binding Target, Mode=OneWay}" />
+                    </TextBlock>
+                    <!-- Résultat gardé après la série : vérification SHA-256 ou erreur, en entier (texte replié). -->
+                    <TextBlock FontSize="11" TextWrapping="Wrap" Classes="QueueState">
+                        <TextBlock.Text>
+                            <MultiBinding Converter="{x:Static views:TransferStatusConverter.Instance}">
+                                <Binding />
+                                <Binding Path="State" />
+                                <Binding Path="Percent" />
+                                <Binding Path="Verifying" />
+                                <Binding Path="Packing" />
+                                <Binding Path="CancelRequested" />
+                                <Binding Path="FileCount" />
+                                <Binding Path="CurrentFile" />
+                                <Binding Path="Error" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                        <Classes.Ok>
+                            <MultiBinding Converter="{x:Static views:TransferOutcomeConverter.Ok}">
+                                <Binding />
+                                <Binding Path="State" />
+                            </MultiBinding>
+                        </Classes.Ok>
+                        <Classes.Warning>
+                            <MultiBinding Converter="{x:Static views:TransferOutcomeConverter.Warning}">
+                                <Binding />
+                                <Binding Path="State" />
+                            </MultiBinding>
+                        </Classes.Warning>
+                        <Classes.Error>
+                            <MultiBinding Converter="{x:Static views:TransferOutcomeConverter.Error}">
+                                <Binding />
+                                <Binding Path="State" />
+                            </MultiBinding>
+                        </Classes.Error>
+                    </TextBlock>
+                    <ProgressBar Height="4" MinHeight="4" Margin="0,2,0,0" Maximum="100" Value="{Binding Percent, Mode=OneWay}"
+                                 IsVisible="{Binding State, Converter={x:Static views:TransferStatusConverter.IsRunning}}" />
+                </StackPanel>
+                <!-- « ✕ » n'a pas de nom lisible : celui de l'action, qui suit l'état (retirer, annuler, détails). -->
+                <Button Grid.Column="2" Click="OnCancelTransfer" Margin="6,0,0,0" Padding="6,0" VerticalAlignment="Top"
+                        Content="{Binding State, Converter={x:Static views:TransferStatusConverter.ButtonText}}"
+                        ToolTip.Tip="{Binding State, Converter={x:Static views:TransferStatusConverter.ButtonTip}}"
+                        AutomationProperties.Name="{Binding State, Converter={x:Static views:TransferStatusConverter.ButtonName}}"
+                        IsEnabled="{Binding !CancelRequested}">
+                    <Button.IsVisible>
+                        <MultiBinding Converter="{x:Static views:TransferStatusConverter.ButtonVisible}">
+                            <Binding />
+                            <Binding Path="State" />
+                        </MultiBinding>
+                    </Button.IsVisible>
+                </Button>
+            </Grid>
+        </DataTemplate>
+        <ContextMenu x:Key="FileMenu" Opening="OnMenuOpened">
+            <MenuItem Tag="open" Header="{x:Static loc:Strings.FileOpen}" Click="OnOpenSelected" FontWeight="SemiBold" />
+            <MenuItem Tag="download" Header="{x:Static loc:Strings.FileDownload}" Click="OnDownload">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDownload}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <!-- Raccourcis affichés à droite (F4, F2, F5) : en-têtes posés par le code (MenuHeader). -->
+            <MenuItem Tag="edit" Header="{x:Static loc:Strings.FileEdit}" Click="OnEdit">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconEdit}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="tail" Header="{x:Static loc:Strings.FileTail}" Click="OnTail">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconTail}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="compare" Header="{x:Static loc:Strings.FileCompareWith}" Click="OnCompare">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconCompare}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <!-- Sous-menu rempli à l'ouverture : une entrée par fenêtre de suivi ouverte. -->
+            <MenuItem Tag="tailadd" Header="{x:Static loc:Strings.FileTailAdd}" />
+            <MenuItem Header="{x:Static loc:Strings.FileUploadHere}" Click="OnUploadDialog">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconUpload}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="{x:Static loc:Strings.FileUploadMany}" Click="OnMultiUpload">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconUploadMany}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{x:Static loc:Strings.NewFolderMenu}" Click="OnNewFolder">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconNewFolder}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="rename" Header="{x:Static loc:Strings.FileRename}" Click="OnRename">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconRename}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="delete" Header="{x:Static loc:Strings.FileDelete}" Click="OnDelete">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconDelete}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Tag="chmod" Header="{x:Static loc:Strings.FilePermissions}" Click="OnPermissions">
+                <MenuItem.Icon>
+                    <Image Source="{DynamicResource IconPermissions}" Width="16" Height="16" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Tag="copy" Header="{x:Static loc:Strings.FileCopyPath}" Click="OnCopyPath" />
+            <MenuItem Tag="refresh" Header="{x:Static loc:Strings.FileRefresh}" Click="OnRefresh" />
+        </ContextMenu>
+        <!-- Choix des colonnes : clic droit sur l'en-tête de la liste, ou clic sur l'indicateur « +n » ; rempli à l'ouverture. -->
+        <ContextMenu x:Key="ColumnsMenu" Closed="OnColumnsMenuClosed" />
+    </UserControl.Resources>
+
+    <DockPanel Background="{DynamicResource SidePanelBrush}">
+        <StackPanel DockPanel.Dock="Top" Margin="8,8,8,4">
+            <DockPanel>
+                <!-- Fichiers déjà suivis sur ce serveur « Mes serveurs » : les suivre à nouveau d'un clic. -->
+                <Button x:Name="TailFilesButton" DockPanel.Dock="Right" Theme="{StaticResource SmallToolButton}" Click="OnTailFiles"
+                        ToolTip.Tip="{x:Static loc:Strings.TailFilesTip}" AutomationProperties.Name="{x:Static loc:Strings.TailFilesTip}"
+                        IsVisible="False">
+                    <Image Source="{DynamicResource IconTail}" Classes="SmallIcon" />
+                </Button>
+                <Image Source="{DynamicResource IconFiles}" Width="18" Height="18" Margin="0,0,6,0" />
+                <!-- Étiquette du serveur (PROD, QA…) : on voit où l'on envoie les fichiers. -->
+                <ContentControl x:Name="HeaderTag" Focusable="False" Margin="0,0,6,0" VerticalAlignment="Center" IsVisible="False" />
+                <TextBlock x:Name="HeaderText" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <!-- Barre d'outils du navigateur -->
+            <!-- Un seul arrêt de tabulation pour la barre ; les flèches passent d'un bouton à l'autre (OnToolbarKeyDown). -->
+            <StackPanel x:Name="Toolbar" Orientation="Horizontal" Margin="-2,6,0,0" KeyboardNavigation.TabNavigation="Once">
+                <Button Theme="{StaticResource SmallToolButton}" Click="OnParent" ToolTip.Tip="{x:Static loc:Strings.ParentTip}"
+                        AutomationProperties.Name="{x:Static loc:Strings.ParentTip}">
+                    <Image Source="{DynamicResource IconParentFolder}" Classes="SmallIcon" />
+                </Button>
+                <Button Theme="{StaticResource SmallToolButton}" Click="OnHome" ToolTip.Tip="{x:Static loc:Strings.HomeTip}"
+                        AutomationProperties.Name="{x:Static loc:Strings.HomeTip}">
+                    <Image Source="{DynamicResource IconHome}" Classes="SmallIcon" />
+                </Button>
+                <Button Theme="{StaticResource SmallToolButton}" Click="OnRefresh" ToolTip.Tip="{x:Static loc:Strings.RefreshTip}"
+                        AutomationProperties.Name="{x:Static loc:Strings.RefreshTip}">
+                    <Image Source="{DynamicResource IconRefresh}" Classes="SmallIcon" />
+                </Button>
+                <Rectangle Classes="ToolSeparator" Margin="4,3" />
+                <Button Theme="{StaticResource SmallToolButton}" Click="OnUploadDialog" ToolTip.Tip="{x:Static loc:Strings.UploadTip}"
+                        AutomationProperties.Name="{x:Static loc:Strings.UploadTip}">
+                    <Image Source="{DynamicResource IconUpload}" Classes="SmallIcon" />
+                </Button>
+                <Button Theme="{StaticResource SmallToolButton}" Click="OnMultiUpload" ToolTip.Tip="{x:Static loc:Strings.MultiUploadTip}"
+                        AutomationProperties.Name="{x:Static loc:Strings.MultiUploadTip}">
+                    <Image Source="{DynamicResource IconUploadMany}" Classes="SmallIcon" />
+                </Button>
+                <!-- Boutons de la sélection : grisés comme dans le menu, l'infobulle dit ce qui manque. -->
+                <Button x:Name="DownloadButton" Theme="{StaticResource SmallToolButton}" Click="OnDownload" ToolTip.Tip="{x:Static loc:Strings.DownloadTip}"
+                        ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{x:Static loc:Strings.DownloadTip}">
+                    <Image Source="{DynamicResource IconDownload}" Classes="SmallIcon" />
+                </Button>
+                <Button x:Name="EditButton" Theme="{StaticResource SmallToolButton}" Click="OnEdit" ToolTip.Tip="{x:Static loc:Strings.EditTip}"
+                        ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{x:Static loc:Strings.EditTip}">
+                    <Image Source="{DynamicResource IconEdit}" Classes="SmallIcon" />
+                </Button>
+                <Button Theme="{StaticResource SmallToolButton}" Click="OnNewFolder" ToolTip.Tip="{x:Static loc:Strings.NewFolder}"
+                        AutomationProperties.Name="{x:Static loc:Strings.NewFolder}">
+                    <Image Source="{DynamicResource IconNewFolder}" Classes="SmallIcon" />
+                </Button>
+                <Button x:Name="RenameButton" Theme="{StaticResource SmallToolButton}" Click="OnRename" ToolTip.Tip="{x:Static loc:Strings.RenameTip}"
+                        ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{x:Static loc:Strings.RenameTip}">
+                    <Image Source="{DynamicResource IconRename}" Classes="SmallIcon" />
+                </Button>
+                <Button x:Name="PermissionsButton" Theme="{StaticResource SmallToolButton}" Click="OnPermissions" ToolTip.Tip="{x:Static loc:Strings.PermissionsTip}"
+                        ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{x:Static loc:Strings.PermissionsTip}">
+                    <Image Source="{DynamicResource IconPermissions}" Classes="SmallIcon" />
+                </Button>
+                <Button x:Name="DeleteButton" Theme="{StaticResource SmallToolButton}" Click="OnDelete" ToolTip.Tip="{x:Static loc:Strings.DeleteTip}"
+                        ToolTip.ShowOnDisabled="True" AutomationProperties.Name="{x:Static loc:Strings.DeleteTip}">
+                    <Image Source="{DynamicResource IconDelete}" Classes="SmallIcon" />
+                </Button>
+            </StackPanel>
+
+            <!-- Barre de navigation : chemin courant, modifiable -->
+            <TextBox x:Name="PathBox" Margin="0,6,0,0" FontFamily="{StaticResource MonospaceFont}" Padding="4,4"
+                     ToolTip.Tip="{x:Static loc:Strings.PathTip}" AutomationProperties.Name="{x:Static loc:Strings.A11yFolderPath}" />
+
+            <!-- Filtre sur le nom des éléments du dossier affiché (vidé au changement de dossier). -->
+            <Panel Margin="0,6,0,0">
+                <TextBox x:Name="FilterBox" Padding="24,3,22,3" TextChanged="OnFilterChanged"
+                         PlaceholderText="{x:Static loc:Strings.FilesFilterPlaceholder}"
+                         AutomationProperties.Name="{x:Static loc:Strings.FilesFilterPlaceholder}"
+                         ToolTip.Tip="{x:Static loc:Strings.FilesFilterTip}" />
+                <Image Source="{DynamicResource IconSearch}" Width="14" Height="14" HorizontalAlignment="Left"
+                       Margin="6,0,0,0" IsHitTestVisible="False" />
+                <views:ClearFieldButton Target="{Binding #FilterBox}" />
+            </Panel>
+
+            <!-- Ordre de tabulation = ordre visuel : « Suivre le dossier » à gauche, puis « Cachés » à droite. -->
+            <Grid Margin="0,6,0,0" ColumnDefinitions="*,Auto">
+                <CheckBox x:Name="FollowBox" Content="{x:Static loc:Strings.FollowTerminal}" Click="OnFollowChanged"
+                          ToolTip.Tip="{x:Static loc:Strings.FollowTip}" ToolTip.ShowOnDisabled="True" />
+                <CheckBox Grid.Column="1" x:Name="HiddenBox" Content="{x:Static loc:Strings.Hidden}" Click="OnHiddenChanged"
+                          ToolTip.Tip="{x:Static loc:Strings.HiddenTip}" />
+            </Grid>
+        </StackPanel>
+
+        <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="0,1,0,0" Padding="8,4">
+            <StackPanel>
+                <!-- Archive .tar.gz envoyée : il reste à l'extraire sur le serveur. Encadré visible jusqu'à ce qu'on le ferme. -->
+                <Border x:Name="ExtractPanel" IsVisible="False" Background="{DynamicResource WarningBackgroundBrush}" BorderBrush="{DynamicResource WarningBorderBrush}"
+                        BorderThickness="1" CornerRadius="3" Padding="8,6" Margin="0,0,0,6">
+                    <StackPanel>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Theme="{StaticResource SmallToolButton}" VerticalAlignment="Top" Click="OnCloseExtract"
+                                    ToolTip.Tip="{x:Static loc:Strings.ArchiveDismissTip}" AutomationProperties.Name="{x:Static loc:Strings.ArchiveDismissTip}">
+                                <Image Source="{DynamicResource IconClose}" Classes="SmallIcon" />
+                            </Button>
+                            <TextBlock x:Name="ExtractTitle" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" />
+                        </DockPanel>
+                        <TextBlock Text="{x:Static loc:Strings.ArchiveExtractHelp}" TextWrapping="Wrap" Margin="0,4,0,4" />
+                        <TextBox x:Name="ExtractCommandBox" IsReadOnly="True" FontFamily="{StaticResource MonospaceFont}" TextWrapping="Wrap"
+                                 Padding="4" Background="{DynamicResource ContentBrush}" AutomationProperties.Name="{x:Static loc:Strings.A11yExtractCommand}" />
+                        <WrapPanel Margin="0,6,0,0">
+                            <Button Padding="10,3" Margin="0,0,6,0" FontWeight="SemiBold" Click="OnCopyExtractCommand"
+                                    Content="{x:Static loc:Strings.ArchiveCopyCommand}" />
+                            <Button x:Name="InsertExtractButton" Padding="10,3" Click="OnInsertExtractCommand"
+                                    Content="{x:Static loc:Strings.ArchiveInsertCommand}" ToolTip.Tip="{x:Static loc:Strings.ArchiveInsertTip}"
+                                    ToolTip.ShowOnDisabled="True" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+                <!-- File d'attente des transferts : visible tant qu'une série est en cours. -->
+                <Border x:Name="QueuePanel" IsVisible="False" BorderBrush="{DynamicResource ToolbarBorderBrush}" BorderThickness="0,0,0,1"
+                        Padding="0,0,0,6" Margin="0,0,0,4">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <Button x:Name="CancelAllButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.QueueCancelAll}" Padding="6,0"
+                                    Click="OnCancelAllTransfers" />
+                            <Button x:Name="ClearFinishedButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.QueueClearFinished}" Padding="6,0"
+                                    Margin="0,0,6,0" Click="OnClearFinished" ToolTip.Tip="{x:Static loc:Strings.QueueClearFinishedTip}" />
+                            <TextBlock Text="{x:Static loc:Strings.QueueTitle}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </DockPanel>
+                        <ScrollViewer MaxHeight="170" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl x:Name="QueueList" ItemTemplate="{StaticResource TransferTemplate}" />
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+                <!-- Sommes SHA-256 de chaque transfert : bouton « Historique » de la barre d'outils. -->
+                <DockPanel>
+                    <!-- Modification récursive des droits en cours : elle peut être arrêtée. -->
+                    <Button x:Name="StopChmodButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.PermissionsStop}" Padding="8,0"
+                            MinWidth="0" Margin="6,0,0,0" IsVisible="False" Click="OnStopChmod"
+                            ToolTip.Tip="{x:Static loc:Strings.PermissionsStopTip}" />
+                    <!-- Bilan sur trois lignes au plus ; en entier dans l'infobulle. -->
+                    <TextBlock x:Name="StatusText" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                               MaxLines="3" ToolTip.Tip="{Binding $self.Text}" />
+                </DockPanel>
+            </StackPanel>
+        </Border>
+
+        <Panel>
+            <!-- Lettres tapées : OnListTextInput (espace comprise). Entrée, Suppr, F2, F4, Retour arrière : OnListKeyDown, avant le
+                 tableau (Entrée y passerait à la ligne suivante). Colonnes en pixels (pas d'étoile : la dernière colonne resterait
+                 hors d'atteinte du défilement), « Nom » élargie par le code (FitNameColumn). CanUserSort sur chaque colonne : le
+                 clic sur l'en-tête lève Sorting (une colonne à modèle n'est pas triable sinon), que OnColumnHeaderClick traite
+                 seul (dossiers en tête, « .. » d'abord). -->
+            <DataGrid x:Name="FileList" Background="{DynamicResource ContentBrush}" SelectionMode="Extended" DragDrop.AllowDrop="True"
+                      AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" ClipboardCopyMode="None"
+                      CanUserSortColumns="True" CanUserReorderColumns="False" CanUserResizeColumns="True"
+                      ContextMenu="{StaticResource FileMenu}" DoubleTapped="OnItemDoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn CanUserSort="True" Header="{x:Static corel:CoreStrings.ColumnName}" Width="165" MinWidth="40">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="ssh:RemoteEntry">
+                                <StackPanel Orientation="Horizontal" Margin="5,0,4,0" VerticalAlignment="Center">
+                                    <Image Source="{Binding Converter={StaticResource FileIcon}, Mode=OneWay}" Width="16" Height="16" Margin="0,0,5,0" />
+                                    <TextBlock Text="{Binding DisplayName, Mode=OneWay}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn CanUserSort="True" Header="{x:Static loc:Strings.ColumnSize}" Width="76" MinWidth="20">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="ssh:RemoteEntry">
+                                <TextBlock Text="{Binding SizeText, Mode=OneWay}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="5,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn CanUserSort="True" Header="{x:Static loc:Strings.ColumnModified}" Width="112" MinWidth="20">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="ssh:RemoteEntry">
+                                <TextBlock Text="{Binding ModifiedText, Mode=OneWay}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="5,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn CanUserSort="True" Header="{x:Static loc:Strings.ColumnPermissions}" Width="84" MinWidth="20">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="ssh:RemoteEntry">
+                                <TextBlock Text="{Binding Permissions, Mode=OneWay}" FontFamily="{StaticResource MonospaceFont}" VerticalAlignment="Center" Margin="5,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn CanUserSort="True" Header="{x:Static loc:Strings.ColumnOwner}" Width="90" MinWidth="20">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="ssh:RemoteEntry">
+                                <TextBlock Text="{Binding Owner, Mode=OneWay}" ToolTip.Tip="{Binding OwnerAndGroup, Mode=OneWay}" TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" Margin="5,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn CanUserSort="True" Header="{x:Static loc:Strings.ColumnGroup}" Width="90" MinWidth="20">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="ssh:RemoteEntry">
+                                <TextBlock Text="{Binding Group, Mode=OneWay}" ToolTip.Tip="{Binding OwnerAndGroup, Mode=OneWay}" TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" Margin="5,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <!-- Colonnes cochées masquées faute de place : « +2 » (nom des colonnes dans l'infobulle), le clic ouvre le choix des colonnes. -->
+                    <DataGridTemplateColumn Width="30" IsVisible="False" CanUserResize="False" CanUserSort="True">
+                        <DataGridTemplateColumn.Header>
+                            <TextBlock x:Name="MoreColumnText" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" />
+                        </DataGridTemplateColumn.Header>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="ssh:RemoteEntry">
+                                <TextBlock />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Indication pendant le glisser-déposer de fichiers -->
+            <Border x:Name="DropHint" IsVisible="False" IsHitTestVisible="False" Margin="6"
+                    Background="{DynamicResource DropHintBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="2" CornerRadius="6">
+                <StackPanel VerticalAlignment="Center" Margin="12">
+                    <Image Source="{DynamicResource IconUpload}" Width="40" Height="40" />
+                    <TextBlock x:Name="DropHintText" TextAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AccentBrush}" Margin="0,8,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Message : aucune session, connexion en cours, erreur -->
+            <Border x:Name="MessagePanel" Background="{DynamicResource SidePanelBrush}" IsVisible="False">
+                <StackPanel VerticalAlignment="Center" Margin="20">
+                    <Image Source="{DynamicResource IconFiles}" Width="44" Height="44" Opacity="0.7" />
+                    <TextBlock x:Name="MessageText" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
+                               Margin="0,10,0,0" />
+                    <Button x:Name="RetryButton" Content="{x:Static loc:Strings.Retry}" Click="OnRetry" IsVisible="False"
+                            HorizontalAlignment="Center" Margin="0,12,0,0" />
+                </StackPanel>
+            </Border>
+        </Panel>
+    </DockPanel>
+</UserControl>

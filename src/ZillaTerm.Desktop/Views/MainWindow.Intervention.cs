@@ -12,6 +12,7 @@ using System.IO;
 using System.Security.Cryptography;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services;
+using ZillaTerm.App.Services.Secrets;
 using ZillaTerm.Core.Diagnostics;
 using ZillaTerm.Core.Interventions;
 
@@ -150,6 +151,10 @@ public partial class MainWindow
     /// Au démarrage : l'enregistrement le plus récent n'a pas de fin (ZillaTerm arrêté pendant l'intervention, il y a moins
     /// de 12 heures) ; le reprendre dans le même journal, le clore, ou décider plus tard (redemandé au prochain lancement).
     /// </summary>
+    /// <remarks>
+    /// Hors de Windows, la clé du trousseau qui protège le journal est lue d'avance, sans bloquer la fenêtre, et seulement
+    /// s'il y a un enregistrement récent à regarder : un trousseau absent ou refusé est dit dans la barre d'état.
+    /// </remarks>
     private async void OfferInterventionResume()
     {
         if (_resumeOffered || Intervention.IsRecording || !_opened)
@@ -158,7 +163,26 @@ public partial class MainWindow
         }
 
         _resumeOffered = true;
-        if (InterventionJournal.FindUnfinished(Intervention.Directory, Intervention.Protector, DateTime.UtcNow) is not { } unfinished)
+        UnfinishedIntervention? unfinished;
+        try
+        {
+            unfinished = await Intervention.FindUnfinishedAsync(DateTime.UtcNow);
+        }
+        catch (SecretProtectorUnavailableException ex)
+        {
+            DebugLog.Write("intervention", $"Intervention interrompue non cherchée, trousseau indisponible ({ex.Failure}).");
+            SetStatus(Text.Format(Strings.InterventionResumeFailed, ex.Message), isError: true);
+            return;
+        }
+
+        if (!IsVisible)
+        {
+            // Fenêtre fermée entre-temps (reconnexion, accès d'urgence) : la suivante le proposera.
+            _resumeOffered = false;
+            return;
+        }
+
+        if (unfinished is null || Intervention.IsRecording)
         {
             return;
         }
@@ -176,7 +200,7 @@ public partial class MainWindow
             DefaultAction = 0,
             CancelLabel = Strings.InterventionResumeLater,
         });
-        if (choice < 0)
+        if (choice < 0 || Intervention.IsRecording)
         {
             return;
         }
@@ -193,7 +217,8 @@ public partial class MainWindow
                 Intervention.CloseUnfinished(file.Path);
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or CryptographicException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or CryptographicException
+                                       or SecretProtectorUnavailableException)
         {
             DebugLog.Write("intervention", "Reprise de l'intervention impossible", ex);
             SetStatus(Text.Format(Strings.InterventionResumeFailed, ex.Message), isError: true);
@@ -242,7 +267,8 @@ public partial class MainWindow
         _interventionWindow = new InterventionWindow(_settings.DutyText, _settings.DutyTextFile, Intervention, _sessionUser, InterventionMode,
             () => ShowSideTab(InterventionTab), InterventionView.CommitPendingNote);
         _interventionWindow.Closed += (_, _) => _interventionWindow = null;
-        _interventionWindow.Show();
+        // Fenêtre liée à la fenêtre principale (au-dessus d'elle, centrée sur elle), comme Owner sous WPF.
+        _interventionWindow.Show(this);
     }
 
     /// <summary>

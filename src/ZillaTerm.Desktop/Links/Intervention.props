@@ -1,0 +1,8 @@
+<Project>
+  <!--
+    Intervention : enregistrement (Services/InterventionRecorder.cs), onglet « Intervention » du panneau de gauche
+    (Views/InterventionPanel) et fenêtre Intervention (Views/InterventionWindow). Le journal, l'historique, le rapport HTML
+    et son lecteur des écrans sont dans ZillaTerm.Core ; la protection du journal (DPAPI sous Windows, trousseau ailleurs)
+    est celle de Services/Secrets (Links/Secrets.props). Rien d'autre à lier ni à ajouter.
+  -->
+</Project>

@@ -5,31 +5,28 @@ using ZillaTerm.App.Services;
 namespace ZillaTerm.App.Views;
 
 /// <summary>
-/// Panneaux du côté gauche créés par le code (« Fichiers » et « Intervention ») et accès au terminal d'une session.
+/// Panneaux du côté gauche créés par le code (« Fichiers » et « Intervention », placés par le constructeur) et accès au
+/// terminal d'une session.
 /// </summary>
 public partial class MainWindow
 {
     /// <summary>Explorateur de fichiers de la session affichée (onglet « Fichiers » du panneau de gauche).</summary>
-    private FileBrowserPanel FilesPanel { get; set; } = null!;
+    private FileBrowserPanel FilesPanel { get; } = new();
 
     /// <summary>Titre, notes et historique de l'intervention en cours (onglet « Intervention »).</summary>
-    private InterventionPanel InterventionView { get; set; } = null!;
+    private InterventionPanel InterventionView { get; } = new();
 
-    /// <summary>Panneaux « Fichiers » et « Intervention », apparence des terminaux, glisser-déposer des arbres.</summary>
+    /// <summary>Panneau « Fichiers », apparence des terminaux, glisser-déposer des arbres.</summary>
     private void InitSessionViews()
     {
         CompareWindow.CleanTemporaryFiles();
         ApplyTerminalAppearance();
-        FilesPanel = new FileBrowserPanel();
-        FilesHost.Content = FilesPanel;
         FilesPanel.Initialize(_settings, SaveSettings);
         FilesPanel.OpenSessions = () => MainTabs.Items.OfType<TabItem>().Select(t => t.Tag).OfType<RemoteSession>().ToList();
         FilesPanel.TagOf = TagOf;
         FilesPanel.ShowTerminalRequested += ShowTerminal;
         FilesPanel.TransfersChanged += UpdateFilesBadge;
         FilesPanel.WidenRequested += WidenSidePanel;
-        InterventionView = new InterventionPanel();
-        InterventionHost.Content = InterventionView;
         InitDragDrop();
         UserActivity.Track(this);
     }
@@ -61,13 +58,13 @@ public partial class MainWindow
     /// Bouton Historique : envois et téléchargements de l'onglet Fichiers, même sans session ; seulement les échecs et
     /// transferts non vérifiés quand un échec est signalé (« ! ») et pas encore vu.
     /// </summary>
-    private void OnTransferHistory(object? sender, RoutedEventArgs e)
+    private async void OnTransferHistory(object? sender, RoutedEventArgs e)
     {
         bool problems = FilesPanel.UnseenProblems > 0;
         // L'historique montre les transferts en échec : ils sont vus.
         FilesPanel.MarkTransfersSeen();
         UpdateFilesBadge();
-        FilesPanel.ShowHistory(problemsOnly: problems);
+        await FilesPanel.ShowHistoryAsync(problemsOnly: problems);
     }
 
     /// <summary>« Terminal » de l'onglet Fichiers : la session est affichée là où est son terminal.</summary>

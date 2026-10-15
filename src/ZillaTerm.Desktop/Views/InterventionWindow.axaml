@@ -1,0 +1,71 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:ZillaTerm.App.Views"
+                    xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+                    x:Class="ZillaTerm.App.Views.InterventionWindow"
+                    Title="{x:Static loc:Strings.InterventionTitle}" Width="660" Height="700" MinWidth="500" MinHeight="520">
+    <DockPanel Margin="16">
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.CloseButton}" IsCancel="True" MinWidth="90"
+                    HorizontalContentAlignment="Center" VerticalAlignment="Center" />
+            <views:AnnouncedText x:Name="MessageText" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0" />
+        </DockPanel>
+
+        <!-- Enregistrement et interventions précédentes, sous les consignes d'astreinte. -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <TextBlock Text="{x:Static loc:Strings.InterventionRecordingSection}" Classes="SectionTitle" />
+            <DockPanel Margin="0,0,0,4">
+                <!-- Sans trousseau (hors de Windows) : grisé, la raison en infobulle. -->
+                <Button x:Name="RecordButton" DockPanel.Dock="Left" Click="OnRecord" MinWidth="210" ToolTip.ShowOnDisabled="True">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="RecordDot" Width="10" Height="10" Fill="#D32F2F" Margin="0,0,7,0" VerticalAlignment="Center" />
+                        <Rectangle x:Name="StopSquare" Width="10" Height="10" Fill="{Binding $parent[Button].Foreground}"
+                                   Margin="0,0,7,0" VerticalAlignment="Center" IsVisible="False" />
+                        <AccessText x:Name="RecordLabel" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <views:AnnouncedText x:Name="StatusText" VerticalAlignment="Center" Margin="12,0,0,0" TextWrapping="Wrap" />
+            </DockPanel>
+            <TextBlock Classes="OptionHelp" Text="{x:Static loc:Strings.InterventionRecordingHelp}" Margin="0,4,0,8" />
+            <!-- Titre, notes, captures et historique : onglet « Intervention » du panneau de gauche, montré au début de
+                 l'enregistrement. -->
+            <Button x:Name="NotesButton" Click="OnOpenNotes" HorizontalAlignment="Left" ToolTip.Tip="{x:Static loc:Strings.TabInterventionTip}">
+                <AccessText Text="{x:Static loc:Strings.InterventionOpenNotes}" />
+            </Button>
+
+            <TextBlock Text="{x:Static loc:Strings.InterventionPreviousSection}" Classes="SectionTitle" Margin="0,16,0,6" />
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Margin="8,0,0,0">
+                    <Button x:Name="ExportButton" Click="OnExport" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.InterventionExportReport}" />
+                    </Button>
+                    <Button x:Name="DeleteButton" Click="OnDelete" Margin="0,6,0,0" HorizontalAlignment="Stretch">
+                        <AccessText Text="{x:Static loc:Strings.InterventionDelete}" />
+                    </Button>
+                </StackPanel>
+                <!-- Plusieurs interventions choisies (Ctrl+clic, Maj+clic) : un seul rapport les réunit. -->
+                <ListBox x:Name="JournalList" Height="110" SelectionMode="Multiple" SelectionChanged="OnJournalSelected"
+                         DoubleTapped="OnJournalDoubleClick" AutomationProperties.Name="{x:Static loc:Strings.InterventionPreviousSection}"
+                         AutomationProperties.HelpText="{x:Static loc:Strings.InterventionPreviousHelp}" />
+            </DockPanel>
+            <TextBlock Classes="OptionHelp" Text="{x:Static loc:Strings.InterventionPreviousHelp}" Margin="0,4,0,0" />
+            <!-- Le rapport n'est pas chiffré : ce qui ressemble à un secret y est masqué, sauf choix contraire. -->
+            <CheckBox x:Name="RedactBox" IsChecked="True" Margin="0,8,0,0" ToolTip.Tip="{x:Static loc:Strings.InterventionRedactSecretsTip}"
+                      AutomationProperties.HelpText="{x:Static loc:Strings.InterventionRedactSecretsTip}">
+                <AccessText Text="{x:Static loc:Strings.InterventionRedactSecrets}" TextWrapping="Wrap" />
+            </CheckBox>
+            <TextBlock Text="{x:Static loc:Strings.InterventionReportNotEncrypted}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"
+                       Margin="0,6,0,0" />
+        </StackPanel>
+
+        <TextBlock x:Name="TeamTitle" DockPanel.Dock="Top" Text="{x:Static loc:Strings.DutyTeamTextSection}" Classes="SectionTitle" />
+        <!-- Origine des consignes : fichier lu (avec son chemin), ou raison pour laquelle il ne l'a pas été. -->
+        <views:AnnouncedText x:Name="ReminderSource" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,-4,0,6" IsVisible="False"
+                             Foreground="{DynamicResource MutedBrush}" />
+        <TextBlock x:Name="NoTeamText" DockPanel.Dock="Top" Text="{x:Static loc:Strings.DutyNoText}" Foreground="{DynamicResource MutedBrush}"
+                   TextWrapping="Wrap" IsVisible="False" Margin="0,0,0,8" />
+        <!-- Texte brut de l'équipe : sélectionnable (numéros à copier), jamais interprété (ni lien, ni mise en forme). -->
+        <TextBox x:Name="TeamText" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 VerticalContentAlignment="Top" FontSize="14" Padding="8,6" AutomationProperties.LabeledBy="{Binding #TeamTitle}" />
+    </DockPanel>
+</views:DialogWindow>

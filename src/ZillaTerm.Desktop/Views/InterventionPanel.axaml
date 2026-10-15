@@ -1,0 +1,122 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:ZillaTerm.App.Views"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+             x:Class="ZillaTerm.App.Views.InterventionPanel">
+    <UserControl.Styles>
+        <!-- Bloc d'un terminal (une commande et son retour) : texte à espacement fixe, sur le fond des blocs de code. -->
+        <Style Selector="Border.Terminal">
+            <Setter Property="Background" Value="{DynamicResource CodeBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CodeBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="6,3" />
+        </Style>
+        <Style Selector="TextBlock.Terminal">
+            <Setter Property="FontFamily" Value="{StaticResource MonospaceFont}" />
+        </Style>
+    </UserControl.Styles>
+    <!-- Onglet « Intervention » du panneau de gauche : titre, notes, captures, et ce qui s'est passé depuis le début, à côté
+         de la session. -->
+    <DockPanel Margin="8">
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,6,0,0">
+            <views:AnnouncedText x:Name="MessageText" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}" />
+            <!-- Fin de l'intervention depuis l'onglet : l'enregistrement s'arrête (après confirmation) et l'onglet se ferme. -->
+            <Button x:Name="EndButton" Click="OnEnd" HorizontalAlignment="Left" Margin="0,6,0,0" IsVisible="False"
+                    ToolTip.Tip="{x:Static loc:Strings.InterventionEndTip}" AutomationProperties.HelpText="{x:Static loc:Strings.InterventionEndTip}">
+                <StackPanel Orientation="Horizontal">
+                    <Rectangle Width="9" Height="9" Margin="0,0,7,0" VerticalAlignment="Center"
+                               Fill="{Binding $parent[Button].Foreground}" />
+                    <AccessText Text="{x:Static loc:Strings.InterventionEnd}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <Ellipse x:Name="RecordingDot" Width="9" Height="9" Fill="#D32F2F" Margin="0,0,7,0" VerticalAlignment="Center" />
+            <views:AnnouncedText x:Name="StatusText" TextWrapping="Wrap" VerticalAlignment="Center" />
+        </DockPanel>
+
+        <!-- Rappel arrivé à son heure (Paramètres › Rappels pendant l'intervention) : reste affiché jusqu'à « Vu », noté
+             au journal. Jamais de focus déplacé : la frappe en cours ne part pas ailleurs. -->
+        <Border x:Name="ReminderBanner" DockPanel.Dock="Top" Classes="WarningBanner" Margin="0,0,0,10" IsVisible="False">
+            <DockPanel>
+                <Button x:Name="ReminderSeenButton" DockPanel.Dock="Right" Click="OnReminderSeen" Margin="8,0,0,0" VerticalAlignment="Center"
+                        MinWidth="0" Padding="10,1" ToolTip.Tip="{x:Static loc:Strings.InterventionReminderSeenTip}"
+                        AutomationProperties.HelpText="{x:Static loc:Strings.InterventionReminderSeenTip}">
+                    <AccessText Text="{x:Static loc:Strings.InterventionReminderSeen}" />
+                </Button>
+                <views:AnnouncedText x:Name="ReminderText" TextWrapping="Wrap" FontWeight="SemiBold" VerticalAlignment="Center"
+                                     Foreground="{DynamicResource WarningBrush}" AutomationProperties.LiveSetting="Assertive" />
+            </DockPanel>
+        </Border>
+
+        <Label DockPanel.Dock="Top" Target="{Binding #TitleBox}" Padding="0,0,0,3" Content="{x:Static loc:Strings.InterventionTitleLabel}" />
+        <TextBox x:Name="TitleBox" DockPanel.Dock="Top" Margin="0,0,0,10" MaxLength="200" KeyDown="OnTitleKeyDown" LostFocus="OnTitleLostFocus"
+                 PlaceholderText="{x:Static loc:Strings.InterventionTitlePlaceholder}" />
+
+        <Label DockPanel.Dock="Top" Target="{Binding #NoteBox}" Padding="0,0,0,3" Content="{x:Static loc:Strings.InterventionNoteLabel}" />
+        <!-- Modification d'une note de l'historique : le champ de la note reprend son texte. -->
+        <views:AnnouncedText x:Name="EditingText" DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}"
+                             Margin="0,0,0,3" IsVisible="False" />
+        <TextBox x:Name="NoteBox" DockPanel.Dock="Top" MaxLength="2000" AcceptsReturn="True" TextWrapping="Wrap" Height="58"
+                 VerticalContentAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Auto" TextChanged="OnNoteChanged"
+                 PlaceholderText="{x:Static loc:Strings.InterventionNotePlaceholder}"
+                 AutomationProperties.HelpText="{x:Static loc:Strings.InterventionNoteKeys}" />
+        <TextBlock DockPanel.Dock="Top" Text="{x:Static loc:Strings.InterventionNoteKeys}" Foreground="{DynamicResource MutedBrush}"
+                   TextWrapping="Wrap" Margin="0,3,0,6" />
+        <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+            <Button x:Name="NoteButton" Click="OnAddNote" Margin="0,0,8,4">
+                <AccessText x:Name="NoteButtonText" Text="{x:Static loc:Strings.InterventionAddNote}" />
+            </Button>
+            <Button x:Name="CancelEditButton" Click="OnCancelEdit" Margin="0,0,8,4" IsVisible="False">
+                <AccessText Text="{x:Static loc:Strings.InterventionCancelNoteEdit}" />
+            </Button>
+            <Button x:Name="CaptureButton" Click="OnCapture" Margin="0,0,0,4" ToolTip.Tip="{x:Static loc:Strings.InterventionCaptureTip}"
+                    AutomationProperties.HelpText="{x:Static loc:Strings.InterventionCaptureTip}">
+                <AccessText Text="{x:Static loc:Strings.InterventionCaptureRdp}" />
+            </Button>
+        </WrapPanel>
+
+        <TextBlock x:Name="HistoryTitle" DockPanel.Dock="Top" Text="{x:Static loc:Strings.InterventionHistorySection}" Classes="SectionTitle" />
+        <TextBlock x:Name="CappedText" DockPanel.Dock="Bottom" Text="{x:Static loc:Strings.InterventionHistoryCapped}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource WarningBrush}" Margin="0,4,0,0" IsVisible="False" />
+        <!-- Journal au-delà de 100 Mo : l'écran des Bureaux à distance n'est plus gardé qu'une fois toutes les 10 s. -->
+        <TextBlock x:Name="ScreenThrottledText" DockPanel.Dock="Bottom" Text="{x:Static loc:Strings.InterventionScreenThrottled}" TextWrapping="Wrap"
+                   Foreground="{DynamicResource WarningBrush}" Margin="0,4,0,0" IsVisible="False" />
+        <!-- Historique : un bloc par événement, ou par commande d'un terminal et son retour ; un long bloc se déplie. -->
+        <ListBox x:Name="HistoryList" AutomationProperties.LabeledBy="{Binding #HistoryTitle}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem" x:DataType="views:InterventionHistoryItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="AutomationProperties.Name" Value="{Binding AutomationName, Mode=OneWay}" />
+                </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="views:InterventionHistoryItem">
+                    <StackPanel Margin="0,3,0,5">
+                        <DockPanel>
+                            <!-- Note de l'enregistrement en cours : modifiable (F2), le journal garde le texte d'origine. -->
+                            <Button DockPanel.Dock="Right" Content="{x:Static loc:Strings.InterventionEditNote}" Click="OnEditNote"
+                                    ToolTip.Tip="{x:Static loc:Strings.InterventionEditNoteTip}" AutomationProperties.HelpText="{x:Static loc:Strings.InterventionEditNoteTip}"
+                                    MinWidth="0" Padding="8,0" Margin="6,0,0,0" VerticalAlignment="Top" IsVisible="{Binding IsNote, Mode=OneWay}"
+                                    IsEnabled="{Binding $parent[views:InterventionPanel].NotesEditable}" />
+                            <TextBlock Text="{Binding Time, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Kind, Mode=OneWay}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Edited, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}" FontStyle="Italic" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Source, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
+                        </DockPanel>
+                        <Border Margin="0,2,0,0" Classes.Terminal="{Binding IsTerminal, Mode=OneWay}" IsVisible="{Binding !IsExpanded, Mode=OneWay}">
+                            <TextBlock Text="{Binding Preview, Mode=OneWay}" TextWrapping="Wrap" Classes.Terminal="{Binding IsTerminal, Mode=OneWay}" />
+                        </Border>
+                        <TextBox Theme="{StaticResource CodeBox}" Text="{Binding FullText, Mode=OneWay}" MaxHeight="320"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="0,2,0,0" IsVisible="{Binding IsExpanded, Mode=OneWay}"
+                                 AutomationProperties.Name="{Binding Kind, Mode=OneWay}" />
+                        <Button Content="{Binding ToggleText, Mode=OneWay}" Click="OnToggle" HorizontalAlignment="Left"
+                                Margin="0,3,0,0" Padding="6,1" IsVisible="{Binding IsLong, Mode=OneWay}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</UserControl>

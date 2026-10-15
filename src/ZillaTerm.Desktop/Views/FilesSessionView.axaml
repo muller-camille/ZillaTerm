@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
+             x:Class="ZillaTerm.App.Views.FilesSessionView">
+    <Panel Background="{DynamicResource SidePanelBrush}">
+        <!-- Étiquette du serveur (PROD, QA…) : cadre de sa couleur autour de la session ; son nom est sur l'onglet. -->
+        <Border x:Name="TagFrame" BorderThickness="0" IsHitTestVisible="False" />
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="600" Margin="24">
+            <Image Source="{DynamicResource IconFiles}" Width="48" Height="48" Margin="0,0,0,12" />
+            <TextBlock x:Name="TitleText" FontSize="17" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource HeadingBrush}" />
+            <TextBlock x:Name="DetailText" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{DynamicResource MutedBrush}" />
+            <TextBlock x:Name="StateText" TextAlignment="Center" TextWrapping="Wrap" Margin="0,14,0,0" FontSize="13" />
+            <ProgressBar x:Name="StateProgress" IsIndeterminate="True" Height="4" MinHeight="4" Width="260" Margin="0,12,0,0" IsVisible="False"
+                         AutomationProperties.LabeledBy="{Binding #StateText}" />
+            <!-- FTP sans TLS, accepté par l'utilisateur : rappel permanent. -->
+            <Border x:Name="CleartextBanner" Background="{DynamicResource WarningBackgroundBrush}" BorderBrush="{DynamicResource WarningBorderBrush}"
+                    BorderThickness="1" CornerRadius="3" Padding="10,6" Margin="0,12,0,0" IsVisible="False">
+                <TextBlock Text="{x:Static loc:Strings.FtpUnencrypted}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" />
+            </Border>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                <Button x:Name="ShowFilesButton" Content="{x:Static loc:Strings.FilesShow}" Click="OnShowFiles" Padding="12,3"
+                        ToolTip.Tip="{x:Static loc:Strings.FilesShowTip}" />
+                <Button x:Name="ReconnectButton" Content="{x:Static loc:Strings.Reconnect}" Click="OnReconnect" Padding="12,3" Margin="8,0,0,0"
+                        IsVisible="False" />
+            </StackPanel>
+        </StackPanel>
+    </Panel>
+</UserControl>
