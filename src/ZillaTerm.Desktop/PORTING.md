@@ -82,3 +82,25 @@ dotnet test tests/ZillaTerm.Desktop.Tests
 # Sous Linux sans écran : Xvfb :99 &, puis
 DISPLAY=:99 dotnet src/ZillaTerm.Desktop/bin/Debug/net10.0/ZillaTerm.dll
 ```
+
+## État (portage mis en pause en octobre 2026)
+
+Branche `avalonia`, non fusionnée dans `main` : l'application WPF reste la seule publiée.
+
+Fait, sous Linux (et compilé, testé sous Windows par la CI) :
+- toutes les fenêtres, le terminal, l'onglet Fichiers, la vue parallèle, VNC, le partage, KeePass, l'Intervention ;
+- Bureau à distance dans l'onglet : wfreerdp du fork sous Windows, xfreerdp3 du système sous Linux (X11) ;
+- secrets : DPAPI sous Windows, trousseau Secret Service sous Linux (refus si absent) ;
+- transfert X11 sous Linux (relais vers le socket local, cookie de la session) ;
+- tests sans écran (`tests/ZillaTerm.Desktop.Tests`) et job CI `linux`.
+
+Vérifié de bout en bout sous Linux : onglet Fichiers sur un serveur SFTP local, Intervention avec KeePassXC comme trousseau
+(pannes du trousseau comprises), Bureau à distance avec xfreerdp3 contre freerdp-shadow (certificat refusé, mauvaise
+empreinte, reconnexion).
+
+Reste :
+- macOS : protection des secrets par le Trousseau de macOS (aujourd'hui refusée : coffre local et Intervention
+  indisponibles), verrouillage de session, raccourcis Cmd, paquet signé et notarisé. Bureau à distance : une fenêtre de
+  l'autre processus ne peut pas être placée dans l'onglet ; sdl-freerdp3 en fenêtre séparée (certificat épinglé) plutôt
+  que l'application de Microsoft, ou FreeRDP comme bibliothèque dans le processus (même travail que pour Android et iOS).
+- Android, iOS : pas de client externe possible ; FreeRDP comme bibliothèque, interface tactile à une seule vue.
