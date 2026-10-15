@@ -19390,5 +19390,23 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("SourcePuttyFolder", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Desktop _notification.
+        /// </summary>
+        public static string TailNotifyUnix {
+            get {
+                return ResourceManager.GetString("TailNotifyUnix", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Also show a desktop notification when the window is not in front (at most one every 30 seconds). It gives the number of lines and the file name, never the content of the lines..
+        /// </summary>
+        public static string TailNotifyTipUnix {
+            get {
+                return ResourceManager.GetString("TailNotifyTipUnix", resourceCulture);
+            }
+        }
     }
 }

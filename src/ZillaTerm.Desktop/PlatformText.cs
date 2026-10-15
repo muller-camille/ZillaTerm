@@ -28,5 +28,9 @@ public static class PlatformText
 
     public static string CompareToolHelp => Windows ? Strings.CompareToolHelp : Strings.CompareToolHelpUnix;
 
+    public static string TailNotify => Windows ? Strings.TailNotify : Strings.TailNotifyUnix;
+
+    public static string TailNotifyTip => Windows ? Strings.TailNotifyTip : Strings.TailNotifyTipUnix;
+
     public static string SettingsShareDirectHelp => Windows ? Strings.SettingsShareDirectHelp : Strings.SettingsShareDirectHelpUnix;
 }

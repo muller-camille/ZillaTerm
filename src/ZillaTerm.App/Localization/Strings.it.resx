@@ -6496,4 +6496,10 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="SourcePuttyFolder" xml:space="preserve">
     <value>Sessioni PuTTY (Linux, cartella ~/.putty)</value>
   </data>
+  <data name="TailNotifyUnix" xml:space="preserve">
+    <value>_Notifica del desktop</value>
+  </data>
+  <data name="TailNotifyTipUnix" xml:space="preserve">
+    <value>Mostra anche una notifica del desktop quando la finestra non è in primo piano (al massimo una ogni 30 secondi). Indica il numero di righe e il nome del file, mai il contenuto delle righe.</value>
+  </data>
 </root>

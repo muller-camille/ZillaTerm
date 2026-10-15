@@ -88,8 +88,8 @@
             <TextBox x:Name="HighlightBox" Width="180" Margin="0,0,14,4" VerticalAlignment="Center" ToolTip.Tip="{x:Static loc:Strings.TailHighlightTip}" />
             <Label Content="{x:Static loc:Strings.TailAlert}" Target="{Binding #AlertBox}" Padding="0,0,6,0" Margin="0,0,0,4" VerticalAlignment="Center" />
             <TextBox x:Name="AlertBox" Width="240" Margin="0,0,14,4" VerticalAlignment="Center" ToolTip.Tip="{x:Static loc:Strings.TailAlertTip}" />
-            <CheckBox x:Name="NotifyBox" VerticalAlignment="Center" Margin="0,0,0,4" Click="OnNotify" ToolTip.Tip="{x:Static loc:Strings.TailNotifyTip}">
-                <AccessText Text="{x:Static loc:Strings.TailNotify}" />
+            <CheckBox x:Name="NotifyBox" VerticalAlignment="Center" Margin="0,0,0,4" Click="OnNotify" ToolTip.Tip="{x:Static loc:PlatformText.TailNotifyTip}">
+                <AccessText Text="{x:Static loc:PlatformText.TailNotify}" />
             </CheckBox>
         </WrapPanel>
 

@@ -6496,4 +6496,10 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="SourcePuttyFolder" xml:space="preserve">
     <value>Sessions PuTTY (Linux, dossier ~/.putty)</value>
   </data>
+  <data name="TailNotifyUnix" xml:space="preserve">
+    <value>Notification du _bureau</value>
+  </data>
+  <data name="TailNotifyTipUnix" xml:space="preserve">
+    <value>Afficher aussi une notification du bureau quand la fenêtre n'est pas au premier plan (au plus une toutes les 30 secondes). Elle donne le nombre de lignes et le nom du fichier, jamais le contenu des lignes.</value>
+  </data>
 </root>
