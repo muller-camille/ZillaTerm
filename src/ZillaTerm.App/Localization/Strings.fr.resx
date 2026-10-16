@@ -461,9 +461,6 @@
   <data name="SettingsTitle" xml:space="preserve">
     <value>Paramètres</value>
   </data>
-  <data name="LanguageSection" xml:space="preserve">
-    <value>Langue</value>
-  </data>
   <data name="LanguageLabel" xml:space="preserve">
     <value>_Langue de l'interface :</value>
   </data>
@@ -471,10 +468,10 @@
     <value>Appliquée après la déconnexion de CyberArk ou au prochain démarrage.</value>
   </data>
   <data name="SettingsSshSection" xml:space="preserve">
-    <value>SSH via PSM for SSH (PSMP)</value>
+    <value>PSMP (PSM for SSH)</value>
   </data>
   <data name="SettingsSshHelp" xml:space="preserve">
-    <value>Les comptes Unix s'ouvrent alors en SSH par défaut (le PSM reste disponible dans « Options avancées… »). Sans aucun PSMP, le SSH est désactivé.</value>
+    <value>Avec un PSMP, les comptes Unix s'ouvrent en SSH (le PSM reste dans « Options avancées… ») ; sans, le SSH est désactivé.</value>
   </data>
   <data name="PsmpAddressLabel" xml:space="preserve">
     <value>PSMP p_ar défaut :</value>
@@ -483,16 +480,13 @@
     <value>_Port :</value>
   </data>
   <data name="SshInApp" xml:space="preserve">
-    <value>_Ouvrir les sessions SSH dans ZillaTerm (terminal en onglet + onglet « Fichiers »), sinon dans Windows Terminal</value>
+    <value>_Ouvrir les sessions SSH dans ZillaTerm</value>
   </data>
   <data name="FollowSetting" xml:space="preserve">
-    <value>_Permettre au navigateur de fichiers de suivre le dossier du terminal (installe PROMPT__COMMAND dans le shell à l'ouverture)</value>
+    <value>Permettre à l'onglet Fichiers de _suivre le dossier du terminal</value>
   </data>
   <data name="UploadLabel" xml:space="preserve">
-    <value>Dépôt de fichiers :</value>
-  </data>
-  <data name="UploadProtocolTip" xml:space="preserve">
-    <value>Protocole essayé d'abord pour les envois. Si le serveur le refuse pour un fichier (règle du PSMP, SFTP en lecture seule…), l'autre prend le relais aussitôt, sans question ; le bilan donne la réponse du serveur, l'Historique l'indique.</value>
+    <value>Protocole d'envoi :</value>
   </data>
   <data name="ComponentsSection" xml:space="preserve">
     <value>Composants PSM</value>
@@ -834,16 +828,13 @@
     <value>_Suivre les fichiers (tail -f) dans une session indépendante</value>
   </data>
   <data name="SettingsTailSessionHelp" xml:space="preserve">
-    <value>Chaque fenêtre de suivi ouvre sa propre connexion SFTP au lieu de partager celle de l'onglet Fichiers : elle n'attend pas les transferts, mais c'est une session PSMP de plus (enregistrée séparément, et une validation MFA peut être demandée).</value>
+    <value>N'attend pas les transferts, mais ouvre une session PSMP de plus (enregistrée à part ; MFA possible).</value>
   </data>
   <data name="SettingsArchiveOffer" xml:space="preserve">
     <value>Proposer une archi_ve .tar.gz à partir de</value>
   </data>
   <data name="SettingsArchiveFiles" xml:space="preserve">
     <value>fichiers déposés d'un coup</value>
-  </data>
-  <data name="SettingsArchiveTip" xml:space="preserve">
-    <value>Quand vous déposez beaucoup de fichiers d'un coup dans l'onglet Fichiers, ZillaTerm propose de les réunir dans une archive .tar.gz : un seul fichier à transférer et à vérifier au lieu de milliers, beaucoup plus rapide via le PSMP. Vous l'extrayez ensuite sur le serveur avec la commande indiquée.</value>
   </data>
   <data name="InvalidArchiveThreshold" xml:space="preserve">
     <value>Le nombre de fichiers pour l'archive doit être d'au moins 2.</value>
@@ -1536,7 +1527,7 @@ Les envoyer dans une seule archive {3} ? Un seul fichier à transférer et à v�
     <value>Ar_guments :</value>
   </data>
   <data name="CompareToolHelp" xml:space="preserve">
-    <value>Facultatif : la fenêtre de comparaison propose d'ouvrir les deux fichiers dans ce programme (par ex. WinMergeU.exe). {0} est le fichier de gauche, {1} celui de droite ; pour VS Code : code.cmd avec --diff "{0}" "{1}".</value>
+    <value>Facultatif : proposé par la fenêtre de comparaison. {0} : fichier de gauche, {1} : de droite (VS Code : code.cmd avec --diff "{0}" "{1}").</value>
   </data>
   <data name="InvalidCompareArguments" xml:space="preserve">
     <value>Les arguments de l'outil de comparaison doivent contenir {0} et {1}.</value>
@@ -1628,9 +1619,6 @@ Les envoyer dans une seule archive {3} ? Un seul fichier à transférer et à v�
   <data name="TerminalFontLabel" xml:space="preserve">
     <value>Taille de pol_ice :</value>
   </data>
-  <data name="TerminalFontTip" xml:space="preserve">
-    <value>Taille de police des terminaux (8 à 32). Ctrl+molette la change pour un terminal, Ctrl+0 la rétablit.</value>
-  </data>
   <data name="InvalidFontSize" xml:space="preserve">
     <value>La taille de police doit être comprise entre {0} et {1}.</value>
   </data>
@@ -1707,7 +1695,7 @@ Les envoyer dans une seule archive {3} ? Un seul fichier à transférer et à v�
     <value>Téléchargement non gardé : {0}</value>
   </data>
   <data name="AboutAutoCheck" xml:space="preserve">
-    <value>Rechercher une _nouvelle version au démarrage de ZillaTerm (au plus une fois par jour ; une requête vers GitHub)</value>
+    <value>Rechercher une _nouvelle version au démarrage</value>
   </data>
   <data name="AboutUpdateNote" xml:space="preserve">
     <value>Rien n'est installé automatiquement : l'archive vérifiée est gardée dans le dossier Téléchargements, et vous remplacez vous-même l'exécutable (vos paramètres sont conservés). L'exécutable n'est pas signé.</value>
@@ -2355,7 +2343,7 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour réessay
     <value>Session CyberArk</value>
   </data>
   <data name="KeepAlive" xml:space="preserve">
-    <value>_Garder la session CyberArk ouverte pendant que vous utilisez le poste (une requête légère toutes les 4 minutes ; suspendue quand Windows est verrouillé ou après 15 minutes sans clavier ni souris)</value>
+    <value>_Garder la session ouverte pendant que je travaille</value>
   </data>
   <data name="KeepAliveExpired" xml:space="preserve">
     <value>La session CyberArk a expiré : F5, ou toute action CyberArk, propose de vous identifier de nouveau.</value>
@@ -4035,20 +4023,17 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="SettingsUpdatesSection" xml:space="preserve">
     <value>Mises à jour</value>
   </data>
-  <data name="SettingsKeepAliveEffect" xml:space="preserve">
-    <value>⚠ Effet : tant que vous travaillez dans ZillaTerm, la session CyberArk ne se ferme plus d'elle-même après son délai d'inactivité.</value>
-  </data>
   <data name="SettingsRightClickEffect" xml:space="preserve">
-    <value>⚠ Effet : un clic droit par mégarde envoie le presse-papiers au shell, y compris un shell root.</value>
+    <value>⚠ Un clic droit par mégarde envoie le presse-papiers au shell, même root.</value>
   </data>
   <data name="SettingsFollowEffect" xml:space="preserve">
-    <value>⚠ Effet : une commande est ajoutée à PROMPT_COMMAND dans le shell distant à l'ouverture de la session.</value>
+    <value>Ajoute une commande à PROMPT_COMMAND du shell distant à l'ouverture de la session.</value>
   </data>
   <data name="LocalStoreImmediate" xml:space="preserve">
     <value>Ces actions s'appliquent tout de suite, sans « Enregistrer ».</value>
   </data>
   <data name="HostKeysSection" xml:space="preserve">
-    <value>Clés de serveurs acceptées</value>
+    <value>Clés et certificats des serveurs</value>
   </data>
   <data name="HostKeysHelp" xml:space="preserve">
     <value>Empreintes vérifiées et acceptées (PSMP, SSH direct, certificats FTPS et Bureau à distance), une ligne par type de clé. Une clé oubliée sera redemandée à la prochaine connexion.</value>
@@ -4225,13 +4210,13 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>ACTIVE ({0})</value>
   </data>
   <data name="PsmpDefaultHelp" xml:space="preserve">
-    <value>Pour les serveurs de son domaine et ceux qu'aucun PSMP ci-dessous ne couvre. Vide : le seul PSMP de la liste, s'il n'y en a qu'un.</value>
+    <value>Pour les serveurs de son domaine et ceux qu'aucun PSMP par domaine ne couvre. Vide : le seul de la liste, s'il n'y en a qu'un.</value>
   </data>
   <data name="PsmpListSection" xml:space="preserve">
     <value>PSMP par domaine</value>
   </data>
   <data name="PsmpListHelp" xml:space="preserve">
-    <value>Chaque serveur passe par le PSMP du domaine le plus proche du sien : srv01.zzz.xxx.corp.com par psmp.zzz.xxx.corp.com s'il est dans la liste, sinon par psmp.xxx.corp.com. Le domaine est celui de l'adresse ; changez-le si le PSMP sert un autre domaine.</value>
+    <value>Chaque serveur passe par le PSMP de son domaine le plus proche : srv01.paris.corp.com par celui de paris.corp.com, sinon de corp.com. Changez le domaine si un PSMP en sert un autre.</value>
   </data>
   <data name="PsmpColumnAddress" xml:space="preserve">
     <value>Adresse du PSMP</value>
@@ -4264,7 +4249,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Aucun PSMP pour ce serveur : SSH et SFTP impossibles. Ajoutez son PSMP ou un PSMP par défaut.</value>
   </data>
   <data name="PsmpSecurityEffect" xml:space="preserve">
-    <value>⚠ Effet : un PSMP reçoit votre mot de passe CyberArk. N'indiquez que les PSMP de votre organisation ; la première connexion à chacun demande de vérifier sa clé.</value>
+    <value>⚠ Un PSMP reçoit votre mot de passe CyberArk : n'ajoutez que ceux de votre organisation ; la première connexion à chacun fait vérifier sa clé.</value>
   </data>
   <data name="InvalidPsmpRowAddress" xml:space="preserve">
     <value>Adresse de PSMP invalide (ligne {0}) : saisissez un nom d'hôte ou une adresse IP.</value>
@@ -4348,10 +4333,10 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>{0} n'est pas autorisé pour ce compte : choisissez l'un des serveurs ci-dessus.</value>
   </data>
   <data name="WindowsComponentLabel" xml:space="preserve">
-    <value>Comptes _Windows :</value>
+    <value>Composant des comptes _Windows :</value>
   </data>
   <data name="WindowsComponentHelp" xml:space="preserve">
-    <value>Pour les comptes Windows (domaine ou locaux) sans composant mémorisé pour leur plateforme, par exemple WIN-PSM. Vide : PSM-RDP.</value>
+    <value>Quand aucun composant n'est retenu pour leur plateforme. Vide : PSM-RDP.</value>
   </data>
   <data name="InvalidComponentName" xml:space="preserve">
     <value>Composant PSM invalide : lettres, chiffres, « - », « _ » et « . » seulement (par exemple WIN-PSM).</value>
@@ -4471,10 +4456,10 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Chemin invalide (chemin complet attendu) : {0}</value>
   </data>
   <data name="CentralFileLabel" xml:space="preserve">
-    <value>Fichier central :</value>
+    <value>Fichier centr_al :</value>
   </data>
   <data name="CentralFileHelp" xml:space="preserve">
-    <value>Fichier d'environnement de l'équipe sur un partage réseau (PVWA, PSMP, composants PSM, listes partagées, clés des PSMP), relu à chaque démarrage : ses changements vous sont montrés avant d'être appliqués. Pour le créer : bouton Paramètres › Exporter l'environnement.</value>
+    <value>Réglages de l'équipe sur un partage réseau, relus à chaque démarrage : leurs changements vous sont montrés avant d'être appliqués. Importer ou exporter : menu du bouton Paramètres.</value>
   </data>
   <data name="InvalidCentralFile" xml:space="preserve">
     <value>Fichier central invalide : saisissez un chemin complet (\\serveur\partage\… ou C:\…).</value>
@@ -4519,7 +4504,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Composant par plateforme</value>
   </data>
   <data name="PlatformComponentsHelp" xml:space="preserve">
-    <value>Pour les comptes d'une plateforme (ID de la plateforme dans le PVWA, par exemple WinDomain ou UnixSSH) ; passe avant le composant des comptes Windows ci-dessus. Une ligne s'ajoute aussi par « Mémoriser ce composant pour la plateforme… » dans la fenêtre de connexion.</value>
+    <value>Prioritaire sur le composant des comptes Windows. « Mémoriser ce composant pour la plateforme… » dans la fenêtre de connexion ajoute aussi une ligne.</value>
   </data>
   <data name="ComponentColumnPlatform" xml:space="preserve">
     <value>Plateforme (ID)</value>
@@ -4884,9 +4869,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="A11yExtractCommand" xml:space="preserve">
     <value>Commande d'extraction</value>
   </data>
-  <data name="AppearanceSection" xml:space="preserve">
-    <value>Apparence</value>
-  </data>
   <data name="AppThemeLabel" xml:space="preserve">
     <value>_Thème :</value>
   </data>
@@ -4900,7 +4882,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Sombre</value>
   </data>
   <data name="AppThemeHelp" xml:space="preserve">
-    <value>Appliqué à l'enregistrement, sans redémarrer. Le contraste élevé de Windows l'emporte toujours. Les couleurs des terminaux se règlent dans la page Terminal.</value>
+    <value>Le contraste élevé de Windows l'emporte toujours. Couleurs des terminaux : page Terminal.</value>
   </data>
   <data name="ToolLeaveEmergency" xml:space="preserve">
     <value>Quitter l'accès d'urgence</value>
@@ -4927,7 +4909,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Serveur X _local :</value>
   </data>
   <data name="X11DisplayHelp" xml:space="preserve">
-    <value>Un serveur X installé sur ce poste (VcXsrv, X410, Xming…) qui accepte les connexions TCP locales : « :0 » est le port 6000. Le transfert X11 se coche serveur par serveur (Propriétés ou Options avancées).</value>
+    <value>Un serveur X sur ce poste (VcXsrv, X410…) qui accepte les connexions TCP locales (« :0 » : port 6000). Le transfert X11 se coche serveur par serveur.</value>
   </data>
   <data name="X11DisplayInvalid" xml:space="preserve">
     <value>Serveur X local : « :0 », « localhost:0 » ou « 127.0.0.1:0.0 » (ce poste seulement : le protocole X n'est pas chiffré).</value>
@@ -5221,7 +5203,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Consignes d'_astreinte :</value>
   </data>
   <data name="DutyTextHelp" xml:space="preserve">
-    <value>Affichées en haut de la fenêtre « Intervention » : bonnes pratiques, numéros d'urgence… Texte brut. Diffusées à l'équipe par le fichier d'environnement (bouton Paramètres › Exporter l'environnement).</value>
+    <value>Affichées en haut de l'onglet Intervention (texte brut).</value>
   </data>
   <data name="InvalidDutyText" xml:space="preserve">
     <value>Consignes d'astreinte : 8000 caractères au plus, sans caractère invisible.</value>
@@ -5239,7 +5221,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>_Fichier des consignes :</value>
   </data>
   <data name="DutyFileHelp" xml:space="preserve">
-    <value>Facultatif : fichier texte (sur un partage réseau, par exemple) relu à chaque ouverture de la fenêtre Intervention. Il remplace le texte ci-dessus : les responsables le mettent à jour sans rediffuser l'environnement. S'il est illisible, le texte ci-dessus est affiché.</value>
+    <value>Facultatif : fichier texte relu à chaque ouverture, qui remplace le texte ci-dessus (s'il est illisible, le texte s'affiche).</value>
   </data>
   <data name="InvalidDutyFile" xml:space="preserve">
     <value>Fichier des consignes : chemin complet d'un fichier (C:\… ou \\serveur\partage\…).</value>
@@ -5329,7 +5311,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Étiquettes des serveurs</value>
   </data>
   <data name="ServerTagsHelp" xml:space="preserve">
-    <value>Environnements donnés aux serveurs de « Mes serveurs » (demandés à l'ajout d'un serveur). Leur couleur marque l'onglet et le contour de chaque session. Supprimer une étiquette la retire des serveurs. Diffusées à l'équipe par le fichier d'environnement.</value>
+    <value>Environnement de chaque serveur (PROD, QA…), demandé à son ajout : sa couleur marque l'onglet et le contour de la session. Supprimer une étiquette la retire des serveurs.</value>
   </data>
   <data name="ServerTagColName" xml:space="preserve">
     <value>Nom</value>
@@ -5407,22 +5389,22 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Windows demande de confirmer l'identité de {0} : vérifiez le certificat avant d'accepter.</value>
   </data>
   <data name="PsmDesktopInTab" xml:space="preserve">
-    <value>Ouvrir les sessions PSM Windows dans un _onglet de ZillaTerm, sinon dans Connexion Bureau à distance</value>
+    <value>Ouvrir les sessions PSM Windows dans un _onglet de ZillaTerm</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>La session prend la taille de l'onglet et s'ouvre avec le client FreeRDP intégré à ZillaTerm, bureau comme application distante (PSM-RDP, PSM-SSH, WinSCP…), sans fenêtre à part. ZillaTerm vérifie le certificat du PSM (approuvé par Windows, sinon empreinte confirmée une fois puis retenue), et les redirections restent celles demandées par le PVWA, jamais plus. Une connexion par une passerelle Bureau à distance s'ouvre toujours dans la Connexion Bureau à distance.</value>
+    <value>Client FreeRDP intégré, à la taille de l'onglet, qui vérifie le certificat du PSM ; décochée : Connexion Bureau à distance. Une passerelle Bureau à distance passe toujours par celle-ci.</value>
   </data>
   <data name="PsmDynamicResolution" xml:space="preserve">
-    <value>Adapter la _résolution du bureau distant à la taille de l'onglet</value>
+    <value>Adapter la _résolution à la taille de l'onglet</value>
   </data>
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
-    <value>Au lieu d'une résolution fixe et d'une image mise à l'échelle dans l'onglet, ZillaTerm demande au serveur PSM de changer la résolution de la session à chaque redimensionnement de l'onglet. L'affichage est plus net, mais selon la configuration du PSM, la connexion du PSM vers le serveur cible peut garder sa taille d'origine : désactivez l'option si l'écran de la cible ne suit pas. S'applique aux nouvelles sessions.</value>
+    <value>Plus net qu'une image mise à l'échelle ; à décocher si l'écran du serveur cible ne suit pas.</value>
   </data>
   <data name="PsmRedirectDrives" xml:space="preserve">
-    <value>Partager les _disques de ce poste avec les sessions PSM Windows</value>
+    <value>Partager les _disques de ce poste</value>
   </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>ZillaTerm demande au PVWA de mapper les disques de ce poste, comme la case « Map local drives » de sa fenêtre de connexion. Si le composant de connexion le permet, ils apparaissent dans la session (Explorateur › Ce PC) pour copier des fichiers ; les programmes de la session peuvent alors les lire et y écrire (dans l'onglet comme dans la Connexion Bureau à distance). Décochée, aucun disque n'est partagé dans l'onglet, même si le PVWA le demande ; la Connexion Bureau à distance suit le fichier signé du PVWA. S'applique aux nouvelles sessions.</value>
+    <value>Comme « Map local drives » du PVWA, si le composant le permet : les programmes de la session peuvent lire et écrire sur vos disques. Décochée, aucun disque n'est partagé dans un onglet.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>
@@ -5804,7 +5786,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>Rappels _pendant l'intervention :</value>
   </data>
   <data name="RemindersHelp" xml:space="preserve">
-    <value>Une ligne par rappel : les minutes depuis le début de l'enregistrement, puis le texte (« 30 Escalader au N3 »). 10 au plus. À l'heure dite, ZillaTerm le montre dans l'onglet Intervention et la barre d'état, et le note au journal.</value>
+    <value>Une ligne par rappel : les minutes depuis le début de l'enregistrement, puis le texte (« 30 Escalader au N3 ») ; 10 au plus.</value>
   </data>
   <data name="InvalidReminder" xml:space="preserve">
     <value>Rappels, ligne {0} : des minutes (1 à 1440), une espace, puis un texte de 200 caractères au plus (10 rappels au plus).</value>
@@ -5894,7 +5876,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>_Permettre de partager mes sessions avec un autre ZillaTerm</value>
   </data>
   <data name="SettingsSessionSharingHelp" xml:space="preserve">
-    <value>Chaque partage se lance de vous-même, depuis le menu de l'onglet de la session ; chaque personne doit être acceptée après comparaison d'un code à 6 chiffres. Les partages s'arrêtent au verrouillage de Windows. Regarder la session d'une autre personne fonctionne sans cette option.</value>
+    <value>Chaque partage se lance depuis l'onglet de la session ; chaque personne est acceptée après comparaison d'un code à 6 chiffres ; tout s'arrête au verrouillage de Windows. Regarder une session partagée ne demande pas cette option.</value>
   </data>
   <data name="SettingsShareDirect" xml:space="preserve">
     <value>Connexions _directes à ce poste</value>
@@ -5902,17 +5884,14 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="SettingsSharePort" xml:space="preserve">
     <value>P_ort :</value>
   </data>
-  <data name="SettingsSharePortTip" xml:space="preserve">
-    <value>0 : un port libre choisi au hasard. Un port fixe aide quand le pare-feu doit l'autoriser.</value>
-  </data>
   <data name="SettingsShareDirectHelp" xml:space="preserve">
-    <value>L'autre ZillaTerm se connecte à ce poste (connexion chiffrée de bout en bout). La première fois, le pare-feu Windows peut demander d'autoriser ZillaTerm : autorisez-le sur les réseaux privés ou de domaine seulement.</value>
+    <value>Connexion chiffrée de bout en bout vers ce poste ; port 0 : un port libre au hasard. Si le pare-feu le demande, autorisez ZillaTerm sur les réseaux privés ou de domaine seulement.</value>
   </data>
   <data name="SettingsShareRelay" xml:space="preserve">
     <value>Dossier re_lais :</value>
   </data>
   <data name="SettingsShareRelayHelp" xml:space="preserve">
-    <value>Quand la connexion directe n'est pas possible (pare-feu), l'échange passe par ce dossier d'un partage réseau accessible aux deux postes. Tout ce qui y est écrit est chiffré de bout en bout, et effacé à la fin du partage.</value>
+    <value>Partage réseau accessible aux deux postes, utilisé quand la connexion directe échoue : tout y est chiffré et effacé à la fin du partage.</value>
   </data>
   <data name="SettingsShareRelayPick" xml:space="preserve">
     <value>Dossier relais du partage de sessions</value>
@@ -6437,10 +6416,10 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>Continuer l'intervention</value>
   </data>
   <data name="PauseRdpDisplay" xml:space="preserve">
-    <value>_Suspendre l'affichage des sessions Bureau à distance que personne ne regarde (la session reste ouverte)</value>
+    <value>_Suspendre l'affichage des sessions que personne ne regarde</value>
   </data>
   <data name="PauseRdpDisplayHelp" xml:space="preserve">
-    <value>Sessions Bureau à distance dans un onglet (client intégré) : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image : ni trafic d'affichage, ni encodage de l'image par le PSM, pour une session que personne ne voit. La session reste ouverte ; l'image revient dès le retour sur l'onglet ou au premier mouvement de souris. Jamais pour l'onglet affiché pendant l'enregistrement d'une intervention ou le partage de la session. Pendant un enregistrement, la pause d'un onglet en arrière-plan y est marquée : « Affichage en pause » sur l'écran et une bande grise sur la frise du rapport.</value>
+    <value>Toute session Bureau à distance dans un onglet : en arrière-plan, ZillaTerm réduit ou poste inactif, l'image n'est plus envoyée (la session reste ouverte). Jamais pour l'onglet affiché pendant un enregistrement ou un partage.</value>
   </data>
   <data name="RdpPaused" xml:space="preserve">
     <value>Affichage en pause</value>
@@ -6470,10 +6449,10 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>Affichage en pause de {0} à {1} ({2})</value>
   </data>
   <data name="KeepAccountListCopy" xml:space="preserve">
-    <value>Afficher tout de suite la liste des comptes à la connexion (copie _chiffrée de la dernière liste sur ce poste)</value>
+    <value>Afficher tout de suite la liste des comptes de la dernière _connexion</value>
   </data>
   <data name="KeepAccountListCopyHelp" xml:space="preserve">
-    <value>La liste de la dernière connexion s'affiche aussitôt, puis elle est relue au PVWA en arrière-plan et remplacée d'un coup. La copie ne contient aucun mot de passe ; elle est chiffrée pour votre compte Windows, propre à chaque PVWA et utilisateur, et supprimée après 30 jours. Décochée : les copies sont supprimées.</value>
+    <value>Copie chiffrée sur ce poste, sans mot de passe, effacée après 30 jours, puis remplacée par la liste relue au PVWA. Décochée : les copies sont supprimées.</value>
   </data>
   <data name="EnvKeepAccountListCopy" xml:space="preserve">
     <value>Afficher tout de suite la liste des comptes (copie chiffrée sur le poste)</value>
@@ -6489,5 +6468,101 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="AccountListUpdated" xml:space="preserve">
     <value>Liste des comptes à jour : {0:# nouveau|# nouveaux}, {1:# retiré|# retirés}.</value>
+  </data>
+  <data name="JoinRelayHeading" xml:space="preserve">
+    <value>Passer par ce dossier relais ?</value>
+  </data>
+  <data name="JoinRelayMessage" xml:space="preserve">
+    <value>Le poste qui partage n'a pas pu être joint directement. L'invitation propose ce dossier relais, qui n'est pas celui de vos Paramètres : Windows s'y connectera avec votre compte. Continuez seulement si c'est le dossier relais de votre équipe.</value>
+  </data>
+  <data name="JoinRelayAction" xml:space="preserve">
+    <value>Passer par ce dossier</value>
+  </data>
+  <data name="JoinRelayRefused" xml:space="preserve">
+    <value>Le poste qui partage n'a pas pu être joint directement, et le dossier relais de l'invitation n'a pas été utilisé.</value>
+  </data>
+  <data name="SettingsPageSsh" xml:space="preserve">
+    <value>SSH</value>
+  </data>
+  <data name="SettingsPageRdp" xml:space="preserve">
+    <value>Bureau à distance</value>
+  </data>
+  <data name="SettingsPageServers" xml:space="preserve">
+    <value>Mes serveurs</value>
+  </data>
+  <data name="SettingsPageIntervention" xml:space="preserve">
+    <value>Intervention</value>
+  </data>
+  <data name="SettingsSectionDisplay" xml:space="preserve">
+    <value>Langue et apparence</value>
+  </data>
+  <data name="SettingsSectionTeam" xml:space="preserve">
+    <value>Environnement de l'équipe</value>
+  </data>
+  <data name="SettingsSectionTroubleshooting" xml:space="preserve">
+    <value>Dépannage</value>
+  </data>
+  <data name="SettingsSectionSessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="SettingsSectionShell" xml:space="preserve">
+    <value>Dans le shell</value>
+  </data>
+  <data name="SettingsSectionTerminalDisplay" xml:space="preserve">
+    <value>Affichage</value>
+  </data>
+  <data name="SettingsSectionTerminalInput" xml:space="preserve">
+    <value>Saisie et collage</value>
+  </data>
+  <data name="SettingsSectionTransfers" xml:space="preserve">
+    <value>Transferts</value>
+  </data>
+  <data name="SettingsSectionPrograms" xml:space="preserve">
+    <value>Programmes</value>
+  </data>
+  <data name="SettingsSectionReminders" xml:space="preserve">
+    <value>Rappels</value>
+  </data>
+  <data name="SettingsSectionShareRoutes" xml:space="preserve">
+    <value>Comment les autres rejoignent vos sessions</value>
+  </data>
+  <data name="SettingsRdpIntro" xml:space="preserve">
+    <value>Ces réglages s'appliquent aux sessions ouvertes ensuite.</value>
+  </data>
+  <data name="UpdateCheckHelp" xml:space="preserve">
+    <value>Une requête vers GitHub, une fois par jour au plus ; rien ne s'installe sans vous.</value>
+  </data>
+  <data name="SettingsDebugLog" xml:space="preserve">
+    <value>_Journal de débogage</value>
+  </data>
+  <data name="SettingsDebugLogHelp" xml:space="preserve">
+    <value>Note le déroulement des connexions dans un fichier, pour comprendre un échec : noms de serveurs et de comptes, jamais de mot de passe.</value>
+  </data>
+  <data name="SettingsDebugLogShow" xml:space="preserve">
+    <value>Afficher le _fichier</value>
+  </data>
+  <data name="TeamBadge" xml:space="preserve">
+    <value>Équipe</value>
+  </data>
+  <data name="TeamBadgeTip" xml:space="preserve">
+    <value>Réglé par le fichier d'environnement de l'équipe ({0}). Une nouvelle version de ce fichier pourra le changer, après votre accord.</value>
+  </data>
+  <data name="KeepAliveHelp" xml:space="preserve">
+    <value>Une requête légère toutes les 4 minutes, arrêtée quand Windows est verrouillé ou après 15 minutes sans clavier ni souris : la session ne se ferme plus d'elle-même pendant que vous travaillez.</value>
+  </data>
+  <data name="SshInAppHelp" xml:space="preserve">
+    <value>Terminal en onglet et onglet Fichiers ; décochée : Windows Terminal.</value>
+  </data>
+  <data name="TerminalFontHelp" xml:space="preserve">
+    <value>Ctrl+molette change la taille d'un terminal, Ctrl+0 la rétablit.</value>
+  </data>
+  <data name="UploadProtocolHelp" xml:space="preserve">
+    <value>Essayé d'abord ; si le serveur le refuse, l'autre prend le relais (l'Historique le note).</value>
+  </data>
+  <data name="SettingsArchiveHelp" xml:space="preserve">
+    <value>Un seul fichier à transférer et à vérifier au lieu de milliers, bien plus rapide via le PSMP ; la commande d'extraction est indiquée.</value>
+  </data>
+  <data name="HostKeysFilter" xml:space="preserve">
+    <value>Filtrer les serveurs</value>
   </data>
 </root>

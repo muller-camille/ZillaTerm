@@ -13,14 +13,17 @@ namespace ZillaTerm.App.Views;
 public partial class JoinShareDialog : Window
 {
     private readonly ShareJoin _join;
+    private readonly string _relayFolder;
     private CancellationTokenSource? _connecting;
     private ShareViewer? _viewer;
     private bool _closed;
 
-    internal JoinShareDialog(ShareJoin join, string? invitation = null)
+    /// <param name="relayFolder">Dossier relais des Paramètres : celui d'une invitation n'est utilisé sans question que s'il est le même.</param>
+    internal JoinShareDialog(ShareJoin join, string relayFolder, string? invitation = null)
     {
         InitializeComponent();
         _join = join;
+        _relayFolder = relayFolder;
         if (invitation is not null)
         {
             InvitationBox.Text = invitation;
@@ -66,7 +69,7 @@ public partial class JoinShareDialog : Window
         _connecting = new CancellationTokenSource();
         try
         {
-            _viewer = await ShareViewer.ConnectAsync(invitation, _join, _connecting.Token);
+            _viewer = await ShareViewer.ConnectAsync(invitation, _join, _connecting.Token, AllowRelayAsync);
             if (_closed)
             {
                 await _viewer.DisposeAsync();
@@ -107,8 +110,35 @@ public partial class JoinShareDialog : Window
         }
     }
 
+    /// <summary>
+    /// Dossier relais de l'invitation, la connexion directe ayant échoué : celui des Paramètres passe ; un autre est montré
+    /// et confirmé, car l'invitation vient d'un message et Windows s'identifie avec le compte de l'utilisateur sur le
+    /// serveur qu'il désigne. « Annuler » par défaut.
+    /// </summary>
+    private async Task<bool> AllowRelayAsync(string relay, CancellationToken cancellationToken)
+    {
+        if (ShareInvitation.SameRelayFolder(relay, _relayFolder))
+        {
+            return true;
+        }
+
+        bool allowed = await Dispatcher.InvokeAsync(() => !_closed && ConfirmDialog.Confirm(this, new ConfirmRequest
+        {
+            Title = Strings.JoinTitle,
+            Heading = Strings.JoinRelayHeading,
+            Subject = relay,
+            Message = Strings.JoinRelayMessage,
+            Kind = ConfirmKind.Warning,
+            Actions = [Strings.JoinRelayAction],
+            DangerAction = 0,
+        }), System.Windows.Threading.DispatcherPriority.Normal, cancellationToken);
+        DebugLog.Write("partage", $"Dossier relais de l'invitation {(allowed ? "accepté" : "refusé")} : {relay}");
+        return allowed;
+    }
+
     internal static string Describe(ShareFailure failure) => failure switch
     {
+        ShareFailure.RelayRefused => Strings.JoinRelayRefused,
         ShareFailure.Unreachable => Strings.JoinUnreachable,
         ShareFailure.Rejected => Strings.JoinRejected,
         ShareFailure.Expired => Strings.JoinExpired,

@@ -258,6 +258,9 @@ public enum ShareFailure
 
     /// <summary>Trop de personnes regardent déjà.</summary>
     Full,
+
+    /// <summary>Connexion directe impossible, et le dossier relais de l'invitation n'a pas été accepté.</summary>
+    RelayRefused,
 }
 
 public sealed class ShareException(ShareFailure failure, string? detail = null, Exception? inner = null)

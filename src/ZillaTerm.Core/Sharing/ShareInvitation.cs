@@ -180,6 +180,17 @@ public sealed record ShareInvitation(
             ? DutyReminderFile.IsValidPath(path.TrimEnd('\\', '/') + "\\zillaterm")
             : Path.IsPathFullyQualified(path) && !path.StartsWith(@"\\", StringComparison.Ordinal));
 
+    /// <summary>
+    /// Même dossier relais (casse, « / » ou « \ », séparateur final et espaces autour ignorés) : celui d'une invitation
+    /// comparé à celui des Paramètres.
+    /// </summary>
+    public static bool SameRelayFolder(string? a, string? b)
+    {
+        static string Normal(string? path) => (path ?? "").Trim().Replace('/', '\\').TrimEnd('\\');
+        var (x, y) = (Normal(a), Normal(b));
+        return x.Length > 0 && string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string Base64Url(byte[] data) => Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     private static byte[]? FromBase64Url(string text)

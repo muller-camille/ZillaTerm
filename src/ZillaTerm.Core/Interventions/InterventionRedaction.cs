@@ -70,6 +70,13 @@ public static class InterventionRedaction
 
     private static readonly SearchValues<string> AuthorizationHints = SearchValues.Create(["bearer", "basic"], StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Variable ou gabarit à la place d'une valeur : « $DB_PASS », « ${DB_PASS} », « $(cat secret) », « %DB_PASS% »,
+    /// « {{ vault_pass }} ». Un mot de passe qui commence par « $ » ou « % » (« $ecr3t!Prod », « %Xk9!pq ») n'en est pas un.
+    /// </summary>
+    private static readonly Regex Variable = new(@"^(?:\$[A-Za-z_][A-Za-z0-9_]*|%[A-Za-z_][A-Za-z0-9_]*%)$",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled, Timeout);
+
     /// <summary>Valeurs qui ne sont pas des secrets : vides de sens, déjà masquées, variables, gabarits.</summary>
     private static readonly HashSet<string> NotSecrets = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -275,11 +282,16 @@ public static class InterventionRedaction
             return mask;
         });
 
+        /// <summary>Variable du shell ou de Windows, substitution de commande, gabarit (voir <see cref="Variable"/>).</summary>
+        private static bool IsVariable(string value) =>
+            value.StartsWith("${", StringComparison.Ordinal) || value.StartsWith("$(", StringComparison.Ordinal)
+            || value.StartsWith("{{", StringComparison.Ordinal) || Variable.IsMatch(value);
+
         private bool IsSecret(string key, string separator, string quote, string value, string line, int end)
         {
             if (value.Contains(mask, StringComparison.Ordinal) || NotSecrets.Contains(value)
                 || value.All(c => c is '*' or 'x' or 'X' or '•' or '.' or '-')
-                || value[0] is '$' or '%' || value.StartsWith("{{", StringComparison.Ordinal))
+                || IsVariable(value))
             {
                 // Déjà masqué, valeur sans contenu, ou variable / gabarit (« $DB_PASSWORD », « {{ vault_pass }} »).
                 return false;

@@ -187,6 +187,48 @@ public sealed class EnvironmentProfile
     public const int MaxDutyText = 8000;
 
     /// <summary>Environnement des réglages actuels, sans rien de personnel ; clés des PSMP configurés déjà acceptées.</summary>
+    /// <summary>
+    /// Réglages que ce fichier définit (les autres restent ceux de chacun) : les Paramètres les marquent « Équipe ».
+    /// </summary>
+    public IReadOnlySet<EnvironmentSetting> DefinedSettings()
+    {
+        var defined = new HashSet<EnvironmentSetting>();
+        void If(bool present, EnvironmentSetting setting)
+        {
+            if (present)
+            {
+                defined.Add(setting);
+            }
+        }
+
+        If(PvwaUrl is not null, EnvironmentSetting.PvwaUrl);
+        If(AuthMethod is not null, EnvironmentSetting.AuthMethod);
+        If(PsmpAddress is not null || PsmpPort is not null, EnvironmentSetting.DefaultPsmp);
+        If(PsmpServers is not null, EnvironmentSetting.PsmpServers);
+        If(WindowsComponent is not null, EnvironmentSetting.WindowsComponent);
+        If(ComponentByPlatform is { Count: > 0 }, EnvironmentSetting.PlatformComponent);
+        If(SharedLists is { Count: > 0 }, EnvironmentSetting.SharedList);
+        If(HostKeys is { Count: > 0 }, EnvironmentSetting.HostKey);
+        If(CentralFile is not null, EnvironmentSetting.CentralFile);
+        If(KeepPvwaSessionAlive is not null, EnvironmentSetting.KeepPvwaSessionAlive);
+        If(KeepAccountListCopy is not null, EnvironmentSetting.KeepAccountListCopy);
+        If(SshInApp is not null, EnvironmentSetting.SshInApp);
+        If(PsmDesktopInTab is not null, EnvironmentSetting.PsmDesktopInTab);
+        If(PsmRedirectDrives is not null, EnvironmentSetting.PsmRedirectDrives);
+        If(PauseRdpDisplay is not null, EnvironmentSetting.PauseRdpDisplay);
+        If(CheckForUpdates is not null, EnvironmentSetting.CheckForUpdates);
+        If(UploadProtocol is not null, EnvironmentSetting.UploadProtocol);
+        If(DutyText is not null, EnvironmentSetting.DutyText);
+        If(DutyTextFile is not null, EnvironmentSetting.DutyTextFile);
+        If(InterventionReminders is not null, EnvironmentSetting.InterventionReminders);
+        If(SessionSharing is not null, EnvironmentSetting.SessionSharing);
+        If(ShareDirect is not null, EnvironmentSetting.ShareDirect);
+        If(SharePort is not null, EnvironmentSetting.SharePort);
+        If(ShareRelayFolder is not null, EnvironmentSetting.ShareRelayFolder);
+        If(ServerTags is not null, EnvironmentSetting.ServerTags);
+        return defined;
+    }
+
     public static EnvironmentProfile FromSettings(AppSettings settings, string? name)
     {
         var psmps = settings.PsmpServers.Select(p => (Address: p.Address, Port: p.Port))

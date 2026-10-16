@@ -51,7 +51,7 @@ away in the chosen language, keeping the address and user name you typed.
   wheel, the selected tab stays visible) and "⌄" lists them all with their state. `Ctrl+Tab` / `Ctrl+Shift+Tab`:
   next / previous tab; `Ctrl+F4` or `Ctrl+Shift+W`: close the tab.
 - **Closing a connected session** (SSH, remote desktop, VNC) asks for confirmation, with a "Don't ask again when
-  closing a session" box (the "Confirm before closing a connected session" setting, Settings › Terminal). On
+  closing a session" box (the "Confirm before closing a connected session" setting, Settings › General). On
   "Sign out of CyberArk" (which closes every tab) and on exit, a single window sums up what will be closed: sessions,
   transfers running, edited files not sent back.
 - **Confirmations**: the buttons say the action ("Delete the account", "Replace the key and connect"…), "Cancel" is
@@ -158,8 +158,8 @@ connection from the PVWA and opens the session in Windows **Remote Desktop Conne
 PVWA "Connect" button: the PVWA's RDP file is handed over as is. A component that opens a remote application
 (RemoteApp) opens its windows on this computer's desktop.
 
-**PSM sessions in a tab** ("Open PSM Windows sessions in a ZillaTerm tab" option, Settings › CyberArk, off by
-default): ZillaTerm reads the PVWA file itself and opens the session in a tab with the FreeRDP Remote Desktop client
+**PSM sessions in a tab** ("Open PSM Windows sessions in a ZillaTerm tab" option, Settings › Remote desktop, off
+by default): ZillaTerm reads the PVWA file itself and opens the session in a tab with the FreeRDP Remote Desktop client
 it includes: no `.rdp` file, no Windows warning about its publisher, no separate window.
 
 - **Opening**: the tab opens at once, as for a PSMP session; a progress bar stays in it while ZillaTerm requests the
@@ -170,8 +170,8 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   there as on a desktop; none opens on this computer's desktop.
 - **Size**: the session takes the size of the tab when it connects and keeps it. If the window changes size, the
   picture is scaled: the PSM opened its connection to the server at that size. The session never goes full screen,
-  even if the PVWA file asks for it. With the option "Resize the remote desktop with the tab" (Settings, CyberArk page,
-  on by default), the resolution of the PSM session follows the tab each time it is resized, without scaling;
+  even if the PVWA file asks for it. With the option "Resize the remote desktop with the tab" (Settings › Remote
+  desktop, on by default), the resolution of the PSM session follows the tab each time it is resized, without scaling;
   depending on the PSM configuration, the connection to the target server may keep its original size: turn the option
   off then, the session keeps a fixed size and its picture is scaled to the tab.
 - **Keyboard**: when the tab has the keyboard (click in the session), all keys go to the session, Windows shortcuts
@@ -189,14 +189,14 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   to ask the CyberArk team for, avoids the confirmations.
 - **Redirections** (clipboard, drives…): those the PVWA asks for, never more. No picture of the session is kept on
   disk.
-- **This computer's drives**: the option "Share this computer's drives with PSM Windows sessions" (Settings ›
-  CyberArk, on by default) asks the PVWA for them, like the "Map local drives" box of its connection window
+- **This computer's drives**: the option "Share this computer's drives" (Settings › Remote desktop, on by
+  default) asks the PVWA for them, like the "Map local drives" box of its connection window
   (`AllowMappingLocalDrives` parameter). When the connection component allows it, the PVWA writes them into the RDP
   file and they appear in the session (File Explorer › This PC), in the tab and in Remote Desktop Connection alike.
   With the option off, no drive is shared in the tab, even if the PVWA asks for it (choice kept in the PVWA, component
   setting); Remote Desktop Connection follows the PVWA's signed file, which cannot be modified.
-- **Display paused**: the option "Pause the display of Remote Desktop sessions nobody is watching" (Settings ›
-  CyberArk, checked by default) asks the server to stop sending the picture of a session in a tab when the tab has
+- **Display paused**: the option "Pause the display of sessions nobody is watching" (Settings › Remote
+  desktop, checked by default) asks the server to stop sending the picture of a session in a tab when the tab has
   been in the background, ZillaTerm minimized or Windows locked for 1 minute, or when nobody has used the keyboard or
   mouse for 15 minutes; the tab then shows "Display paused". The session stays open: the picture comes back as soon as
   you return to the tab or move the mouse, and the keyboard goes back to the session only afterwards (the key that
@@ -216,7 +216,7 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Tick "Remember this component" to keep it for the whole platform. Your
   PVWA may name its components differently (for example `WIN-PSM`): enter the name its "Connect" button offers; the
   list then offers the components already used, the platform's first. For all your Windows accounts, set the
-  component once in **Settings › CyberArk** ("Windows accounts", for example `WIN-PSM`); a component remembered for a
+  component once in **Settings › CyberArk** ("Component for Windows accounts", for example `WIN-PSM`); a component remembered for a
   platform still comes first. Per-platform components are shown and edited in the same place ("Component per
   platform").
 - **Domain accounts**: an account registered for its domain has no server. It is recognized by its domain platform,
@@ -242,7 +242,7 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
 
 ## 4. Open an SSH session through the PSMP
 
-Set the PSMP once in **Settings › CyberArk** (see [PSMP by domain](#psmp-by-domain) if you have several).
+Set the PSMP once in **Settings › SSH** (see [PSMP by domain](#psmp-by-domain) if you have several).
 Double-click (or Enter) then chooses from the name of the account's platform:
 
 | Platform name | Opened by default |
@@ -272,7 +272,7 @@ Graphical applications started in an SSH session (`xclock`, Oracle installers, `
 as with `ssh -X`:
 
 1. Install an **X server** on the computer (VcXsrv, X410, Xming…) and start it with **local TCP connections**
-   allowed: display `:0` listens on port 6000. The X server is set in **Settings › Terminal › Local X server** (`:0`
+   allowed: display `:0` listens on port 6000. The X server is set in **Settings › SSH › Local X server** (`:0`
    by default; this computer only, since the X protocol is not encrypted).
 2. Tick **"X11 forwarding (graphical applications)"** for the server: right-click → "Properties…" in "My servers", or
    in "Advanced options…" for a single connection. SSH sessions only; unticked by default. Once ticked, the box
@@ -288,7 +288,7 @@ neither exported nor put in a shared list.
 
 ### PSMP by domain
 
-With one PSMP per domain, declare them in **Settings › CyberArk**: a **default PSMP** and the **PSMP by domain** list
+With one PSMP per domain, declare them in **Settings › SSH**: a **default PSMP** and the **PSMP by domain** list
 ("Add a PSMP", address, port; the domain served is the one of the address, and can be changed). Each server goes
 through the PSMP of the domain **closest to its own**:
 
@@ -669,7 +669,7 @@ see the new color.
 - **Change**: right-click a server or a selection (`Ctrl+click`) → "Tag ▸", or a folder → "Tag the servers of the
   folder ▸", then the tag, or "No tag". "Suggest from the name" tags at once the servers that have none yet (those
   without a suggestion stay untagged). Also in "Properties…".
-- **List of tags**: Settings › General › "Server tags" (name of 16 characters at most, color; 20 tags at most).
+- **List of tags**: Settings › My servers › "Server tags" (name of 16 characters at most, color; 20 tags at most).
   Renaming a tag renames it on the servers; deleting it removes it from the servers.
 - The tag follows the server in the export of "My servers" and in shared lists; a tag missing from your Settings is
   shown in gray. The list of tags (names and colors) is shared with the team by the
@@ -868,9 +868,9 @@ says its master password was not remembered. Manage it in the **Settings**, Secu
 The **"Intervention"** button in the toolbar opens a window for any intervention, on call or not:
 
 - **The on-call duty reminder**: good practices, emergency numbers, contacts… It comes:
-  - from the text of **Settings › General › Duty reminder**, shared with the whole team by the
+  - from the text of **Settings › Intervention › Duty reminder**, shared with the whole team by the
     [environment file](#shared-environment);
-  - or from a **text file** set in **Settings › General › Reminder file** (usually on a network share; it can also be
+  - or from a **text file** set in **Settings › Intervention › Reminder file** (usually on a network share; it can also be
     shared by the environment file). It is read again each time the window opens: the managers update it without
     sending a new environment. Its path shows under the title; if it cannot be read (missing, access denied, share not
     answering within 5 seconds), the text from the Settings is shown, with the reason. UTF-8 or UTF-16 (Notepad is
@@ -925,7 +925,7 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   `Esc` or "Keep recording" cancels); a note being typed is added to the journal first. When recording stops, from here
   or from the Intervention window, the tab goes away and the Intervention window shows the intervention in "Recorded
   interventions", ready for "Export the report…".
-- **Timed reminders** (Settings › General, or the team's environment file): one line per reminder, the minutes since the
+- **Timed reminders** (Settings › Intervention, or the team's environment file): one line per reminder, the minutes since the
   start of the recording then the text ("30 Escalate to level 3"), 10 at most. The status bar shows the next one ("●
   Intervention recorded · Escalate to level 3 in 12 min"); at that time a banner appears at the top of the
   "Intervention" tab, the status bar says it and the ZillaTerm button flashes in the taskbar, without taking the
@@ -953,7 +953,8 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   the other and, at the top, the list of recordings (an intervention over the night and the morning, for example); they
   are also deleted together. **"Mask what looks like a secret"** (checked by default) replaces in the report, with
   "[masked]", passwords (`password=…`, `"client_secret": "…"`, `--db-password=…`, the one in an address
-  `https://jdoe:…@srv01.corp.local`), the body of private keys (`-----BEGIN … PRIVATE KEY-----`), `Bearer` and `Basic`
+  `https://jdoe:…@srv01.corp.local`; a password starting with `$` or `%` too, unless it has the shape of a variable,
+  left readable: `$DB_PASS`, `${VAULT_PASS}`, `$(cat …)`, `%DB_PASS%`), the body of private keys (`-----BEGIN … PRIVATE KEY-----`), `Bearer` and `Basic`
   headers, tokens of known formats (JWT, GitHub, GitLab, Slack, AWS, Google) and password hashes (`$6$…` from
   /etc/shadow); the report says how many passages were masked. Images (captures, recorded screens) are not masked, and
   the encrypted journal keeps everything. Masking is a safety net: read the report again before passing it on.
@@ -986,7 +987,9 @@ another person's session works without it). Then, how others reach you:
   networks only.
 - **Relay folder**: a folder of a network share that both computers can reach (`\\server\share\folder`), used when
   the direct connection does not get through (firewall, VPN). The person joining tries the direct connection first,
-  then the folder.
+  then the folder. When the invitation offers a relay folder that is not the one in their Settings, ZillaTerm shows it
+  and asks before using it ("Go through this relay folder?"): Windows connects to it with their account, so it should
+  only be the team's relay folder.
 
 **Share a session**
 
@@ -1085,9 +1088,9 @@ its label, the status bar messages and connection errors; a refused password is 
 only once. On the selected row of trees and tables, the secondary texts (counters, "matches: …", ⚠) stay readable,
 with or without the focus. The toolbars of "My servers" and of the Files tab are a single `Tab` stop (the arrow keys
 move from one button to the other). In the Settings, every box has its access key, without duplicates in the page
-shown. In high contrast mode, the interface takes the Windows system colours and follows their changes.
+shown, and the "Team" badge is read with its tooltip. In high contrast mode, the interface takes the Windows system colours and follows their changes.
 
-**Dark theme**: Settings → General → Appearance → Theme: "Same as Windows" (default: the app mode chosen in Windows,
+**Dark theme**: Settings › General › Theme: "Same as Windows" (default: the app mode chosen in Windows,
 Personalization → Colors, followed even when it changes), "Light" or "Dark". The change applies right away, to open
 windows and to the title bar; Windows high contrast always takes precedence. SSH terminal colours are set separately
 (Terminal page).
@@ -1096,48 +1099,57 @@ windows and to the title bar; Windows high contrast always takes precedence. SSH
 
 <img src="captures/en/settings.png" alt="Settings" width="480">
 
-Settings toolbar button → "Settings…" (or `Ctrl+,`). The window, which can be resized, is organized in pages: General,
-CyberArk, Terminal, Files, Sharing, Security. "Save" applies the settings; an incorrect value shows the page of the
-field concerned, with the cursor in it. Options with a side effect say so under their box ("⚠ Effect: …").
+Settings toolbar button → "Settings…" (or `Ctrl+,`). The window, which can be resized, has one page per topic (on the
+left, `Ctrl+Tab` from one to the next): General, CyberArk, SSH, Remote desktop, Terminal, Files, My servers,
+Intervention, Sharing, Security; each fits on one screen. Every setting has its help line underneath; "⚠" there marks
+a real risk. "Save" applies the settings; an incorrect value shows the page of the field concerned, with the cursor in
+it.
+
+**"Team" badge**: on the right of a setting, it means that the team's [environment file](#shared-environment) (next to
+the executable or central file) sets it, with the value in effect; its tooltip gives the file. You can still change the
+setting here, but a new version of the file may change it (always after your approval). A setting you refused at
+import, or changed since, has no badge.
 
 | Page | Setting | Purpose | Default |
 | --- | --- | --- | --- |
-| General | Theme | Same as Windows, Light or Dark; applied right away (Windows high contrast takes precedence) | same as Windows |
-| General | Duty reminder | Good practices and emergency numbers shown in the "Intervention" window; plain text, shared by the environment file (see [Intervention](#8-intervention-recording-and-on-call-duty-reminder)) | empty |
-| General | Reminder file | Text file (usually on a network share) read again each time the "Intervention" window opens, shown instead of the reminder above; shared by the environment file | empty |
-| General | Timed reminders | One line per reminder: minutes since the start of the recording, then the text ("30 Escalate to level 3"); shown in the "Intervention" tab and the status bar, noted in the journal; shared by the environment file | empty |
-| General | Server tags | Tags given to the servers of "My servers" (name, color): "Add a tag", "Remove the tag", editable cells; renaming follows in "My servers", deleting removes the tag from the servers; shared by the environment file (see [Tags](#tags-prod-qa-dev)) | PROD (red), QA (blue), DEV (green) |
 | General | Interface language | Français, English, Italiano or system language; applied after signing out of CyberArk or at the next start | Windows language (English if it is not translated) |
-| General | Central file | Team environment file on a network share, read at each start; its changes are shown before being applied (see [Shared environment](#shared-environment)) | empty |
+| General | Theme | Same as Windows, Light or Dark; applied right away (Windows high contrast takes precedence) | same as Windows |
+| General | Confirm before closing a connected session | SSH, remote desktop, VNC; "Don't ask again" in the confirmation unticks this setting | yes |
 | General | Look for a new version at startup | One request to GitHub at most once a day; a link in the status bar when a newer version exists (the "About" window recalls this setting) | no |
-| CyberArk | Keep the CyberArk session open | Light request every 4 minutes while you use the computer; paused while Windows is locked or after 15 minutes without keyboard or mouse (the CyberArk session then expires after its idle timeout) | yes |
-| CyberArk | Show the account list at once when you log in | Encrypted copy (Windows account) of the last complete list, one per PVWA and user, without any password, deleted after 30 days: shown at once, then replaced by the list read again from the PVWA. Unchecked: the copies are deleted. Spread by the environment file | yes |
-| CyberArk | Default PSMP, port | PSM for SSH server; when set (or a PSMP by domain), Unix accounts open over SSH by default (as files only for an "SFTP" platform); without any PSMP, SSH and SFTP are disabled | empty, 22 |
-| CyberArk | PSMP by domain | Other PSMPs (address, port, domain served); each server goes through the one of the domain closest to its own (see [PSMP by domain](#psmp-by-domain)); "Which PSMP for the server" to check | none |
-| CyberArk | Windows accounts component | PSM component of Windows accounts (domain or local) without a component remembered for their platform, for example `WIN-PSM` | empty = `PSM-RDP` |
-| CyberArk | PSM Windows sessions in a tab | PSM session (desktop or remote application) in a ZillaTerm tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); spread by the environment file | no |
-| CyberArk | Share this computer's drives with PSM Windows sessions | Asks the PVWA for this computer's drives ("Map local drives" box of its connection window, `AllowMappingLocalDrives`); when the component allows them, they appear in the session (File Explorer › This PC). Spread by the environment file | yes |
-| CyberArk | Resize the remote desktop with the tab | PSM sessions in a tab: the resolution follows the size of the tab instead of a scaled picture; the connection from the PSM to the target may keep its original size. For new sessions | yes |
-| CyberArk | Pause the display of Remote Desktop sessions nobody is watching | Sessions in a tab (FreeRDP client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture; the session stays open, the picture comes back when you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared; during a recording, the pause of a tab in the background is marked in it (screen and timeline of the report). Spread by the environment file | yes |
-| CyberArk | Component per platform | Platform (PVWA ID, for example `WinDomain`) / PSM component table: "Add a component", "Remove the line", editable cells; takes precedence over the Windows accounts component. "Remember this component for platform" (connection window) adds a line to it | empty |
-| Terminal | SSH in ZillaTerm | Built-in terminal and Files tab; otherwise Windows Terminal | yes |
-| Terminal | Terminal colours, font size | Palette (Campbell, One Half, Solarized…) and font size of the SSH terminals | Campbell, 14 |
-| Terminal | Warn before pasting several lines | Preview and confirmation when the shell would run the lines one by one | yes |
-| Terminal | Confirm before closing a connected session | SSH, remote desktop, VNC; "Don't ask again" in the confirmation unticks this setting | yes |
+| General | Central file | Team environment file on a network share, read at each start; its changes are shown before being applied (see [Shared environment](#shared-environment)) | empty |
+| General | Debug log | How connections unfold, in a file, without secrets (see [Security](#security)); "Show the file" opens it in Explorer. Also in the Settings button menu | no |
+| CyberArk | Keep the session open while I work | Light request every 4 minutes while you use the computer; paused while Windows is locked or after 15 minutes without keyboard or mouse (the CyberArk session then expires after its idle timeout) | yes |
+| CyberArk | Show the account list of the last login at once | Encrypted copy (Windows account) of the last complete list, one per PVWA and user, without any password, deleted after 30 days: shown at once, then replaced by the list read again from the PVWA. Unchecked: the copies are deleted | yes |
+| CyberArk | Component for Windows accounts | PSM component of Windows accounts (domain or local) without a component remembered for their platform, for example `WIN-PSM` | empty = `PSM-RDP` |
+| CyberArk | Component per platform | Platform (PVWA ID, for example `WinDomain`) / PSM component table: "Add a component", "Remove the line", editable cells; takes precedence over the component for Windows accounts. "Remember this component for platform" (connection window) adds a line to it | empty |
+| SSH | Open SSH sessions in ZillaTerm | Built-in terminal and Files tab; unchecked: Windows Terminal | yes |
+| SSH | Default PSMP, port | PSM for SSH server; when set (or a PSMP by domain), Unix accounts open over SSH by default (as files only for an "SFTP" platform); without any PSMP, SSH and SFTP are disabled | empty, 22 |
+| SSH | PSMP by domain | Other PSMPs (address, port, domain served); each server goes through the one of the domain closest to its own (see [PSMP by domain](#psmp-by-domain)); "Which PSMP for the server" to check | none |
+| SSH | Let the Files tab follow the terminal folder | Adds a command to `PROMPT_COMMAND` of the remote shell when the session opens (see [Following the terminal folder](#following-the-terminal-folder)) | yes |
+| SSH | Local X server | This computer's X server for X11 forwarding (`:0` = port 6000); this computer only | `:0` |
+| Remote desktop | Open PSM Windows sessions in a ZillaTerm tab | PSM session (desktop or remote application) in a tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); unchecked: Windows Remote Desktop Connection | no |
+| Remote desktop | Resize the remote desktop with the tab | Sessions in a tab: the resolution follows the size of the tab instead of a scaled picture; the connection from the PSM to the target may keep its original size | yes |
+| Remote desktop | Share this computer's drives | Asks the PVWA for this computer's drives ("Map local drives" box of its connection window, `AllowMappingLocalDrives`); when the component allows them, they appear in the session (File Explorer › This PC). ⚠ The programs of the session can then read and write your drives | yes |
+| Remote desktop | Pause the display of sessions nobody is watching | Sessions in a tab: when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture; the session stays open, the picture comes back when you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared; during a recording, the pause of a tab in the background is marked in it (screen and timeline of the report) | yes |
+| Terminal | Terminal colours, font size | Palette (Campbell, One Half, Solarized…) and font size of the SSH terminals; `Ctrl+wheel` changes the size of one terminal, `Ctrl+0` resets it | Campbell, 14 |
+| Terminal | Warn before pasting several lines when the shell would run them one by one | Preview and confirmation before pasting | yes |
 | Terminal | Right-click in the terminal pastes the clipboard | Shift+right-click then opens the menu; ⚠ a stray right-click sends the clipboard to the shell | no |
-| Terminal | Follow the terminal folder | Allows setting up folder tracking in the shell; ⚠ a command is added to `PROMPT_COMMAND` | yes |
-| Terminal | Local X server | This computer's X server for X11 forwarding (`:0` = port 6000); this computer only | `:0` |
-| Files | File upload | Protocol tried first (SFTP or SCP); if the server refuses it, the other one takes over | SFTP |
+| Files | Upload protocol | Protocol tried first (SFTP or SCP); if the server refuses it, the other one takes over | SFTP |
 | Files | Offer a single .tar.gz archive | Sending a single archive is offered from this number of files dropped at once | yes, 200 |
-| Files | Follow in an independent session | Following a file (tail -f) opens its own SFTP connection (one more PSMP session) | no |
+| Files | Follow files (tail -f) in an independent session | Following a file opens its own SFTP connection (one more PSMP session) | no |
 | Files | Text editor | Program opened by "Edit" in the Files tab | Notepad |
 | Files | Comparison tool | Program offered in the comparison window, with its arguments (`{0}` = left file, `{1}` = right file) | none |
-| Sharing | Allow sharing my sessions with another ZillaTerm | Share a session from the menu of its tab; watching another person's session works without it (see [Share a session](#9-share-a-session-with-a-colleague)); spread by the environment file | no |
-| Sharing | Direct connections to this computer, port | The other ZillaTerm connects to this computer; port 0 = a free port at random, 1024 to 65535 for a fixed port (useful when the firewall must allow it); spread by the environment file | yes, 0 |
-| Sharing | Relay folder | Folder of a network share that both computers can reach, used when the direct connection does not get through; encrypted exchanges, deleted at the end of the share; spread by the environment file (a folder on a network server requires ticking "I checked…") | empty |
+| My servers | Server tags | Tags given to the servers of "My servers" (name, color): "Add a tag", "Remove the tag", editable cells; renaming follows in "My servers", deleting removes the tag from the servers (see [Tags](#tags-prod-qa-dev)) | PROD (red), QA (blue), DEV (green) |
+| Intervention | Duty reminder | Good practices and emergency numbers shown at the top of the "Intervention" tab; plain text (see [Intervention](#8-intervention-recording-and-on-call-duty-reminder)) | empty |
+| Intervention | Reminder file | Text file (usually on a network share) read again each time, shown instead of the reminder above | empty |
+| Intervention | Timed reminders | One line per reminder: minutes since the start of the recording, then the text ("30 Escalate to level 3"); shown in the "Intervention" tab and the status bar, noted in the journal | empty |
+| Sharing | Allow sharing my sessions with another ZillaTerm | Share a session from the menu of its tab; watching another person's session works without it (see [Share a session](#9-share-a-session-with-a-colleague)) | no |
+| Sharing | Direct connections to this computer, port | The other ZillaTerm connects to this computer; port 0 = a free port at random, 1024 to 65535 for a fixed port (useful when the firewall must allow it) | yes, 0 |
+| Sharing | Relay folder | Folder of a network share that both computers can reach, used when the direct connection does not get through; encrypted exchanges, deleted at the end of the share (a folder on a network server coming from the environment file requires ticking "I checked…") | empty |
+| Security | Server keys and certificates | Table of the fingerprints checked and accepted (server, type, fingerprint): PSMP, direct SSH, FTPS and Remote Desktop certificates of KeePass entries (one row per key type); "Filter the servers" narrows the list. "Forget the selected keys" removes the selected rows on save; the key will be asked again at the next connection | — |
 | Security | Local vault | Remembered KeePass master passwords: "Create…", "Unlock…", "Change password…", "Delete now…"; these actions apply at once, without "Save" | — |
-| Security | Accepted server keys | Table of the fingerprints checked and accepted (server, type, fingerprint): PSMP, direct SSH, FTPS and Remote Desktop certificates of KeePass entries (one row per key type). "Forget the selected keys" removes the selected rows on save; the key will be asked again at the next connection | — |
-| Settings button menu | Debug log | How connections unfold, in a file, without secrets (see [Security](#security)); "Show the debug log file" opens it in Explorer | no |
+
+The settings the team's environment file can spread are listed in [Shared environment](#shared-environment).
 
 ### Shared environment
 
@@ -1222,7 +1234,8 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
   authenticated by the invitation secret, then AES-256-GCM, one key per direction, numbered messages (an altered,
   replayed or moved message cuts the connection). The verification code is derived from the connection keys: someone
   in between, even with the invitation, would get another code. After 5 attempts with a wrong invitation, the share
-  stops. The relay folder only sees encrypted messages, deleted at the end of the share. Nobody types in a session
+  stops. The relay folder only sees encrypted messages, deleted at the end of the share; an invitation's relay folder that
+  is not the one in your Settings is only used after you agree (Windows connects to it with your account). Nobody types in a session
   unless you gave them control (terminal only), and you take it back whenever you want; sharing stops when Windows
   locks. The name, account and computer of a person who asks are declarative: only the code is proof.
 - **End of the Windows session** (sign-out, shutdown): ZillaTerm closes without asking; its sessions are closed

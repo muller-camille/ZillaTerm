@@ -1,12 +1,15 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using ZillaTerm.App.Localization;
+using ZillaTerm.App.Services;
 using ZillaTerm.App.Terminal;
 using ZillaTerm.Core;
+using ZillaTerm.Core.Diagnostics;
 using ZillaTerm.Core.Interventions;
 using ZillaTerm.Core.KeePass;
 using ZillaTerm.Core.Localization;
@@ -35,6 +38,7 @@ public partial class SettingsDialog : Window
         KeepAccountListCopyBox.IsChecked = settings.KeepAccountListCopy;
         UpdateCheckBox.IsChecked = settings.CheckForUpdates;
         CentralFileBox.Text = settings.EnvironmentFile;
+        DebugLogBox.IsChecked = settings.DebugLogEnabled;
         UpdateStore();
         LanguageBox.DisplayMemberPath = "Value";
         LanguageBox.SelectedValuePath = "Key";
@@ -104,7 +108,11 @@ public partial class SettingsDialog : Window
         TagGrid.ItemsSource = _tagRows;
         _tagRows.CollectionChanged += (_, _) => UpdateAddTagButton();
         UpdateAddTagButton();
-        Loaded += (_, _) => (Pages.SelectedItem == SharingPage ? (Control)SessionSharingBox : LanguageBox).Focus();
+        Loaded += (_, _) =>
+        {
+            (Pages.SelectedItem == SharingPage ? (Control)SessionSharingBox : LanguageBox).Focus();
+            _ = ShowTeamBadgesAsync();
+        };
     }
 
     /// <summary>Ouvre la page « Partage » (partage demandé alors qu'il est désactivé).</summary>
@@ -131,7 +139,7 @@ public partial class SettingsDialog : Window
                     kv.Key);
             })
             .ToList();
-        HostKeysGrid.ItemsSource = HostKeyRows;
+        FilterHostKeys();
         HostKeysText.Text = _forgottenKeys.Count > 0 ? Strings.HostKeysForgotten
             : HostKeyRows.Count == 0 ? Strings.NoHostKeys
             : Strings.HostKeysHelp;
@@ -139,6 +147,17 @@ public partial class SettingsDialog : Window
 
     private void OnHostKeySelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
         ForgetKeysButton.IsEnabled = HostKeysGrid.SelectedItems.Count > 0;
+
+    private void OnHostKeysFilter(object sender, TextChangedEventArgs e) => FilterHostKeys();
+
+    /// <summary>Clés affichées dont le serveur ou l'empreinte contient le texte du filtre (toutes sans filtre).</summary>
+    private void FilterHostKeys()
+    {
+        var filter = HostKeysFilterBox.Text.Trim();
+        HostKeysGrid.ItemsSource = filter.Length == 0 ? HostKeyRows
+            : HostKeyRows.Where(r => r.Server.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                                     || r.Fingerprint.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
 
     /// <summary>
     /// Hauteur maximale : la zone de travail de l'écran où s'ouvre la fenêtre (celui de la fenêtre principale, qui peut
@@ -330,6 +349,7 @@ public partial class SettingsDialog : Window
         _settings.KeepPvwaSessionAlive = KeepAliveBox.IsChecked == true;
         _settings.KeepAccountListCopy = KeepAccountListCopyBox.IsChecked == true;
         _settings.CheckForUpdates = UpdateCheckBox.IsChecked == true;
+        _settings.DebugLogEnabled = DebugLogBox.IsChecked == true;
         _settings.PreferredUploadProtocol = ScpRadio.IsChecked == true ? TransferProtocol.Scp : TransferProtocol.Sftp;
         _settings.OfferArchive = ArchiveBox.IsChecked == true;
         _settings.ArchiveThreshold = threshold;
@@ -380,13 +400,120 @@ public partial class SettingsDialog : Window
         }
     }
 
-    /// <summary>Erreur en pied de fenêtre ; la page du champ en cause s'affiche et le champ prend le focus.</summary>
     private void OnBrowseCentralFile(object sender, RoutedEventArgs e)
     {
         var dialog = new Microsoft.Win32.OpenFileDialog { Filter = EnvironmentImport.FileFilter, CheckFileExists = true };
         if (dialog.ShowDialog(this) == true)
         {
             CentralFileBox.Text = dialog.FileName;
+        }
+    }
+
+    /// <summary>Ouvre l'Explorateur sur le fichier du journal, pour le relire ou le joindre à un message.</summary>
+    private void OnShowDebugLog(object sender, RoutedEventArgs e)
+    {
+        var path = DebugLog.FilePath ?? DebugLog.DefaultPath;
+        if (!File.Exists(path))
+        {
+            ShowError(Strings.DebugLogMissing, DebugLogBox);
+            return;
+        }
+
+        try
+        {
+            WindowsExplorer.ShowFile(path);
+        }
+        catch (Exception ex) when (ex is Win32Exception or ArgumentException)
+        {
+            ShowError(ex.Message, DebugLogShowButton);
+        }
+    }
+
+    // ===================== Pastilles « Équipe » =====================
+
+    /// <summary>
+    /// Montre la pastille « Équipe » des réglages que définit le fichier d'environnement posé à côté de l'exécutable ou
+    /// le fichier central, avec la valeur en vigueur. Fichiers lus en arrière-plan : le fichier central peut être sur un
+    /// partage lent ou absent.
+    /// </summary>
+    private async Task ShowTeamBadgesAsync()
+    {
+        string[] paths = [EnvironmentImport.LocalFile, _settings.EnvironmentFile.Trim()];
+        var files = await Task.Run(() => LoadTeamFiles(paths));
+        var applied = TeamSettings(files, _settings);
+        foreach (var badge in TeamBadges(Pages))
+        {
+            if (applied.TryGetValue(badge.Setting, out var path))
+            {
+                var tip = Text.Format(Strings.TeamBadgeTip, path);
+                badge.ToolTip = tip;
+                System.Windows.Automation.AutomationProperties.SetHelpText(badge, tip);
+                badge.Visibility = Visibility.Visible;
+            }
+        }
+    }
+
+    /// <summary>Fichiers d'environnement lisibles parmi ceux-ci ; un fichier absent, illisible ou refusé est ignoré.</summary>
+    private static List<(string Path, EnvironmentProfile Profile)> LoadTeamFiles(IEnumerable<string> paths)
+    {
+        var files = new List<(string, EnvironmentProfile)>();
+        foreach (var path in paths.Where(p => p.Length > 0))
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    files.Add((path, EnvironmentProfile.Load(path).Profile));
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException
+                                           or EnvironmentFileException)
+            {
+                DebugLog.Write("env", $"Fichier d'environnement non lu pour les Paramètres : {path} ({ex.Message})");
+            }
+        }
+
+        return files;
+    }
+
+    /// <summary>
+    /// Réglages que ces fichiers définissent et dont la valeur est celle en vigueur, avec le fichier en cause (le dernier
+    /// l'emporte, comme au démarrage où le fichier central est proposé après celui de l'exécutable). Un réglage refusé à
+    /// l'import, ou changé depuis, n'a pas de pastille.
+    /// </summary>
+    internal static Dictionary<EnvironmentSetting, string> TeamSettings(IEnumerable<(string Path, EnvironmentProfile Profile)> files,
+        AppSettings settings)
+    {
+        // Le port du partage direct est sur la ligne de la case « Partage direct » : une pastille pour les deux.
+        static EnvironmentSetting Row(EnvironmentSetting setting) =>
+            setting == EnvironmentSetting.SharePort ? EnvironmentSetting.ShareDirect : setting;
+
+        var applied = new Dictionary<EnvironmentSetting, string>();
+        foreach (var (path, profile) in files)
+        {
+            var differs = profile.Diff(settings).Select(c => Row(c.Setting)).ToHashSet();
+            foreach (var setting in profile.DefinedSettings().Select(Row).Where(s => !differs.Contains(s)))
+            {
+                applied[setting] = path;
+            }
+        }
+
+        return applied;
+    }
+
+    private static IEnumerable<TeamBadge> TeamBadges(DependencyObject node)
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(node).OfType<DependencyObject>())
+        {
+            if (child is TeamBadge badge)
+            {
+                yield return badge;
+            }
+
+            foreach (var inner in TeamBadges(child))
+            {
+                yield return inner;
+            }
         }
     }
 
@@ -830,6 +957,7 @@ public partial class SettingsDialog : Window
         return new Dictionary<string, string>(components, StringComparer.Ordinal);
     }
 
+    /// <summary>Erreur en pied de fenêtre ; la page du champ en cause s'affiche et le champ prend le focus.</summary>
     private void ShowError(string message, System.Windows.Controls.Control field)
     {
         ErrorText.Text = message;

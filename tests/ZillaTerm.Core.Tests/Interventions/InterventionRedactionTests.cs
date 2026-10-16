@@ -35,6 +35,11 @@ public sealed class InterventionRedactionTests
     [InlineData("aws_access_key_id = AKIAIOSFODNN7EXAMPLE", "aws_access_key_id = [masked]")]
     [InlineData("root:$6$rounds=5000$saltsalt$Xk3h2J8sZ0aQ1bC2dE3fG4hI5jK6lM7nO8pQ9rS0tU:19650:0:99999:7:::",
         "root:[masked]:19650:0:99999:7:::")]
+    // Mot de passe qui commence par « $ » ou « % » : une valeur, pas une variable.
+    [InlineData("mysql -u root --password='$ecr3t!Prod'", "mysql -u root --password='[masked]'")]
+    [InlineData("password: $Tr0ub4dor!3", "password: [masked]")]
+    [InlineData("db_password=%Xk9!pq", "db_password=[masked]")]
+    [InlineData("DB_PASSWORD=\"$Pa55;w0rd\"", "DB_PASSWORD=\"[masked]\"")]
     [InlineData("jdoe:$y$j9T$abcdefgh$0123456789abcdefghijklmnopqrstuvwxyzABCDE:19000::::::", "jdoe:[masked]:19000::::::")]
     public void SecretsAreMasked(string line, string expected) => Assert.Equal(expected, Line(line));
 
@@ -50,6 +55,9 @@ public sealed class InterventionRedactionTests
     [InlineData("Basic authentication is disabled")]
     [InlineData("password: ********")]
     [InlineData("DB_PASSWORD=$DB_PASS")]
+    [InlineData("export DB_PASSWORD=${VAULT_PASS}")]
+    [InlineData("export API_TOKEN=$(cat /run/secrets/token)")]
+    [InlineData("set DB_PASSWORD=%DB_PASS%")]
     [InlineData("password: \"{{ vault_db_password }}\"")]
     [InlineData("token_expiry=3600")]
     [InlineData("[admin-srv01@srv01 ~]$ df -h /var")]

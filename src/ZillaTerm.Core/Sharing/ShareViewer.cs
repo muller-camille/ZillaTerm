@@ -122,8 +122,16 @@ public sealed class ShareViewer : IShareConnection
     /// <summary>
     /// Se connecte et demande à regarder ; l'accord se lit ensuite dans <see cref="Accepted"/>.
     /// </summary>
-    /// <exception cref="ShareException">Invitation terminée, poste injoignable, invitation refusée, dossier introuvable.</exception>
-    public static async Task<ShareViewer> ConnectAsync(ShareInvitation invitation, ShareJoin join, CancellationToken cancellationToken)
+    /// <param name="allowRelay">
+    /// Appelé avant de passer par le dossier relais de l'invitation (connexion directe impossible) : faux, il n'est pas
+    /// ouvert. L'invitation vient d'un message : son dossier peut désigner n'importe quel serveur, auquel Windows
+    /// s'identifierait avec le compte de la personne qui rejoint. Null : toujours permis.
+    /// </param>
+    /// <exception cref="ShareException">
+    /// Invitation terminée, poste injoignable, invitation refusée, dossier introuvable, dossier relais refusé.
+    /// </exception>
+    public static async Task<ShareViewer> ConnectAsync(ShareInvitation invitation, ShareJoin join, CancellationToken cancellationToken,
+        Func<string, CancellationToken, Task<bool>>? allowRelay = null)
     {
         if (invitation.ExpiresAt < DateTime.UtcNow)
         {
@@ -144,6 +152,11 @@ public sealed class ShareViewer : IShareConnection
 
         if (invitation.RelayFolder is { } relay && ShareInvitation.IsRelayFolder(relay))
         {
+            if (allowRelay is not null && !await allowRelay(relay, cancellationToken).ConfigureAwait(false))
+            {
+                throw new ShareException(ShareFailure.RelayRefused, relay);
+            }
+
             var viewer = await ConnectRelayAsync(invitation, relay, cancellationToken).ConfigureAwait(false);
             await viewer.BeginAsync(join, cancellationToken).ConfigureAwait(false);
             return viewer;

@@ -53,7 +53,7 @@ subito nella lingua scelta, conservando l'indirizzo e il nome utente inseriti.
   `Ctrl+F4` o `Ctrl+Maiusc+W`: chiudi la scheda.
 - **Chiudere una sessione connessa** (SSH, desktop remoto, VNC) chiede conferma, con la casella «Non chiedere più
   alla chiusura di una sessione» (impostazione «Conferma prima di chiudere una sessione connessa», Impostazioni ›
-  Terminale). Con «Disconnetti da CyberArk» (che chiude tutte le schede) e all'uscita, una sola finestra riepiloga
+  Generale). Con «Disconnetti da CyberArk» (che chiude tutte le schede) e all'uscita, una sola finestra riepiloga
   ciò che verrà chiuso: sessioni, trasferimenti in corso, file modificati non rimandati.
 - **Conferme**: i pulsanti dicono l'azione («Elimina l'account», «Sostituisci la chiave e connetti»…), «Annulla» è il
   pulsante predefinito, e il server, l'account o il safe interessato viene nominato. I valori da confrontare
@@ -167,7 +167,7 @@ avanzate…» permette allora di scegliere il PSM. ZillaTerm richiede la conness
 componente che apre un'applicazione remota (RemoteApp) apre le sue finestre sul desktop del computer.
 
 **Sessioni PSM in una scheda** (opzione «Apri le sessioni PSM Windows in una scheda di ZillaTerm», Impostazioni ›
-CyberArk, disattivata per impostazione predefinita): ZillaTerm legge da sé il file del PVWA e apre la sessione in una
+Desktop remoto, disattivata per impostazione predefinita): ZillaTerm legge da sé il file del PVWA e apre la sessione in una
 scheda con il client Desktop remoto FreeRDP che integra: nessun file `.rdp`, nessun avviso di Windows sul suo autore,
 nessuna finestra separata.
 
@@ -180,8 +180,7 @@ nessuna finestra separata.
 - **Dimensione**: la sessione prende la dimensione della scheda alla connessione e la mantiene. Se la finestra cambia
   dimensione, l'immagine viene ridimensionata: il PSM ha aperto la sua connessione al server a quella dimensione. La
   sessione non passa mai a schermo intero, anche se il file del PVWA lo chiede. Con l'opzione «Adatta la risoluzione
-  del desktop remoto alla dimensione della scheda» (Impostazioni, pagina CyberArk, attiva per impostazione
-  predefinita), la risoluzione della sessione PSM segue la scheda a ogni ridimensionamento, senza adattare l'immagine;
+  alla dimensione della scheda» (Impostazioni › Desktop remoto, attiva per impostazione predefinita), la risoluzione della sessione PSM segue la scheda a ogni ridimensionamento, senza adattare l'immagine;
   a seconda della configurazione del PSM, la connessione al server di destinazione può mantenere la dimensione
   originale: disattiva allora l'opzione, la sessione mantiene una dimensione fissa e la sua immagine viene adattata
   alla scheda.
@@ -200,15 +199,15 @@ nessuna finestra separata.
   certificato del PSM emesso dall'autorità dell'azienda, da chiedere al team CyberArk, evita le conferme.
 - **Reindirizzamenti** (appunti, unità…): quelli richiesti dal PVWA, mai di più. Nessuna immagine della sessione
   viene conservata sul disco.
-- **Dischi di questo computer**: l'opzione «Condividi i dischi di questo computer con le sessioni PSM Windows»
-  (Impostazioni › CyberArk, selezionata per impostazione predefinita) li chiede al PVWA, come la casella «Map local
+- **Dischi di questo computer**: l'opzione «Condividi i dischi di questo computer»
+  (Impostazioni › Desktop remoto, selezionata per impostazione predefinita) li chiede al PVWA, come la casella «Map local
   drives» della sua finestra di connessione (parametro `AllowMappingLocalDrives`). Se il componente di connessione lo
   consente, il PVWA li scrive nel file RDP e compaiono nella sessione (Esplora file › Questo PC), nella scheda come in
   Connessione Desktop remoto. Con l'opzione deselezionata, nessun disco viene condiviso nella scheda, anche se il PVWA
   lo chiede (scelta conservata nel PVWA, impostazione del componente); Connessione Desktop remoto segue il file
   firmato del PVWA, che non può essere modificato.
-- **Visualizzazione in pausa**: l'opzione «Sospendi la visualizzazione delle sessioni Desktop remoto che nessuno
-  guarda» (Impostazioni › CyberArk, selezionata per impostazione predefinita) chiede al server di non inviare più
+- **Visualizzazione in pausa**: l'opzione «Sospendi la visualizzazione delle sessioni che nessuno guarda»
+  (Impostazioni › Desktop remoto, selezionata per impostazione predefinita) chiede al server di non inviare più
   l'immagine di una sessione in una scheda quando la scheda è in secondo piano, ZillaTerm ridotto a icona o Windows
   bloccato da 1 minuto, oppure quando tastiera e mouse non sono stati usati da 15 minuti; la scheda mostra allora
   «Visualizzazione in pausa». La sessione resta aperta: l'immagine torna appena si ritorna sulla scheda o si muove il
@@ -231,8 +230,8 @@ nessuna finestra separata.
   `PSM-SQLServerMgmtStudio`, `PSM-SQLPlus`…). Seleziona «Memorizza questo componente» per conservarlo per tutta la
   piattaforma. Il tuo PVWA può chiamare i suoi componenti in un altro modo (ad esempio `WIN-PSM`): inserisci il nome
   proposto dal suo pulsante «Connect»; l'elenco propone poi i componenti già usati, quello della piattaforma per
-  primo. Per tutti i tuoi account Windows, imposta una volta il componente in **Impostazioni › CyberArk** («Account
-  Windows», ad esempio `WIN-PSM`); un componente memorizzato per una piattaforma resta prioritario. I componenti per
+  primo. Per tutti i tuoi account Windows, imposta una volta il componente in **Impostazioni › CyberArk** («Componente
+  degli account Windows», ad esempio `WIN-PSM`); un componente memorizzato per una piattaforma resta prioritario. I componenti per
   piattaforma si vedono e si modificano nello stesso punto («Componente per piattaforma»).
 - **Account di dominio**: un account registrato per il suo dominio non ha un server. Viene riconosciuto dalla
   piattaforma di dominio, dalla limitazione alle sue macchine autorizzate o dall'indirizzo: il dominio di accesso, un
@@ -258,7 +257,7 @@ nessuna finestra separata.
 
 ## 4. Aprire una sessione SSH tramite il PSMP
 
-Imposta una volta il PSMP in **Impostazioni › CyberArk** (vedi [PSMP per dominio](#psmp-per-dominio) se ne hai
+Imposta una volta il PSMP in **Impostazioni › SSH** (vedi [PSMP per dominio](#psmp-per-dominio) se ne hai
 diversi). Il doppio clic (o Invio) sceglie allora in base al nome della piattaforma dell'account:
 
 | Nome della piattaforma | Apertura predefinita |
@@ -289,7 +288,7 @@ Le applicazioni grafiche avviate in una sessione SSH (`xclock`, programmi di ins
 aprirsi sul vostro computer, come con `ssh -X`:
 
 1. Installate un **server X** sul computer (VcXsrv, X410, Xming…) e avviatelo consentendo le **connessioni TCP
-   locali**: il display `:0` è in ascolto sulla porta 6000. Il server X si imposta in **Impostazioni › Terminale ›
+   locali**: il display `:0` è in ascolto sulla porta 6000. Il server X si imposta in **Impostazioni › SSH ›
    Server X locale** (`:0` per impostazione predefinita; solo questo computer, perché il protocollo X non è cifrato).
 2. Selezionate **«Inoltro X11 (applicazioni grafiche)»** per il server: clic destro → «Proprietà…» in «I miei
    server», oppure in «Opzioni avanzate…» per una sola connessione. Solo sessioni SSH; non selezionato per impostazione
@@ -305,7 +304,7 @@ personale: non viene né esportata né inserita in un elenco condiviso.
 
 ### PSMP per dominio
 
-Con un PSMP per dominio, dichiarali in **Impostazioni › CyberArk**: un **PSMP predefinito** e l'elenco **PSMP per
+Con un PSMP per dominio, dichiarali in **Impostazioni › SSH**: un **PSMP predefinito** e l'elenco **PSMP per
 dominio** («Aggiungi un PSMP», indirizzo, porta; il dominio servito è quello dell'indirizzo, modificabile). Ogni
 server passa dal PSMP del dominio **più vicino al suo**:
 
@@ -712,7 +711,7 @@ riaprire la sessione per vedere il nuovo colore.
 - **Cambiare**: clic destro su un server o una selezione (`Ctrl+clic`) → «Etichetta ▸», oppure su una cartella →
   «Etichetta i server della cartella ▸», poi l'etichetta, o «Nessuna». «Proponi in base al nome» etichetta in un colpo
   solo i server che non ne hanno ancora una (quelli senza proposta restano senza etichetta). Anche in «Proprietà…».
-- **Elenco delle etichette**: Impostazioni › Generale › «Etichette dei server» (nome di 16 caratteri al massimo,
+- **Elenco delle etichette**: Impostazioni › I miei server › «Etichette dei server» (nome di 16 caratteri al massimo,
   colore; 20 etichette al massimo). Rinominare un'etichetta la rinomina sui server; eliminarla la toglie dai server.
 - L'etichetta segue il server nell'esportazione di «I miei server» e negli elenchi condivisi; un'etichetta assente
   dalle proprie Impostazioni appare in grigio. L'elenco delle etichette (nomi e colori) si diffonde al team con il
@@ -924,9 +923,9 @@ Il pulsante **«Intervento»** della barra degli strumenti apre una finestra uti
 reperibilità o no:
 
 - **Il promemoria di reperibilità**: buone pratiche, numeri di emergenza, contatti… Proviene:
-  - dal testo di **Impostazioni › Generale › Promemoria di reperibilità**, diffuso a tutto il team con il
+  - dal testo di **Impostazioni › Intervento › Promemoria di reperibilità**, diffuso a tutto il team con il
     [file di ambiente](#ambiente-condiviso);
-  - oppure da un **file di testo** indicato in **Impostazioni › Generale › File del promemoria** (di solito su una
+  - oppure da un **file di testo** indicato in **Impostazioni › Intervento › File del promemoria** (di solito su una
     condivisione di rete; anch'esso diffondibile con il file di ambiente). Viene riletto a ogni apertura della
     finestra: i responsabili lo aggiornano senza ridistribuire l'ambiente. Il suo percorso appare sotto il titolo; se
     non è leggibile (assente, accesso negato, condivisione che non risponde entro 5 secondi), viene mostrato il testo
@@ -983,7 +982,7 @@ reperibilità o no:
   `Esc` o «Continua l'intervento» annulla); una nota in corso di scrittura viene prima aggiunta al registro.
   All'interruzione, da qui o dalla finestra Intervento, la scheda scompare e la finestra Intervento mostra l'intervento
   in «Interventi registrati», pronto per «Esporta il rapporto…».
-- **Avvisi a tempo** (Impostazioni › Generale, o file di ambiente del team): una riga per avviso, i minuti dall'inizio
+- **Avvisi a tempo** (Impostazioni › Intervento, o file di ambiente del team): una riga per avviso, i minuti dall'inizio
   della registrazione poi il testo («30 Scalare al livello 3»), al massimo 10. La barra di stato mostra il prossimo («●
   Intervento registrato · Scalare al livello 3 tra 12 min»); all'ora indicata un banner appare in cima alla scheda
   «Intervento», la barra di stato lo dice e il pulsante di ZillaTerm lampeggia nella barra delle applicazioni, senza
@@ -1012,7 +1011,8 @@ reperibilità o no:
   e, in testa, l'elenco delle registrazioni (un intervento sulla notte e la mattina, ad esempio); si eliminano anche
   insieme. **«Maschera ciò che sembra un segreto»** (selezionato per impostazione predefinita) sostituisce nel rapporto,
   con «[mascherato]», le password (`password=…`, `"client_secret": "…"`, `--db-password=…`, quella di un indirizzo
-  `https://jdoe:…@srv01.corp.local`), il corpo delle chiavi private (`-----BEGIN … PRIVATE KEY-----`), le intestazioni
+  `https://jdoe:…@srv01.corp.local`; anche una password che inizia con `$` o `%`, salvo se ha la forma di una
+  variabile, lasciata leggibile: `$DB_PASS`, `${VAULT_PASS}`, `$(cat …)`, `%DB_PASS%`), il corpo delle chiavi private (`-----BEGIN … PRIVATE KEY-----`), le intestazioni
   `Bearer` e `Basic`, i token di formato noto (JWT, GitHub, GitLab, Slack, AWS, Google) e gli hash di password (`$6$…`
   di /etc/shadow); il rapporto dice quanti passaggi sono stati mascherati. Le immagini (catture, schermi registrati) non
   sono mascherate, e il registro cifrato conserva tutto. Il mascheramento è una rete di sicurezza: rileggete il rapporto
@@ -1048,7 +1048,9 @@ gli altri ti raggiungono:
   private o di dominio.
 - **Cartella di inoltro**: una cartella di una condivisione di rete raggiungibile da entrambi i computer
   (`\\server\condivisione\cartella`), usata quando la connessione diretta non riesce (firewall, VPN). Chi partecipa
-  prova prima la connessione diretta, poi la cartella.
+  prova prima la connessione diretta, poi la cartella. Se l'invito propone una cartella di inoltro diversa da quella
+  delle sue Impostazioni, ZillaTerm la mostra e chiede prima di usarla («Passare da questa cartella di inoltro?»):
+  Windows vi si collega con il suo account, quindi deve essere solo la cartella di inoltro del team.
 
 **Condividere una sessione**
 
@@ -1151,10 +1153,11 @@ tentativo («Tentativo 2 di 3»), letto anche con il campo, e un server che non 
 vengono annunciati una sola volta. Sulla riga selezionata degli alberi e delle tabelle, i testi secondari (contatori,
 «corrisponde: …», ⚠) restano leggibili, con o senza il focus. Le barre degli strumenti di «I miei server» e della
 scheda File sono un solo passo di `Tab` (le frecce passano da un pulsante all'altro). Nelle Impostazioni, ogni
-casella ha il suo tasto di scelta, senza doppioni nella pagina mostrata. In contrasto elevato, l'interfaccia usa i
+casella ha il suo tasto di scelta, senza doppioni nella pagina mostrata, e il badge «Team» viene letto con la sua
+descrizione. In contrasto elevato, l'interfaccia usa i
 colori di sistema di Windows e ne segue i cambiamenti.
 
-**Tema scuro**: Impostazioni → Generale → Aspetto → Tema: «Come Windows» (predefinito: la modalità delle app scelta in
+**Tema scuro**: Impostazioni › Generale › Tema: «Come Windows» (predefinito: la modalità delle app scelta in
 Windows, Personalizzazione → Colori, seguita anche quando cambia), «Chiaro» o «Scuro». La modifica si applica subito,
 alle finestre aperte e alla barra del titolo; il contrasto elevato di Windows ha sempre la precedenza. I colori dei
 terminali SSH si impostano a parte (pagina Terminale).
@@ -1163,49 +1166,57 @@ terminali SSH si impostano a parte (pagina Terminale).
 
 <img src="captures/it/settings.png" alt="Impostazioni" width="480">
 
-Pulsante Impostazioni della barra degli strumenti → «Impostazioni…» (o `Ctrl+,`). La finestra, ridimensionabile, è
-organizzata in pagine: Generale, CyberArk, Terminale, File, Condivisione, Sicurezza. «Salva» applica le impostazioni; un
-valore errato mostra la pagina del campo interessato, con il cursore nel campo. Le opzioni con un effetto collaterale lo
-dicono sotto la loro casella («⚠ Effetto: …»).
+Pulsante Impostazioni della barra degli strumenti → «Impostazioni…» (o `Ctrl+,`). La finestra, ridimensionabile, ha
+una pagina per argomento (a sinistra, `Ctrl+Tab` dall'una all'altra): Generale, CyberArk, SSH, Desktop remoto,
+Terminale, File, I miei server, Intervento, Condivisione, Sicurezza; ognuna sta in una schermata. Ogni impostazione ha
+la sua riga di aiuto sotto; «⚠» vi segnala un rischio reale. «Salva» applica le impostazioni; un valore errato mostra
+la pagina del campo interessato, con il cursore nel campo.
+
+**Badge «Team»**: a destra di un'impostazione, indica che il [file di ambiente](#ambiente-condiviso) del team (accanto
+all'eseguibile o file centrale) la definisce, con il valore in vigore; la sua descrizione indica il file. L'impostazione
+resta modificabile qui, ma una nuova versione del file potrà cambiarla (sempre dopo la tua approvazione).
+Un'impostazione rifiutata all'importazione, o cambiata dopo, non ha il badge.
 
 | Pagina | Impostazione | Ruolo | Predefinito |
 | --- | --- | --- | --- |
-| Generale | Tema | Come Windows, Chiaro o Scuro; applicato subito (il contrasto elevato di Windows ha la precedenza) | come Windows |
-| Generale | Promemoria di reperibilità | Buone pratiche e numeri di emergenza mostrati nella finestra «Intervento»; testo semplice, diffuso dal file di ambiente (vedi [Intervento](#8-intervento-registrazione-e-promemoria-di-reperibilità)) | vuoto |
-| Generale | File del promemoria | File di testo (di solito su una condivisione di rete) riletto a ogni apertura della finestra «Intervento», mostrato al posto del promemoria qui sopra; diffuso dal file di ambiente | vuoto |
-| Generale | Avvisi a tempo | Una riga per avviso: minuti dall'inizio della registrazione, poi il testo («30 Scalare al livello 3»); mostrati nella scheda «Intervento» e nella barra di stato, annotati nel registro; diffusi dal file di ambiente | vuoto |
-| Generale | Etichette dei server | Etichette assegnate ai server di «I miei server» (nome, colore): «Aggiungi un'etichetta», «Elimina l'etichetta», celle modificabili; la ridenominazione si applica in «I miei server», l'eliminazione toglie l'etichetta dai server; diffuse dal file di ambiente (vedi [Etichette](#etichette-prod-qa-dev)) | PROD (rosso), QA (blu), DEV (verde) |
 | Generale | Lingua dell'interfaccia | Français, English, Italiano o lingua del sistema; applicata dopo la disconnessione da CyberArk o al prossimo avvio | lingua di Windows (inglese se non è tradotta) |
+| Generale | Tema | Come Windows, Chiaro o Scuro; applicato subito (il contrasto elevato di Windows ha la precedenza) | come Windows |
+| Generale | Conferma prima di chiudere una sessione connessa | SSH, desktop remoto, VNC; «Non chiedere più» nella conferma deseleziona questa impostazione | sì |
+| Generale | Cerca una nuova versione all'avvio | Una richiesta a GitHub al massimo una volta al giorno; un link nella barra di stato se esiste una versione più recente (la finestra «Informazioni» ricorda questa impostazione) | no |
 | Generale | File centrale | File di ambiente del team su una condivisione di rete, riletto a ogni avvio; le sue modifiche vengono mostrate prima di essere applicate (vedi [Ambiente condiviso](#ambiente-condiviso)) | vuoto |
-| Generale | Cercare una nuova versione all'avvio | Una richiesta a GitHub al massimo una volta al giorno; un link nella barra di stato se esiste una versione più recente (la finestra «Informazioni» ricorda questa impostazione) | no |
-| CyberArk | Mantenere aperta la sessione CyberArk | Richiesta leggera ogni 4 minuti mentre usi il computer; sospesa quando Windows è bloccato o dopo 15 minuti senza tastiera né mouse (la sessione CyberArk scade allora secondo il suo timeout di inattività) | sì |
-| CyberArk | Mostrare subito l'elenco degli account all'accesso | Copia cifrata (account Windows) dell'ultimo elenco completo, una per PVWA e utente, senza alcuna password, eliminata dopo 30 giorni: mostrata subito, poi sostituita dall'elenco riletto dal PVWA. Non selezionata: le copie vengono eliminate. Diffusa dal file d'ambiente | sì |
-| CyberArk | PSMP predefinito, porta | Server PSM for SSH; se impostato (o un PSMP per dominio), gli account Unix si aprono in SSH per impostazione predefinita (in soli file per una piattaforma «SFTP»); senza alcun PSMP, SSH e SFTP sono disattivati | vuoto, 22 |
-| CyberArk | PSMP per dominio | Altri PSMP (indirizzo, porta, dominio servito); ogni server passa da quello del dominio più vicino al suo (vedi [PSMP per dominio](#psmp-per-dominio)); «Quale PSMP per il server» per verificare | nessuno |
+| Generale | Registro di debug | Svolgimento delle connessioni in un file, senza segreti (vedi [Sicurezza](#sicurezza)); «Mostra il file» lo apre in Esplora risorse. Anche nel menu del pulsante Impostazioni | no |
+| CyberArk | Mantieni aperta la sessione mentre lavoro | Richiesta leggera ogni 4 minuti mentre usi il computer; sospesa quando Windows è bloccato o dopo 15 minuti senza tastiera né mouse (la sessione CyberArk scade allora secondo il suo timeout di inattività) | sì |
+| CyberArk | Mostra subito l'elenco degli account dell'ultimo accesso | Copia cifrata (account Windows) dell'ultimo elenco completo, una per PVWA e utente, senza alcuna password, eliminata dopo 30 giorni: mostrata subito, poi sostituita dall'elenco riletto dal PVWA. Non selezionata: le copie vengono eliminate | sì |
 | CyberArk | Componente degli account Windows | Componente PSM degli account Windows (di dominio o locali) senza componente memorizzato per la loro piattaforma, ad esempio `WIN-PSM` | vuoto = `PSM-RDP` |
-| CyberArk | Sessioni PSM Windows in una scheda | Sessione PSM (desktop o applicazione remota) in una scheda di ZillaTerm, con il client FreeRDP integrato, alla dimensione della scheda (vedi [Aprire una sessione PSM](#3-aprire-una-sessione-psm-desktop-remoto)); diffusa dal file d'ambiente | no |
-| CyberArk | Condividi i dischi di questo computer con le sessioni PSM Windows | Chiede al PVWA i dischi di questo computer (casella «Map local drives» della sua finestra di connessione, `AllowMappingLocalDrives`); se il componente li consente, compaiono nella sessione (Esplora file › Questo PC). Diffusa dal file d'ambiente | sì |
-| CyberArk | Adatta la risoluzione del desktop remoto alla dimensione della scheda | Sessioni PSM in una scheda: la risoluzione segue la dimensione della scheda invece di un'immagine adattata; la connessione dal PSM alla destinazione può mantenere la dimensione originale. Per le nuove sessioni | sì |
-| CyberArk | Sospendi la visualizzazione delle sessioni Desktop remoto che nessuno guarda | Sessioni in una scheda (client FreeRDP): con la scheda in secondo piano, ZillaTerm ridotto a icona o Windows bloccato da 1 minuto, oppure senza tastiera né mouse da 15 minuti, il server smette di inviare l'immagine; la sessione resta aperta, l'immagine torna quando si ritorna sulla scheda o si muove il mouse. Mai per la scheda visualizzata durante la registrazione di un intervento o una condivisione; durante una registrazione, la pausa di una scheda in secondo piano vi è segnata (schermo e linea del tempo del rapporto). Diffusa dal file d'ambiente | sì |
 | CyberArk | Componente per piattaforma | Tabella Piattaforma (ID del PVWA, ad esempio `WinDomain`) / Componente PSM: «Aggiungi un componente», «Rimuovi la riga», celle modificabili; ha la precedenza sul componente degli account Windows. «Memorizza questo componente per la piattaforma» (finestra di connessione) vi aggiunge una riga | vuoto |
-| Terminale | SSH in ZillaTerm | Terminale e scheda File integrati; altrimenti Windows Terminal | sì |
-| Terminale | Colori del terminale, dimensione carattere | Tavolozza (Campbell, One Half, Solarized…) e dimensione del carattere dei terminali SSH | Campbell, 14 |
-| Terminale | Avvisa prima di incollare più righe | Anteprima e conferma quando la shell eseguirebbe le righe una alla volta | sì |
-| Terminale | Conferma prima di chiudere una sessione connessa | SSH, desktop remoto, VNC; «Non chiedere più» nella conferma deseleziona questa impostazione | sì |
+| SSH | Apri le sessioni SSH in ZillaTerm | Terminale e scheda File integrati; non selezionata: Windows Terminal | sì |
+| SSH | Indirizzo PSMP predefinito, porta | Server PSM for SSH; se impostato (o un PSMP per dominio), gli account Unix si aprono in SSH per impostazione predefinita (in soli file per una piattaforma «SFTP»); senza alcun PSMP, SSH e SFTP sono disattivati | vuoto, 22 |
+| SSH | PSMP per dominio | Altri PSMP (indirizzo, porta, dominio servito); ogni server passa da quello del dominio più vicino al suo (vedi [PSMP per dominio](#psmp-per-dominio)); «Quale PSMP per il server» per verificare | nessuno |
+| SSH | Consenti alla scheda File di seguire la cartella del terminale | Aggiunge un comando a `PROMPT_COMMAND` della shell remota all'apertura della sessione (vedi [Monitoraggio della cartella del terminale](#monitoraggio-della-cartella-del-terminale)) | sì |
+| SSH | Server X locale | Server X di questo computer per l'inoltro X11 (`:0` = porta 6000); solo questo computer | `:0` |
+| Desktop remoto | Apri le sessioni PSM Windows in una scheda di ZillaTerm | Sessione PSM (desktop o applicazione remota) in una scheda, con il client FreeRDP integrato, alla dimensione della scheda (vedi [Aprire una sessione PSM](#3-aprire-una-sessione-psm-desktop-remoto)); non selezionata: Connessione Desktop remoto di Windows | no |
+| Desktop remoto | Adatta la risoluzione alla dimensione della scheda | Sessioni in una scheda: la risoluzione segue la dimensione della scheda invece di un'immagine adattata; la connessione dal PSM alla destinazione può mantenere la dimensione originale | sì |
+| Desktop remoto | Condividi i dischi di questo computer | Chiede al PVWA i dischi di questo computer (casella «Map local drives» della sua finestra di connessione, `AllowMappingLocalDrives`); se il componente li consente, compaiono nella sessione (Esplora file › Questo PC). ⚠ I programmi della sessione possono allora leggere e scrivere sui tuoi dischi | sì |
+| Desktop remoto | Sospendi la visualizzazione delle sessioni che nessuno guarda | Sessioni in una scheda: con la scheda in secondo piano, ZillaTerm ridotto a icona o Windows bloccato da 1 minuto, oppure senza tastiera né mouse da 15 minuti, il server smette di inviare l'immagine; la sessione resta aperta, l'immagine torna quando si ritorna sulla scheda o si muove il mouse. Mai per la scheda visualizzata durante la registrazione di un intervento o una condivisione; durante una registrazione, la pausa di una scheda in secondo piano vi è segnata (schermo e linea del tempo del rapporto) | sì |
+| Terminale | Colori del terminale, dimensione carattere | Tavolozza (Campbell, One Half, Solarized…) e dimensione del carattere dei terminali SSH; `Ctrl+rotellina` cambia la dimensione di un terminale, `Ctrl+0` la ripristina | Campbell, 14 |
+| Terminale | Avvisa prima di incollare più righe quando la shell le eseguirebbe una alla volta | Anteprima e conferma prima di incollare | sì |
 | Terminale | Il clic destro nel terminale incolla gli appunti | Maiusc+clic destro apre allora il menu; ⚠ un clic destro involontario invia gli appunti alla shell | no |
-| Terminale | Segui la cartella del terminale | Consente di attivare il monitoraggio della cartella nella shell; ⚠ un comando viene aggiunto a `PROMPT_COMMAND` | sì |
-| Terminale | Server X locale | Server X di questo computer per l'inoltro X11 (`:0` = porta 6000); solo questo computer | `:0` |
-| File | Invio dei file | Protocollo provato per primo (SFTP o SCP); se il server lo rifiuta, subentra l'altro | SFTP |
+| File | Protocollo di invio | Protocollo provato per primo (SFTP o SCP); se il server lo rifiuta, subentra l'altro | SFTP |
 | File | Proporre un archivio .tar.gz | Invio in un unico archivio proposto a partire da questo numero di file rilasciati insieme | sì, 200 |
-| File | Monitoraggio in una sessione indipendente | Seguire un file (tail -f) apre una propria connessione SFTP (una sessione PSMP in più) | no |
+| File | Segui i file (tail -f) in una sessione indipendente | Seguire un file apre una propria connessione SFTP (una sessione PSMP in più) | no |
 | File | Editor di testo | Programma aperto da «Modifica» nella scheda File | Blocco note |
 | File | Strumento di confronto | Programma proposto nella finestra di confronto, con i suoi argomenti (`{0}` = file di sinistra, `{1}` = di destra) | nessuno |
-| Condivisione | Consenti di condividere le mie sessioni con un altro ZillaTerm | Condividere una sessione dal menu della sua scheda; guardare quella di un'altra persona funziona anche senza (vedi [Condividere una sessione](#9-condividere-una-sessione-con-un-collega)); diffusa dal file di ambiente | no |
-| Condivisione | Connessioni dirette a questo computer, porta | L'altro ZillaTerm si connette a questo computer; porta 0 = una porta libera a caso, da 1024 a 65535 per una porta fissa (utile quando il firewall deve consentirla); diffuse dal file di ambiente | sì, 0 |
-| Condivisione | Cartella di inoltro | Cartella di una condivisione di rete raggiungibile da entrambi i computer, usata quando la connessione diretta non riesce; scambi cifrati, cancellati alla fine della condivisione; diffusa dal file di ambiente (una cartella su un server di rete richiede di spuntare «Ho verificato…») | vuota |
+| I miei server | Etichette dei server | Etichette assegnate ai server di «I miei server» (nome, colore): «Aggiungi un'etichetta», «Elimina l'etichetta», celle modificabili; la ridenominazione si applica in «I miei server», l'eliminazione toglie l'etichetta dai server (vedi [Etichette](#etichette-prod-qa-dev)) | PROD (rosso), QA (blu), DEV (verde) |
+| Intervento | Promemoria di reperibilità | Buone pratiche e numeri di emergenza mostrati in alto nella scheda «Intervento»; testo semplice (vedi [Intervento](#8-intervento-registrazione-e-promemoria-di-reperibilità)) | vuoto |
+| Intervento | File del promemoria | File di testo (di solito su una condivisione di rete) riletto a ogni apertura, mostrato al posto del promemoria qui sopra | vuoto |
+| Intervento | Avvisi a tempo | Una riga per avviso: minuti dall'inizio della registrazione, poi il testo («30 Scalare al livello 3»); mostrati nella scheda «Intervento» e nella barra di stato, annotati nel registro | vuoto |
+| Condivisione | Consenti di condividere le mie sessioni con un altro ZillaTerm | Condividere una sessione dal menu della sua scheda; guardare quella di un'altra persona funziona anche senza (vedi [Condividere una sessione](#9-condividere-una-sessione-con-un-collega)) | no |
+| Condivisione | Connessioni dirette a questo computer, porta | L'altro ZillaTerm si connette a questo computer; porta 0 = una porta libera a caso, da 1024 a 65535 per una porta fissa (utile quando il firewall deve consentirla) | sì, 0 |
+| Condivisione | Cartella di inoltro | Cartella di una condivisione di rete raggiungibile da entrambi i computer, usata quando la connessione diretta non riesce; scambi cifrati, cancellati alla fine della condivisione (una cartella su un server di rete proveniente dal file di ambiente richiede di spuntare «Ho verificato…») | vuota |
+| Sicurezza | Chiavi e certificati dei server | Tabella delle impronte verificate e accettate (server, tipo, impronta): PSMP, SSH diretto, certificati FTPS e Desktop remoto delle voci KeePass (una riga per tipo di chiave); «Filtra i server» restringe l'elenco. «Dimentica le chiavi scelte» rimuove le righe selezionate al salvataggio; la chiave verrà richiesta di nuovo alla prossima connessione | — |
 | Sicurezza | Vault locale | Password principali KeePass memorizzate: «Crea…», «Sblocca…», «Cambia password…», «Elimina ora…»; queste azioni si applicano subito, senza «Salva» | — |
-| Sicurezza | Chiavi dei server accettate | Tabella delle impronte verificate e accettate (server, tipo, impronta): PSMP, SSH diretto, certificati FTPS e Desktop remoto delle voci KeePass (una riga per tipo di chiave). «Dimentica le chiavi scelte» rimuove le righe selezionate al salvataggio; la chiave verrà richiesta di nuovo alla prossima connessione | — |
-| Menu del pulsante Impostazioni | Registro di debug | Svolgimento delle connessioni in un file, senza segreti (vedi [Sicurezza](#sicurezza)); «Mostra il file del registro» lo apre in Esplora risorse | no |
+
+Le impostazioni che il file di ambiente del team può diffondere sono elencate in [Ambiente condiviso](#ambiente-condiviso).
 
 ### Ambiente condiviso
 
@@ -1299,7 +1310,9 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   dell'invito, poi AES-256-GCM, una chiave per direzione, messaggi numerati (un messaggio alterato, ripetuto o spostato
   interrompe la connessione). Il codice di verifica è derivato dalle chiavi della connessione: chi si interponesse,
   anche con l'invito, otterrebbe un altro codice. Dopo 5 tentativi con un invito errato, la condivisione si
-  interrompe. La cartella di inoltro vede passare solo messaggi cifrati, cancellati alla fine della condivisione.
+  interrompe. La cartella di inoltro vede passare solo messaggi cifrati, cancellati alla fine della condivisione;
+  quella di un invito, se non è quella delle tue Impostazioni, viene usata solo dopo il tuo consenso (Windows vi si
+  collega con il tuo account).
   Nessuno digita in una sessione se non gli hai dato il controllo (solo terminale), e lo riprendi quando vuoi; la
   condivisione si interrompe al blocco di Windows. Nome, account e computer di chi chiede sono dichiarativi: fa fede
   solo il codice.
