@@ -754,4 +754,61 @@ public class PvwaClientTests
 
         Assert.True(ex.IsUnauthorized);
     }
+
+    /// <summary>
+    /// Reconnexion après expiration : les cookies de la session expirée ne repartent pas avec la nouvelle ouverture de
+    /// session (le PVWA y échoue, CAWS00001E) ; entre deux tentatives (challenge RADIUS), ils restent. Vrai serveur HTTP
+    /// local et gestionnaire HTTP de l'application : c'est lui qui garde et renvoie les cookies.
+    /// </summary>
+    [Fact]
+    public async Task ForgetCookies_NextLogonStartsWithoutTheExpiredSessionCookies()
+    {
+        int port;
+        using (var probe = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0))
+        {
+            probe.Start();
+            port = ((IPEndPoint)probe.LocalEndpoint).Port;
+        }
+
+        using var listener = new HttpListener();
+        listener.Prefixes.Add($"http://127.0.0.1:{port}/PasswordVault/");
+        listener.Start();
+        var cookies = new List<string?>();
+        var serving = Task.Run(async () =>
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                var context = await listener.GetContextAsync();
+                cookies.Add(context.Request.Headers["Cookie"]);
+                context.Response.Headers.Add("Set-Cookie", $"CA11111=session{i}; Path=/PasswordVault; HttpOnly");
+                var body = System.Text.Encoding.UTF8.GetBytes($"\"token{i}\"");
+                context.Response.ContentType = "application/json";
+                await context.Response.OutputStream.WriteAsync(body);
+                context.Response.Close();
+            }
+        });
+
+        using var client = new PvwaClient(new Uri($"http://127.0.0.1:{port}/PasswordVault/"), PvwaClient.CreateHandler(AuthMethod.RADIUS));
+        await client.LogonAsync(AuthMethod.RADIUS, "jdoe", "1234567890");
+        // Réponse à un challenge RADIUS : même client, cookies de la tentative précédente renvoyés.
+        await client.LogonAsync(AuthMethod.RADIUS, "jdoe", "123456");
+
+        Assert.Equal(["CA11111"], client.ForgetCookies());
+        await client.LogonAsync(AuthMethod.RADIUS, "jdoe", "1234567890");
+        await serving.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.Equal([null, "CA11111=session0", null], cookies);
+        // Cookie de la nouvelle session gardé (prochain challenge), oublié à son tour ; ensuite, plus rien.
+        Assert.Equal(["CA11111"], client.ForgetCookies());
+        Assert.Empty(client.ForgetCookies());
+    }
+
+    /// <summary>Client sans cookies (gestionnaire de test) : rien à oublier.</summary>
+    [Fact]
+    public void ForgetCookies_WithoutCookieStoreDoesNothing()
+    {
+        using var client = new FakePvwa(_ => FakePvwa.Json("\"tok\"")).CreateClient();
+
+        Assert.Empty(client.ForgetCookies());
+    }
 }
