@@ -1821,6 +1821,8 @@ public partial class MainWindow : Window
         if (accepted)
         {
             SaveSettings();
+            AppDebugLog.Apply(_settings);
+            UpdateDebugLogIndicator();
             ZillaTerm.App.Terminal.TerminalAppearance.Apply(_settings.TerminalTheme, _settings.TerminalFontSize, _settings.TerminalRightClickPastes);
             Palette.Choose(Application.Current, _settings.Theme);
             UpdateActions();

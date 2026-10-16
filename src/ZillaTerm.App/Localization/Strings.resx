@@ -461,9 +461,6 @@
   <data name="SettingsTitle" xml:space="preserve">
     <value>Settings</value>
   </data>
-  <data name="LanguageSection" xml:space="preserve">
-    <value>Language</value>
-  </data>
   <data name="LanguageLabel" xml:space="preserve">
     <value>I_nterface language:</value>
   </data>
@@ -471,10 +468,10 @@
     <value>Applied after signing out of CyberArk or at the next start.</value>
   </data>
   <data name="SettingsSshSection" xml:space="preserve">
-    <value>SSH via PSM for SSH (PSMP)</value>
+    <value>PSMP (PSM for SSH)</value>
   </data>
   <data name="SettingsSshHelp" xml:space="preserve">
-    <value>Unix accounts then open over SSH by default (PSM stays available in “Advanced options…”). Without any PSMP, SSH is disabled.</value>
+    <value>With a PSMP, Unix accounts open over SSH (PSM stays in “Advanced options…”); without one, SSH is disabled.</value>
   </data>
   <data name="PsmpAddressLabel" xml:space="preserve">
     <value>_Default PSMP:</value>
@@ -483,16 +480,13 @@
     <value>_Port:</value>
   </data>
   <data name="SshInApp" xml:space="preserve">
-    <value>_Open SSH sessions in ZillaTerm (terminal tab + “Files” tab), otherwise in Windows Terminal</value>
+    <value>_Open SSH sessions in ZillaTerm</value>
   </data>
   <data name="FollowSetting" xml:space="preserve">
-    <value>_Let the file browser follow the terminal folder (sets PROMPT__COMMAND in the shell when the session opens)</value>
+    <value>_Let the Files tab follow the terminal folder</value>
   </data>
   <data name="UploadLabel" xml:space="preserve">
-    <value>File upload:</value>
-  </data>
-  <data name="UploadProtocolTip" xml:space="preserve">
-    <value>Protocol tried first for uploads. If the server refuses it for a file (rule of the PSMP, read-only SFTP…), the other one takes over at once, without any question; the summary gives the server's answer, the History shows it.</value>
+    <value>Upload protocol:</value>
   </data>
   <data name="ComponentsSection" xml:space="preserve">
     <value>PSM components</value>
@@ -834,16 +828,13 @@
     <value>_Follow files (tail -f) in an independent session</value>
   </data>
   <data name="SettingsTailSessionHelp" xml:space="preserve">
-    <value>Each follow window opens its own SFTP connection instead of sharing the one of the Files tab: it does not wait for transfers, but it is one more PSMP session (recorded separately, and an MFA validation may be asked).</value>
+    <value>Does not wait for transfers, but opens one more PSMP session (recorded separately; MFA may be asked).</value>
   </data>
   <data name="SettingsArchiveOffer" xml:space="preserve">
     <value>Offer a s_ingle .tar.gz archive from</value>
   </data>
   <data name="SettingsArchiveFiles" xml:space="preserve">
     <value>files dropped at once</value>
-  </data>
-  <data name="SettingsArchiveTip" xml:space="preserve">
-    <value>When you drop many files at once in the Files tab, ZillaTerm offers to pack them into one .tar.gz archive: one file to transfer and check instead of thousands, much faster through the PSMP. You then extract it on the server with the command given.</value>
   </data>
   <data name="InvalidArchiveThreshold" xml:space="preserve">
     <value>The number of files for the archive must be 2 or more.</value>
@@ -1536,7 +1527,7 @@ Send them in a single {3} archive? One file to transfer and check instead of {0}
     <value>Ar_guments:</value>
   </data>
   <data name="CompareToolHelp" xml:space="preserve">
-    <value>Optional: the comparison window offers to open both files in this program (e.g. WinMergeU.exe). {0} is the left file, {1} the right one; for VS Code: code.cmd with --diff "{0}" "{1}".</value>
+    <value>Optional: offered by the comparison window. {0} is the left file, {1} the right one (VS Code: code.cmd with --diff "{0}" "{1}").</value>
   </data>
   <data name="InvalidCompareArguments" xml:space="preserve">
     <value>The arguments of the comparison tool must contain {0} and {1}.</value>
@@ -1628,9 +1619,6 @@ Send them in a single {3} archive? One file to transfer and check instead of {0}
   <data name="TerminalFontLabel" xml:space="preserve">
     <value>_Font size:</value>
   </data>
-  <data name="TerminalFontTip" xml:space="preserve">
-    <value>Font size of the terminals (8 to 32). Ctrl+wheel changes it for one terminal, Ctrl+0 restores it.</value>
-  </data>
   <data name="InvalidFontSize" xml:space="preserve">
     <value>The font size must be between {0} and {1}.</value>
   </data>
@@ -1707,7 +1695,7 @@ Send them in a single {3} archive? One file to transfer and check instead of {0}
     <value>Download not kept: {0}</value>
   </data>
   <data name="AboutAutoCheck" xml:space="preserve">
-    <value>_Look for a new version when ZillaTerm starts (at most once a day; a request to GitHub)</value>
+    <value>_Look for a new version at startup</value>
   </data>
   <data name="AboutUpdateNote" xml:space="preserve">
     <value>Nothing is installed automatically: the checked archive is kept in the Downloads folder, and you replace the executable yourself (your settings are kept). The executable is not signed.</value>
@@ -2355,7 +2343,7 @@ Your changes stay in the editor: save again to retry.</value>
     <value>CyberArk session</value>
   </data>
   <data name="KeepAlive" xml:space="preserve">
-    <value>_Keep the CyberArk session open while you use the computer (a light request every 4 minutes; paused while Windows is locked or after 15 minutes without keyboard or mouse)</value>
+    <value>_Keep the session open while I work</value>
   </data>
   <data name="KeepAliveExpired" xml:space="preserve">
     <value>The CyberArk session has expired: F5, or any CyberArk action, offers to sign in again.</value>
@@ -3811,7 +3799,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Send Ctrl+Alt+Del</value>
   </data>
   <data name="SettingsConfirmClose" xml:space="preserve">
-    <value>Co_nfirm before closing a connected session (SSH, remote desktop, VNC)</value>
+    <value>_Confirm before closing a connected session (SSH, remote desktop, VNC)</value>
   </data>
   <data name="SettingsConfirmPaste" xml:space="preserve">
     <value>_Warn before pasting several lines when the shell would run them one by one</value>
@@ -4035,20 +4023,17 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="SettingsUpdatesSection" xml:space="preserve">
     <value>Updates</value>
   </data>
-  <data name="SettingsKeepAliveEffect" xml:space="preserve">
-    <value>⚠ Effect: while you work in ZillaTerm, the CyberArk session no longer closes by itself after its idle timeout.</value>
-  </data>
   <data name="SettingsRightClickEffect" xml:space="preserve">
-    <value>⚠ Effect: a stray right-click sends the clipboard to the shell, root shells included.</value>
+    <value>⚠ A stray right-click sends the clipboard to the shell, root shells included.</value>
   </data>
   <data name="SettingsFollowEffect" xml:space="preserve">
-    <value>⚠ Effect: a command is added to PROMPT_COMMAND in the remote shell when the session opens.</value>
+    <value>Adds a command to PROMPT_COMMAND in the remote shell when the session opens.</value>
   </data>
   <data name="LocalStoreImmediate" xml:space="preserve">
     <value>These actions apply at once, without “Save”.</value>
   </data>
   <data name="HostKeysSection" xml:space="preserve">
-    <value>Accepted server keys</value>
+    <value>Server keys and certificates</value>
   </data>
   <data name="HostKeysHelp" xml:space="preserve">
     <value>Fingerprints checked and accepted (PSMP, direct SSH, FTPS and Remote Desktop certificates), one row per key type. A forgotten key is asked again at the next connection.</value>
@@ -4225,13 +4210,13 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>ON ({0})</value>
   </data>
   <data name="PsmpDefaultHelp" xml:space="preserve">
-    <value>For the servers of its domain and those no PSMP below covers. Empty: the only PSMP of the list, if there is just one.</value>
+    <value>For the servers of its domain and those no PSMP by domain covers. Empty: the only one in the list, if there is just one.</value>
   </data>
   <data name="PsmpListSection" xml:space="preserve">
     <value>PSMP by domain</value>
   </data>
   <data name="PsmpListHelp" xml:space="preserve">
-    <value>Each server goes through the PSMP of the closest domain: srv01.zzz.xxx.corp.com through psmp.zzz.xxx.corp.com if it is listed, otherwise through psmp.xxx.corp.com. The domain comes from the address; change it if the PSMP serves another domain.</value>
+    <value>Each server goes through the PSMP of its closest domain: srv01.paris.corp.com through the one of paris.corp.com, otherwise of corp.com. Change the domain if a PSMP serves another one.</value>
   </data>
   <data name="PsmpColumnAddress" xml:space="preserve">
     <value>PSMP address</value>
@@ -4264,7 +4249,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>No PSMP for this server: SSH and SFTP are impossible. Add its PSMP or a default PSMP.</value>
   </data>
   <data name="PsmpSecurityEffect" xml:space="preserve">
-    <value>⚠ Effect: a PSMP receives your CyberArk password. Only list your organization's PSMPs; the first connection to each one asks you to check its key.</value>
+    <value>⚠ A PSMP receives your CyberArk password: only add your organization's; the first connection to each one asks you to check its key.</value>
   </data>
   <data name="InvalidPsmpRowAddress" xml:space="preserve">
     <value>Invalid PSMP address (line {0}): enter a host name or an IP address.</value>
@@ -4348,10 +4333,10 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>{0} is not allowed for this account: choose one of the servers above.</value>
   </data>
   <data name="WindowsComponentLabel" xml:space="preserve">
-    <value>_Windows accounts:</value>
+    <value>Component for _Windows accounts:</value>
   </data>
   <data name="WindowsComponentHelp" xml:space="preserve">
-    <value>For Windows accounts (domain or local) when no component is remembered for their platform, for example WIN-PSM. Empty: PSM-RDP.</value>
+    <value>When no component is remembered for their platform. Empty: PSM-RDP.</value>
   </data>
   <data name="InvalidComponentName" xml:space="preserve">
     <value>Invalid PSM component: letters, digits, “-”, “_” and “.” only (for example WIN-PSM).</value>
@@ -4471,10 +4456,10 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Invalid path (a full path is expected): {0}</value>
   </data>
   <data name="CentralFileLabel" xml:space="preserve">
-    <value>Central file:</value>
+    <value>Central f_ile:</value>
   </data>
   <data name="CentralFileHelp" xml:space="preserve">
-    <value>Environment file of your team on a network share (PVWA, PSMP, PSM components, shared lists, PSMP keys), read at each start: its changes are shown to you before being applied. To create it: Settings button › Export the environment.</value>
+    <value>Your team's settings on a network share, read at each start: their changes are shown to you before being applied. Import or export: Settings button menu.</value>
   </data>
   <data name="InvalidCentralFile" xml:space="preserve">
     <value>Invalid central file: enter a full path (\\server\share\… or C:\…).</value>
@@ -4519,7 +4504,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Component per platform</value>
   </data>
   <data name="PlatformComponentsHelp" xml:space="preserve">
-    <value>For the accounts of a platform (platform ID in the PVWA, for example WinDomain or UnixSSH); takes precedence over the Windows accounts component above. A line is also added by “Remember this component for platform…” in the connection window.</value>
+    <value>Takes precedence over the Windows accounts component. “Remember this component for platform…” in the connection window also adds a line.</value>
   </data>
   <data name="ComponentColumnPlatform" xml:space="preserve">
     <value>Platform (ID)</value>
@@ -4884,9 +4869,6 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="A11yExtractCommand" xml:space="preserve">
     <value>Extraction command</value>
   </data>
-  <data name="AppearanceSection" xml:space="preserve">
-    <value>Appearance</value>
-  </data>
   <data name="AppThemeLabel" xml:space="preserve">
     <value>_Theme:</value>
   </data>
@@ -4900,7 +4882,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Dark</value>
   </data>
   <data name="AppThemeHelp" xml:space="preserve">
-    <value>Applied when you save, without restarting. Windows high contrast always takes precedence. Terminal colours are set on the Terminal page.</value>
+    <value>Windows high contrast always takes precedence. Terminal colours: Terminal page.</value>
   </data>
   <data name="ToolLeaveEmergency" xml:space="preserve">
     <value>Leave emergency access</value>
@@ -4927,7 +4909,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Local _X server:</value>
   </data>
   <data name="X11DisplayHelp" xml:space="preserve">
-    <value>An X server installed on this computer (VcXsrv, X410, Xming…) that accepts local TCP connections: “:0” is port 6000. X11 forwarding is turned on server by server (Properties or Advanced options).</value>
+    <value>An X server on this computer (VcXsrv, X410…) that accepts local TCP connections (“:0” is port 6000). X11 forwarding is turned on server by server.</value>
   </data>
   <data name="X11DisplayInvalid" xml:space="preserve">
     <value>Local X server: “:0”, “localhost:0” or “127.0.0.1:0.0” (this computer only: the X protocol is not encrypted).</value>
@@ -5221,7 +5203,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>D_uty reminder:</value>
   </data>
   <data name="DutyTextHelp" xml:space="preserve">
-    <value>Shown at the top of the “Intervention” window: good practices, emergency numbers… Plain text. Shared with the team by the environment file (Settings button › Export the environment).</value>
+    <value>Shown at the top of the Intervention tab (plain text).</value>
   </data>
   <data name="InvalidDutyText" xml:space="preserve">
     <value>On-call duty reminder: 8000 characters at most, without invisible characters.</value>
@@ -5239,7 +5221,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Reminder _file:</value>
   </data>
   <data name="DutyFileHelp" xml:space="preserve">
-    <value>Optional: a text file (on a network share, for example) read again each time the Intervention window opens. It replaces the text above, so the managers can update it without sending a new environment. If it cannot be read, the text above is shown.</value>
+    <value>Optional: a text file read again at each opening, which replaces the text above (if it cannot be read, the text is shown).</value>
   </data>
   <data name="InvalidDutyFile" xml:space="preserve">
     <value>Reminder file: full path of a file (C:\… or \\server\share\…).</value>
@@ -5329,7 +5311,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Server tags</value>
   </data>
   <data name="ServerTagsHelp" xml:space="preserve">
-    <value>Environments given to the servers of My servers (asked when a server is added). Their colour marks the session tabs and the outline of each session. Removing a tag takes it off the servers. Shared with the team by the environment file.</value>
+    <value>Environment of each server (PROD, QA…), asked when it is added: its colour marks the tab and the outline of the session. Removing a tag takes it off the servers.</value>
   </data>
   <data name="ServerTagColName" xml:space="preserve">
     <value>Name</value>
@@ -5407,22 +5389,22 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Windows asks you to confirm the identity of {0}: check the certificate before accepting.</value>
   </data>
   <data name="PsmDesktopInTab" xml:space="preserve">
-    <value>Open PSM Windows sessions in a ZillaTerm _tab, otherwise in Remote Desktop Connection</value>
+    <value>Open PSM Windows sessions in a ZillaTerm _tab</value>
   </data>
   <data name="PsmDesktopInTabHelp" xml:space="preserve">
-    <value>The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection.</value>
+    <value>Built-in FreeRDP client at the size of the tab, which checks the PSM certificate; unchecked: Remote Desktop Connection. A Remote Desktop gateway always goes through the latter.</value>
   </data>
   <data name="PsmDynamicResolution" xml:space="preserve">
     <value>Resize the _remote desktop with the tab</value>
   </data>
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
-    <value>Instead of a fixed resolution with the image scaled to the tab, ZillaTerm asks the PSM server to change the resolution of the session each time the tab is resized. The display is sharper, but depending on the PSM configuration, the connection from the PSM to the target server may keep its original size: turn the option off if the target screen does not follow. Applies to new sessions.</value>
+    <value>Sharper than a scaled picture; turn it off if the target server's screen does not follow.</value>
   </data>
   <data name="PsmRedirectDrives" xml:space="preserve">
-    <value>Share this _computer's drives with PSM Windows sessions</value>
+    <value>Share this _computer's drives</value>
   </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>ZillaTerm asks the PVWA to map this computer's drives, like the “Map local drives” box of its connection window. When the connection component allows it, they appear in the session (File Explorer › This PC) to copy files; programs in the session can then read and write them (in the tab and in Remote Desktop Connection). Unchecked, no drive is shared in the tab, even if the PVWA asks for it; Remote Desktop Connection follows the PVWA's signed file. Applies to new sessions.</value>
+    <value>Like “Map local drives” in the PVWA, when the component allows it: programs in the session can read and write your drives. Unchecked, no drive is shared in a tab.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>PSM Windows sessions in a tab</value>
@@ -5804,7 +5786,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Timed _reminders:</value>
   </data>
   <data name="RemindersHelp" xml:space="preserve">
-    <value>One line per reminder: the minutes since the start of the recording, then the text ("30 Escalate to level 3"). 10 at most. At that time ZillaTerm shows it in the Intervention tab and the status bar, and notes it in the journal.</value>
+    <value>One line per reminder: the minutes since the start of the recording, then the text ("30 Escalate to level 3"); 10 at most.</value>
   </data>
   <data name="InvalidReminder" xml:space="preserve">
     <value>Timed reminders, line {0}: minutes (1 to 1440), a space, then a text of 200 characters at most (10 reminders at most).</value>
@@ -5894,7 +5876,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>_Allow sharing my sessions with another ZillaTerm</value>
   </data>
   <data name="SettingsSessionSharingHelp" xml:space="preserve">
-    <value>You start each share yourself, from the menu of the session tab; each person must be accepted after comparing a 6-digit code. Shares stop when Windows locks. Watching another person's session works without this option.</value>
+    <value>You start each share from the session tab; each person is accepted after comparing a 6-digit code; everything stops when Windows locks. Watching a shared session does not need this option.</value>
   </data>
   <data name="SettingsShareDirect" xml:space="preserve">
     <value>_Direct connections to this computer</value>
@@ -5902,17 +5884,14 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="SettingsSharePort" xml:space="preserve">
     <value>P_ort:</value>
   </data>
-  <data name="SettingsSharePortTip" xml:space="preserve">
-    <value>0: a free port chosen at random. A fixed port helps when the firewall must allow it.</value>
-  </data>
   <data name="SettingsShareDirectHelp" xml:space="preserve">
-    <value>The other ZillaTerm connects to this computer (end-to-end encrypted connection). The first time, Windows Firewall may ask to allow ZillaTerm: allow it on private or domain networks only.</value>
+    <value>End-to-end encrypted connection to this computer; port 0: a free port at random. If the firewall asks, allow ZillaTerm on private or domain networks only.</value>
   </data>
   <data name="SettingsShareRelay" xml:space="preserve">
     <value>_Relay folder:</value>
   </data>
   <data name="SettingsShareRelayHelp" xml:space="preserve">
-    <value>When the direct connection is not possible (firewall), the exchange goes through this folder of a network share that both computers can reach. Everything written there is end-to-end encrypted, and deleted at the end of the share.</value>
+    <value>A network share both computers can reach, used when the direct connection fails: everything there is encrypted and deleted at the end of the share.</value>
   </data>
   <data name="SettingsShareRelayPick" xml:space="preserve">
     <value>Relay folder for session sharing</value>
@@ -6437,10 +6416,10 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Keep recording</value>
   </data>
   <data name="PauseRdpDisplay" xml:space="preserve">
-    <value>Pause the d_isplay of Remote Desktop sessions nobody is watching (the session stays open)</value>
+    <value>Pause the d_isplay of sessions nobody is watching</value>
   </data>
   <data name="PauseRdpDisplayHelp" xml:space="preserve">
-    <value>Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared. During a recording, the pause of a tab in the background is marked in it: "Display paused" on the screen and a grey band on the timeline of the report.</value>
+    <value>Any Remote Desktop session in a tab: in the background, ZillaTerm minimized or computer idle, the picture is no longer sent (the session stays open). Never for the tab shown during a recording or a share.</value>
   </data>
   <data name="RdpPaused" xml:space="preserve">
     <value>Display paused</value>
@@ -6470,10 +6449,10 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Display paused from {0} to {1} ({2})</value>
   </data>
   <data name="KeepAccountListCopy" xml:space="preserve">
-    <value>Show the account list at once when you log in (_encrypted copy of the last list on this computer)</value>
+    <value>Show the account list of the last login at _once</value>
   </data>
   <data name="KeepAccountListCopyHelp" xml:space="preserve">
-    <value>The list from the last login shows at once, then it is read again from the PVWA in the background and replaced in one go. The copy holds no password; it is encrypted for your Windows account, one per PVWA and user, and deleted after 30 days. Unchecked: the copies are deleted.</value>
+    <value>Encrypted copy on this computer, without any password, deleted after 30 days, then replaced by the list read again from the PVWA. Unchecked: the copies are deleted.</value>
   </data>
   <data name="EnvKeepAccountListCopy" xml:space="preserve">
     <value>Show the account list at once (encrypted copy on the computer)</value>
@@ -6489,5 +6468,101 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="AccountListUpdated" xml:space="preserve">
     <value>Account list updated: {0:# new|# new}, {1:# removed|# removed}.</value>
+  </data>
+  <data name="JoinRelayHeading" xml:space="preserve">
+    <value>Go through this relay folder?</value>
+  </data>
+  <data name="JoinRelayMessage" xml:space="preserve">
+    <value>The computer that shares could not be reached directly. The invitation offers this relay folder, which is not the one in your Settings: Windows will connect to it with your account. Continue only if it is your team's relay folder.</value>
+  </data>
+  <data name="JoinRelayAction" xml:space="preserve">
+    <value>Use this folder</value>
+  </data>
+  <data name="JoinRelayRefused" xml:space="preserve">
+    <value>The computer that shares could not be reached directly, and the invitation's relay folder was not used.</value>
+  </data>
+  <data name="SettingsPageSsh" xml:space="preserve">
+    <value>SSH</value>
+  </data>
+  <data name="SettingsPageRdp" xml:space="preserve">
+    <value>Remote desktop</value>
+  </data>
+  <data name="SettingsPageServers" xml:space="preserve">
+    <value>My servers</value>
+  </data>
+  <data name="SettingsPageIntervention" xml:space="preserve">
+    <value>Intervention</value>
+  </data>
+  <data name="SettingsSectionDisplay" xml:space="preserve">
+    <value>Language and appearance</value>
+  </data>
+  <data name="SettingsSectionTeam" xml:space="preserve">
+    <value>Team environment</value>
+  </data>
+  <data name="SettingsSectionTroubleshooting" xml:space="preserve">
+    <value>Troubleshooting</value>
+  </data>
+  <data name="SettingsSectionSessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="SettingsSectionShell" xml:space="preserve">
+    <value>In the shell</value>
+  </data>
+  <data name="SettingsSectionTerminalDisplay" xml:space="preserve">
+    <value>Display</value>
+  </data>
+  <data name="SettingsSectionTerminalInput" xml:space="preserve">
+    <value>Typing and pasting</value>
+  </data>
+  <data name="SettingsSectionTransfers" xml:space="preserve">
+    <value>Transfers</value>
+  </data>
+  <data name="SettingsSectionPrograms" xml:space="preserve">
+    <value>Programs</value>
+  </data>
+  <data name="SettingsSectionReminders" xml:space="preserve">
+    <value>Reminders</value>
+  </data>
+  <data name="SettingsSectionShareRoutes" xml:space="preserve">
+    <value>How others reach your sessions</value>
+  </data>
+  <data name="SettingsRdpIntro" xml:space="preserve">
+    <value>These settings apply to the sessions opened afterwards.</value>
+  </data>
+  <data name="UpdateCheckHelp" xml:space="preserve">
+    <value>One request to GitHub, once a day at most; nothing is installed without you.</value>
+  </data>
+  <data name="SettingsDebugLog" xml:space="preserve">
+    <value>_Debug log</value>
+  </data>
+  <data name="SettingsDebugLogHelp" xml:space="preserve">
+    <value>Writes how connections go in a file, to understand a failure: server and account names, never a password.</value>
+  </data>
+  <data name="SettingsDebugLogShow" xml:space="preserve">
+    <value>Show the _file</value>
+  </data>
+  <data name="TeamBadge" xml:space="preserve">
+    <value>Team</value>
+  </data>
+  <data name="TeamBadgeTip" xml:space="preserve">
+    <value>Set by your team's environment file ({0}). A new version of that file may change it, after your approval.</value>
+  </data>
+  <data name="KeepAliveHelp" xml:space="preserve">
+    <value>A light request every 4 minutes, stopped while Windows is locked or after 15 minutes without keyboard or mouse: the session no longer closes by itself while you work.</value>
+  </data>
+  <data name="SshInAppHelp" xml:space="preserve">
+    <value>Terminal in a tab and Files tab; unchecked: Windows Terminal.</value>
+  </data>
+  <data name="TerminalFontHelp" xml:space="preserve">
+    <value>Ctrl+wheel changes the size of one terminal, Ctrl+0 restores it.</value>
+  </data>
+  <data name="UploadProtocolHelp" xml:space="preserve">
+    <value>Tried first; if the server refuses it, the other one takes over (the History shows it).</value>
+  </data>
+  <data name="SettingsArchiveHelp" xml:space="preserve">
+    <value>One file to transfer and check instead of thousands, much faster through the PSMP; the extraction command is given.</value>
+  </data>
+  <data name="HostKeysFilter" xml:space="preserve">
+    <value>Filter the servers</value>
   </data>
 </root>

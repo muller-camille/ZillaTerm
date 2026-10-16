@@ -342,4 +342,27 @@ public sealed class EnvironmentProfileTests : IDisposable
 
         new EnvironmentProfile { DutyTextFile = @"C:\Equipe\consignes.txt" }.Validate();
     }
+    /// <summary>
+    /// Réglages définis par un fichier (pastille « Équipe » des Paramètres) : ceux qu'il porte, aucun autre ; un fichier
+    /// complet les couvre tous (un nouveau réglage de l'environnement doit y être ajouté).
+    /// </summary>
+    [Fact]
+    public void DefinedSettingsAreThoseTheFileCarries()
+    {
+        Assert.Empty(new EnvironmentProfile().DefinedSettings());
+        Assert.Equal([EnvironmentSetting.DefaultPsmp, EnvironmentSetting.KeepPvwaSessionAlive],
+            new EnvironmentProfile { PsmpAddress = "psmp.corp.local", KeepPvwaSessionAlive = false }.DefinedSettings().Order());
+
+        var full = new EnvironmentProfile
+        {
+            PvwaUrl = "https://pvwa.corp.local", AuthMethod = AuthMethod.LDAP, PsmpAddress = "psmp.corp.local", PsmpServers = [],
+            WindowsComponent = "WIN-PSM", ComponentByPlatform = new() { ["WinDomain"] = "PSM-RDP" }, SharedLists = [@"\\fs\l.json"],
+            HostKeys = new() { ["psmp.corp.local:22"] = "ssh-ed25519 SHA256:AAAA" }, CentralFile = @"\\fs\env.json",
+            KeepPvwaSessionAlive = true, KeepAccountListCopy = true, SshInApp = true, PsmDesktopInTab = true, PsmRedirectDrives = true,
+            PauseRdpDisplay = true, CheckForUpdates = false, UploadProtocol = TransferProtocol.Sftp, DutyText = "N2", DutyTextFile = @"\\fs\d.txt",
+            InterventionReminders = [], SessionSharing = true, ShareDirect = true, SharePort = 50000, ShareRelayFolder = @"\\fs\relais",
+            ServerTags = [],
+        };
+        Assert.Equal(Enum.GetValues<EnvironmentSetting>().Order(), full.DefinedSettings().Order());
+    }
 }

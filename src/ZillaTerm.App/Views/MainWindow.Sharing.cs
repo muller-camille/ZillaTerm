@@ -399,7 +399,7 @@ public partial class MainWindow
 
     private void JoinShare()
     {
-        var dialog = new JoinShareDialog(JoinIdentity()) { Owner = _sharesWindow ?? (Window)this };
+        var dialog = new JoinShareDialog(JoinIdentity(), _settings.ShareRelayFolder) { Owner = _sharesWindow ?? (Window)this };
         if (dialog.ShowDialog() == true && dialog.Joined is { } watched)
         {
             OpenWatchedTab(watched);

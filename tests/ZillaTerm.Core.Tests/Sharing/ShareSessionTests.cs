@@ -134,6 +134,46 @@ public sealed class ShareSessionTests : IDisposable
     }
 
     /// <summary>
+    /// Dossier relais d'une invitation : demandé avant d'être ouvert (il peut désigner n'importe quel serveur). Refusé, rien
+    /// n'y est écrit et la demande n'arrive pas ; accepté, la connexion passe par lui.
+    /// </summary>
+    [Fact]
+    public async Task RelayFolderIsOnlyUsedOnceAllowed()
+    {
+        var host = Host(direct: false, relay: true);
+        var share = host.Start(Info());
+        var folder = ShareNetwork.ShareFolder(_relay, share.Invitation);
+        var asked = new List<string>();
+
+        var refused = await Assert.ThrowsAsync<ShareException>(() => Within(ShareViewer.ConnectAsync(share.Invitation, Join(), CancellationToken.None,
+            (relay, _) =>
+            {
+                asked.Add(relay);
+                return Task.FromResult(false);
+            })));
+        Assert.Equal(ShareFailure.RelayRefused, refused.Failure);
+        Assert.Equal([_relay], asked);
+        Assert.Empty(Directory.GetFiles(folder));
+        Assert.Empty(share.Watchers);
+
+        var requested = new TaskCompletionSource<ShareWatcher>(TaskCreationOptions.RunContinuationsAsynchronously);
+        share.JoinRequested += w => requested.TrySetResult(w);
+        await using var viewer = await Within(ShareViewer.ConnectAsync(share.Invitation, Join(), CancellationToken.None,
+            (_, _) => Task.FromResult(true)));
+        Assert.True(viewer.IsRelay);
+        Assert.Equal(viewer.VerificationCode, (await Within(requested.Task)).VerificationCode);
+    }
+
+    [Theory]
+    [InlineData(@"\\fs01\equipe\relais", @"\\FS01\Equipe\relais\", true)]
+    [InlineData(@"\\fs01\equipe\relais", @"//fs01/equipe/relais", true)]
+    [InlineData(@"\\fs01\equipe\relais", @"\\fs01\equipe\relais2", false)]
+    [InlineData(@"\\fs01\equipe\relais", "", false)]
+    [InlineData("", "", false)]
+    public void SameRelayFolderIgnoresCaseAndSeparators(string invitation, string settings, bool same) =>
+        Assert.Equal(same, ShareInvitation.SameRelayFolder(invitation, settings));
+
+    /// <summary>
     /// L'écran envoyé à l'accord arrive avant que l'onglet ne s'abonne : il lui est remis d'abord, dans l'ordre, avec ce
     /// qui a suivi.
     /// </summary>

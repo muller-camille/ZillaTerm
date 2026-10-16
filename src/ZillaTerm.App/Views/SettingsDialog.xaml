@@ -5,10 +5,52 @@
         xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
         xmlns:core="clr-namespace:ZillaTerm.Core;assembly=ZillaTerm.Core"
         Title="{x:Static loc:Strings.SettingsTitle}"
-        Width="780" Height="560" MinWidth="640" MinHeight="420" ResizeMode="CanResize"
+        Width="820" Height="620" MinWidth="680" MinHeight="460" ResizeMode="CanResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
-    <!-- Une page par thème (onglets à gauche, Ctrl+Tab de l'une à l'autre) ; chaque page défile si besoin. Les réglages
-         s'appliquent avec « Enregistrer » ; seules les actions du coffre local sont immédiates, et le disent. -->
+    <!-- Une page par tâche (onglets à gauche, Ctrl+Tab de l'une à l'autre), chacune tenant sur un écran. Une même mise en
+         page partout : titre de section, case ou champ, une ligne d'aide dessous ; « ⚠ » pour un vrai risque ; pastille
+         « Équipe » à droite d'un réglage que le fichier d'environnement de l'équipe définit. Tout s'applique avec
+         « Enregistrer », sauf les actions du coffre local, qui le disent. -->
+    <Window.Resources>
+        <Style x:Key="Page" TargetType="StackPanel">
+            <Setter Property="Margin" Value="20,14,22,18" />
+            <Setter Property="Grid.IsSharedSizeScope" Value="True" />
+        </Style>
+        <Style x:Key="FirstSection" TargetType="TextBlock" BasedOn="{StaticResource SectionTitle}">
+            <Setter Property="Margin" Value="0,0,0,2" />
+        </Style>
+        <Style x:Key="Section" TargetType="TextBlock" BasedOn="{StaticResource SectionTitle}">
+            <Setter Property="Margin" Value="0,20,0,2" />
+        </Style>
+        <Style x:Key="SubTitle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <!-- Ligne d'une case : la pastille « Équipe » à droite, la case prend le reste (son texte passe à la ligne). -->
+        <Style x:Key="OptionRow" TargetType="DockPanel">
+            <Setter Property="Margin" Value="0,10,0,0" />
+        </Style>
+        <Style x:Key="Help" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="20,2,0,0" />
+        </Style>
+        <Style x:Key="Warn" TargetType="TextBlock" BasedOn="{StaticResource Help}">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style x:Key="FieldHelp" TargetType="TextBlock" BasedOn="{StaticResource Help}">
+            <Setter Property="Margin" Value="0,3,0,0" />
+        </Style>
+        <!-- Ligne d'un champ : libellé (colonne commune à la page), champ, bouton éventuel, pastille ; aide dessous. -->
+        <Style x:Key="FieldRow" TargetType="Grid">
+            <Setter Property="Margin" Value="0,10,0,0" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="Label" BasedOn="{StaticResource {x:Type Label}}">
+            <Setter Property="Padding" Value="0,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
     <DockPanel>
         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooter}">
             <DockPanel>
@@ -25,7 +67,7 @@
                 <!-- Sur le style du thème (clair ou sombre) en vigueur à l'ouverture de la fenêtre. -->
                 <Style TargetType="TabItem" BasedOn="{StaticResource {x:Type TabItem}}">
                     <Setter Property="Padding" Value="14,7" />
-                    <Setter Property="MinWidth" Value="130" />
+                    <Setter Property="MinWidth" Value="150" />
                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                 </Style>
                 <Style TargetType="ScrollViewer">
@@ -38,144 +80,81 @@
             <!-- ===== Général ===== -->
             <TabItem x:Name="GeneralPage" Header="{x:Static loc:Strings.SettingsPageGeneral}">
                 <ScrollViewer>
-                    <StackPanel Margin="16,12">
-                        <TextBlock Text="{x:Static loc:Strings.LanguageSection}" Style="{StaticResource SectionTitle}" />
-                        <Grid Margin="0,0,0,16">
+                    <StackPanel Style="{StaticResource Page}">
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionDisplay}" Style="{StaticResource FirstSection}" />
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <Label Content="{x:Static loc:Strings.LanguageLabel}" Target="{Binding ElementName=LanguageBox}" />
-                            <ComboBox Grid.Column="1" x:Name="LanguageBox" VerticalAlignment="Center" MaxWidth="320" HorizontalAlignment="Left" MinWidth="220" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Static loc:Strings.LanguageHelp}" Foreground="{DynamicResource MutedBrush}"
-                                       TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <Label Content="{x:Static loc:Strings.LanguageLabel}" Target="{Binding ElementName=LanguageBox}" Style="{StaticResource FieldLabel}" />
+                            <ComboBox Grid.Column="1" x:Name="LanguageBox" MaxWidth="320" HorizontalAlignment="Left" MinWidth="220" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.LanguageHelp}" />
                         </Grid>
-
-                        <TextBlock Text="{x:Static loc:Strings.AppearanceSection}" Style="{StaticResource SectionTitle}" />
-                        <Grid Margin="0,0,0,16">
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <Label Content="{x:Static loc:Strings.AppThemeLabel}" Target="{Binding ElementName=AppThemeBox}" />
-                            <ComboBox Grid.Column="1" x:Name="AppThemeBox" VerticalAlignment="Center" MaxWidth="320" HorizontalAlignment="Left" MinWidth="220" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Static loc:Strings.AppThemeHelp}" Foreground="{DynamicResource MutedBrush}"
-                                       TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <Label Content="{x:Static loc:Strings.AppThemeLabel}" Target="{Binding ElementName=AppThemeBox}" Style="{StaticResource FieldLabel}" />
+                            <ComboBox Grid.Column="1" x:Name="AppThemeBox" MaxWidth="320" HorizontalAlignment="Left" MinWidth="220" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.AppThemeHelp}" />
                         </Grid>
 
-                        <TextBlock Text="{x:Static loc:Strings.SettingsUpdatesSection}" Style="{StaticResource SectionTitle}" />
-                        <CheckBox x:Name="UpdateCheckBox" Margin="0,0,0,16">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.AboutAutoCheck}" />
-                        </CheckBox>
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionSessions}" Style="{StaticResource Section}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <CheckBox x:Name="ConfirmCloseBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsConfirmClose}" />
+                            </CheckBox>
+                        </DockPanel>
+
+                        <TextBlock Text="{x:Static loc:Strings.SettingsUpdatesSection}" Style="{StaticResource Section}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="CheckForUpdates" />
+                            <CheckBox x:Name="UpdateCheckBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.AboutAutoCheck}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.UpdateCheckHelp}" />
 
                         <!-- Environnement d'équipe : fichier central relu à chaque démarrage (voir EnvironmentImport). -->
-                        <TextBlock Text="{x:Static loc:Strings.EnvTitle}" Style="{StaticResource SectionTitle}" />
-                        <Grid Margin="0,0,0,4">
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionTeam}" Style="{StaticResource Section}" />
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Label Content="{x:Static loc:Strings.CentralFileLabel}" Target="{Binding ElementName=CentralFileBox}" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.CentralFileLabel}" Target="{Binding ElementName=CentralFileBox}" Style="{StaticResource FieldLabel}" />
                             <TextBox Grid.Column="1" x:Name="CentralFileBox" VerticalContentAlignment="Center" />
                             <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseCentralFile" Margin="8,0,0,0" />
+                            <views:TeamBadge Grid.Column="3" Setting="CentralFile" VerticalAlignment="Center" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.CentralFileHelp}" />
                         </Grid>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,16" Text="{x:Static loc:Strings.CentralFileHelp}" />
 
-                        <!-- Astreinte : consignes de l'équipe (texte ou fichier), diffusées par le fichier d'environnement. -->
-                        <TextBlock Text="{x:Static loc:Strings.DutySection}" Style="{StaticResource SectionTitle}" />
-                        <Label Content="{x:Static loc:Strings.DutyTextLabel}" Target="{Binding ElementName=DutyTextBox}" Padding="0,0,0,4" />
-                        <TextBox x:Name="DutyTextBox" AcceptsReturn="True" AcceptsTab="False" TextWrapping="Wrap" MinHeight="96" MaxHeight="220"
-                                 VerticalScrollBarVisibility="Auto" MaxLength="8000" />
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,4,0,8" Text="{x:Static loc:Strings.DutyTextHelp}" />
-                        <Grid Margin="0,0,0,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Label Content="{x:Static loc:Strings.DutyFileLabel}" Target="{Binding ElementName=DutyFileBox}" />
-                            <TextBox Grid.Column="1" x:Name="DutyFileBox" VerticalContentAlignment="Center" MaxLength="1024" />
-                            <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseDutyFile" Margin="8,0,0,0" />
-                        </Grid>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,8" Text="{x:Static loc:Strings.DutyFileHelp}" />
-                        <!-- Rappels pendant l'intervention : une ligne par rappel, minutes depuis le début puis le texte. -->
-                        <Label Content="{x:Static loc:Strings.RemindersLabel}" Target="{Binding ElementName=RemindersBox}" Padding="0,0,0,4" />
-                        <TextBox x:Name="RemindersBox" AcceptsReturn="True" AcceptsTab="False" TextWrapping="Wrap" MinHeight="58" MaxHeight="160"
-                                 VerticalScrollBarVisibility="Auto" MaxLength="2400" FontFamily="Consolas, Courier New"
-                                 AutomationProperties.HelpText="{x:Static loc:Strings.RemindersHelp}" />
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,4,0,16" Text="{x:Static loc:Strings.RemindersHelp}" />
-
-                        <!-- Étiquettes des serveurs de « Mes serveurs » (PROD, QA, DEV…) : nom et couleur. -->
-                        <TextBlock Text="{x:Static loc:Strings.ServerTagsSection}" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,6" Text="{x:Static loc:Strings.ServerTagsHelp}" />
-                        <DataGrid x:Name="TagGrid" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
-                                  CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" SelectionMode="Single"
-                                  SelectionUnit="FullRow" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
-                                  MinHeight="60" MaxHeight="220" SelectionChanged="OnTagSelected"
-                                  AutomationProperties.Name="{x:Static loc:Strings.ServerTagsSection}">
-                            <DataGrid.Columns>
-                                <!-- Aperçu : la pastille telle qu'elle apparaîtra sur l'onglet. -->
-                                <DataGridTemplateColumn Width="Auto" IsReadOnly="True">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{Binding Background}" CornerRadius="3" Padding="5,0,5,1" Margin="4,2"
-                                                    HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" Foreground="{Binding Foreground}" FontSize="11" FontWeight="SemiBold" />
-                                            </Border>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="{x:Static loc:Strings.ServerTagColName}" Width="*"
-                                                    Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Margin" Value="2,0" />
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                    <DataGridTextColumn.EditingElementStyle>
-                                        <Style TargetType="TextBox">
-                                            <Setter Property="MaxLength" Value="{x:Static core:ServerTagRules.MaxNameLength}" />
-                                        </Style>
-                                    </DataGridTextColumn.EditingElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTemplateColumn Header="{x:Static loc:Strings.ServerTagColColor}" Width="*">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding Colors}" SelectedValuePath="Hex"
-                                                      SelectedValue="{Binding Color, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                      AutomationProperties.Name="{Binding ColorName}">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Rectangle Width="14" Height="14" Fill="{Binding Brush}" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                                        </StackPanel>
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,8">
-                            <Button x:Name="AddTagButton" Click="OnAddTag" ToolTipService.ShowOnDisabled="True">
-                                <AccessText Text="{x:Static loc:Strings.ServerTagAdd}" />
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionTroubleshooting}" Style="{StaticResource Section}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <Button x:Name="DebugLogShowButton" DockPanel.Dock="Right" Click="OnShowDebugLog" Margin="12,0,0,0" VerticalAlignment="Top">
+                                <AccessText Text="{x:Static loc:Strings.SettingsDebugLogShow}" />
                             </Button>
-                            <Button x:Name="RemoveTagButton" Click="OnRemoveTag" IsEnabled="False" Margin="8,0,0,0">
-                                <AccessText Text="{x:Static loc:Strings.ServerTagRemove}" />
-                            </Button>
-                        </StackPanel>
+                            <CheckBox x:Name="DebugLogBox" VerticalAlignment="Center">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsDebugLog}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsDebugLogHelp}" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -183,37 +162,106 @@
             <!-- ===== CyberArk ===== -->
             <TabItem x:Name="CyberArkPage" Header="{x:Static loc:Strings.SettingsPageCyberArk}">
                 <ScrollViewer>
-                    <StackPanel Margin="16,12">
-                        <TextBlock Text="{x:Static loc:Strings.PvwaSessionSection}" Style="{StaticResource SectionTitle}" />
-                        <CheckBox x:Name="KeepAliveBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.KeepAlive}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionEffect}" Text="{x:Static loc:Strings.SettingsKeepAliveEffect}" Margin="20,0,0,10" />
-                        <CheckBox x:Name="KeepAccountListCopyBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.KeepAccountListCopy}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="22,0,0,16" Text="{x:Static loc:Strings.KeepAccountListCopyHelp}" />
+                    <StackPanel Style="{StaticResource Page}">
+                        <TextBlock Text="{x:Static loc:Strings.PvwaSessionSection}" Style="{StaticResource FirstSection}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="KeepPvwaSessionAlive" />
+                            <CheckBox x:Name="KeepAliveBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.KeepAlive}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.KeepAliveHelp}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="KeepAccountListCopy" />
+                            <CheckBox x:Name="KeepAccountListCopyBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.KeepAccountListCopy}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.KeepAccountListCopyHelp}" />
 
-                        <TextBlock Text="{x:Static loc:Strings.SettingsSshSection}" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,10"
-                                   Text="{x:Static loc:Strings.SettingsSshHelp}" />
-                        <Grid Margin="0,0,0,4">
+                        <TextBlock Text="{x:Static loc:Strings.ComponentsSection}" Style="{StaticResource Section}" />
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.WindowsComponentLabel}" Target="{Binding ElementName=WindowsComponentBox}" Style="{StaticResource FieldLabel}" />
+                            <ComboBox Grid.Column="1" x:Name="WindowsComponentBox" IsEditable="True" MaxWidth="320" HorizontalAlignment="Left" MinWidth="220" />
+                            <views:TeamBadge Grid.Column="2" Setting="WindowsComponent" VerticalAlignment="Center" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.WindowsComponentHelp}" />
+                        </Grid>
+                        <!-- Composant par plateforme : prioritaire sur celui des comptes Windows (voir AppSettings.ResolveComponent). -->
+                        <DockPanel Margin="0,16,0,0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="PlatformComponent" />
+                            <TextBlock Text="{x:Static loc:Strings.PlatformComponentsSection}" Style="{StaticResource SubTitle}" />
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource FieldHelp}" Margin="0,2,0,6" Text="{x:Static loc:Strings.PlatformComponentsHelp}" />
+                        <DataGrid x:Name="ComponentGrid" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
+                                  CanUserDeleteRows="False" CanUserReorderColumns="False" SelectionMode="Single" SelectionUnit="FullRow"
+                                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
+                                  MinHeight="60" MaxHeight="180" SelectionChanged="OnComponentSelected"
+                                  AutomationProperties.Name="{x:Static loc:Strings.PlatformComponentsSection}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{x:Static loc:Strings.ComponentColumnPlatform}" Width="*"
+                                                    Binding="{Binding Platform, UpdateSourceTrigger=PropertyChanged}" />
+                                <DataGridTextColumn Header="{x:Static loc:Strings.ComponentColumnComponent}" Width="*"
+                                                    Binding="{Binding Component, UpdateSourceTrigger=PropertyChanged}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <Button Content="{x:Static loc:Strings.ComponentAdd}" Click="OnAddComponent" />
+                            <Button x:Name="RemoveComponentButton" Content="{x:Static loc:Strings.ComponentRemove}" Click="OnRemoveComponent"
+                                    IsEnabled="False" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ===== SSH ===== -->
+            <TabItem x:Name="SshPage" Header="{x:Static loc:Strings.SettingsPageSsh}">
+                <ScrollViewer>
+                    <StackPanel Style="{StaticResource Page}">
+                        <DockPanel Margin="0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="SshInApp" />
+                            <CheckBox x:Name="SshInAppBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SshInApp}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SshInAppHelp}" />
+
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSshSection}" Style="{StaticResource Section}" />
+                        <TextBlock Style="{StaticResource FieldHelp}" Margin="0" Text="{x:Static loc:Strings.SettingsSshHelp}" />
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Label Content="{x:Static loc:Strings.PsmpAddressLabel}" Target="{Binding ElementName=PsmpBox}" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.PsmpAddressLabel}" Target="{Binding ElementName=PsmpBox}" Style="{StaticResource FieldLabel}" />
                             <TextBox Grid.Column="1" x:Name="PsmpBox" VerticalContentAlignment="Center" TextChanged="OnPsmpChanged" />
-                            <Label Grid.Column="2" Content="{x:Static loc:Strings.PortLabel}" Target="{Binding ElementName=PortBox}" Margin="8,0,0,0" />
+                            <Label Grid.Column="2" Content="{x:Static loc:Strings.PortLabel}" Target="{Binding ElementName=PortBox}" Style="{StaticResource FieldLabel}"
+                                   Margin="12,0,0,0" />
                             <TextBox Grid.Column="3" x:Name="PortBox" VerticalContentAlignment="Center" TextChanged="OnPsmpChanged" />
+                            <views:TeamBadge Grid.Column="4" Setting="DefaultPsmp" VerticalAlignment="Center" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.PsmpDefaultHelp}" />
                         </Grid>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,12" Text="{x:Static loc:Strings.PsmpDefaultHelp}" />
-
                         <!-- Autres PSMP : chaque serveur passe par celui de son domaine le plus proche (voir PsmpRouting). -->
-                        <TextBlock Text="{x:Static loc:Strings.PsmpListSection}" FontWeight="SemiBold" Margin="0,0,0,4" />
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,6" Text="{x:Static loc:Strings.PsmpListHelp}" />
+                        <DockPanel Margin="0,16,0,0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="PsmpServers" />
+                            <TextBlock Text="{x:Static loc:Strings.PsmpListSection}" Style="{StaticResource SubTitle}" />
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource FieldHelp}" Margin="0,2,0,6" Text="{x:Static loc:Strings.PsmpListHelp}" />
                         <DataGrid x:Name="PsmpGrid" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
                                   CanUserDeleteRows="False" CanUserReorderColumns="False" SelectionMode="Single" SelectionUnit="FullRow"
                                   GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
@@ -228,73 +276,88 @@
                                                     Binding="{Binding Domain, UpdateSourceTrigger=PropertyChanged}" />
                             </DataGrid.Columns>
                         </DataGrid>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,10">
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                             <Button Content="{x:Static loc:Strings.PsmpAdd}" Click="OnAddPsmp" />
                             <Button x:Name="RemovePsmpButton" Content="{x:Static loc:Strings.PsmpRemove}" Click="OnRemovePsmp"
                                     IsEnabled="False" Margin="8,0,0,0" />
                         </StackPanel>
-                        <Grid Margin="0,0,0,4">
+                        <Grid Style="{StaticResource FieldRow}" Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Label Content="{x:Static loc:Strings.PsmpTestLabel}" Target="{Binding ElementName=PsmpTestBox}" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.PsmpTestLabel}" Target="{Binding ElementName=PsmpTestBox}" Style="{StaticResource FieldLabel}" />
                             <TextBox Grid.Column="1" x:Name="PsmpTestBox" VerticalContentAlignment="Center" TextChanged="OnPsmpChanged" />
+                            <views:AnnouncedText Grid.Row="1" Grid.Column="1" x:Name="PsmpTestText" Style="{StaticResource FieldHelp}"
+                                                 AutomationProperties.LiveSetting="Polite" />
                         </Grid>
-                        <views:AnnouncedText x:Name="PsmpTestText" Style="{StaticResource OptionHelp}" Margin="0,0,0,8"
-                                             AutomationProperties.LiveSetting="Polite" />
-                        <TextBlock Style="{StaticResource OptionEffect}" Margin="0,0,0,16" Text="{x:Static loc:Strings.PsmpSecurityEffect}" />
+                        <TextBlock Style="{StaticResource Warn}" Margin="0,10,0,0" Text="{x:Static loc:Strings.PsmpSecurityEffect}" />
 
-                        <TextBlock Text="{x:Static loc:Strings.ComponentsSection}" Style="{StaticResource SectionTitle}" />
-                        <Grid Margin="0,0,0,4">
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionShell}" Style="{StaticResource Section}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <CheckBox x:Name="FollowBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.FollowSetting}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsFollowEffect}" />
+
+                        <TextBlock Text="{x:Static loc:Strings.X11Section}" Style="{StaticResource Section}" />
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
+                                <ColumnDefinition Width="160" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Label Content="{x:Static loc:Strings.WindowsComponentLabel}" Target="{Binding ElementName=WindowsComponentBox}" />
-                            <ComboBox Grid.Column="1" x:Name="WindowsComponentBox" IsEditable="True" MaxWidth="320" HorizontalAlignment="Left"
-                                      MinWidth="220" VerticalAlignment="Center" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.X11DisplayLabel}" Target="{Binding ElementName=X11DisplayBox}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Column="1" x:Name="X11DisplayBox" VerticalContentAlignment="Center" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.X11DisplayHelp}" />
                         </Grid>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,10" Text="{x:Static loc:Strings.WindowsComponentHelp}" />
-                        <CheckBox x:Name="PsmDesktopInTabBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDesktopInTab}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="22,0,0,10" Text="{x:Static loc:Strings.PsmDesktopInTabHelp}" />
-                        <CheckBox x:Name="PsmDynamicResolutionBox" Margin="22,0,0,2"
-                                  IsEnabled="{Binding IsChecked, ElementName=PsmDesktopInTabBox}">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDynamicResolution}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="44,0,0,10" Text="{x:Static loc:Strings.PsmDynamicResolutionHelp}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ===== Bureau à distance ===== -->
+            <TabItem x:Name="RdpPage" Header="{x:Static loc:Strings.SettingsPageRdp}">
+                <ScrollViewer>
+                    <StackPanel Style="{StaticResource Page}">
+                        <TextBlock Style="{StaticResource FieldHelp}" Margin="0" Text="{x:Static loc:Strings.SettingsRdpIntro}" />
+                        <DockPanel Style="{StaticResource OptionRow}" Margin="0,12,0,0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="PsmDesktopInTab" />
+                            <CheckBox x:Name="PsmDesktopInTabBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDesktopInTab}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.PsmDesktopInTabHelp}" />
+                        <DockPanel Style="{StaticResource OptionRow}" Margin="20,8,0,0">
+                            <CheckBox x:Name="PsmDynamicResolutionBox" IsEnabled="{Binding IsChecked, ElementName=PsmDesktopInTabBox}">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDynamicResolution}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Margin="40,2,0,0" Text="{x:Static loc:Strings.PsmDynamicResolutionHelp}" />
                         <!-- Onglet et Connexion Bureau à distance : jamais grisée. -->
-                        <CheckBox x:Name="PsmRedirectDrivesBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmRedirectDrives}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="22,0,0,10" Text="{x:Static loc:Strings.PsmRedirectDrivesHelp}" />
+                        <DockPanel Style="{StaticResource OptionRow}" Margin="0,14,0,0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="PsmRedirectDrives" />
+                            <CheckBox x:Name="PsmRedirectDrivesBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmRedirectDrives}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Warn}" Text="{x:Static loc:Strings.PsmRedirectDrivesHelp}" />
                         <!-- Toute session Bureau à distance dans un onglet (PSM, KeePass) avec le client FreeRDP : jamais grisée. -->
-                        <CheckBox x:Name="PauseRdpDisplayBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PauseRdpDisplay}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="22,0,0,10" Text="{x:Static loc:Strings.PauseRdpDisplayHelp}" />
-                        <!-- Composant par plateforme : prioritaire sur celui des comptes Windows (voir AppSettings.ResolveComponent). -->
-                        <TextBlock Text="{x:Static loc:Strings.PlatformComponentsSection}" FontWeight="SemiBold" Margin="0,0,0,4" />
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,0,0,6" Text="{x:Static loc:Strings.PlatformComponentsHelp}" />
-                        <DataGrid x:Name="ComponentGrid" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
-                                  CanUserDeleteRows="False" CanUserReorderColumns="False" SelectionMode="Single" SelectionUnit="FullRow"
-                                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
-                                  MinHeight="60" MaxHeight="180" SelectionChanged="OnComponentSelected"
-                                  AutomationProperties.Name="{x:Static loc:Strings.PlatformComponentsSection}">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="{x:Static loc:Strings.ComponentColumnPlatform}" Width="*"
-                                                    Binding="{Binding Platform, UpdateSourceTrigger=PropertyChanged}" />
-                                <DataGridTextColumn Header="{x:Static loc:Strings.ComponentColumnComponent}" Width="*"
-                                                    Binding="{Binding Component, UpdateSourceTrigger=PropertyChanged}" />
-                            </DataGrid.Columns>
-                        </DataGrid>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,8">
-                            <Button Content="{x:Static loc:Strings.ComponentAdd}" Click="OnAddComponent" />
-                            <Button x:Name="RemoveComponentButton" Content="{x:Static loc:Strings.ComponentRemove}" Click="OnRemoveComponent"
-                                    IsEnabled="False" Margin="8,0,0,0" />
-                        </StackPanel>
+                        <DockPanel Style="{StaticResource OptionRow}" Margin="0,14,0,0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="PauseRdpDisplay" />
+                            <CheckBox x:Name="PauseRdpDisplayBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PauseRdpDisplay}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.PauseRdpDisplayHelp}" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -302,47 +365,44 @@
             <!-- ===== Terminal ===== -->
             <TabItem x:Name="TerminalPage" Header="{x:Static loc:Strings.SettingsPageTerminal}">
                 <ScrollViewer>
-                    <StackPanel Margin="16,12">
-                        <CheckBox x:Name="SshInAppBox" Margin="0,0,0,12">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SshInApp}" />
-                        </CheckBox>
-                        <Grid Margin="0,0,0,12">
+                    <StackPanel Style="{StaticResource Page}">
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionTerminalDisplay}" Style="{StaticResource FirstSection}" />
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
+                                <ColumnDefinition Width="*" MaxWidth="320" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="70" />
                             </Grid.ColumnDefinitions>
-                            <Label Content="{x:Static loc:Strings.TerminalThemeLabel}" Target="{Binding ElementName=ThemeBox}" />
-                            <ComboBox Grid.Column="1" x:Name="ThemeBox" VerticalAlignment="Center" />
-                            <Label Grid.Column="2" Content="{x:Static loc:Strings.TerminalFontLabel}" Target="{Binding ElementName=FontSizeBox}" Margin="8,0,0,0" />
-                            <TextBox Grid.Column="3" x:Name="FontSizeBox" VerticalContentAlignment="Center" ToolTip="{x:Static loc:Strings.TerminalFontTip}" />
+                            <Label Content="{x:Static loc:Strings.TerminalThemeLabel}" Target="{Binding ElementName=ThemeBox}" Style="{StaticResource FieldLabel}" />
+                            <ComboBox Grid.Column="1" x:Name="ThemeBox" />
                         </Grid>
-                        <CheckBox x:Name="ConfirmPasteBox" Margin="0,0,0,8">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsConfirmPaste}" />
-                        </CheckBox>
-                        <CheckBox x:Name="ConfirmCloseBox" Margin="0,0,0,8">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsConfirmClose}" />
-                        </CheckBox>
-                        <CheckBox x:Name="RightClickBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsRightClickPastes}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionEffect}" Text="{x:Static loc:Strings.SettingsRightClickEffect}" />
-                        <CheckBox x:Name="FollowBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.FollowSetting}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionEffect}" Text="{x:Static loc:Strings.SettingsFollowEffect}" />
-
-                        <TextBlock Text="{x:Static loc:Strings.X11Section}" Style="{StaticResource SectionTitle}" />
-                        <Grid Margin="0,0,0,2">
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
-                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Label Content="{x:Static loc:Strings.X11DisplayLabel}" Target="{Binding ElementName=X11DisplayBox}" />
-                            <TextBox Grid.Column="1" x:Name="X11DisplayBox" VerticalContentAlignment="Center" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.TerminalFontLabel}" Target="{Binding ElementName=FontSizeBox}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Column="1" x:Name="FontSizeBox" VerticalContentAlignment="Center" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.TerminalFontHelp}" />
                         </Grid>
-                        <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.X11DisplayHelp}" />
+
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionTerminalInput}" Style="{StaticResource Section}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <CheckBox x:Name="ConfirmPasteBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsConfirmPaste}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <CheckBox x:Name="RightClickBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsRightClickPastes}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Warn}" Text="{x:Static loc:Strings.SettingsRightClickEffect}" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -350,16 +410,29 @@
             <!-- ===== Fichiers ===== -->
             <TabItem x:Name="FilesPage" Header="{x:Static loc:Strings.SettingsPageFiles}">
                 <ScrollViewer>
-                    <StackPanel Margin="16,12">
-                        <WrapPanel Margin="0,0,0,10" ToolTip="{x:Static loc:Strings.UploadProtocolTip}">
-                            <Label x:Name="UploadLabel" Content="{x:Static loc:Strings.UploadLabel}" Target="{Binding ElementName=SftpRadio}"
-                                   VerticalAlignment="Center" Margin="0,0,8,0" Padding="0" />
-                            <RadioButton x:Name="SftpRadio" Content="SFTP" GroupName="Upload" Margin="0,0,16,0" VerticalAlignment="Center"
-                                         AutomationProperties.LabeledBy="{Binding ElementName=UploadLabel}" />
-                            <RadioButton x:Name="ScpRadio" Content="SCP" GroupName="Upload" VerticalAlignment="Center"
-                                         AutomationProperties.LabeledBy="{Binding ElementName=UploadLabel}" />
-                        </WrapPanel>
-                        <WrapPanel Margin="0,0,0,10" ToolTip="{x:Static loc:Strings.SettingsArchiveTip}">
+                    <StackPanel Style="{StaticResource Page}">
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionTransfers}" Style="{StaticResource FirstSection}" />
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label x:Name="UploadLabel" Content="{x:Static loc:Strings.UploadLabel}" Target="{Binding ElementName=SftpRadio}" Style="{StaticResource FieldLabel}" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <RadioButton x:Name="SftpRadio" Content="SFTP" GroupName="Upload" Margin="0,0,20,0" VerticalAlignment="Center"
+                                             AutomationProperties.LabeledBy="{Binding ElementName=UploadLabel}" />
+                                <RadioButton x:Name="ScpRadio" Content="SCP" GroupName="Upload" VerticalAlignment="Center"
+                                             AutomationProperties.LabeledBy="{Binding ElementName=UploadLabel}" />
+                            </StackPanel>
+                            <views:TeamBadge Grid.Column="2" Setting="UploadProtocol" VerticalAlignment="Center" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.UploadProtocolHelp}" />
+                        </Grid>
+                        <WrapPanel Margin="0,12,0,0">
                             <CheckBox x:Name="ArchiveBox" VerticalAlignment="Center">
                                 <AccessText Text="{x:Static loc:Strings.SettingsArchiveOffer}" />
                             </CheckBox>
@@ -367,14 +440,18 @@
                                      IsEnabled="{Binding IsChecked, ElementName=ArchiveBox}" AutomationProperties.Name="{x:Static loc:Strings.A11yArchiveThreshold}" />
                             <TextBlock Text="{x:Static loc:Strings.SettingsArchiveFiles}" VerticalAlignment="Center" />
                         </WrapPanel>
-                        <CheckBox x:Name="TailSessionBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsTailSession}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.SettingsTailSessionHelp}" Margin="20,0,0,16" />
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsArchiveHelp}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <CheckBox x:Name="TailSessionBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsTailSession}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsTailSessionHelp}" />
 
-                        <Grid Margin="0,0,0,12">
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionPrograms}" Style="{StaticResource Section}" />
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
@@ -382,18 +459,17 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <Label Content="{x:Static loc:Strings.TextEditorLabel}" Target="{Binding ElementName=EditorBox}" />
+                            <Label Content="{x:Static loc:Strings.TextEditorLabel}" Target="{Binding ElementName=EditorBox}" Style="{StaticResource FieldLabel}" />
                             <TextBox Grid.Column="1" x:Name="EditorBox" VerticalContentAlignment="Center" />
                             <TextBlock Grid.Column="1" Style="{StaticResource Placeholder}" Tag="{Binding ElementName=EditorBox}"
                                        Text="notepad.exe" Margin="6,0,0,0" />
                             <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseEditor" Margin="8,0,0,0" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{x:Static loc:Strings.TextEditorHelp}"
-                                       Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.TextEditorHelp}" />
                         </Grid>
                         <!-- Outil de comparaison externe (facultatif) : la comparaison intégrée suffit sinon. -->
-                        <Grid>
+                        <Grid Style="{StaticResource FieldRow}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" MinWidth="140" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
@@ -402,15 +478,131 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <Label Content="{x:Static loc:Strings.CompareToolLabel}" Target="{Binding ElementName=CompareToolBox}" />
+                            <Label Content="{x:Static loc:Strings.CompareToolLabel}" Target="{Binding ElementName=CompareToolBox}" Style="{StaticResource FieldLabel}" />
                             <TextBox Grid.Column="1" x:Name="CompareToolBox" VerticalContentAlignment="Center" />
                             <Button Grid.Column="2" Content="{x:Static loc:Strings.BrowseOther}" Click="OnBrowseCompareTool" Margin="8,0,0,0" />
-                            <Label Grid.Row="1" Content="{x:Static loc:Strings.CompareArgumentsLabel}" Target="{Binding ElementName=CompareArgsBox}" />
-                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="CompareArgsBox" VerticalContentAlignment="Center" Margin="0,4,0,0"
+                            <Label Grid.Row="1" Content="{x:Static loc:Strings.CompareArgumentsLabel}" Target="{Binding ElementName=CompareArgsBox}"
+                                   Style="{StaticResource FieldLabel}" Margin="0,6,0,0" />
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="CompareArgsBox" VerticalContentAlignment="Center" Margin="0,6,0,0"
                                      FontFamily="Consolas, Courier New" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{x:Static loc:Strings.CompareToolHelp}"
-                                       Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.CompareToolHelp}" />
                         </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ===== Mes serveurs ===== -->
+            <TabItem x:Name="ServersPage" Header="{x:Static loc:Strings.SettingsPageServers}">
+                <DockPanel Margin="20,14,22,18">
+                    <!-- Étiquettes des serveurs de « Mes serveurs » (PROD, QA, DEV…) : nom et couleur. -->
+                    <DockPanel DockPanel.Dock="Top">
+                        <views:TeamBadge DockPanel.Dock="Right" Setting="ServerTags" />
+                        <TextBlock Text="{x:Static loc:Strings.ServerTagsSection}" Style="{StaticResource FirstSection}" />
+                    </DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource FieldHelp}" Margin="0,0,0,8" Text="{x:Static loc:Strings.ServerTagsHelp}" />
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,6,0,0">
+                        <Button x:Name="AddTagButton" Click="OnAddTag" ToolTipService.ShowOnDisabled="True">
+                            <AccessText Text="{x:Static loc:Strings.ServerTagAdd}" />
+                        </Button>
+                        <Button x:Name="RemoveTagButton" Click="OnRemoveTag" IsEnabled="False" Margin="8,0,0,0">
+                            <AccessText Text="{x:Static loc:Strings.ServerTagRemove}" />
+                        </Button>
+                    </StackPanel>
+                    <DataGrid x:Name="TagGrid" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
+                              CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" SelectionMode="Single"
+                              SelectionUnit="FullRow" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
+                              MinHeight="60" SelectionChanged="OnTagSelected"
+                              AutomationProperties.Name="{x:Static loc:Strings.ServerTagsSection}">
+                        <DataGrid.Columns>
+                            <!-- Aperçu : la pastille telle qu'elle apparaîtra sur l'onglet. -->
+                            <DataGridTemplateColumn Width="Auto" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{Binding Background}" CornerRadius="3" Padding="5,0,5,1" Margin="4,2"
+                                                HorizontalAlignment="Left" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" Foreground="{Binding Foreground}" FontSize="11" FontWeight="SemiBold" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="{x:Static loc:Strings.ServerTagColName}" Width="*"
+                                                Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                        <Setter Property="Margin" Value="2,0" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.EditingElementStyle>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="MaxLength" Value="{x:Static core:ServerTagRules.MaxNameLength}" />
+                                    </Style>
+                                </DataGridTextColumn.EditingElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="{x:Static loc:Strings.ServerTagColColor}" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Colors}" SelectedValuePath="Hex"
+                                                  SelectedValue="{Binding Color, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  AutomationProperties.Name="{Binding ColorName}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Rectangle Width="14" Height="14" Fill="{Binding Brush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- ===== Intervention ===== -->
+            <TabItem x:Name="InterventionPage" Header="{x:Static loc:Strings.SettingsPageIntervention}">
+                <ScrollViewer>
+                    <StackPanel Style="{StaticResource Page}">
+                        <!-- Astreinte : consignes de l'équipe (texte ou fichier), diffusées par le fichier d'environnement. -->
+                        <DockPanel>
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="DutyText" />
+                            <TextBlock Text="{x:Static loc:Strings.DutySection}" Style="{StaticResource FirstSection}" />
+                        </DockPanel>
+                        <Label Content="{x:Static loc:Strings.DutyTextLabel}" Target="{Binding ElementName=DutyTextBox}" Padding="0,8,0,4" />
+                        <TextBox x:Name="DutyTextBox" AcceptsReturn="True" AcceptsTab="False" TextWrapping="Wrap" MinHeight="96" MaxHeight="220"
+                                 VerticalScrollBarVisibility="Auto" MaxLength="8000" />
+                        <TextBlock Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.DutyTextHelp}" />
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.DutyFileLabel}" Target="{Binding ElementName=DutyFileBox}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Column="1" x:Name="DutyFileBox" VerticalContentAlignment="Center" MaxLength="1024" />
+                            <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseDutyFile" Margin="8,0,0,0" />
+                            <views:TeamBadge Grid.Column="3" Setting="DutyTextFile" VerticalAlignment="Center" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.DutyFileHelp}" />
+                        </Grid>
+
+                        <!-- Rappels pendant l'intervention : une ligne par rappel, minutes depuis le début puis le texte. -->
+                        <DockPanel Margin="0,20,0,0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="InterventionReminders" />
+                            <TextBlock Text="{x:Static loc:Strings.SettingsSectionReminders}" Style="{StaticResource FirstSection}" />
+                        </DockPanel>
+                        <Label Content="{x:Static loc:Strings.RemindersLabel}" Target="{Binding ElementName=RemindersBox}" Padding="0,8,0,4" />
+                        <TextBox x:Name="RemindersBox" AcceptsReturn="True" AcceptsTab="False" TextWrapping="Wrap" MinHeight="58" MaxHeight="160"
+                                 VerticalScrollBarVisibility="Auto" MaxLength="2400" FontFamily="Consolas, Courier New"
+                                 AutomationProperties.HelpText="{x:Static loc:Strings.RemindersHelp}" />
+                        <TextBlock Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.RemindersHelp}" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -418,34 +610,47 @@
             <!-- ===== Partage de sessions ===== -->
             <TabItem x:Name="SharingPage" Header="{x:Static loc:Strings.SettingsPageSharing}">
                 <ScrollViewer>
-                    <StackPanel Margin="16,12">
-                        <CheckBox x:Name="SessionSharingBox" Margin="0,0,0,2">
-                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsSessionSharing}" />
-                        </CheckBox>
-                        <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.SettingsSessionSharingHelp}" Margin="20,0,0,14" />
+                    <StackPanel Style="{StaticResource Page}">
+                        <DockPanel>
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="SessionSharing" />
+                            <CheckBox x:Name="SessionSharingBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsSessionSharing}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsSessionSharingHelp}" />
                         <!-- Par où les autres rejoignent mes partages : directement, sinon par le dossier relais. -->
-                        <StackPanel IsEnabled="{Binding IsChecked, ElementName=SessionSharingBox}">
-                            <WrapPanel Margin="0,0,0,2">
-                                <CheckBox x:Name="ShareDirectBox" VerticalAlignment="Center">
-                                    <AccessText Text="{x:Static loc:Strings.SettingsShareDirect}" />
-                                </CheckBox>
-                                <Label Content="{x:Static loc:Strings.SettingsSharePort}" Target="{Binding ElementName=SharePortBox}" Margin="16,0,4,0" Padding="0"
-                                       VerticalAlignment="Center" />
-                                <TextBox x:Name="SharePortBox" Width="70" VerticalAlignment="Center" MaxLength="5"
-                                         IsEnabled="{Binding IsChecked, ElementName=ShareDirectBox}" ToolTip="{x:Static loc:Strings.SettingsSharePortTip}" />
-                            </WrapPanel>
-                            <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.SettingsShareDirectHelp}" Margin="20,0,0,14" />
-                            <Grid Margin="0,0,0,4">
+                        <StackPanel IsEnabled="{Binding IsChecked, ElementName=SessionSharingBox}" Grid.IsSharedSizeScope="True">
+                            <TextBlock Text="{x:Static loc:Strings.SettingsSectionShareRoutes}" Style="{StaticResource Section}" />
+                            <DockPanel Style="{StaticResource OptionRow}">
+                                <views:TeamBadge DockPanel.Dock="Right" Setting="ShareDirect" />
+                                <WrapPanel>
+                                    <CheckBox x:Name="ShareDirectBox" VerticalAlignment="Center">
+                                        <AccessText Text="{x:Static loc:Strings.SettingsShareDirect}" />
+                                    </CheckBox>
+                                    <Label Content="{x:Static loc:Strings.SettingsSharePort}" Target="{Binding ElementName=SharePortBox}" Margin="20,0,6,0"
+                                           Padding="0" VerticalAlignment="Center" />
+                                    <TextBox x:Name="SharePortBox" Width="70" VerticalAlignment="Center" MaxLength="5"
+                                             IsEnabled="{Binding IsChecked, ElementName=ShareDirectBox}" />
+                                </WrapPanel>
+                            </DockPanel>
+                            <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsShareDirectHelp}" />
+                            <Grid Style="{StaticResource FieldRow}" Margin="0,14,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" MinWidth="140" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <Label Content="{x:Static loc:Strings.SettingsShareRelay}" Target="{Binding ElementName=ShareRelayBox}" />
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Label Content="{x:Static loc:Strings.SettingsShareRelay}" Target="{Binding ElementName=ShareRelayBox}" Style="{StaticResource FieldLabel}" />
                                 <TextBox Grid.Column="1" x:Name="ShareRelayBox" VerticalContentAlignment="Center" MaxLength="400" />
                                 <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseShareRelay" Margin="8,0,0,0" />
+                                <views:TeamBadge Grid.Column="3" Setting="ShareRelayFolder" VerticalAlignment="Center" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.SettingsShareRelayHelp}" />
                             </Grid>
-                            <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.SettingsShareRelayHelp}" />
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -453,23 +658,35 @@
 
             <!-- ===== Sécurité ===== -->
             <TabItem x:Name="SecurityPage" Header="{x:Static loc:Strings.SettingsPageSecurity}">
-                <DockPanel Margin="16,12">
-                    <!-- Coffre local : actions immédiates, sans « Enregistrer ». -->
-                    <StackPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
-                        <TextBlock Text="{x:Static loc:Strings.LocalStoreSection}" Style="{StaticResource SectionTitle}" />
-                        <TextBlock x:Name="StoreText" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,6" />
-                        <WrapPanel>
-                            <Button x:Name="StoreCreateButton" Content="{x:Static loc:Strings.LocalStoreCreate}" Click="OnStoreCreate" Margin="0,0,8,4" />
-                            <Button x:Name="StoreUnlockButton" Content="{x:Static loc:Strings.LocalStoreUnlockMenu}" Click="OnStoreUnlock" Margin="0,0,8,4" />
-                            <Button x:Name="StoreChangeButton" Content="{x:Static loc:Strings.LocalStoreChange}" Click="OnStoreChange" Margin="0,0,8,4" />
-                            <Button x:Name="StoreDeleteButton" Content="{x:Static loc:Strings.LocalStoreDelete}" Click="OnStoreDelete" Margin="0,0,8,4"
-                                    Style="{StaticResource DangerButton}" />
-                        </WrapPanel>
-                        <TextBlock Style="{StaticResource OptionHelp}" Margin="0,2,0,0" Text="{x:Static loc:Strings.LocalStoreImmediate}" />
-                    </StackPanel>
+                <DockPanel Margin="20,14,22,18">
+                    <!-- Coffre local : actions immédiates, sans « Enregistrer », dans leur propre cadre. -->
+                    <Border DockPanel.Dock="Bottom" Margin="0,18,0,0" Padding="12,10" BorderThickness="1" CornerRadius="3"
+                            BorderBrush="{DynamicResource ToolbarBorderBrush}" Background="{DynamicResource SidePanelBrush}">
+                        <StackPanel>
+                            <TextBlock Text="{x:Static loc:Strings.LocalStoreSection}" Style="{StaticResource FirstSection}" />
+                            <TextBlock x:Name="StoreText" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,2,0,8" />
+                            <WrapPanel>
+                                <Button x:Name="StoreCreateButton" Content="{x:Static loc:Strings.LocalStoreCreate}" Click="OnStoreCreate" Margin="0,0,8,4" />
+                                <Button x:Name="StoreUnlockButton" Content="{x:Static loc:Strings.LocalStoreUnlockMenu}" Click="OnStoreUnlock" Margin="0,0,8,4" />
+                                <Button x:Name="StoreChangeButton" Content="{x:Static loc:Strings.LocalStoreChange}" Click="OnStoreChange" Margin="0,0,8,4" />
+                                <Button x:Name="StoreDeleteButton" Content="{x:Static loc:Strings.LocalStoreDelete}" Click="OnStoreDelete" Margin="0,0,8,4"
+                                        Style="{StaticResource DangerButton}" />
+                            </WrapPanel>
+                            <TextBlock Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.LocalStoreImmediate}" />
+                        </StackPanel>
+                    </Border>
 
                     <!-- Clés de serveur acceptées : oubliées à l'enregistrement (la connexion suivante redemandera l'empreinte). -->
-                    <TextBlock DockPanel.Dock="Top" Text="{x:Static loc:Strings.HostKeysSection}" Style="{StaticResource SectionTitle}" />
+                    <DockPanel DockPanel.Dock="Top">
+                        <views:TeamBadge DockPanel.Dock="Right" Setting="HostKey" />
+                        <TextBlock Text="{x:Static loc:Strings.HostKeysSection}" Style="{StaticResource FirstSection}" />
+                    </DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="0,8,0,6" MaxWidth="320" HorizontalAlignment="Left">
+                        <TextBox x:Name="HostKeysFilterBox" MinWidth="260" VerticalContentAlignment="Center" TextChanged="OnHostKeysFilter"
+                                 AutomationProperties.Name="{x:Static loc:Strings.HostKeysFilter}" />
+                        <TextBlock Style="{StaticResource Placeholder}" Tag="{Binding ElementName=HostKeysFilterBox}"
+                                   Text="{x:Static loc:Strings.HostKeysFilter}" Margin="6,0,0,0" />
+                    </Grid>
                     <DockPanel DockPanel.Dock="Bottom" Margin="0,6,0,0">
                         <Button x:Name="ForgetKeysButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.ForgetSelectedKeys}"
                                 Click="OnForgetHostKeys" IsEnabled="False" VerticalAlignment="Top" />

@@ -56,7 +56,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to _Look for a new version when ZillaTerm starts (at most once a day; a request to GitHub).
+        ///   Looks up a localized string similar to _Look for a new version at startup.
         /// </summary>
         public static string AboutAutoCheck {
             get {
@@ -1469,7 +1469,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Optional: the comparison window offers to open both files in this program (e.g. WinMergeU.exe). {[rest of string was truncated].
+        ///   Looks up a localized string similar to Optional: offered by the comparison window. {0} is the left file, {1} the right one (VS Code: code.cmd with --diff "{0}" "{1}")..
         /// </summary>
         public static string CompareToolHelp {
             get {
@@ -2612,7 +2612,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to _Let the file browser follow the terminal folder (sets PROMPT__COMMAND in the shell when the session opens).
+        ///   Looks up a localized string similar to _Let the Files tab follow the terminal folder.
         /// </summary>
         public static string FollowSetting {
             get {
@@ -3785,7 +3785,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to _Keep the CyberArk session open while you use the computer (a light request every 4 minutes; paused while Windows is locked or after 15 minutes without keyboard or mouse).
+        ///   Looks up a localized string similar to _Keep the session open while I work.
         /// </summary>
         public static string KeepAlive {
             get {
@@ -3817,15 +3817,6 @@ namespace ZillaTerm.App.Localization {
         public static string LanguageLabel {
             get {
                 return ResourceManager.GetString("LanguageLabel", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Language.
-        /// </summary>
-        public static string LanguageSection {
-            get {
-                return ResourceManager.GetString("LanguageSection", resourceCulture);
             }
         }
 
@@ -7388,15 +7379,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to When you drop many files at once in the Files tab, ZillaTerm offers to pack them into one .tar[rest of string was truncated].
-        /// </summary>
-        public static string SettingsArchiveTip {
-            get {
-                return ResourceManager.GetString("SettingsArchiveTip", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to _Right-click in the terminal pastes the clipboard (Shift+right-click then opens the menu).
         /// </summary>
         public static string SettingsRightClickPastes {
@@ -7424,7 +7406,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Unix accounts then open over SSH by default (PSM stays available in “Advanced options…”). Without any PSMP, SSH is disabled..
+        ///   Looks up a localized string similar to With a PSMP, Unix accounts open over SSH (PSM stays in “Advanced options…”); without one, SSH is disabled..
         /// </summary>
         public static string SettingsSshHelp {
             get {
@@ -7433,7 +7415,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to SSH via PSM for SSH (PSMP).
+        ///   Looks up a localized string similar to PSMP (PSM for SSH).
         /// </summary>
         public static string SettingsSshSection {
             get {
@@ -7451,7 +7433,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Each follow window opens its own SFTP connection instead of sharing the one of the Files tab: it [rest of string was truncated].
+        ///   Looks up a localized string similar to Does not wait for transfers, but opens one more PSMP session (recorded separately; MFA may be asked)..
         /// </summary>
         public static string SettingsTailSessionHelp {
             get {
@@ -8118,7 +8100,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to _Open SSH sessions in ZillaTerm (terminal tab + “Files” tab), otherwise in Windows Terminal.
+        ///   Looks up a localized string similar to _Open SSH sessions in ZillaTerm.
         /// </summary>
         public static string SshInApp {
             get {
@@ -9000,15 +8982,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Font size of the terminals (8 to 32). Ctrl+wheel changes it for one terminal, Ctrl+0 restores it..
-        /// </summary>
-        public static string TerminalFontTip {
-            get {
-                return ResourceManager.GetString("TerminalFontTip", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Text files (*.txt)|*.txt|All files (*.*)|*.*.
         /// </summary>
         public static string TerminalSaveFilter {
@@ -9379,20 +9352,11 @@ namespace ZillaTerm.App.Localization {
 
 
         /// <summary>
-        ///   Looks up a localized string similar to File upload:.
+        ///   Looks up a localized string similar to Upload protocol:.
         /// </summary>
         public static string UploadLabel {
             get {
                 return ResourceManager.GetString("UploadLabel", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Protocol tried first for uploads. If the server refuses it for a file (rule of the PSMP, read-onl[rest of string was truncated].
-        /// </summary>
-        public static string UploadProtocolTip {
-            get {
-                return ResourceManager.GetString("UploadProtocolTip", resourceCulture);
             }
         }
 
@@ -11340,7 +11304,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Co_nfirm before closing a connected session (SSH, remote desktop, VNC).
+        ///   Looks up a localized string similar to _Confirm before closing a connected session (SSH, remote desktop, VNC).
         /// </summary>
         public static string SettingsConfirmClose {
             get {
@@ -12016,16 +11980,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to ⚠ Effect: while you work in ZillaTerm, the CyberArk session no longer closes by itself after its idle timeout..
-        /// </summary>
-        public static string SettingsKeepAliveEffect {
-            get {
-                return ResourceManager.GetString("SettingsKeepAliveEffect", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to ⚠ Effect: a stray right-click sends the clipboard to the shell, root shells included..
+        ///   Looks up a localized string similar to ⚠ A stray right-click sends the clipboard to the shell, root shells included..
         /// </summary>
         public static string SettingsRightClickEffect {
             get {
@@ -12034,7 +11989,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to ⚠ Effect: a command is added to PROMPT_COMMAND in the remote shell when the session opens..
+        ///   Looks up a localized string similar to Adds a command to PROMPT_COMMAND in the remote shell when the session opens..
         /// </summary>
         public static string SettingsFollowEffect {
             get {
@@ -12052,7 +12007,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Accepted server keys.
+        ///   Looks up a localized string similar to Server keys and certificates.
         /// </summary>
         public static string HostKeysSection {
             get {
@@ -12583,7 +12538,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to For the servers of its domain and those no PSMP below covers. Empty: the only PSMP of the list, if there is just one..
+        ///   Looks up a localized string similar to For the servers of its domain and those no PSMP by domain covers. Empty: the only one in the list, if there is just one..
         /// </summary>
         public static string PsmpDefaultHelp {
             get {
@@ -12601,7 +12556,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Each server goes through the PSMP of the closest domain: srv01.zzz.xxx.corp.com through psmp.zzz.xxx.corp.com if it is listed, otherwise through psmp.xxx.corp.com. The domain comes from the address; change it if the PSMP serves another domain..
+        ///   Looks up a localized string similar to Each server goes through the PSMP of its closest domain: srv01.paris.corp.com through the one of paris.corp.com, otherwise of corp.com. Change the domain if a PSMP serves another one..
         /// </summary>
         public static string PsmpListHelp {
             get {
@@ -12700,7 +12655,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to ⚠ Effect: a PSMP receives your CyberArk password. Only list your organization's PSMPs; the first connection to each one asks you to check its key..
+        ///   Looks up a localized string similar to ⚠ A PSMP receives your CyberArk password: only add your organization's; the first connection to each one asks you to check its key..
         /// </summary>
         public static string PsmpSecurityEffect {
             get {
@@ -12952,7 +12907,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to _Windows accounts:.
+        ///   Looks up a localized string similar to Component for _Windows accounts:.
         /// </summary>
         public static string WindowsComponentLabel {
             get {
@@ -12961,7 +12916,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to For Windows accounts (domain or local) when no component is remembered for their platform, for example WIN-PSM. Empty: PSM-RDP..
+        ///   Looks up a localized string similar to When no component is remembered for their platform. Empty: PSM-RDP..
         /// </summary>
         public static string WindowsComponentHelp {
             get {
@@ -13321,7 +13276,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Central file:.
+        ///   Looks up a localized string similar to Central f_ile:.
         /// </summary>
         public static string CentralFileLabel {
             get {
@@ -13330,7 +13285,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Environment file of your team on a network share (PVWA, PSMP, PSM components, shared lists, PSMP keys), read at each start: its changes are shown to you before being applied. To create it: Settings button › Export the environment..
+        ///   Looks up a localized string similar to Your team's settings on a network share, read at each start: their changes are shown to you before being applied. Import or export: Settings button menu..
         /// </summary>
         public static string CentralFileHelp {
             get {
@@ -13465,7 +13420,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to For the accounts of a platform (platform ID in the PVWA, for example WinDomain or UnixSSH); takes precedence over the Windows accounts component above. A line is also added by “Remember this component for platform…” in the connection window..
+        ///   Looks up a localized string similar to Takes precedence over the Windows accounts component. “Remember this component for platform…” in the connection window also adds a line..
         /// </summary>
         public static string PlatformComponentsHelp {
             get {
@@ -14563,15 +14518,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Appearance.
-        /// </summary>
-        public static string AppearanceSection {
-            get {
-                return ResourceManager.GetString("AppearanceSection", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to _Theme:.
         /// </summary>
         public static string AppThemeLabel {
@@ -14608,7 +14554,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Applied right away. Windows high contrast always takes precedence. Terminal colors are set on the Terminal page..
+        ///   Looks up a localized string similar to Windows high contrast always takes precedence. Terminal colours: Terminal page..
         /// </summary>
         public static string AppThemeHelp {
             get {
@@ -14689,7 +14635,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to An X server installed on this computer (VcXsrv, X410, Xming…) that accepts local TCP connections: ":0" is port 6000. X11 forwarding is turned on server by server (Properties or Advanced options)..
+        ///   Looks up a localized string similar to An X server on this computer (VcXsrv, X410…) that accepts local TCP connections (“:0” is port 6000). X11 forwarding is turned on server by server..
         /// </summary>
         public static string X11DisplayHelp {
             get {
@@ -15572,7 +15518,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Shown at the top of the "Intervention" window: good practices, emergency numbers… Plain text. Shared with the team by the environment file (Settings button › Export the environment)..
+        ///   Looks up a localized string similar to Shown at the top of the Intervention tab (plain text)..
         /// </summary>
         public static string DutyTextHelp {
             get {
@@ -15626,7 +15572,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Optional: a text file (on a network share, for example) read again each time the Intervention window opens. It replaces the text above, so the managers can update it without sending a new environment. If it cannot be read, the text above is shown..
+        ///   Looks up a localized string similar to Optional: a text file read again at each opening, which replaces the text above (if it cannot be read, the text is shown)..
         /// </summary>
         public static string DutyFileHelp {
             get {
@@ -15898,7 +15844,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Environments given to the servers of My servers (asked when a server is added). Their color marks the session tabs and the outline of each session. Removing a tag takes it off the servers. Shared with the team by the environment file..
+        ///   Looks up a localized string similar to Environment of each server (PROD, QA…), asked when it is added: its colour marks the tab and the outline of the session. Removing a tag takes it off the servers..
         /// </summary>
         public static string ServerTagsHelp {
             get {
@@ -16132,7 +16078,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Open PSM Windows sessions in a ZillaTerm _tab, otherwise in Remote Desktop Connection.
+        ///   Looks up a localized string similar to Open PSM Windows sessions in a ZillaTerm _tab.
         /// </summary>
         public static string PsmDesktopInTab {
             get {
@@ -16141,7 +16087,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The session takes the size of the tab and opens with the FreeRDP client built into ZillaTerm, desktop or remote application (PSM-RDP, PSM-SSH, WinSCP…) alike, without a window of its own. ZillaTerm checks the PSM certificate (trusted by Windows, otherwise fingerprint confirmed once then remembered), and the redirections stay those asked by the PVWA, never more. A connection through a Remote Desktop gateway still opens in Remote Desktop Connection..
+        ///   Looks up a localized string similar to Built-in FreeRDP client at the size of the tab, which checks the PSM certificate; unchecked: Remote Desktop Connection. A Remote Desktop gateway always goes through the latter..
         /// </summary>
         public static string PsmDesktopInTabHelp {
             get {
@@ -16159,7 +16105,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Instead of a fixed resolution with the image scaled to the tab, ZillaTerm asks the PSM server to change the resolution of the session each time the tab is resized. The display is sharper, but depending on the PSM configuration, the connection from the PSM to the target server may keep its original size: turn the option off if the target screen does not follow. Applies to new sessions..
+        ///   Looks up a localized string similar to Sharper than a scaled picture; turn it off if the target server's screen does not follow..
         /// </summary>
         public static string PsmDynamicResolutionHelp {
             get {
@@ -16168,7 +16114,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Share this _computer's drives with PSM Windows sessions.
+        ///   Looks up a localized string similar to Share this _computer's drives.
         /// </summary>
         public static string PsmRedirectDrives {
             get {
@@ -16177,7 +16123,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to ZillaTerm asks the PVWA to map this computer's drives, like the “Map local drives” box of its connection window. When the connection component allows it, they appear in the session (File Explorer › This PC) to copy files; programs in the session can then read and write them. In the tab and in Remote Desktop Connection; applies to new sessions..
+        ///   Looks up a localized string similar to Like “Map local drives” in the PVWA, when the component allows it: programs in the session can read and write your drives. Unchecked, no drive is shared in a tab..
         /// </summary>
         public static string PsmRedirectDrivesHelp {
             get {
@@ -17313,7 +17259,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to One line per reminder: the minutes since the start of the recording, then the text ("30 Escalate to level 3"). 10 at most. At that time ZillaTerm shows it in the Intervention tab and the status bar, and notes it in the journal..
+        ///   Looks up a localized string similar to One line per reminder: the minutes since the start of the recording, then the text ("30 Escalate to level 3"); 10 at most..
         /// </summary>
         public static string RemindersHelp {
             get {
@@ -17583,7 +17529,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to You start each share yourself, from the menu of the session tab; each person must be accepted after comparing a 6-digit code. Shares stop when Windows locks. Watching another person's session works without this option..
+        ///   Looks up a localized string similar to You start each share from the session tab; each person is accepted after comparing a 6-digit code; everything stops when Windows locks. Watching a shared session does not need this option..
         /// </summary>
         public static string SettingsSessionSharingHelp {
             get {
@@ -17610,16 +17556,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 0: a free port chosen at random. A fixed port helps when the firewall must allow it..
-        /// </summary>
-        public static string SettingsSharePortTip {
-            get {
-                return ResourceManager.GetString("SettingsSharePortTip", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The other ZillaTerm connects to this computer (end-to-end encrypted connection). The first time, Windows Firewall may ask to allow ZillaTerm: allow it on private or domain networks only..
+        ///   Looks up a localized string similar to End-to-end encrypted connection to this computer; port 0: a free port at random. If the firewall asks, allow ZillaTerm on private or domain networks only..
         /// </summary>
         public static string SettingsShareDirectHelp {
             get {
@@ -17637,7 +17574,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to When the direct connection is not possible (firewall), the exchange goes through this folder of a network share that both computers can reach. Everything written there is end-to-end encrypted, and deleted at the end of the share..
+        ///   Looks up a localized string similar to A network share both computers can reach, used when the direct connection fails: everything there is encrypted and deleted at the end of the share..
         /// </summary>
         public static string SettingsShareRelayHelp {
             get {
@@ -19212,7 +19149,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Pause the d_isplay of Remote Desktop sessions nobody is watching (the session stays open).
+        ///   Looks up a localized string similar to Pause the d_isplay of sessions nobody is watching.
         /// </summary>
         public static string PauseRdpDisplay {
             get {
@@ -19221,7 +19158,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Remote Desktop sessions in a tab (built-in client): when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture: no display traffic, and no picture encoding by the PSM, for a session nobody sees. The session stays open; the picture comes back as soon as you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared. During a recording, the pause of a tab in the background is marked in it: &quot;Display paused&quot; on the screen and a grey band on the timeline of the report..
+        ///   Looks up a localized string similar to Any Remote Desktop session in a tab: in the background, ZillaTerm minimized or computer idle, the picture is no longer sent (the session stays open). Never for the tab shown during a recording or a share..
         /// </summary>
         public static string PauseRdpDisplayHelp {
             get {
@@ -19311,7 +19248,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Show the account list at once when you log in (_encrypted copy of the last list on this computer).
+        ///   Looks up a localized string similar to Show the account list of the last login at _once.
         /// </summary>
         public static string KeepAccountListCopy {
             get {
@@ -19320,7 +19257,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The list from the last login shows at once, then it is read again from the PVWA in the background and replaced in one go. The copy holds no password; it is encrypted for your Windows account, one per PVWA and user, and deleted after 30 days. Unchecked: the copies are deleted..
+        ///   Looks up a localized string similar to Encrypted copy on this computer, without any password, deleted after 30 days, then replaced by the list read again from the PVWA. Unchecked: the copies are deleted..
         /// </summary>
         public static string KeepAccountListCopyHelp {
             get {
@@ -19370,6 +19307,294 @@ namespace ZillaTerm.App.Localization {
         public static string AccountListUpdated {
             get {
                 return ResourceManager.GetString("AccountListUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Go through this relay folder?.
+        /// </summary>
+        public static string JoinRelayHeading {
+            get {
+                return ResourceManager.GetString("JoinRelayHeading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The computer that shares could not be reached directly. The invitation offers this relay folder, which is not the one in your Settings: Windows will connect to it with your account. Continue only if it is your team's relay folder..
+        /// </summary>
+        public static string JoinRelayMessage {
+            get {
+                return ResourceManager.GetString("JoinRelayMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use this folder.
+        /// </summary>
+        public static string JoinRelayAction {
+            get {
+                return ResourceManager.GetString("JoinRelayAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The computer that shares could not be reached directly, and the invitation's relay folder was not used..
+        /// </summary>
+        public static string JoinRelayRefused {
+            get {
+                return ResourceManager.GetString("JoinRelayRefused", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SSH.
+        /// </summary>
+        public static string SettingsPageSsh {
+            get {
+                return ResourceManager.GetString("SettingsPageSsh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remote desktop.
+        /// </summary>
+        public static string SettingsPageRdp {
+            get {
+                return ResourceManager.GetString("SettingsPageRdp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to My servers.
+        /// </summary>
+        public static string SettingsPageServers {
+            get {
+                return ResourceManager.GetString("SettingsPageServers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Intervention.
+        /// </summary>
+        public static string SettingsPageIntervention {
+            get {
+                return ResourceManager.GetString("SettingsPageIntervention", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Language and appearance.
+        /// </summary>
+        public static string SettingsSectionDisplay {
+            get {
+                return ResourceManager.GetString("SettingsSectionDisplay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Team environment.
+        /// </summary>
+        public static string SettingsSectionTeam {
+            get {
+                return ResourceManager.GetString("SettingsSectionTeam", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Troubleshooting.
+        /// </summary>
+        public static string SettingsSectionTroubleshooting {
+            get {
+                return ResourceManager.GetString("SettingsSectionTroubleshooting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sessions.
+        /// </summary>
+        public static string SettingsSectionSessions {
+            get {
+                return ResourceManager.GetString("SettingsSectionSessions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to In the shell.
+        /// </summary>
+        public static string SettingsSectionShell {
+            get {
+                return ResourceManager.GetString("SettingsSectionShell", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Display.
+        /// </summary>
+        public static string SettingsSectionTerminalDisplay {
+            get {
+                return ResourceManager.GetString("SettingsSectionTerminalDisplay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Typing and pasting.
+        /// </summary>
+        public static string SettingsSectionTerminalInput {
+            get {
+                return ResourceManager.GetString("SettingsSectionTerminalInput", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Transfers.
+        /// </summary>
+        public static string SettingsSectionTransfers {
+            get {
+                return ResourceManager.GetString("SettingsSectionTransfers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Programs.
+        /// </summary>
+        public static string SettingsSectionPrograms {
+            get {
+                return ResourceManager.GetString("SettingsSectionPrograms", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reminders.
+        /// </summary>
+        public static string SettingsSectionReminders {
+            get {
+                return ResourceManager.GetString("SettingsSectionReminders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to How others reach your sessions.
+        /// </summary>
+        public static string SettingsSectionShareRoutes {
+            get {
+                return ResourceManager.GetString("SettingsSectionShareRoutes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to These settings apply to the sessions opened afterwards..
+        /// </summary>
+        public static string SettingsRdpIntro {
+            get {
+                return ResourceManager.GetString("SettingsRdpIntro", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to One request to GitHub, once a day at most; nothing is installed without you..
+        /// </summary>
+        public static string UpdateCheckHelp {
+            get {
+                return ResourceManager.GetString("UpdateCheckHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Debug log.
+        /// </summary>
+        public static string SettingsDebugLog {
+            get {
+                return ResourceManager.GetString("SettingsDebugLog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Writes how connections go in a file, to understand a failure: server and account names, never a password..
+        /// </summary>
+        public static string SettingsDebugLogHelp {
+            get {
+                return ResourceManager.GetString("SettingsDebugLogHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show the _file.
+        /// </summary>
+        public static string SettingsDebugLogShow {
+            get {
+                return ResourceManager.GetString("SettingsDebugLogShow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Team.
+        /// </summary>
+        public static string TeamBadge {
+            get {
+                return ResourceManager.GetString("TeamBadge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set by your team's environment file ({0}). A new version of that file may change it, after your approval..
+        /// </summary>
+        public static string TeamBadgeTip {
+            get {
+                return ResourceManager.GetString("TeamBadgeTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A light request every 4 minutes, stopped while Windows is locked or after 15 minutes without keyboard or mouse: the session no longer closes by itself while you work..
+        /// </summary>
+        public static string KeepAliveHelp {
+            get {
+                return ResourceManager.GetString("KeepAliveHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Terminal in a tab and Files tab; unchecked: Windows Terminal..
+        /// </summary>
+        public static string SshInAppHelp {
+            get {
+                return ResourceManager.GetString("SshInAppHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ctrl+wheel changes the size of one terminal, Ctrl+0 restores it..
+        /// </summary>
+        public static string TerminalFontHelp {
+            get {
+                return ResourceManager.GetString("TerminalFontHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tried first; if the server refuses it, the other one takes over (the History shows it)..
+        /// </summary>
+        public static string UploadProtocolHelp {
+            get {
+                return ResourceManager.GetString("UploadProtocolHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to One file to transfer and check instead of thousands, much faster through the PSMP; the extraction command is given..
+        /// </summary>
+        public static string SettingsArchiveHelp {
+            get {
+                return ResourceManager.GetString("SettingsArchiveHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Filter the servers.
+        /// </summary>
+        public static string HostKeysFilter {
+            get {
+                return ResourceManager.GetString("HostKeysFilter", resourceCulture);
             }
         }
     }
