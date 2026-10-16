@@ -21,7 +21,7 @@ public partial class AccountDialog : Window
     private readonly Func<NewAccount, CancellationToken, Task<PvwaAccount>>? _create;
     private readonly PvwaAccount? _original;
     private readonly Func<IReadOnlyList<PatchOperation>, CancellationToken, Task<PvwaAccount>>? _update;
-    private readonly CancellationTokenSource _closing = new();
+    private readonly CancelOnce _closing = new();
     private bool _busy;
 
     /// <param name="safes">Safes proposés (ceux des comptes visibles) ; la saisie reste libre.</param>

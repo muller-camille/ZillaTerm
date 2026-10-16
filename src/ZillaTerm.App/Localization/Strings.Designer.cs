@@ -19597,5 +19597,41 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("HostKeysFilter", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sending back an edited file does not finish.
+        /// </summary>
+        public static string EditWriteStuckHeading {
+            get {
+                return ResourceManager.GetString("EditWriteStuckHeading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The server no longer answers. Closing now may leave the file incomplete on the server; its edited copy stays on this computer for at least a day and is shown in File Explorer..
+        /// </summary>
+        public static string EditWriteStuckMessage {
+            get {
+                return ResourceManager.GetString("EditWriteStuckMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close without waiting.
+        /// </summary>
+        public static string EditWriteStuckClose {
+            get {
+                return ResourceManager.GetString("EditWriteStuckClose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Keep waiting.
+        /// </summary>
+        public static string EditWriteStuckWait {
+            get {
+                return ResourceManager.GetString("EditWriteStuckWait", resourceCulture);
+            }
+        }
     }
 }

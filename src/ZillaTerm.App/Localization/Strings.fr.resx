@@ -6565,4 +6565,16 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="HostKeysFilter" xml:space="preserve">
     <value>Filtrer les serveurs</value>
   </data>
+  <data name="EditWriteStuckHeading" xml:space="preserve">
+    <value>Le renvoi d'un fichier modifié ne se termine pas</value>
+  </data>
+  <data name="EditWriteStuckMessage" xml:space="preserve">
+    <value>Le serveur ne répond plus. Fermer maintenant peut laisser le fichier incomplet sur le serveur ; sa copie modifiée reste sur ce poste au moins un jour et s'affiche dans l'Explorateur.</value>
+  </data>
+  <data name="EditWriteStuckClose" xml:space="preserve">
+    <value>Fermer sans attendre</value>
+  </data>
+  <data name="EditWriteStuckWait" xml:space="preserve">
+    <value>Attendre encore</value>
+  </data>
 </root>

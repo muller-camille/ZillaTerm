@@ -6565,4 +6565,16 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="HostKeysFilter" xml:space="preserve">
     <value>Filter the servers</value>
   </data>
+  <data name="EditWriteStuckHeading" xml:space="preserve">
+    <value>Sending back an edited file does not finish</value>
+  </data>
+  <data name="EditWriteStuckMessage" xml:space="preserve">
+    <value>The server no longer answers. Closing now may leave the file incomplete on the server; its edited copy stays on this computer for at least a day and is shown in File Explorer.</value>
+  </data>
+  <data name="EditWriteStuckClose" xml:space="preserve">
+    <value>Close without waiting</value>
+  </data>
+  <data name="EditWriteStuckWait" xml:space="preserve">
+    <value>Keep waiting</value>
+  </data>
 </root>

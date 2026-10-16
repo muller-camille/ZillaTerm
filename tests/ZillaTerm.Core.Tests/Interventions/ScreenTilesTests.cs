@@ -330,6 +330,36 @@ public sealed partial class ScreenTilesTests : IDisposable
     }
 
     /// <summary>
+    /// Écran reçu d'un autre poste : au-delà des tuiles permises entre deux images clés, plus rien ne se lit (mémoire
+    /// bornée) jusqu'à l'image clé suivante. Sans limite (son propre journal), tout se lit.
+    /// </summary>
+    [Fact]
+    public void SharedScreenDecoderBoundsItsTileCache()
+    {
+        const int width = 128, height = 128;
+        var screen = Screen(width, height, (x, y) => ((byte)(x / 64 * 100), (byte)(y / 64 * 100), (byte)50));
+        var encoder = new ScreenTileEncoder(stream: 7, live: true);
+        var key = encoder.Encode(T0, screen, width, height, width * 4)!;
+        Paint(screen, width, 0, 0, 64, 64, 10);
+        var next = encoder.Encode(T0.AddSeconds(1), screen, width, height, width * 4)!;
+        Paint(screen, width, 0, 0, 64, 64, 30);
+        var after = encoder.Encode(T0.AddSeconds(2), screen, width, height, width * 4)!;
+        var again = encoder.Encode(T0.AddSeconds(3), screen, width, height, width * 4, key: true)!;
+        Assert.Equal(4, key.Header.NewTiles);
+
+        var decoder = new ScreenTileDecoder(maxTiles: 4);
+        Assert.True(decoder.Apply(key.Data));
+        Assert.False(decoder.Apply(next.Data));
+        Assert.False(decoder.Apply(after.Data));
+        Assert.True(decoder.Apply(again.Data));
+        Assert.Equal(Rgb565(screen), decoder.Pixels);
+
+        var own = new ScreenTileDecoder();
+        Assert.True(own.Apply(key.Data) && own.Apply(next.Data) && own.Apply(after.Data));
+        Assert.True(ScreenTileEncoder.MaxTilesBetweenKeys >= 2 * (ScreenTileEncoder.MaxSide / ScreenTileEncoder.TileSize) * (ScreenTileEncoder.MaxSide / ScreenTileEncoder.TileSize));
+    }
+
+    /// <summary>
     /// Journal au format 3 : captures et images d'écran en binaire après le JSON compressé (pas de base64), relues à
     /// l'identique ; les images d'écran ne comptent pas comme événements ; la taille du fichier est suivie (bridage à
     /// 100 Mo) ; le texte des terminaux prend bien moins de place qu'en clair.

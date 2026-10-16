@@ -42,7 +42,7 @@ public partial class SafeMemberDialog : Window
     private readonly bool _editing;
     private readonly Func<SafeMemberChange, CancellationToken, Task> _save;
     private bool _settingProfile;
-    private readonly CancellationTokenSource _closing = new();
+    private readonly CancelOnce _closing = new();
     private bool _busy;
 
     /// <summary>Ajout d'un membre : profil « Utilisateur des comptes » au départ (lister, se connecter, sans les mots de passe).</summary>

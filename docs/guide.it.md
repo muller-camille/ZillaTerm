@@ -567,7 +567,8 @@ e voci KeePass SFTP, FTP, FTPS ([sezione 7](#7-accesso-di-emergenza-fuori-da-cyb
   copia ha modifiche non rimandate e il file è cambiato anche sul server, ZillaTerm chiede se «Ricarica la versione del
   server» o «Tieni la mia copia». Mentre un file modificato viene rimandato, chiudere la scheda, uscire o
   disconnettersi attende la fine del rinvio (la barra di stato lo dice), per non lasciare un file scritto a metà sul
-  server.
+  server. Per uscire o disconnettersi, se il server non risponde più, dopo 20 secondi viene proposto «Chiudi senza
+  attendere»: la copia modificata resta sul computer per almeno un giorno e viene mostrata in Esplora file.
 - **Seguire un file (tail -f)**: clic destro su uno o più file → «Segui (tail -f)». Una finestra mostra la fine del
   file, poi ogni nuova riga appena viene scritta, come `tail -f`, leggendo il file via SFTP ogni secondo: nessun
   comando viene eseguito sul server. Un file troncato o sostituito da una rotazione viene riletto dall'inizio;
@@ -1303,6 +1304,19 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   per la durata della sessione. Password PSMP conservate e chiave MFA dimenticate al blocco di Windows; la chiave MFA
   viene cancellata dopo ogni connessione e rimossa dal PVWA alla disconnessione (`Logoff`), fatta alla chiusura.
 - Sessione PVWA aperta con `concurrentSession`: l'eventuale sessione web del PVWA non viene chiusa.
+- **Cosa conserva ZillaTerm sul computer** (oltre ai file che salvi tu: download, rapporti, esportazioni):
+  - `%APPDATA%\ZillaTerm`: `settings.json` e la sua copia `.bak` (impostazioni, «I miei server», connessioni recenti,
+    impronte dei server accettati; nessuna password), `transfers.json` (cronologia dei trasferimenti: server, percorsi,
+    dimensioni, somme SHA-256), `coffre-local.dat` (password principali KeePass, cifrate: vedi sotto) e `urgence.log`
+    (registro dell'accesso di emergenza);
+  - `%LOCALAPPDATA%\ZillaTerm`: `Accounts` (copia dell'elenco degli account, cifrata per il tuo account Windows, senza
+    password, eliminata dopo 30 giorni o quando l'opzione viene deselezionata), `Interventions` (registri di intervento
+    cifrati, vedi [Intervento](#8-intervento-registrazione-e-promemoria-di-reperibilità)), `debug.log` (solo se il
+    registro di debug è attivo), `FreeRDP` e `FreeRDP-config` (client Desktop remoto integrato e sua configurazione,
+    senza credenziali né certificati);
+  - `%TEMP%\ZillaTerm` (o `%LOCALAPPDATA%\ZillaTerm\Temp`), riservata al tuo account Windows: copie di lavoro (file
+    modificati, confronti, archivi di invio, file trascinati in Esplora file, file .rdp durante l'apertura di una
+    sessione PSM), cancellate alla chiusura, o al più tardi un giorno dopo un arresto improvviso.
 - **Condivisione delle sessioni** (disattivata per impostazione predefinita): ogni condivisione la avvii tu, e ogni
   persona la accetti tu dopo il confronto di un codice di 6 cifre; nulla è in ascolto sulla rete finché nessuna
   sessione è condivisa. L'invito contiene un segreto casuale di 256 bit, valido per la durata della condivisione, e
@@ -1598,12 +1612,16 @@ o si chiude direttamente.
 ### Condivisione delle sessioni
 
 Invito: `zillaterm-share:1:` seguito, in base64url, dall'identificativo della condivisione (128 bit), dal segreto (256
-bit), dalla fine della validità, dagli indirizzi di questo computer con la porta di ascolto e dalla cartella di inoltro.
+bit), dalla fine della validità, dagli indirizzi di questo computer con la porta di ascolto (solo quelli delle schede del
+dominio aziendale, VPN compresa, quando il computer è in un dominio e il loro suffisso DNS lo indica; altrimenti
+tutti) e dalla cartella di inoltro.
 Apertura: ogni parte invia una chiave pubblica ECDH P-256 effimera autenticata (HMAC-SHA256) da una chiave derivata dal
 segreto; le chiavi di sessione (una per direzione) e il codice di verifica sono derivati (HKDF-SHA256) dal segreto
 condiviso ECDH, dal segreto dell'invito e dall'intero scambio. Messaggi: AES-256-GCM, nonce = numero del messaggio nella
 sua direzione. Connessione diretta: TCP, ogni messaggio preceduto dalla sua lunghezza; tutti gli indirizzi dell'invito
-sono provati insieme (al massimo 4 secondi). Cartella di inoltro: una sottocartella `zts-<identificativo>` per
+sono provati insieme (al massimo 4 secondi). La porta è in ascolto su tutte le schede, ma una connessione arrivata da
+un indirizzo assente dagli inviti in corso viene rifiutata; al massimo 4 aperture in attesa per indirizzo (64 in
+tutto), perché un solo computer non blocchi gli altri. Cartella di inoltro: una sottocartella `zts-<identificativo>` per
 condivisione, due file per persona (uno per direzione), letti ogni 200 ms; le sottocartelle abbandonate da più di due
 giorni vengono cancellate.
 
@@ -1613,7 +1631,9 @@ catturato quattro volte al secondo finché qualcuno guarda, in riquadri di 64 ×
 i riquadri modificati, compressi; un'immagine completa a ogni arrivo. La digitazione di chi ha il controllo è codificata
 da chi condivide, secondo le modalità del suo terminale. Limiti: 10 condivisioni contemporanee, 5 persone per
 condivisione, 3 minuti per rispondere, connessione interrotta dopo 60 secondi senza notizie; una persona in ritardo di
-oltre 48 MB riceve lo schermo intero al posto del ritardo.
+oltre 48 MB riceve lo schermo intero al posto del ritardo (i messaggi di stato, controllo ripreso o visualizzazione
+in pausa, vengono conservati). Da chi guarda, i riquadri dello schermo conservati tra due immagini complete sono
+limitati (256 MB); chi condivide invia un'immagine completa prima di raggiungere questo limite.
 
 ### Sessioni PSMP
 

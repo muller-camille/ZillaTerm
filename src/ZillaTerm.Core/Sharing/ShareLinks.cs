@@ -114,7 +114,10 @@ public sealed class FolderShareLink : IShareLink
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private FileStream? _out;
     private long _offset;
+
+    // Lu et pas encore rendu : _pending à partir de _start (un message rendu avance _start, sans recopier la suite).
     private byte[] _pending = [];
+    private int _start;
 
     /// <param name="inPath">Fichier lu (messages de l'autre côté).</param>
     /// <param name="outPath">Fichier écrit (nos messages), créé s'il n'existe pas.</param>
@@ -181,24 +184,25 @@ public sealed class FolderShareLink : IShareLink
     /// <summary>Message entier en tête de ce qui a été lu, retiré ; null s'il n'est pas encore complet.</summary>
     private byte[]? TakeMessage(int maxLength)
     {
-        if (_pending.Length < 4)
+        int available = _pending.Length - _start;
+        if (available < 4)
         {
             return null;
         }
 
-        int size = BinaryPrimitives.ReadInt32BigEndian(_pending);
+        int size = BinaryPrimitives.ReadInt32BigEndian(_pending.AsSpan(_start));
         if (size < 0 || size > maxLength)
         {
             throw new InvalidDataException("Share message too long.");
         }
 
-        if (_pending.Length < 4 + size)
+        if (available < 4 + size)
         {
             return null;
         }
 
-        var message = _pending.AsSpan(4, size).ToArray();
-        _pending = _pending.AsSpan(4 + size).ToArray();
+        var message = _pending.AsSpan(_start + 4, size).ToArray();
+        _start += 4 + size;
         return message;
     }
 
@@ -214,10 +218,14 @@ public sealed class FolderShareLink : IShareLink
             }
 
             file.Seek(_offset, SeekOrigin.Begin);
-            var buffer = new byte[(int)Math.Min(file.Length - _offset, 4 << 20)];
-            int read = file.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
+            // Reste non rendu, puis ce qui s'est ajouté au fichier : une seule copie par lecture.
+            int rest = _pending.Length - _start;
+            var buffer = new byte[rest + (int)Math.Min(file.Length - _offset, 4 << 20)];
+            _pending.AsSpan(_start).CopyTo(buffer);
+            int read = file.ReadAtLeast(buffer.AsSpan(rest), buffer.Length - rest, throwOnEndOfStream: false);
             _offset += read;
-            _pending = [.. _pending, .. buffer.AsSpan(0, read)];
+            _pending = rest + read == buffer.Length ? buffer : buffer[..(rest + read)];
+            _start = 0;
             return true;
         }
         catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
@@ -267,14 +275,16 @@ public static class ShareNetwork
 
     /// <summary>
     /// Adresses du poste joignables par un collègue : cartes réseau actives, VPN compris (IPv4, puis IPv6 globale) ; ni
-    /// boucle locale, ni adresse automatique (169.254), ni lien local.
+    /// boucle locale, ni adresse automatique (169.254), ni lien local. Seulement celles du réseau de l'entreprise quand on
+    /// le reconnaît (<see cref="Select"/>) : l'invitation ne donne pas l'adresse du Wi-Fi de la maison.
     /// </summary>
     public static List<IPAddress> LocalAddresses()
     {
-        var v4 = new List<IPAddress>();
-        var v6 = new List<IPAddress>();
+        var candidates = new List<(IPAddress, string)>();
+        string domain = "";
         try
         {
+            domain = IPGlobalProperties.GetIPGlobalProperties().DomainName;
             foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if (nic.OperationalStatus != OperationalStatus.Up || nic.NetworkInterfaceType == NetworkInterfaceType.Loopback)
@@ -282,23 +292,10 @@ public static class ShareNetwork
                     continue;
                 }
 
-                foreach (var unicast in nic.GetIPProperties().UnicastAddresses)
+                var properties = nic.GetIPProperties();
+                foreach (var unicast in properties.UnicastAddresses)
                 {
-                    var address = unicast.Address;
-                    if (IPAddress.IsLoopback(address))
-                    {
-                        continue;
-                    }
-
-                    if (address.AddressFamily == AddressFamily.InterNetwork && !(address.GetAddressBytes() is [169, 254, ..]))
-                    {
-                        v4.Add(address);
-                    }
-                    else if (address.AddressFamily == AddressFamily.InterNetworkV6 && !address.IsIPv6LinkLocal && !address.IsIPv6Multicast
-                             && !address.IsIPv6SiteLocal)
-                    {
-                        v6.Add(address);
-                    }
+                    candidates.Add((unicast.Address, properties.DnsSuffix));
                 }
             }
         }
@@ -307,7 +304,39 @@ public static class ShareNetwork
             // Liste des cartes indisponible : seul le dossier relais restera.
         }
 
-        return [.. v4.Distinct(), .. v6.Distinct()];
+        return Select(candidates, domain);
+    }
+
+    /// <summary>
+    /// Adresses à mettre dans l'invitation, parmi celles des cartes (avec le suffixe DNS de chacune). Poste dans un domaine
+    /// et cartes dont le suffixe DNS est celui du domaine (réseau de l'entreprise, VPN compris) : seulement leurs adresses.
+    /// Sinon (pas de domaine, suffixes non renseignés), toutes.
+    /// </summary>
+    public static List<IPAddress> Select(IEnumerable<(IPAddress Address, string DnsSuffix)> candidates, string domain)
+    {
+        var usable = candidates.Where(c => Usable(c.Address)).ToList();
+        var company = usable.Where(c => SameDomain(c.DnsSuffix, domain)).ToList();
+        var chosen = (company.Count > 0 ? company : usable).Select(c => c.Address).ToList();
+        return [.. chosen.Where(a => a.AddressFamily == AddressFamily.InterNetwork).Distinct(),
+            .. chosen.Where(a => a.AddressFamily == AddressFamily.InterNetworkV6).Distinct()];
+    }
+
+    private static bool Usable(IPAddress address) =>
+        !IPAddress.IsLoopback(address)
+        && (address.AddressFamily == AddressFamily.InterNetwork
+            ? !(address.GetAddressBytes() is [169, 254, ..])
+            : address.AddressFamily == AddressFamily.InterNetworkV6 && !address.IsIPv6LinkLocal && !address.IsIPv6Multicast
+              && !address.IsIPv6SiteLocal);
+
+    /// <summary>Suffixe DNS d'une carte dans le domaine du poste (« corp.local », « paris.corp.local »).</summary>
+    private static bool SameDomain(string suffix, string domain)
+    {
+        suffix = suffix.Trim().TrimEnd('.');
+        domain = domain.Trim().TrimEnd('.');
+        return suffix.Length > 0 && domain.Length > 0
+               && (suffix.Equals(domain, StringComparison.OrdinalIgnoreCase)
+                   || suffix.EndsWith("." + domain, StringComparison.OrdinalIgnoreCase)
+                   || (suffix.Contains('.') && domain.EndsWith("." + suffix, StringComparison.OrdinalIgnoreCase)));
     }
 
     /// <summary>Dossier d'un partage dans le dossier relais.</summary>

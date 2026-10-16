@@ -111,7 +111,7 @@ public partial class SharedSessionView : UserControl
                     terminalChanged = true;
                     break;
                 case ShareMessageType.ScreenFrame:
-                    _decoder ??= new ScreenTileDecoder();
+                    _decoder ??= new ScreenTileDecoder(ScreenTileEncoder.MaxTilesBetweenKeys);
                     screenChanged |= _decoder.Apply(message.Payload);
                     break;
                 case ShareMessageType.Control:

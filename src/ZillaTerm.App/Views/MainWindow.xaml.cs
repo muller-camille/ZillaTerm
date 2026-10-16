@@ -1470,6 +1470,9 @@ public partial class MainWindow : Window
     }
 
     private static readonly TimeSpan StatusLifetime = TimeSpan.FromSeconds(10);
+
+    /// <summary>À la fermeture, attente d'un renvoi de fichier modifié avant de proposer de fermer sans attendre.</summary>
+    private static readonly TimeSpan WriteWaitBeforeAsking = TimeSpan.FromSeconds(20);
     private DispatcherTimer? _statusClear;
 
     private DispatcherTimer CreateStatusClearTimer()
@@ -2175,12 +2178,44 @@ public partial class MainWindow : Window
         IsEnabled = false;
         // Transferts annulés d'abord : le fichier interrompu est supprimé tant que la connexion est ouverte.
         await FilesPanel.CancelTransfersAsync(null);
-        // Renvoi d'un fichier modifié en cours : attendu, une coupure en pleine écriture laisserait le fichier tronqué.
+        // Renvoi d'un fichier modifié en cours : attendu, une coupure en pleine écriture laisserait le fichier tronqué. Un
+        // serveur qui ne répond plus ne le finirait qu'à la coupure de la connexion : la fermeture est alors proposée.
         var editors = _remoteSessions.Select(s => s.Editor).OfType<RemoteEditor>().ToList();
-        if (editors.Any(r => !r.WritesDone.IsCompleted))
+        while (editors.Any(r => !r.WritesDone.IsCompleted))
         {
             SetStatus(Strings.EditWaitingForWrite);
-            await Task.WhenAll(editors.Select(r => r.WritesDone));
+            var written = Task.WhenAll(editors.Select(r => r.WritesDone));
+            if (await Task.WhenAny(written, Task.Delay(WriteWaitBeforeAsking)) == written
+                || !ConfirmDialog.Confirm(this, new ConfirmRequest
+                {
+                    Title = Strings.EditUploadTitle,
+                    Heading = Strings.EditWriteStuckHeading,
+                    Message = Strings.EditWriteStuckMessage,
+                    Items = RemoteEditor.WritingFiles(editors),
+                    Kind = ConfirmKind.Warning,
+                    Actions = [Strings.EditWriteStuckClose],
+                    DangerAction = 0,
+                    CancelLabel = Strings.EditWriteStuckWait,
+                }))
+            {
+                continue;
+            }
+
+            var kept = editors.SelectMany(r => r.KeepWritingCopies()).ToList();
+            DebugLog.Write("files", $"Fermeture sans attendre la fin de {kept.Count} renvoi(s) : copies gardées sur le poste");
+            try
+            {
+                if (kept.Count > 0)
+                {
+                    WindowsExplorer.ShowFile(kept[0]);
+                }
+            }
+            catch (Exception ex) when (ex is Win32Exception or ArgumentException)
+            {
+                // Copie quand même gardée.
+            }
+
+            break;
         }
 
         _lifetime.Cancel();

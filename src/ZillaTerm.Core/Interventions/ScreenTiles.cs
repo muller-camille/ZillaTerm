@@ -144,6 +144,12 @@ public sealed class ScreenTileEncoder
     /// <summary>Plus grand côté d'écran accepté (pixels).</summary>
     public const int MaxSide = 8192;
 
+    /// <summary>
+    /// Tuiles gardées au plus entre deux images clés (256 Mo chez celui qui relit) : au-delà, une image clé repart d'un
+    /// cache vide. Deux fois la grille du plus grand écran : une image clé y tient toujours.
+    /// </summary>
+    public const int MaxTilesBetweenKeys = 2 * (MaxSide / TileSize) * (MaxSide / TileSize);
+
     /// <summary>Écart minimal entre deux images clés venues du poids des images.</summary>
     public static readonly TimeSpan KeyFrameMinInterval = TimeSpan.FromMinutes(5);
 
@@ -244,7 +250,7 @@ public sealed class ScreenTileEncoder
 
         bool first = _shown is null;
         var shown = _shown ??= new ushort[_current.Length];
-        key |= first || KeyDue(time) || _keyAfterPause;
+        key |= first || KeyDue(time) || _keyAfterPause || _ids.Count + (_rows * _columns) > MaxTilesBetweenKeys;
         _keyAfterPause = false;
         _paused = ScreenPause.None;
 
@@ -492,9 +498,17 @@ public sealed class ScreenTileDecoder
     private const int TilePixels = TileSize * TileSize;
 
     private readonly Dictionary<int, ushort[]> _tiles = [];
+    private readonly int _maxTiles;
 
     // Numéro de l'image attendue ; -1 : en attente d'une image clé.
     private int _next = -1;
+
+    /// <param name="maxTiles">
+    /// Tuiles gardées au plus entre deux images clés ; au-delà, plus rien ne se lit jusqu'à l'image clé suivante. Pour un
+    /// écran reçu d'un autre poste (partage), <see cref="ScreenTileEncoder.MaxTilesBetweenKeys"/> : un poste bogué ou
+    /// malveillant n'épuise pas la mémoire. Sans limite pour relire son propre journal.
+    /// </param>
+    public ScreenTileDecoder(int maxTiles = int.MaxValue) => _maxTiles = maxTiles;
 
     public int Width { get; private set; }
 
@@ -532,6 +546,13 @@ public sealed class ScreenTileDecoder
         }
 
         _next = -1;
+        if (_tiles.Count + (long)header.NewTiles > _maxTiles)
+        {
+            // Plus de tuiles que l'encodeur n'en garde entre deux images clés.
+            _tiles.Clear();
+            return false;
+        }
+
         long expected = (8L * header.Placements) + (4L * header.NewTiles) + (2L * TilePixels * header.NewTiles);
         var body = new byte[expected];
         try

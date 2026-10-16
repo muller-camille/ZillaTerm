@@ -17,7 +17,7 @@ public partial class RetrievePasswordDialog : Window
 {
     private readonly Func<RetrieveOptions, CancellationToken, Task<char[]>> _retrieve;
     private readonly Func<char[], bool> _copy;
-    private readonly CancellationTokenSource _closing = new();
+    private readonly CancelOnce _closing = new();
     private bool _busy;
 
     /// <param name="copy">Copie dans le presse-papiers ; faux s'il est occupé par une autre application.</param>

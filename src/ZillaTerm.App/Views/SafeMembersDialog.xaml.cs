@@ -31,7 +31,7 @@ public partial class SafeMembersDialog : Window
     private readonly string _safe;
     private readonly Func<CancellationToken, Task<List<SafeMember>>> _load;
     private readonly SafeMemberActions? _actions;
-    private readonly CancellationTokenSource _closing = new();
+    private readonly CancelOnce _closing = new();
     private List<SafeMemberRow> _rows = [];
 
     /// <param name="actions">Ajout, modification et retrait de membres ; null = consultation seule.</param>
