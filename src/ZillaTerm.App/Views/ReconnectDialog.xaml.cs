@@ -69,6 +69,18 @@ public partial class ReconnectDialog : Window
         _logon = new CancellationTokenSource();
         try
         {
+            if (!_challenge)
+            {
+                // Nouvelle ouverture de session sans les cookies de la session expirée, comme la fenêtre d'identification
+                // qui part d'un client neuf : renvoyés, ils font échouer le PVWA (CAWS00001E). La réponse au challenge
+                // RADIUS, elle, a besoin de ceux de la tentative qui l'a demandé.
+                var forgotten = _client.ForgetCookies();
+                if (forgotten.Count > 0)
+                {
+                    DebugLog.Write("login", $"Cookies de la session expirée oubliés : {string.Join(", ", forgotten)}");
+                }
+            }
+
             DebugLog.Write("login", $"Reconnexion à {_client.BaseUri} (méthode {_method}{(_challenge ? ", réponse au challenge RADIUS" : "")})");
             await _client.LogonAsync(_method, _userName, password, _logon.Token);
             DebugLog.Write("login", "Session PVWA rouverte.");

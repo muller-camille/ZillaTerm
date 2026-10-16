@@ -24,6 +24,9 @@ public sealed class PvwaClient : IDisposable
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _http;
+
+    /// <summary>Cookies reçus du PVWA (null si le gestionnaire HTTP ne les garde pas).</summary>
+    private readonly CookieContainer? _cookies;
     private string? _token;
 
     public PvwaClient(Uri baseUri, HttpMessageHandler handler)
@@ -31,6 +34,12 @@ public sealed class PvwaClient : IDisposable
         BaseUri = baseUri;
         _http = new HttpClient(new DebugLogHandler(handler)) { BaseAddress = baseUri, Timeout = TimeSpan.FromSeconds(60) };
         _http.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        _cookies = handler switch
+        {
+            HttpClientHandler { UseCookies: true } h => h.CookieContainer,
+            SocketsHttpHandler { UseCookies: true } s => s.CookieContainer,
+            _ => null,
+        };
     }
 
     public Uri BaseUri { get; }
@@ -154,6 +163,33 @@ public sealed class PvwaClient : IDisposable
         {
             CryptographicOperations.ZeroMemory(body);
         }
+    }
+
+    /// <summary>
+    /// Oublie les cookies reçus du PVWA : l'ouverture de session suivante part comme sur un client neuf. Le PVWA lie des
+    /// cookies à sa session ; ceux d'une session expirée, renvoyés avec une nouvelle ouverture de session, la font échouer
+    /// chez lui (CAWS00001E « Object reference not set to an instance of an object »). À ne pas appeler entre le mot de
+    /// passe et la réponse à un challenge RADIUS, qui repose sur eux.
+    /// </summary>
+    /// <returns>Noms des cookies oubliés (journal de débogage), jamais leurs valeurs.</returns>
+    public IReadOnlyList<string> ForgetCookies()
+    {
+        if (_cookies is null)
+        {
+            return [];
+        }
+
+        var names = new List<string>();
+        foreach (Cookie cookie in _cookies.GetAllCookies())
+        {
+            if (!cookie.Expired)
+            {
+                cookie.Expired = true;
+                names.Add(cookie.Name);
+            }
+        }
+
+        return names;
     }
 
     /// <summary>
