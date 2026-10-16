@@ -533,7 +533,9 @@ and KeePass SFTP, FTP, FTPS entries ([section 7](#7-emergency-access-outside-cyb
   by the current version; otherwise it is left as is. Only exception: if your copy has changes not sent back and the
   file also changed on the server, ZillaTerm asks whether to "Reload the server version" or "Keep my copy". While an
   edited file is being sent back, closing the tab, exiting or signing out waits for the send-back to finish (the
-  status bar says so), so as not to leave a half-written file on the server.
+  status bar says so), so as not to leave a half-written file on the server. To exit or sign out, if the server no
+  longer answers, "Close without waiting" is offered after 20 seconds: the edited copy is kept on this computer for at
+  least a day and shown in File Explorer.
 - **Follow a file (tail -f)**: right-click one or several files → "Follow (tail -f)". A window shows the end of the
   file, then each new line as soon as it is written, like `tail -f`, reading the file over SFTP every second: no
   command runs on the server. A file truncated or replaced by a rotation is read again from the start; the last
@@ -1228,6 +1230,18 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
   Kept PSMP passwords and the MFA key are forgotten when Windows locks; the MFA key is wiped after each connection and
   removed from the PVWA at logoff (`Logoff`), done on exit.
 - PVWA session opened with `concurrentSession`: your PVWA web session, if any, is not closed.
+- **What ZillaTerm keeps on this computer** (besides the files you save yourself: downloads, reports, exports):
+  - `%APPDATA%\ZillaTerm`: `settings.json` and its `.bak` backup (settings, "My servers", recent connections, accepted
+    server fingerprints; no password), `transfers.json` (transfer history: servers, paths, sizes, SHA-256 sums),
+    `coffre-local.dat` (KeePass master passwords, encrypted: see below) and `urgence.log` (emergency access log);
+  - `%LOCALAPPDATA%\ZillaTerm`: `Accounts` (copy of the account list, encrypted for your Windows account, without any
+    password, deleted after 30 days or when the option is unticked), `Interventions` (encrypted intervention journals,
+    see [Intervention](#8-intervention-recording-and-on-call-duty-reminder)), `debug.log` (only when the debug log is
+    on), `FreeRDP` and `FreeRDP-config` (built-in Remote Desktop client and its configuration, with no credential or
+    certificate);
+  - `%TEMP%\ZillaTerm` (or `%LOCALAPPDATA%\ZillaTerm\Temp`), restricted to your Windows account: working copies
+    (edited files, comparisons, upload archives, files dragged to File Explorer, the .rdp file while a PSM session
+    opens), deleted on exit, or at the latest one day after a crash.
 - **Session sharing** (off by default): you start each share, and you accept each person after comparing a 6-digit
   code; nothing listens on the network while no session is shared. The invitation holds a random 256-bit secret, valid
   for the duration of the share, and only lets someone ask. Exchanges are end-to-end encrypted: ECDH P-256 key exchange
@@ -1501,11 +1515,14 @@ signs out anyway, or exits directly.
 ### Session sharing
 
 Invitation: `zillaterm-share:1:` followed, in base64url, by the share identifier (128 bits), the secret (256 bits), the
-end of validity, the addresses of this computer with the listening port, and the relay folder. Opening: each side sends
+end of validity, the addresses of this computer with the listening port (only those of the company domain cards, VPN
+included, when the computer is in a domain and their DNS suffix says so; otherwise all), and the relay folder. Opening: each side sends
 an ephemeral ECDH P-256 public key authenticated (HMAC-SHA256) by a key derived from the secret; the session keys (one
 per direction) and the verification code are derived (HKDF-SHA256) from the ECDH shared secret, the invitation secret
 and the whole exchange. Messages: AES-256-GCM, nonce = message number in its direction. Direct connection: TCP, each
-message preceded by its length; all the addresses of the invitation are tried together (4 seconds at most). Relay
+message preceded by its length; all the addresses of the invitation are tried together (4 seconds at most). The port
+listens on every card, but a connection arriving on an address absent from the current invitations is refused; at
+most 4 pending openings per address (64 in all), so that a single computer cannot block the others. Relay
 folder: one `zts-<identifier>` subfolder per share, two files per person (one per direction), read every 200 ms;
 subfolders abandoned for more than two days are deleted.
 
@@ -1514,7 +1531,9 @@ the terminal receives it; a size change sends the whole screen again. Screen (Re
 per second while someone watches, in 64 × 64 pixel tiles (16-bit colors), only the changed tiles are sent, compressed;
 a full image at each arrival. The typing of the person who has control is encoded on the sharer's side, according to
 the modes of their terminal. Limits: 10 shares at once, 5 people per share, 3 minutes to answer, connection cut after
-60 seconds without news; a person more than 48 MB behind receives the whole screen instead of the backlog.
+60 seconds without news; a person more than 48 MB behind receives the whole screen instead of the backlog (state messages, control taken back or
+display paused, are kept). On the viewer's side, the screen tiles kept between two full images are limited (256 MB);
+the sharer sends a full image before reaching that limit.
 
 ### PSMP sessions
 

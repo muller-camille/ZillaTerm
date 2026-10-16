@@ -51,6 +51,109 @@ public sealed class ShareSessionTests : IDisposable
     private static ShareInvitation Local(HostedShare share, int port) =>
         share.Invitation with { Endpoints = [new IPEndPoint(IPAddress.Loopback, port)] };
 
+    /// <summary>Lien qui n'envoie ni ne reçoit rien : la file d'une personne qui regarde, sans réseau.</summary>
+    private sealed class IdleLink : IShareLink
+    {
+        public string Route => "test";
+
+        public bool IsRelay => false;
+
+        public Task SendAsync(ReadOnlyMemory<byte> message, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task<byte[]?> ReceiveAsync(int maxLength, CancellationToken cancellationToken) => Task.FromResult<byte[]?>(null);
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    [Fact]
+    public void SlowNetworkDropsTheStreamButKeepsStateMessages()
+    {
+        var share = Host(direct: false, relay: true).Start(Info());
+        var resynced = new List<ShareWatcher>();
+        share.ResyncNeeded += resynced.Add;
+        using var cipher = new ShareCipher(new ShareSessionKeys(new byte[32], new byte[32], "000 000"));
+        var watcher = new ShareWatcher(share, new IdleLink(), cipher, Join(), "000 000");
+        var half = new string('x', (int)(ShareWatcher.MaxQueuedBytes / 2) + 1024);
+
+        watcher.Enqueue(ShareMessage.TerminalData("avant"));
+        watcher.Enqueue(ShareMessage.Control(false));
+        watcher.Enqueue(ShareMessage.TerminalData(half));
+        watcher.Enqueue(ShareMessage.Notice(ShareNotice.ScreenPaused));
+        Assert.Empty(resynced);
+        watcher.Enqueue(ShareMessage.TerminalData(half));
+
+        // Le flux en attente est abandonné (l'écran sera renvoyé entier) ; la main reprise et la pause restent, dans l'ordre.
+        Assert.Equal([ShareMessageType.Control, ShareMessageType.Notice], watcher.QueuedTypes());
+        Assert.Equal([watcher], resynced);
+        watcher.Enqueue(ShareMessage.TerminalData("après"));
+        Assert.Equal([ShareMessageType.Control, ShareMessageType.Notice, ShareMessageType.TerminalData], watcher.QueuedTypes());
+    }
+
+    [Fact]
+    public void InvitationKeepsTheCompanyNetworkWhenItIsKnown()
+    {
+        (IPAddress, string)[] cards =
+        [
+            (IPAddress.Parse("10.20.30.40"), "corp.local"),
+            (IPAddress.Parse("192.168.1.23"), "home"),
+            (IPAddress.Parse("172.16.5.6"), "vpn.corp.local"),
+            (IPAddress.Parse("169.254.1.1"), "corp.local"),
+            (IPAddress.Loopback, ""),
+            (IPAddress.Parse("2001:db8::5"), "corp.local"),
+            (IPAddress.Parse("fe80::1"), "corp.local"),
+        ];
+
+        Assert.Equal(["10.20.30.40", "172.16.5.6", "2001:db8::5"], ShareNetwork.Select(cards, "corp.local").Select(a => a.ToString()));
+        // Domaine inconnu, ou aucune carte du domaine : toutes les adresses utilisables.
+        Assert.Equal(["10.20.30.40", "192.168.1.23", "172.16.5.6", "2001:db8::5"], ShareNetwork.Select(cards, "").Select(a => a.ToString()));
+        Assert.Equal(4, ShareNetwork.Select(cards, "other.example").Count);
+        // Une carte du domaine parent (« corp.local ») vaut pour un poste de « paris.corp.local » ; « local » seul, non.
+        Assert.Equal(["10.20.30.40", "2001:db8::5"],
+            ShareNetwork.Select([.. cards.Where(c => c.Item2 != "vpn.corp.local"), (IPAddress.Parse("10.9.9.9"), "local")], "paris.corp.local")
+                .Select(a => a.ToString()));
+    }
+
+    [Fact]
+    public void DirectConnectionsOnlyOnInvitedAddressesAndFewPendingPerAddress()
+    {
+        var host = Host(direct: true, relay: false);
+        var share = host.Start(Info());
+        Assert.True(host.Invited(IPAddress.Loopback));
+        Assert.True(host.Invited(IPAddress.IPv6Loopback));
+        Assert.False(host.Invited(IPAddress.Parse("203.0.113.9")));
+        Assert.All(share.Invitation.Endpoints, e => Assert.True(host.Invited(e.Address)));
+
+        var one = IPAddress.Parse("10.1.1.1");
+        for (int i = 0; i < ShareHost.MaxPendingPerAddress; i++)
+        {
+            Assert.True(host.TryStartHandshake(one));
+        }
+
+        Assert.False(host.TryStartHandshake(one));
+        Assert.True(host.TryStartHandshake(IPAddress.Parse("10.1.1.2")));
+        host.EndHandshake(one);
+        Assert.True(host.TryStartHandshake(one));
+    }
+
+    [Fact]
+    public async Task RelayFileDeliversManySmallMessagesInOrder()
+    {
+        var a = Path.Combine(_relay, "t.g");
+        var b = Path.Combine(_relay, "t.h");
+        await using var writer = new FolderShareLink(b, a, deleteOnClose: false);
+        await using var reader = new FolderShareLink(a, b, deleteOnClose: false);
+        for (int i = 0; i < 2000; i++)
+        {
+            await writer.SendAsync(BitConverter.GetBytes(i), CancellationToken.None);
+        }
+
+        for (int i = 0; i < 2000; i++)
+        {
+            var message = await Within(reader.ReceiveAsync(16, CancellationToken.None));
+            Assert.Equal(i, BitConverter.ToInt32(message!));
+        }
+    }
+
     // Suites des attentes hors des fils du partage : un test qui attend ensuite (TryTake) ne bloque pas la réception.
     private static async Task<T> Within<T>(Task<T> task) => await task.WaitAsync(Wait);
 

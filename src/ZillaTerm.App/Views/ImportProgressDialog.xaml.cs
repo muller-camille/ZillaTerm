@@ -22,7 +22,7 @@ public partial class ImportProgressDialog : Window
 {
     private readonly AccountImport _import;
     private readonly Func<NewAccount, CancellationToken, Task<PvwaAccount>> _create;
-    private readonly CancellationTokenSource _closing = new();
+    private readonly CancelOnce _closing = new();
     private readonly List<ImportRowView> _rows;
     private bool _running;
     private bool _finished;

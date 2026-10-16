@@ -566,7 +566,9 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   Seule exception : si votre copie a des modifications non renvoyées et que le fichier a aussi changé sur le serveur,
   ZillaTerm demande s'il faut « Recharger la version du serveur » ou « Garder ma copie ». Pendant qu'un fichier
   modifié est renvoyé, fermer l'onglet, quitter ou se déconnecter attend la fin du renvoi (la barre d'état le dit),
-  pour ne pas laisser un fichier à moitié écrit sur le serveur.
+  pour ne pas laisser un fichier à moitié écrit sur le serveur. Pour quitter ou se déconnecter, si le serveur ne
+  répond plus, « Fermer sans attendre » est proposé après 20 secondes : la copie modifiée est gardée sur le poste
+  au moins un jour et montrée dans l'Explorateur.
 - **Suivre un fichier (tail -f)** : clic droit sur un ou plusieurs fichiers → « Suivre (tail -f) ». Une fenêtre
   montre la fin du fichier puis chaque nouvelle ligne dès qu'elle est écrite, comme `tail -f`, en lisant le fichier
   par SFTP chaque seconde : aucune commande n'est lancée sur le serveur. Un fichier tronqué ou remplacé par une
@@ -1302,6 +1304,20 @@ renommé) : téléchargez-la une fois depuis la page des versions.
   mémoire, le temps de la session. Mots de passe PSMP gardés et clé MFA oubliés au verrouillage de Windows ; la clé
   MFA est effacée après chaque connexion et retirée du PVWA à la déconnexion (`Logoff`), faite à la fermeture.
 - Session PVWA ouverte avec `concurrentSession` : votre session web PVWA éventuelle n'est pas fermée.
+- **Ce que ZillaTerm garde sur le poste** (en plus des fichiers que vous enregistrez vous-même : téléchargements,
+  rapports, exports) :
+  - `%APPDATA%\ZillaTerm` : `settings.json` et sa sauvegarde `.bak` (réglages, « Mes serveurs », connexions récentes,
+    empreintes des serveurs acceptés ; aucun mot de passe), `transfers.json` (historique des transferts : serveurs,
+    chemins, tailles, sommes SHA-256), `coffre-local.dat` (mots de passe maîtres KeePass, chiffrés : voir plus bas) et
+    `urgence.log` (journal de l'accès d'urgence) ;
+  - `%LOCALAPPDATA%\ZillaTerm` : `Accounts` (copie de la liste des comptes, chiffrée pour votre compte Windows, sans
+    mot de passe, supprimée après 30 jours ou quand l'option est décochée), `Interventions` (journaux d'intervention
+    chiffrés, voir [Intervention](#8-intervention--enregistrement-et-consignes-dastreinte)), `debug.log` (seulement si
+    le journal de débogage est activé), `FreeRDP` et `FreeRDP-config` (client Bureau à distance embarqué et sa
+    configuration, sans identifiant ni certificat) ;
+  - `%TEMP%\ZillaTerm` (ou `%LOCALAPPDATA%\ZillaTerm\Temp`), réservé à votre compte Windows : copies de travail
+    (fichiers modifiés, comparaisons, archives d'envoi, fichiers glissés vers l'Explorateur, fichier .rdp le temps de
+    l'ouverture d'une session PSM), effacées à la fermeture, ou au plus tard un jour après un arrêt brutal.
 - **Partage de sessions** (désactivé par défaut) : chaque partage est lancé par vous, chaque personne acceptée par
   vous après comparaison d'un code à 6 chiffres ; rien n'écoute sur le réseau tant qu'aucune session n'est partagée.
   L'invitation contient un secret aléatoire de 256 bits, valable pour la durée du partage, et permet seulement de
@@ -1594,11 +1610,15 @@ fenêtre (son emplacement est mis de côté), et l'application se déconnecte qu
 ### Partage de sessions
 
 Invitation : `zillaterm-share:1:` suivi, en base64url, de l'identifiant du partage (128 bits), du secret (256 bits), de
-la fin de validité, des adresses de ce poste avec le port d'écoute, et du dossier relais. Ouverture : chacun envoie une
+la fin de validité, des adresses de ce poste avec le port d'écoute (seulement celles des cartes du domaine de
+l'entreprise, VPN compris, quand le poste est dans un domaine et que leur suffixe DNS le dit ; sinon toutes), et du
+dossier relais. Ouverture : chacun envoie une
 clé publique ECDH P-256 éphémère authentifiée (HMAC-SHA256) par une clé tirée du secret ; les clés de session (une par
 sens) et le code de vérification sont dérivés (HKDF-SHA256) du secret partagé ECDH, du secret de l'invitation et de
 l'échange complet. Messages : AES-256-GCM, nonce = numéro du message dans son sens. Connexion directe : TCP, chaque
-message précédé de sa longueur ; toutes les adresses de l'invitation sont essayées ensemble (4 secondes au plus).
+message précédé de sa longueur ; toutes les adresses de l'invitation sont essayées ensemble (4 secondes au plus). Le
+port écoute sur toutes les cartes, mais une connexion arrivée par une adresse absente des invitations en cours est
+refusée ; 4 ouvertures en attente au plus par adresse (64 en tout), pour qu'un seul poste ne bloque pas les autres.
 Dossier relais : un sous-dossier `zts-<identifiant>` par partage, deux fichiers par personne (un par sens), lus toutes
 les 200 ms ; les sous-dossiers abandonnés depuis plus de deux jours sont effacés.
 
@@ -1608,7 +1628,9 @@ fois par seconde tant que quelqu'un regarde, en tuiles de 64 × 64 pixels (coule
 modifiées partent, compressées ; une image complète à chaque arrivée. La saisie de la personne qui a la main est
 encodée chez celui qui partage, selon les modes de son terminal. Limites : 10 partages à la fois, 5 personnes par
 partage, 3 minutes pour répondre, connexion coupée après 60 secondes sans nouvelles ; une personne en retard de plus
-de 48 Mo reçoit l'écran entier au lieu du retard.
+de 48 Mo reçoit l'écran entier au lieu du retard (les messages d'état, main reprise ou affichage en pause, sont
+gardés). Chez la personne qui regarde, les tuiles d'écran gardées entre deux images complètes sont limitées (256 Mo) ;
+celui qui partage envoie une image complète avant d'atteindre cette limite.
 
 ### Sessions PSMP
 

@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ZillaTerm.Core.Interventions;
@@ -52,13 +53,16 @@ public static class InterventionRedaction
 
     /// <summary>
     /// Valeur d'une clé nommée mot de passe, secret, jeton ou clé d'API, avec « = » ou « : » : entre guillemets, jusqu'au
-    /// guillemet fermant (espaces compris) ; sinon jusqu'à une espace ou un séparateur. Le nom doit finir par le mot
-    /// repéré : « db_password » oui, « password_file » non.
+    /// guillemet fermant (espaces compris) ; sinon jusqu'à une espace ou un séparateur (prolongée au-delà d'un séparateur
+    /// collé à la suite : « $Tr0ub4dor&amp;3 »). Le nom doit finir par le mot repéré : « db_password » oui, « password_file » non.
     /// </summary>
     private static readonly Regex Assignment = new(
         @"(?<key>(?<![\w.-])[\w.-]{0,64}?(?:passw(?:or)?d|pwd|passphrase|secret|token|api[_-]?key|access[_-]?key|private[_-]?key)s?)"
         + @"(?<sep>[""']?\s{0,3}[:=]\s{0,3})(?:(?<q>"")(?<value>[^""\r\n]+)|(?<q>')(?<value>[^'\r\n]+)|(?<value>[^\s""'`,;&|<>]+))",
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled, Timeout);
+
+    /// <summary>Début d'une autre clé juste après un séparateur : « &user=… », « ;Database=… », « ,port=… ».</summary>
+    private static readonly Regex NextKey = new(@"\G[A-Za-z_][\w.-]{0,64}\s?=", RegexOptions.CultureInvariant | RegexOptions.Compiled, Timeout);
 
     // Tri rapide avant les expressions : la plupart des lignes de terminal n'ont aucun de ces mots et sont gardées telles
     // quelles sans autre examen (un journal de 60 Mo se masque en quelques secondes).
@@ -263,17 +267,26 @@ public static class InterventionRedaction
                 return line;
             }
 
-            return Assignment.Replace(line, m =>
+            var result = new StringBuilder(line.Length);
+            int copied = 0;
+            for (var m = Assignment.Match(line); m.Success;)
             {
-                var value = m.Groups["value"].Value;
-                if (!IsSecret(m.Groups["key"].Value, m.Groups["sep"].Value, m.Groups["q"].Value, value, line, m.Index + m.Length))
+                var group = m.Groups["value"];
+                var quote = m.Groups["q"].Value;
+                int end = quote.Length > 0 ? group.Index + group.Length : GluedEnd(line, group.Index + group.Length);
+                int next = m.Index + m.Length;
+                if (IsSecret(m.Groups["key"].Value, m.Groups["sep"].Value, quote, line[group.Index..end], line, end))
                 {
-                    return m.Value;
+                    Count++;
+                    result.Append(line, copied, group.Index - copied).Append(mask);
+                    copied = end;
+                    next = end;
                 }
 
-                Count++;
-                return m.Value[..(m.Groups["value"].Index - m.Index)] + mask;
-            });
+                m = next < line.Length ? Assignment.Match(line, next) : Match.Empty;
+            }
+
+            return copied == 0 ? line : result.Append(line, copied, line.Length - copied).ToString();
         }
 
         private string Replace(Regex regex, string line) => regex.Replace(line, _ =>
@@ -281,6 +294,27 @@ public static class InterventionRedaction
             Count++;
             return mask;
         });
+
+        /// <summary>
+        /// Fin d'une valeur sans guillemets. Un séparateur collé à ce qui suit fait partie de la valeur (« $Tr0ub4dor&amp;3 »,
+        /// « Tr0ub;dor ») : la valeur continue jusqu'à la prochaine espace. Restent des séparateurs : une espace ou la fin
+        /// de ligne après eux, un opérateur doublé (« &amp;&amp; », « || », « >> »), et le début d'une autre clé (« &amp;user=… »,
+        /// « ;Database=… »). Mieux vaut masquer un mot de trop que laisser la fin d'un mot de passe.
+        /// </summary>
+        private static int GluedEnd(string line, int end)
+        {
+            while (end + 1 < line.Length && line[end] is '&' or '|' or ';' or ',' or '<' or '>'
+                   && !char.IsWhiteSpace(line[end + 1]) && line[end + 1] != line[end] && !NextKey.IsMatch(line, end + 1))
+            {
+                end++;
+                while (end < line.Length && !char.IsWhiteSpace(line[end]) && line[end] is not ('"' or '\'' or '`' or '&' or '|' or ';' or ',' or '<' or '>'))
+                {
+                    end++;
+                }
+            }
+
+            return end;
+        }
 
         /// <summary>Variable du shell ou de Windows, substitution de commande, gabarit (voir <see cref="Variable"/>).</summary>
         private static bool IsVariable(string value) =>

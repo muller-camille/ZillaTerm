@@ -1,5 +1,6 @@
 using System.Windows;
 using ZillaTerm.App.Localization;
+using ZillaTerm.Core;
 using ZillaTerm.Core.Ssh;
 
 namespace ZillaTerm.App.Views;
@@ -14,7 +15,7 @@ public readonly record struct TransferStep(string Name, int Index, long Bytes);
 public partial class TransferDialog : Window
 {
     private readonly Func<IProgress<TransferStep>, CancellationToken, Task> _work;
-    private readonly CancellationTokenSource _cancel = new();
+    private readonly CancelOnce _cancel = new();
     private readonly long _totalBytes;
     private readonly int _totalFiles;
     private bool _closed;

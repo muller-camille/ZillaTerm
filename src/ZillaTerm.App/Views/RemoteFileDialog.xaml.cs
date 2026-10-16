@@ -15,7 +15,7 @@ public partial class RemoteFileDialog : Window
 {
     private readonly Func<string, bool, CancellationToken, Task<List<RemoteEntry>>> _list;
     private readonly string _home;
-    private CancellationTokenSource? _loading;
+    private CancelOnce? _loading;
     // Lettres tapées dans la liste (sélection par le début du nom), comme dans l'onglet Fichiers.
     private readonly TypeAhead _typeAhead = new();
 
@@ -104,7 +104,7 @@ public partial class RemoteFileDialog : Window
     private async Task<Shown> ShowAsync(string directory, string? select = null, bool reportError = true)
     {
         _loading?.Cancel();
-        var loading = _loading = new CancellationTokenSource();
+        var loading = _loading = new CancelOnce();
         directory = RemotePath.Normalize(directory);
         SetStatus(Text.Format(Strings.RemotePickLoading, directory));
         try

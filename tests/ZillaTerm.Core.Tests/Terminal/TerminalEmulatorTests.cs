@@ -503,6 +503,46 @@ public class TerminalEmulatorTests
         Assert.Equal((2, 2), (t.CursorRow, t.CursorColumn));
     }
 
+    /// <summary>
+    /// Terminal partagé : celui qui regarde n'a pas la marque et ne sait pas effacer la commande de suivi du dossier. Le
+    /// marqueur arrive avant la fin du flux (Fed) : l'écran déjà effacé peut lui être renvoyé entier.
+    /// </summary>
+    [Fact]
+    public void EraseMarkerComesBeforeFedSoASharedScreenCanBeResent()
+    {
+        var host = new TerminalEmulator(30, 4);
+        var viewer = new TerminalEmulator(30, 4);
+        var events = new List<string>();
+        string? resent = null;
+        bool erased = false;
+        host.EraseMarkerReceived += () =>
+        {
+            events.Add("erase");
+            erased = true;
+        };
+        host.Fed += text =>
+        {
+            events.Add("fed");
+            viewer.Feed(text);
+            if (erased)
+            {
+                erased = false;
+                resent = host.Snapshot();
+            }
+        };
+
+        host.Feed("$ ");
+        host.MarkEraseFromCursorLine();
+        host.Feed(" eval '__catosc7'\r\n" + WorkingDirectory.EraseMarker + "$ ");
+
+        Assert.Equal(["fed", "erase", "fed"], events);
+        Assert.Contains(Screen(viewer), line => line.Contains("__catosc7", StringComparison.Ordinal));
+        var reset = new TerminalEmulator(30, 4);
+        reset.Feed(resent!);
+        Assert.Equal(Screen(host), Screen(reset));
+        Assert.DoesNotContain(Screen(reset), line => line.Contains("__catosc7", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void EraseMarkerFollowsTheMarkedLineWhenTheEchoScrolls()
     {

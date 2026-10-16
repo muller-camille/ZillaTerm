@@ -6565,4 +6565,16 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="HostKeysFilter" xml:space="preserve">
     <value>Filtra i server</value>
   </data>
+  <data name="EditWriteStuckHeading" xml:space="preserve">
+    <value>L'invio di un file modificato non termina</value>
+  </data>
+  <data name="EditWriteStuckMessage" xml:space="preserve">
+    <value>Il server non risponde più. Chiudere ora può lasciare il file incompleto sul server; la sua copia modificata resta su questo computer per almeno un giorno e viene mostrata in Esplora file.</value>
+  </data>
+  <data name="EditWriteStuckClose" xml:space="preserve">
+    <value>Chiudi senza attendere</value>
+  </data>
+  <data name="EditWriteStuckWait" xml:space="preserve">
+    <value>Attendi ancora</value>
+  </data>
 </root>

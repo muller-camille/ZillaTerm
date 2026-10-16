@@ -28,7 +28,7 @@ public partial class InterventionWindow : Window
     private readonly Action? _showNotes;
     private readonly Action? _beforeStop;
     private readonly DispatcherTimer _timer;
-    private CancellationTokenSource? _reminderRead;
+    private CancelOnce? _reminderRead;
 
     // État d'enregistrement déjà dit par la ligne d'état (annoncée seulement quand il change).
     private bool _shownRecording;
@@ -83,7 +83,7 @@ public partial class InterventionWindow : Window
             return;
         }
 
-        var read = _reminderRead = new CancellationTokenSource();
+        var read = _reminderRead = new CancelOnce();
         ShowReminderSource(Strings.DutyFileReading, warning: false);
         string message;
         bool warning = true;

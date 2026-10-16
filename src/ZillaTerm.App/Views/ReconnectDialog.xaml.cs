@@ -16,7 +16,7 @@ public partial class ReconnectDialog : Window
     private readonly PvwaClient _client;
     private readonly AuthMethod _method;
     private readonly string _userName;
-    private CancellationTokenSource? _logon;
+    private CancelOnce? _logon;
     private bool _challenge;
     private bool _closed;
 
@@ -66,7 +66,7 @@ public partial class ReconnectDialog : Window
         }
 
         SetBusy(true);
-        _logon = new CancellationTokenSource();
+        _logon = new CancelOnce();
         try
         {
             if (!_challenge)

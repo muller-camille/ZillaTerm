@@ -36,7 +36,10 @@ public sealed class ShareHost : IAsyncDisposable
     public const int MaxShares = 10;
 
     /// <summary>Ouvertures d'échange en cours, au plus (connexions qui n'ont pas encore dit pour quel partage).</summary>
-    private const int MaxPendingHandshakes = 16;
+    private const int MaxPendingHandshakes = 64;
+
+    /// <summary>Ouvertures en attente au plus depuis une même adresse : un poste seul ne bloque pas les connexions directes.</summary>
+    internal const int MaxPendingPerAddress = 4;
 
     /// <summary>Attente au plus du bonjour d'une connexion, puis de sa demande.</summary>
     internal static readonly TimeSpan HandshakeTimeout = TimeSpan.FromSeconds(15);
@@ -46,6 +49,7 @@ public sealed class ShareHost : IAsyncDisposable
     private TcpListener? _listener;
     private CancellationTokenSource? _listening;
     private int _pendingHandshakes;
+    private readonly Dictionary<IPAddress, int> _pendingFrom = [];
 
     public ShareHost(ShareHostOptions options) => Options = options;
 
@@ -241,19 +245,68 @@ public sealed class ShareHost : IAsyncDisposable
                 return;
             }
 
-            if (Interlocked.Increment(ref _pendingHandshakes) > MaxPendingHandshakes)
+            if (client.Client.RemoteEndPoint is not IPEndPoint remote || client.Client.LocalEndPoint is not IPEndPoint local
+                || !Invited(local.Address) || !TryStartHandshake(Normalize(remote.Address)))
             {
-                Interlocked.Decrement(ref _pendingHandshakes);
                 client.Dispose();
                 continue;
             }
 
-            _ = HandleAsync(new TcpShareLink(client));
+            _ = HandleAsync(new TcpShareLink(client), Normalize(remote.Address));
+        }
+    }
+
+    private static IPAddress Normalize(IPAddress address) => address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address;
+
+    /// <summary>
+    /// Connexion arrivée par une adresse de l'invitation d'un partage en cours (ou la boucle locale) : l'écoute porte sur
+    /// toutes les cartes, mais une carte qui n'est pas dans l'invitation (Wi-Fi de la maison, réseau virtuel) est refusée.
+    /// </summary>
+    internal bool Invited(IPAddress local)
+    {
+        local = Normalize(local);
+        if (IPAddress.IsLoopback(local))
+        {
+            return true;
+        }
+
+        lock (_lock)
+        {
+            return _shares.Any(s => s.Invitation.Endpoints.Any(e => Normalize(e.Address).Equals(local)));
+        }
+    }
+
+    /// <summary>Ouverture comptée, si ni le total ni celles venues de cette adresse ne sont au plus haut.</summary>
+    internal bool TryStartHandshake(IPAddress from)
+    {
+        lock (_lock)
+        {
+            int fromThere = _pendingFrom.GetValueOrDefault(from);
+            if (_pendingHandshakes >= MaxPendingHandshakes || fromThere >= MaxPendingPerAddress)
+            {
+                return false;
+            }
+
+            _pendingHandshakes++;
+            _pendingFrom[from] = fromThere + 1;
+            return true;
+        }
+    }
+
+    internal void EndHandshake(IPAddress from)
+    {
+        lock (_lock)
+        {
+            _pendingHandshakes--;
+            if (--_pendingFrom[from] == 0)
+            {
+                _pendingFrom.Remove(from);
+            }
         }
     }
 
     /// <summary>Connexion directe : son bonjour dit quel partage elle vise.</summary>
-    private async Task HandleAsync(IShareLink link)
+    private async Task HandleAsync(IShareLink link, IPAddress from)
     {
         try
         {
@@ -282,7 +335,7 @@ public sealed class ShareHost : IAsyncDisposable
         }
         finally
         {
-            Interlocked.Decrement(ref _pendingHandshakes);
+            EndHandshake(from);
         }
     }
 
@@ -739,8 +792,8 @@ public enum ShareWatcherState
 /// <summary>Une personne qui regarde un partage (ou attend l'accord) : sa connexion, sa file d'envoi, son état.</summary>
 public sealed class ShareWatcher
 {
-    /// <summary>Retard au-delà duquel la file est vidée et l'écran renvoyé entier.</summary>
-    private const long MaxQueuedBytes = 48L << 20;
+    /// <summary>Retard au-delà duquel le terminal et les images en attente sont abandonnés et l'écran renvoyé entier.</summary>
+    internal const long MaxQueuedBytes = 48L << 20;
 
     private static readonly TimeSpan PingInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan SilenceLimit = TimeSpan.FromSeconds(60);
@@ -751,7 +804,8 @@ public sealed class ShareWatcher
     private readonly HostedShare _share;
     private readonly IShareLink _link;
     private readonly ShareCipher _cipher;
-    private readonly Channel<byte[]> _queue = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions { SingleReader = true });
+    // Lue par la boucle d'envoi et, quand le réseau ne suit plus, par Enqueue qui l'allège : plusieurs lecteurs.
+    private readonly Channel<Queued> _queue = Channel.CreateUnbounded<Queued>(new UnboundedChannelOptions { SingleReader = false });
     private readonly CancellationTokenSource _stop = new();
     private long _queuedBytes;
     private long _lastHeard = DateTime.UtcNow.Ticks;
@@ -798,23 +852,61 @@ public sealed class ShareWatcher
         _ = PingLoopAsync(_stop.Token);
     }
 
+    /// <summary>Message en attente d'envoi, avec son type (pour alléger la file sans perdre les messages d'état).</summary>
+    private readonly record struct Queued(ShareMessageType Type, byte[] Data);
+
+    /// <summary>Flux du terminal et images : remplacés par l'écran entier quand le réseau ne suit plus.</summary>
+    private static bool IsBulk(ShareMessageType type) =>
+        type is ShareMessageType.TerminalData or ShareMessageType.ScreenFrame or ShareMessageType.TerminalReset;
+
     internal void Enqueue(ShareMessage message)
     {
-        var data = message.ToBytes();
-        if (Interlocked.Add(ref _queuedBytes, data.Length) > MaxQueuedBytes && message.Type is ShareMessageType.TerminalData or ShareMessageType.ScreenFrame)
+        var item = new Queued(message.Type, message.ToBytes());
+        if (Interlocked.Add(ref _queuedBytes, item.Data.Length) > MaxQueuedBytes && IsBulk(message.Type))
         {
-            // Réseau trop lent pour suivre : la file est vidée (l'écran sera renvoyé entier).
-            while (_queue.Reader.TryRead(out var dropped))
+            // Réseau trop lent pour suivre : le terminal et les images en attente sont abandonnés (l'écran sera renvoyé
+            // entier). Les messages d'état restent, dans leur ordre : main reprise, affichage en pause ou repris, avis.
+            var kept = new List<Queued>();
+            while (_queue.Reader.TryRead(out var queued))
             {
-                Interlocked.Add(ref _queuedBytes, -dropped.Length);
+                if (IsBulk(queued.Type))
+                {
+                    Interlocked.Add(ref _queuedBytes, -queued.Data.Length);
+                }
+                else
+                {
+                    kept.Add(queued);
+                }
             }
 
-            Interlocked.Add(ref _queuedBytes, -data.Length);
+            foreach (var queued in kept)
+            {
+                _queue.Writer.TryWrite(queued);
+            }
+
+            Interlocked.Add(ref _queuedBytes, -item.Data.Length);
             _share.Lagging(this);
             return;
         }
 
-        _queue.Writer.TryWrite(data);
+        _queue.Writer.TryWrite(item);
+    }
+
+    /// <summary>Types des messages en attente, dans l'ordre (tests).</summary>
+    internal IReadOnlyList<ShareMessageType> QueuedTypes()
+    {
+        var items = new List<Queued>();
+        while (_queue.Reader.TryRead(out var queued))
+        {
+            items.Add(queued);
+        }
+
+        foreach (var queued in items)
+        {
+            _queue.Writer.TryWrite(queued);
+        }
+
+        return [.. items.Select(q => q.Type)];
     }
 
     /// <summary>
@@ -847,15 +939,15 @@ public sealed class ShareWatcher
     {
         try
         {
-            await foreach (var data in _queue.Reader.ReadAllAsync(stop).ConfigureAwait(false))
+            await foreach (var queued in _queue.Reader.ReadAllAsync(stop).ConfigureAwait(false))
             {
-                Interlocked.Add(ref _queuedBytes, -data.Length);
+                Interlocked.Add(ref _queuedBytes, -queued.Data.Length);
                 if (Volatile.Read(ref _closed) != 0)
                 {
                     break;
                 }
 
-                await _link.SendAsync(_cipher.Seal(data), stop).ConfigureAwait(false);
+                await _link.SendAsync(_cipher.Seal(queued.Data), stop).ConfigureAwait(false);
             }
         }
         catch (Exception e) when (e is OperationCanceledException or IOException or SocketException or ObjectDisposedException)

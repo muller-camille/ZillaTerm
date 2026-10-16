@@ -1,6 +1,7 @@
 using System.Windows;
 using ZillaTerm.App.Localization;
 using ZillaTerm.App.Services.Sharing;
+using ZillaTerm.Core;
 using ZillaTerm.Core.Diagnostics;
 using ZillaTerm.Core.Sharing;
 
@@ -14,7 +15,7 @@ public partial class JoinShareDialog : Window
 {
     private readonly ShareJoin _join;
     private readonly string _relayFolder;
-    private CancellationTokenSource? _connecting;
+    private CancelOnce? _connecting;
     private ShareViewer? _viewer;
     private bool _closed;
 
@@ -66,7 +67,7 @@ public partial class JoinShareDialog : Window
         CodePanel.Visibility = Visibility.Collapsed;
         JoinButton.IsEnabled = false;
         WaitingText.Text = Strings.JoinConnecting;
-        _connecting = new CancellationTokenSource();
+        _connecting = new CancelOnce();
         try
         {
             _viewer = await ShareViewer.ConnectAsync(invitation, _join, _connecting.Token, AllowRelayAsync);

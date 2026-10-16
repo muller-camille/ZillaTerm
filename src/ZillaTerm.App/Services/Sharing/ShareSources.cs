@@ -18,8 +18,9 @@ internal interface IShareSource : IDisposable
 
 /// <summary>
 /// Terminal SSH partagé : l'écran à l'accord (instantané, sans l'historique), puis le flux tel que le terminal le reçoit ;
-/// un redimensionnement renvoie l'écran entier. La saisie de la personne qui a la main est encodée selon les modes du
-/// terminal de celui qui partage, comme sa propre frappe.
+/// un redimensionnement renvoie l'écran entier, comme l'effacement de la commande de suivi du dossier (que ZillaTerm fait
+/// de son côté seulement). La saisie de la personne qui a la main est encodée selon les modes du terminal de celui qui
+/// partage, comme sa propre frappe.
 /// </summary>
 internal sealed class TerminalShareSource : IShareSource
 {
@@ -27,6 +28,7 @@ internal sealed class TerminalShareSource : IShareSource
     private readonly SshSession _session;
     private readonly Dispatcher _dispatcher;
     private bool _resetQueued;
+    private bool _erased;
     private bool _disposed;
 
     public TerminalShareSource(HostedShare share, SshSession session, Dispatcher dispatcher)
@@ -35,6 +37,7 @@ internal sealed class TerminalShareSource : IShareSource
         _session = session;
         _dispatcher = dispatcher;
         session.Emulator.Fed += OnFed;
+        session.Emulator.EraseMarkerReceived += OnErased;
         session.Emulator.Resized += OnResized;
         session.StateChanged += OnStateChanged;
         share.InputReceived += OnInput;
@@ -53,7 +56,20 @@ internal sealed class TerminalShareSource : IShareSource
     private ShareMessage Reset() =>
         ShareMessage.TerminalReset(_session.Emulator.Columns, _session.Emulator.Rows, _session.Emulator.Snapshot());
 
-    private void OnFed(string text) => _share.Broadcast(ShareMessage.TerminalData(text));
+    private void OnFed(string text)
+    {
+        _share.Broadcast(ShareMessage.TerminalData(text));
+        if (_erased)
+        {
+            // La commande de suivi du dossier vient d'être effacée ici : le terminal de celui qui regarde ne sait pas
+            // l'effacer (il n'a pas la marque), il reçoit l'écran entier.
+            _erased = false;
+            _share.Broadcast(Reset());
+        }
+    }
+
+    // Pendant Feed, avant Fed et sur le même fil.
+    private void OnErased() => _erased = true;
 
     private void OnResized()
     {
@@ -95,6 +111,7 @@ internal sealed class TerminalShareSource : IShareSource
     {
         _disposed = true;
         _session.Emulator.Fed -= OnFed;
+        _session.Emulator.EraseMarkerReceived -= OnErased;
         _session.Emulator.Resized -= OnResized;
         _session.StateChanged -= OnStateChanged;
         _share.InputReceived -= OnInput;

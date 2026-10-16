@@ -36,6 +36,7 @@ public sealed class RemoteEditor : IDisposable
     // Renvois en cours d'écriture sur le serveur, et leur fin attendue par la fermeture de la connexion.
     private readonly HashSet<EditedFile> _writing = [];
     private TaskCompletionSource? _writesDone;
+    private bool _keepCopies;
     private bool _disposed;
 
     /// <param name="status">Message pour la barre d'état (texte, erreur).</param>
@@ -65,6 +66,17 @@ public sealed class RemoteEditor : IDisposable
     /// </summary>
     public Task WritesDone =>
         _writing.Count == 0 ? Task.CompletedTask : (_writesDone ??= new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously)).Task;
+
+    /// <summary>
+    /// Fermeture sans attendre la fin d'un renvoi bloqué (serveur qui ne répond plus) : les copies de cette session restent
+    /// sur le poste, supprimées au plus tôt un jour après (<see cref="CleanupStale"/>). Renvoie celles des fichiers en cours
+    /// de renvoi.
+    /// </summary>
+    public IReadOnlyList<string> KeepWritingCopies()
+    {
+        _keepCopies |= _writing.Count > 0;
+        return [.. _writing.Select(f => f.LocalPath)];
+    }
 
     /// <summary>Renvois en cours de ces sessions, sous la forme « serveur:chemin ».</summary>
     public static List<string> WritingFiles(IEnumerable<RemoteEditor> editors) =>
@@ -353,7 +365,7 @@ public sealed class RemoteEditor : IDisposable
         _files.Clear();
         try
         {
-            if (Directory.Exists(_directory))
+            if (!_keepCopies && Directory.Exists(_directory))
             {
                 Directory.Delete(_directory, recursive: true);
             }
