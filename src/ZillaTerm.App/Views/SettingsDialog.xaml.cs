@@ -41,7 +41,8 @@ public partial class SettingsDialog : Window
 
     /// <param name="store">Coffre local des mots de passe maîtres KeePass, géré depuis cette fenêtre.</param>
     /// <param name="pvwaHost">PVWA de la session, nom donné à un environnement exporté.</param>
-    public SettingsDialog(AppSettings settings, LocalSecretStore? store = null, string pvwaHost = "")
+    /// <param name="saveSettings">Enregistre les réglages en vigueur (page À propos : date de la dernière recherche d'une nouvelle version).</param>
+    public SettingsDialog(AppSettings settings, LocalSecretStore? store = null, string pvwaHost = "", Action? saveSettings = null)
     {
         InitializeComponent();
         SourceInitialized += (_, _) => FitToScreen();
@@ -69,6 +70,7 @@ public partial class SettingsDialog : Window
         TagGrid.ItemsSource = _tagRows;
         FolderGrid.ItemsSource = _folderRows;
         _tagRows.CollectionChanged += (_, _) => UpdateAddTagButton();
+        AboutView.Initialize(settings, saveSettings);
         UpdateStore();
         ShowValues(settings);
         UpdateAddTagButton();
@@ -180,6 +182,9 @@ public partial class SettingsDialog : Window
 
     /// <summary>Ouvre la page « Partage » (partage demandé alors qu'il est désactivé).</summary>
     internal void ShowSharingPage() => Pages.SelectedItem = SharingPage;
+
+    /// <summary>Page « À propos » (lien d'une nouvelle version dans la barre d'état).</summary>
+    internal void ShowAboutPage() => Pages.SelectedItem = AboutPage;
 
     /// <summary>
     /// Clé d'hôte acceptée : « hôte:port », type de clé (ou X.509 pour un certificat), empreinte SHA-256, et sa clé

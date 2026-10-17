@@ -181,7 +181,7 @@
     <value>Paramètres</value>
   </data>
   <data name="ToolSettingsTip" xml:space="preserve">
-    <value>PSMP, langue, composants mémorisés, journal de débogage</value>
+    <value>Paramètres de ZillaTerm : PSMP, langue, Bureau à distance, journal de débogage, À propos</value>
   </data>
   <data name="TabAvailable" xml:space="preserve">
     <value>Disponibles</value>
@@ -1622,9 +1622,6 @@ Les envoyer dans une seule archive {3} ? Un seul fichier à transférer et à v�
   <data name="InvalidFontSize" xml:space="preserve">
     <value>La taille de police doit être comprise entre {0} et {1}.</value>
   </data>
-  <data name="MenuAbout" xml:space="preserve">
-    <value>À propos de _ZillaTerm…</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>À propos de ZillaTerm</value>
   </data>
@@ -2043,26 +2040,8 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour réessay
   <data name="DetachedReattach" xml:space="preserve">
     <value>_Ramener dans l'onglet</value>
   </data>
-  <data name="MenuSettings" xml:space="preserve">
-    <value>_Paramètres…</value>
-  </data>
-  <data name="MenuDebugLog" xml:space="preserve">
-    <value>_Journal de débogage</value>
-  </data>
-  <data name="MenuDebugLogTip" xml:space="preserve">
-    <value>Note le déroulement des connexions (PVWA, PSM, Bureau à distance, SSH) dans un fichier, pour comprendre un échec. Il contient des noms de serveurs et de comptes, jamais de mot de passe ni de jeton. Désactivé par défaut.</value>
-  </data>
-  <data name="MenuDebugLogShow" xml:space="preserve">
-    <value>Afficher le _fichier du journal</value>
-  </data>
   <data name="DebugLogActive" xml:space="preserve">
     <value>Journal de débogage actif</value>
-  </data>
-  <data name="DebugLogStarted" xml:space="preserve">
-    <value>Journal de débogage activé : {0}</value>
-  </data>
-  <data name="DebugLogStopped" xml:space="preserve">
-    <value>Journal de débogage désactivé.</value>
   </data>
   <data name="DebugLogMissing" xml:space="preserve">
     <value>Pas encore de journal de débogage : activez-le, puis reproduisez le problème.</value>
@@ -4020,9 +3999,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="SettingsPageSecurity" xml:space="preserve">
     <value>Sécurité</value>
   </data>
-  <data name="SettingsUpdatesSection" xml:space="preserve">
-    <value>Mises à jour</value>
-  </data>
   <data name="SettingsRightClickEffect" xml:space="preserve">
     <value>⚠ Un clic droit par mégarde envoie le presse-papiers au shell, même root.</value>
   </data>
@@ -4046,12 +4022,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="ForgetSelectedKeys" xml:space="preserve">
     <value>Oublier les _clés choisies</value>
-  </data>
-  <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Les mises à jour sont recherchées au démarrage (Paramètres › Général).</value>
-  </data>
-  <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>La recherche automatique des mises à jour est désactivée (Paramètres › Général).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Ne sert que pour une connexion par le PSM (pas en SSH ni en SFTP via le PSMP).</value>
@@ -4598,9 +4568,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="SessionImportTip" xml:space="preserve">
     <value>Importer les sessions d'un autre logiciel (PuTTY, WinSCP, mRemoteNG, RDCMan…) pour les ouvrir via CyberArk</value>
-  </data>
-  <data name="MenuSessionImport" xml:space="preserve">
-    <value>Importer les sessions d'un autre _logiciel…</value>
   </data>
   <data name="SessionImportDone" xml:space="preserve">
     <value>{0:# serveur importé|# serveurs importés} dans « Mes serveurs »</value>
@@ -6524,7 +6491,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>Note le déroulement des connexions dans un fichier, pour comprendre un échec : noms de serveurs et de comptes, jamais de mot de passe.</value>
   </data>
   <data name="SettingsDebugLogShow" xml:space="preserve">
-    <value>Afficher le _fichier</value>
+    <value>Afficher le _fichier du journal</value>
   </data>
   <data name="TeamBadge" xml:space="preserve">
     <value>Équipe</value>
@@ -6687,5 +6654,17 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="PsmStartedNoFolders" xml:space="preserve">
     <value>Session PSM lancée : {0} ({1}). Connexion Bureau à distance ne partage que des disques entiers : aucun disque partagé (« Ces dossiers seulement »).</value>
+  </data>
+  <data name="SettingsDebugLogShowTip" xml:space="preserve">
+    <value>Ouvre l'Explorateur sur le fichier du journal de débogage, pour le relire ou le joindre à un message.</value>
+  </data>
+  <data name="RdpReconnect" xml:space="preserve">
+    <value>Re_connecter</value>
+  </data>
+  <data name="RdpReconnectTip" xml:space="preserve">
+    <value>Nouvelle connexion dans cet onglet (pour une session PSM, nouvelle demande au PVWA) ; une session ouverte est d'abord fermée, après confirmation.</value>
+  </data>
+  <data name="SettingsPageAbout" xml:space="preserve">
+    <value>À propos</value>
   </data>
 </root>

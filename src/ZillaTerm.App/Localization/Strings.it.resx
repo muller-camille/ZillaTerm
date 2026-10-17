@@ -181,7 +181,7 @@
     <value>Impostazioni</value>
   </data>
   <data name="ToolSettingsTip" xml:space="preserve">
-    <value>PSMP, lingua, componenti memorizzati, registro di debug</value>
+    <value>Impostazioni di ZillaTerm: PSMP, lingua, Desktop remoto, registro di debug, Informazioni</value>
   </data>
   <data name="TabAvailable" xml:space="preserve">
     <value>Disponibili</value>
@@ -1622,9 +1622,6 @@ Inviarli in un unico archivio {3}? Un solo file da trasferire e verificare invec
   <data name="InvalidFontSize" xml:space="preserve">
     <value>La dimensione del carattere deve essere compresa tra {0} e {1}.</value>
   </data>
-  <data name="MenuAbout" xml:space="preserve">
-    <value>Informazioni su _ZillaTerm…</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Informazioni su ZillaTerm</value>
   </data>
@@ -2043,26 +2040,8 @@ Le modifiche restano nell'editor: salva di nuovo per riprovare.</value>
   <data name="DetachedReattach" xml:space="preserve">
     <value>_Riporta nella scheda</value>
   </data>
-  <data name="MenuSettings" xml:space="preserve">
-    <value>_Impostazioni…</value>
-  </data>
-  <data name="MenuDebugLog" xml:space="preserve">
-    <value>_Registro di debug</value>
-  </data>
-  <data name="MenuDebugLogTip" xml:space="preserve">
-    <value>Registra in un file lo svolgimento delle connessioni (PVWA, PSM, desktop remoto, SSH), per capire un errore. Contiene nomi di server e di account, mai password né token. Disattivato per impostazione predefinita.</value>
-  </data>
-  <data name="MenuDebugLogShow" xml:space="preserve">
-    <value>Mostra il _file del registro</value>
-  </data>
   <data name="DebugLogActive" xml:space="preserve">
     <value>Registro di debug attivo</value>
-  </data>
-  <data name="DebugLogStarted" xml:space="preserve">
-    <value>Registro di debug attivato: {0}</value>
-  </data>
-  <data name="DebugLogStopped" xml:space="preserve">
-    <value>Registro di debug disattivato.</value>
   </data>
   <data name="DebugLogMissing" xml:space="preserve">
     <value>Ancora nessun registro di debug: attivalo, poi riproduci il problema.</value>
@@ -4020,9 +3999,6 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="SettingsPageSecurity" xml:space="preserve">
     <value>Sicurezza</value>
   </data>
-  <data name="SettingsUpdatesSection" xml:space="preserve">
-    <value>Aggiornamenti</value>
-  </data>
   <data name="SettingsRightClickEffect" xml:space="preserve">
     <value>⚠ Un clic destro involontario invia gli appunti alla shell, anche root.</value>
   </data>
@@ -4046,12 +4022,6 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="ForgetSelectedKeys" xml:space="preserve">
     <value>Dimentica le c_hiavi scelte</value>
-  </data>
-  <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Gli aggiornamenti vengono cercati all'avvio (Impostazioni › Generale).</value>
-  </data>
-  <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>La ricerca automatica degli aggiornamenti è disattivata (Impostazioni › Generale).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Serve solo per una connessione tramite il PSM (non in SSH né in SFTP tramite il PSMP).</value>
@@ -4598,9 +4568,6 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="SessionImportTip" xml:space="preserve">
     <value>Importa le sessioni di un altro programma (PuTTY, WinSCP, mRemoteNG, RDCMan…) per aprirle tramite CyberArk</value>
-  </data>
-  <data name="MenuSessionImport" xml:space="preserve">
-    <value>Importa le sessioni di un altro pro_gramma…</value>
   </data>
   <data name="SessionImportDone" xml:space="preserve">
     <value>{0:# server importato|# server importati} in «I miei server»</value>
@@ -6524,7 +6491,7 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
     <value>Annota lo svolgimento delle connessioni in un file, per capire un errore: nomi di server e di account, mai una password.</value>
   </data>
   <data name="SettingsDebugLogShow" xml:space="preserve">
-    <value>Mostra il fil_e</value>
+    <value>Mostra il file del re_gistro</value>
   </data>
   <data name="TeamBadge" xml:space="preserve">
     <value>Team</value>
@@ -6687,5 +6654,17 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   </data>
   <data name="PsmStartedNoFolders" xml:space="preserve">
     <value>Sessione PSM avviata: {0} ({1}). Connessione Desktop remoto condivide solo dischi interi: nessun disco condiviso («Solo queste cartelle»).</value>
+  </data>
+  <data name="SettingsDebugLogShowTip" xml:space="preserve">
+    <value>Apre Esplora file sul file del registro di debug, per rileggerlo o allegarlo a un messaggio.</value>
+  </data>
+  <data name="RdpReconnect" xml:space="preserve">
+    <value>Ri_connetti</value>
+  </data>
+  <data name="RdpReconnectTip" xml:space="preserve">
+    <value>Nuova connessione in questa scheda (per una sessione PSM, nuova richiesta al PVWA); una sessione aperta viene prima chiusa, dopo conferma.</value>
+  </data>
+  <data name="SettingsPageAbout" xml:space="preserve">
+    <value>Informazioni</value>
   </data>
 </root>

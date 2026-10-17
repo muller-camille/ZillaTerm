@@ -1784,24 +1784,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Debug log on: {0}.
-        /// </summary>
-        public static string DebugLogStarted {
-            get {
-                return ResourceManager.GetString("DebugLogStarted", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Debug log off..
-        /// </summary>
-        public static string DebugLogStopped {
-            get {
-                return ResourceManager.GetString("DebugLogStopped", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Default _reason:.
         /// </summary>
         public static string DefaultReasonLabel {
@@ -4127,15 +4109,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to _About ZillaTerm….
-        /// </summary>
-        public static string MenuAbout {
-            get {
-                return ResourceManager.GetString("MenuAbout", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Add an account….
         /// </summary>
         public static string MenuAddAccount {
@@ -4267,33 +4240,6 @@ namespace ZillaTerm.App.Localization {
         public static string MenuCreateSharedList {
             get {
                 return ResourceManager.GetString("MenuCreateSharedList", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to _Debug log.
-        /// </summary>
-        public static string MenuDebugLog {
-            get {
-                return ResourceManager.GetString("MenuDebugLog", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Show the debug log _file.
-        /// </summary>
-        public static string MenuDebugLogShow {
-            get {
-                return ResourceManager.GetString("MenuDebugLogShow", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Records how connections unfold (PVWA, PSM, remote desktop, SSH) in a file, to understand a failur[rest of string was truncated].
-        /// </summary>
-        public static string MenuDebugLogTip {
-            get {
-                return ResourceManager.GetString("MenuDebugLogTip", resourceCulture);
             }
         }
 
@@ -4627,15 +4573,6 @@ namespace ZillaTerm.App.Localization {
         public static string MenuSafeMembersOf {
             get {
                 return ResourceManager.GetString("MenuSafeMembersOf", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to _Settings….
-        /// </summary>
-        public static string MenuSettings {
-            get {
-                return ResourceManager.GetString("MenuSettings", resourceCulture);
             }
         }
 
@@ -9270,7 +9207,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to PSMP, language, remembered components, debug log.
+        ///   Looks up a localized string similar to ZillaTerm settings: PSMP, language, remote desktop, debug log, About.
         /// </summary>
         public static string ToolSettingsTip {
             get {
@@ -11971,15 +11908,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Updates.
-        /// </summary>
-        public static string SettingsUpdatesSection {
-            get {
-                return ResourceManager.GetString("SettingsUpdatesSection", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to ⚠ A stray right-click sends the clipboard to the shell, root shells included..
         /// </summary>
         public static string SettingsRightClickEffect {
@@ -12048,24 +11976,6 @@ namespace ZillaTerm.App.Localization {
         public static string ForgetSelectedKeys {
             get {
                 return ResourceManager.GetString("ForgetSelectedKeys", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Updates are checked at start-up (Settings &gt; General)..
-        /// </summary>
-        public static string AboutAutoCheckOn {
-            get {
-                return ResourceManager.GetString("AboutAutoCheckOn", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Automatic update check is off (Settings &gt; General)..
-        /// </summary>
-        public static string AboutAutoCheckOff {
-            get {
-                return ResourceManager.GetString("AboutAutoCheckOff", resourceCulture);
             }
         }
 
@@ -13704,15 +13614,6 @@ namespace ZillaTerm.App.Localization {
         public static string SessionImportTip {
             get {
                 return ResourceManager.GetString("SessionImportTip", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Import sessions from another _tool….
-        /// </summary>
-        public static string MenuSessionImport {
-            get {
-                return ResourceManager.GetString("MenuSessionImport", resourceCulture);
             }
         }
 
@@ -19473,7 +19374,7 @@ namespace ZillaTerm.App.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Show the _file.
+        ///   Looks up a localized string similar to Show the log _file.
         /// </summary>
         public static string SettingsDebugLogShow {
             get {
@@ -19964,6 +19865,42 @@ namespace ZillaTerm.App.Localization {
         public static string PsmStartedNoFolders {
             get {
                 return ResourceManager.GetString("PsmStartedNoFolders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Opens File Explorer on the debug log file, to read it again or attach it to a message..
+        /// </summary>
+        public static string SettingsDebugLogShowTip {
+            get {
+                return ResourceManager.GetString("SettingsDebugLogShowTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Re_connect.
+        /// </summary>
+        public static string RdpReconnect {
+            get {
+                return ResourceManager.GetString("RdpReconnect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New connection in this tab (for a PSM session, a new request to the PVWA); an open session is closed first, after confirmation..
+        /// </summary>
+        public static string RdpReconnectTip {
+            get {
+                return ResourceManager.GetString("RdpReconnectTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to About.
+        /// </summary>
+        public static string SettingsPageAbout {
+            get {
+                return ResourceManager.GetString("SettingsPageAbout", resourceCulture);
             }
         }
     }

@@ -2435,11 +2435,15 @@ public sealed partial class DialogTests
             Assert.Equal("intro", choose.IntroText.Text);
             choose.Close();
 
-            var about = new AboutWindow(new AppSettings(), () => { });
+            // À propos : page des Paramètres (version, logo, recherche d'une nouvelle version et son réglage).
+            var settingsWindow = new SettingsDialog(new AppSettings());
+            settingsWindow.ShowAboutPage();
+            Assert.Same(settingsWindow.AboutPage, settingsWindow.Pages.SelectedItem);
+            var about = settingsWindow.AboutView;
             Assert.Contains(UpdateChecker.CurrentVersion.ToString(), about.VersionText.Text);
             // Logo net : une image du .ico au moins aussi grande que l'affichage (pas celle de 16 px agrandie).
             Assert.True(((System.Windows.Media.Imaging.BitmapSource)about.LogoImage.Source).PixelWidth >= about.LogoImage.Width);
-            about.Close();
+            settingsWindow.Close();
 
             s1.Dispose();
             s2.Dispose();

@@ -225,8 +225,9 @@ fenêtre à part.
   d'une intervention ou le partage de la session. Pendant un enregistrement, la pause d'un onglet en arrière-plan y est
   marquée : le lecteur du rapport montre « Affichage en pause » sur l'écran et une bande grise sur la frise (voir
   [Intervention](#8-intervention--enregistrement-et-consignes-dastreinte)).
-- **Reconnecter**, « Dupliquer l'onglet » : nouvelle demande au PVWA (le jeton d'une session PSM ne sert qu'une
-  fois) ; motif et ticket restent ceux de la première connexion. Si la session CyberArk a expiré entre-temps, la
+- **Reconnecter** (bouton de la barre de l'onglet, à côté de « Plein écran » et « Déconnecter », ou menu de
+  l'onglet ; confirmation si la session est ouverte), « Dupliquer l'onglet » : nouvelle demande au PVWA (le jeton
+  d'une session PSM ne sert qu'une fois) ; motif et ticket restent ceux de la première connexion. Si la session CyberArk a expiré entre-temps, la
   fenêtre d'identification est proposée, puis la demande repart.
 - L'onglet porte l'étiquette du serveur (PROD, QA…) et son cadre de couleur ; « Capture » ajoute une image au
   journal d'une intervention en cours.
@@ -780,8 +781,7 @@ passent de l'un à l'autre) :
 ### Reprendre les sessions d'un autre logiciel
 
 Pour passer à ZillaTerm sans retaper vos serveurs, et ne plus vous y connecter en direct : menu « Importer ▾ » ›
-« Sessions d'un autre logiciel… » en haut de l'onglet, ou menu **Paramètres** › « Importer les sessions d'un autre
-logiciel… ». Les comptes du PVWA doivent être chargés.
+« Sessions d'un autre logiciel… » en haut de l'onglet. Les comptes du PVWA doivent être chargés.
 
 <img src="captures/fr/session-import.png" alt="Import des sessions d'un autre logiciel : aperçu avant l'import" width="820">
 
@@ -1182,15 +1182,16 @@ toujours. Les couleurs des terminaux SSH se règlent à part (page Terminal).
 
 <img src="captures/fr/settings.png" alt="Paramètres" width="480">
 
-Bouton « Paramètres » de la barre d'outils → « Paramètres… » (ou `Ctrl+,`). La fenêtre, redimensionnable, a une page
+Bouton « Paramètres » de la barre d'outils (ou `Ctrl+,`). La fenêtre, redimensionnable, a une page
 par sujet (à gauche, `Ctrl+Tab` de l'une à l'autre) : Général, CyberArk, SSH, Bureau à distance, Terminal, Fichiers,
-Mes serveurs, Intervention, Partage, Sécurité ; chacune tient sur un écran. Chaque réglage a sa ligne d'aide dessous ;
+Mes serveurs, Intervention, Partage, Sécurité, À propos ; chacune tient sur un écran. Chaque réglage a sa ligne d'aide dessous ;
 « ⚠ » y signale un vrai risque. « Enregistrer » applique les réglages ; une valeur incorrecte affiche la page du champ
 concerné, curseur dans ce champ.
 
 Tout s'applique à « Enregistrer », un environnement importé compris ; seules les actions du coffre local (page
 Sécurité) s'appliquent tout de suite, et le disent. « En savoir plus sur cette page » (ou `F1`), en bas de la fenêtre,
-ouvre la section de la page affichée dans ce guide en ligne (version installée, langue de l'interface).
+ouvre la section de la page affichée dans ce guide en ligne (version installée, langue de l'interface). Le bouton
+**Paramètres** de la barre ouvre directement cette fenêtre, sans menu.
 
 **Pastille « Équipe »** : à droite d'un réglage, elle indique que le [fichier d'environnement](#environnement-partagé)
 de l'équipe (à côté de l'exécutable ou fichier central) le définit, avec la valeur en vigueur ; son infobulle donne le
@@ -1206,10 +1207,9 @@ accord). Un réglage que vous avez refusé à l'import, ou changé depuis, n'a p
 | Langue de l'interface | Français, English, Italiano ou langue du système ; appliquée après la déconnexion de CyberArk ou au prochain démarrage | langue de Windows (anglais si elle n'est pas traduite) |
 | Thème | Comme Windows, Clair ou Sombre ; appliqué tout de suite (le contraste élevé de Windows l'emporte) | comme Windows |
 | Confirmer avant de fermer une session connectée | SSH, Bureau à distance, VNC ; « Ne plus demander » dans la confirmation décoche ce réglage | oui |
-| Rechercher une nouvelle version au démarrage | Une requête vers GitHub au plus une fois par jour ; lien dans la barre d'état si une version plus récente existe (la fenêtre « À propos » rappelle ce réglage) | non |
 | Fichier central | Fichier d'environnement de l'équipe sur un partage réseau, relu à chaque démarrage ; ses changements sont montrés avant d'être appliqués (voir [Environnement partagé](#environnement-partagé)) | vide |
 | Importer, exporter l'environnement | « Importer un environnement… » : ses changements sont montrés, puis repris dans les pages et appliqués à « Enregistrer » (« Annuler » les abandonne). « Exporter l'environnement… » : les valeurs affichées, ni mot de passe ni donnée personnelle (voir [Environnement partagé](#environnement-partagé)) | — |
-| Journal de débogage | Déroulement des connexions dans un fichier, sans secret (voir [Sécurité](#sécurité)) ; « Afficher le fichier » l'ouvre dans l'Explorateur. Aussi dans le menu du bouton Paramètres | non |
+| Journal de débogage | Déroulement des connexions dans un fichier, sans secret (voir [Sécurité](#sécurité)) ; « Afficher le fichier du journal », juste sous la case, l'ouvre dans l'Explorateur | non |
 
 <a id="settings-cyberark"></a>
 
@@ -1310,6 +1310,19 @@ accord). Un réglage que vous avez refusé à l'import, ou changé depuis, n'a p
 | --- | --- | --- |
 | Clés et certificats des serveurs | Tableau des empreintes vérifiées et acceptées (serveur, type, empreinte) : PSMP, SSH direct, certificats FTPS et Bureau à distance des entrées KeePass (une ligne par type de clé) ; « Filtrer les serveurs » réduit la liste. « Oublier les clés choisies » retire les lignes sélectionnées, oubliées à l'enregistrement (« Rétablir les clés retirées » les remet d'ici là) ; la clé sera redemandée à la prochaine connexion | — |
 | Coffre local | Mots de passe maîtres KeePass mémorisés : « Créer le coffre… », « Déverrouiller… », « Changer le mot de passe… », « Supprimer maintenant… » ; ces actions s'appliquent tout de suite, sans « Enregistrer » | — |
+
+<a id="settings-about"></a>
+
+#### Page À propos
+
+Version de ZillaTerm, liens du projet et des notes de version, licence, versions de .NET et de Windows, dossier des
+paramètres et de l'historique (« Ouvrir le dossier »). « Rechercher maintenant » interroge GitHub ; une nouvelle version
+se télécharge dans le dossier Téléchargements, vérifiée par sa somme SHA-256 : rien ne s'installe, vous remplacez
+vous-même l'exécutable. Le lien de nouvelle version de la barre d'état ouvre cette page.
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Rechercher une nouvelle version au démarrage | Une requête vers GitHub au plus une fois par jour ; lien dans la barre d'état si une version plus récente existe | non |
 
 Les réglages que peut diffuser le fichier d'environnement de l'équipe sont listés dans
 [Environnement partagé](#environnement-partagé).
@@ -1507,7 +1520,8 @@ renommé) : téléchargez-la une fois depuis la page des versions.
   - journal `urgence.log` : date, compte Windows, poste, action, base, entrée, cible ; jamais de mot de passe.
     Chaque lecture du mot de passe d'une entrée y est notée, reconnexions et connexions SFTP / SCP de l'onglet
     Fichiers comprises ; si le journal ne peut pas être écrit, la connexion n'est pas ouverte.
-- **Journal de débogage**, désactivé par défaut (menu du bouton Paramètres) :
+- **Journal de débogage**, désactivé par défaut (Paramètres › Général, avec « Afficher le fichier du journal » juste
+  sous la case) :
   `%LOCALAPPDATA%\ZillaTerm\debug.log`, 5 Mo au plus plus une génération `.1`. Il note le déroulement des
   connexions PVWA, PSM, Bureau à distance et SSH : adresses et statuts des requêtes, réglages du fichier .rdp,
   événements et codes du contrôle Bureau à distance, version et algorithmes du serveur SSH, erreurs ; pour chaque
@@ -1799,14 +1813,14 @@ l'écran.
 | « La liste partagée est en cours de modification par quelqu'un d'autre » | Un autre poste écrit la liste depuis plus de 5 secondes, ou garde le fichier ouvert : réessayez dans un instant. |
 | « vous n'avez pas le droit de modifier ce fichier (droits du partage réseau) » | Le partage est en lecture seule pour vous : demandez le droit d'écriture à son responsable. La liste reste utilisable. |
 | Une liste partagée affiche « (illisible) » | Partage injoignable ou fichier endommagé : l'info-bulle donne l'erreur. Si le fichier est endommagé, copiez la version la plus récente du dossier `nom.versions` à sa place. |
-| Comprendre un échec de connexion | Paramètres → Journal de débogage, reproduisez le problème, puis Paramètres → « Afficher le fichier du journal ». |
+| Comprendre un échec de connexion | Paramètres → Journal de débogage, reproduisez le problème, puis « Afficher le fichier du journal », juste sous la case. |
 | Une session PSM dans un onglet demande de confirmer le certificat du PSM | Windows n'approuve pas ce certificat (auto-signé, ou émis pour un autre nom) : comparez l'empreinte avec l'équipe CyberArk avant d'accepter ; elle est ensuite retenue. Un certificat émis par l'autorité de l'entreprise pour le nom du PSM supprime cette question. |
 | Session PSM : « Nouveau certificat pour ce PSM » | L'adresse du PSM regroupe sans doute plusieurs serveurs (répartition de charge), chacun avec son certificat auto-signé, ou le certificat a été renouvelé : comparez l'empreinte avec l'administrateur CyberArk, puis « Lui faire aussi confiance » (autre serveur PSM) ou « Remplacer les certificats connus » (renouvellement). |
 | Session PSM : « Identité de … impossible à vérifier » | ZillaTerm n'a pas pu lire le certificat du PSM avant la connexion (PSM injoignable, port filtré, réponse qui n'est pas du Bureau à distance) : la raison suit le message. Rien n'a été envoyé au PSM. |
 | Une session PSM s'ouvre dans la Connexion Bureau à distance malgré l'option « dans un onglet » | Connexion par une passerelle Bureau à distance, ou client FreeRDP impossible à lancer sur le poste (stratégie du poste) : la barre d'état le dit. |
 | Alt+Tab ou la touche Windows ne répondent plus | L'onglet d'une session PSM a le clavier : toutes les touches vont à la session. Cliquez ailleurs dans ZillaTerm (un autre onglet, la liste). |
-| Session PSM dans un onglet : Ctrl+V d'un fichier ou d'un texte copié sur le poste ne fait rien | Le PVWA n'autorise peut-être pas le presse-papiers, ou le PSM n'autorise que le texte. Paramètres → Journal de débogage, reproduisez (copie, clic dans la session, collage), puis « Afficher le fichier du journal » : les lignes `freerdp` donnent les redirections demandées par le PVWA (`presse-papiers oui/non`), chaque changement du presse-papiers du poste (programme, formats : fichiers, texte ; jamais le contenu) et les échanges du presse-papiers avec le PSM (`cliprdr` : `CB_STREAM_FILECLIP_ENABLED` absent des drapeaux du serveur signifie pas de copie de fichiers). |
-| Session PSM dans un onglet : un disque du poste ne répond pas, ou le journal de débogage se remplit de `drive_map_windows_err` | Paramètres → Journal de débogage, ouvrez la session, ouvrez le disque dans la session (`\\tsclient\…`), puis « Afficher le fichier du journal » : avec des disques partagés, les lignes `rdpdr` donnent chaque demande du PSM aux disques (`MajorFunction` : opération ; `deviceID` : disque) et sa réponse (`ioStatus`, code NTSTATUS : `0x00000000` réussi, `0xC0000001` échec) ; jamais le nom ni le contenu d'un fichier. Le journal devient bavard (deux lignes par demande) : désactivez-le une fois le problème reproduit. |
+| Session PSM dans un onglet : Ctrl+V d'un fichier ou d'un texte copié sur le poste ne fait rien | Le PVWA n'autorise peut-être pas le presse-papiers, ou le PSM n'autorise que le texte. Paramètres → Journal de débogage, reproduisez (copie, clic dans la session, collage), puis « Afficher le fichier du journal » (sous la case) : les lignes `freerdp` donnent les redirections demandées par le PVWA (`presse-papiers oui/non`), chaque changement du presse-papiers du poste (programme, formats : fichiers, texte ; jamais le contenu) et les échanges du presse-papiers avec le PSM (`cliprdr` : `CB_STREAM_FILECLIP_ENABLED` absent des drapeaux du serveur signifie pas de copie de fichiers). |
+| Session PSM dans un onglet : un disque du poste ne répond pas, ou le journal de débogage se remplit de `drive_map_windows_err` | Paramètres → Journal de débogage, ouvrez la session, ouvrez le disque dans la session (`\\tsclient\…`), puis « Afficher le fichier du journal » (sous la case) : avec des disques partagés, les lignes `rdpdr` donnent chaque demande du PSM aux disques (`MajorFunction` : opération ; `deviceID` : disque) et sa réponse (`ioStatus`, code NTSTATUS : `0x00000000` réussi, `0xC0000001` échec) ; jamais le nom ni le contenu d'un fichier. Le journal devient bavard (deux lignes par demande) : désactivez-le une fois le problème reproduit. |
 | Session PSM : « Vérifier la clé de ce PSM » | Le PSM n'accepte que l'ancienne « sécurité RDP », sans TLS : seule l'empreinte de sa clé l'identifie. Acceptez-la au premier usage (elle est retenue) et demandez à l'administrateur CyberArk d'activer TLS sur le PSM. « Clé faible » en rouge : la clé fait moins de 2 048 bits ; cette demande est alors urgente. |
 | Session PSM : « Nouvelle clé pour ce PSM » | L'adresse du PSM regroupe sans doute plusieurs serveurs (répartition de charge), chacun avec sa clé : confirmez-la si l'administrateur CyberArk le confirme. Les clés déjà acceptées le restent. |
 | Session SSH ou PSMP : « La connexion a été coupée par le serveur ou le réseau » ou « Session fermée par le serveur » après une veille, un verrouillage ou une pause | La connexion est perdue : le poste s'est mis en veille, le réseau ou le VPN a changé, un pare-feu l'a oubliée, ou le PSMP a fermé la session (inactivité). ZillaTerm le détecte en une minute au plus (demande de maintien toutes les 15 s, à laquelle le serveur doit répondre) : « Reconnecter » ouvre une nouvelle session ; l'onglet Fichiers propose de rouvrir la sienne. |

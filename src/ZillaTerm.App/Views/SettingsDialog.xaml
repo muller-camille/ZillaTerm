@@ -123,15 +123,6 @@
                             </CheckBox>
                         </DockPanel>
 
-                        <TextBlock Text="{x:Static loc:Strings.SettingsUpdatesSection}" Style="{StaticResource Section}" />
-                        <DockPanel Style="{StaticResource OptionRow}">
-                            <views:TeamBadge DockPanel.Dock="Right" Setting="CheckForUpdates" />
-                            <CheckBox x:Name="UpdateCheckBox">
-                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.AboutAutoCheck}" />
-                            </CheckBox>
-                        </DockPanel>
-                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.UpdateCheckHelp}" />
-
                         <!-- Environnement d'équipe : fichier central relu à chaque démarrage (voir EnvironmentImport). -->
                         <TextBlock Text="{x:Static loc:Strings.SettingsSectionTeam}" Style="{StaticResource Section}" />
                         <Grid Style="{StaticResource FieldRow}">
@@ -167,14 +158,16 @@
 
                         <TextBlock Text="{x:Static loc:Strings.SettingsSectionTroubleshooting}" Style="{StaticResource Section}" />
                         <DockPanel Style="{StaticResource OptionRow}">
-                            <Button x:Name="DebugLogShowButton" DockPanel.Dock="Right" Click="OnShowDebugLog" Margin="12,0,0,0" VerticalAlignment="Top">
-                                <AccessText Text="{x:Static loc:Strings.SettingsDebugLogShow}" />
-                            </Button>
                             <CheckBox x:Name="DebugLogBox" VerticalAlignment="Center">
                                 <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsDebugLog}" />
                             </CheckBox>
                         </DockPanel>
                         <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsDebugLogHelp}" />
+                        <!-- Juste sous la case : le fichier du journal dans l'Explorateur (journal actif ou non, s'il existe). -->
+                        <Button x:Name="DebugLogShowButton" Click="OnShowDebugLog" HorizontalAlignment="Left" Margin="20,6,0,0"
+                                ToolTip="{x:Static loc:Strings.SettingsDebugLogShowTip}" AutomationProperties.HelpText="{x:Static loc:Strings.SettingsDebugLogShowTip}">
+                            <AccessText Text="{x:Static loc:Strings.SettingsDebugLogShow}" />
+                        </Button>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -830,6 +823,22 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
+            </TabItem>
+            <!-- ===== À propos ===== -->
+            <TabItem x:Name="AboutPage" Tag="about" Header="{x:Static loc:Strings.SettingsPageAbout}">
+                <ScrollViewer>
+                    <StackPanel Style="{StaticResource Page}">
+                        <views:AboutPanel x:Name="AboutView" />
+                        <!-- Recherche automatique : à côté de la recherche à la demande. -->
+                        <DockPanel Style="{StaticResource OptionRow}" Margin="0,10,0,0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="CheckForUpdates" />
+                            <CheckBox x:Name="UpdateCheckBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.AboutAutoCheck}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.UpdateCheckHelp}" />
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
     </DockPanel>

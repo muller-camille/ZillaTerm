@@ -381,29 +381,6 @@
             <MenuItem Header="{x:Static loc:Strings.MenuCopyUser}" Click="OnCopyUser" />
         </ContextMenu>
 
-        <!-- Menu du bouton Paramètres : paramètres, journal de débogage (désactivé par défaut), import de sessions, À propos.
-             L'environnement de l'équipe s'importe et s'exporte dans Paramètres › Général. -->
-        <ContextMenu x:Key="SettingsMenu" Opened="OnSettingsMenuOpened">
-            <MenuItem Header="{x:Static loc:Strings.MenuSettings}" Click="OnSettings" FontWeight="SemiBold">
-                <MenuItem.Icon>
-                    <Image Source="{DynamicResource IconSettings}" Width="16" Height="16" />
-                </MenuItem.Icon>
-            </MenuItem>
-            <Separator />
-            <MenuItem Tag="debuglog" Header="{x:Static loc:Strings.MenuDebugLog}" IsCheckable="True" Click="OnToggleDebugLog"
-                      ToolTip="{x:Static loc:Strings.MenuDebugLogTip}" />
-            <MenuItem Header="{x:Static loc:Strings.MenuDebugLogShow}" Click="OnShowDebugLog" />
-            <Separator />
-            <MenuItem Tag="sessionimport" Header="{x:Static loc:Strings.MenuSessionImport}" Click="OnImportSessions"
-                      ToolTip="{x:Static loc:Strings.SessionImportTip}">
-                <MenuItem.Icon>
-                    <Image Source="{DynamicResource IconMigrate}" Width="16" Height="16" />
-                </MenuItem.Icon>
-            </MenuItem>
-            <Separator />
-            <MenuItem Header="{x:Static loc:Strings.MenuAbout}" Click="OnAbout" />
-        </ContextMenu>
-
         <!-- Ligne « compte » réutilisée dans les listes (favoris, résultats de recherche). -->
         <DataTemplate x:Key="AccountRow" DataType="{x:Type core:PvwaAccount}">
             <DockPanel Margin="0,2">
@@ -537,7 +514,7 @@
                             <TextBlock Text="{x:Static loc:Strings.ToolSharing}" Style="{StaticResource ToolLabel}" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource ToolButton}" Click="OnSettingsMenu" ToolTip="{x:Static loc:Strings.ToolSettingsTip}"
+                    <Button Style="{StaticResource ToolButton}" Click="OnSettings" ToolTip="{x:Static loc:Strings.ToolSettingsTip}"
                             AutomationProperties.Name="{x:Static loc:Strings.ToolSettings}">
                         <StackPanel>
                             <Image Source="{DynamicResource IconSettings}" Style="{StaticResource ToolIcon}" />

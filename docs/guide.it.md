@@ -226,7 +226,9 @@ nessuna finestra separata.
   registrazione, la pausa di una scheda in secondo piano vi è segnata: il lettore del rapporto mostra «Visualizzazione
   in pausa» sullo schermo e una banda grigia sulla linea del tempo (vedi
   [Intervento](#8-intervento-registrazione-e-promemoria-di-reperibilità)).
-- **Riconnetti**, «Duplica scheda»: nuova richiesta al PVWA (il token di una sessione PSM vale una sola volta);
+- **Riconnetti** (pulsante della barra della scheda, accanto a «Schermo intero» e «Disconnetti», o menu della
+  scheda; conferma se la sessione è aperta), «Duplica scheda»: nuova richiesta al PVWA (il token di una sessione PSM
+  vale una sola volta);
   motivo e ticket restano quelli della prima connessione. Se nel frattempo la sessione CyberArk è scaduta, viene
   proposta la finestra di accesso, poi la richiesta riparte.
 - La scheda mostra l'etichetta del server (PROD, QA…) e la sua cornice colorata; «Cattura» aggiunge un'immagine al
@@ -778,8 +780,7 @@ all'altro):
 ### Riprendere le sessioni di un altro programma
 
 Per passare a ZillaTerm senza ridigitare i server, e smettere di connettersi a loro direttamente: menu «Importa ▾» ›
-«Sessioni di un altro programma…» in alto nella scheda, o menu **Impostazioni** › «Importa le sessioni di un altro
-programma…». Gli account del PVWA devono essere caricati.
+«Sessioni di un altro programma…» in alto nella scheda. Gli account del PVWA devono essere caricati.
 
 <img src="captures/it/session-import.png" alt="Importazione delle sessioni di un altro programma: anteprima prima dell'importazione" width="820">
 
@@ -1180,15 +1181,16 @@ terminali SSH si impostano a parte (pagina Terminale).
 
 <img src="captures/it/settings.png" alt="Impostazioni" width="480">
 
-Pulsante Impostazioni della barra degli strumenti → «Impostazioni…» (o `Ctrl+,`). La finestra, ridimensionabile, ha
+Pulsante Impostazioni della barra degli strumenti (o `Ctrl+,`). La finestra, ridimensionabile, ha
 una pagina per argomento (a sinistra, `Ctrl+Tab` dall'una all'altra): Generale, CyberArk, SSH, Desktop remoto,
-Terminale, File, I miei server, Intervento, Condivisione, Sicurezza; ognuna sta in una schermata. Ogni impostazione ha
+Terminale, File, I miei server, Intervento, Condivisione, Sicurezza, Informazioni; ognuna sta in una schermata. Ogni impostazione ha
 la sua riga di aiuto sotto; «⚠» vi segnala un rischio reale. «Salva» applica le impostazioni; un valore errato mostra
 la pagina del campo interessato, con il cursore nel campo.
 
 Tutto si applica con «Salva», compreso un ambiente importato; solo le azioni del vault locale (pagina Sicurezza) si
 applicano subito, e lo dicono. «Ulteriori informazioni su questa pagina» (o `F1`), in fondo alla finestra, apre la
-sezione della pagina mostrata in questa guida online (versione installata, lingua dell'interfaccia).
+sezione della pagina mostrata in questa guida online (versione installata, lingua dell'interfaccia). Il pulsante
+**Impostazioni** della barra apre direttamente questa finestra, senza menu.
 
 **Badge «Team»**: a destra di un'impostazione, indica che il [file di ambiente](#ambiente-condiviso) del team (accanto
 all'eseguibile o file centrale) la definisce, con il valore in vigore; la sua descrizione indica il file. L'impostazione
@@ -1204,10 +1206,9 @@ Un'impostazione rifiutata all'importazione, o cambiata dopo, non ha il badge.
 | Lingua dell'interfaccia | Français, English, Italiano o lingua del sistema; applicata dopo la disconnessione da CyberArk o al prossimo avvio | lingua di Windows (inglese se non è tradotta) |
 | Tema | Come Windows, Chiaro o Scuro; applicato subito (il contrasto elevato di Windows ha la precedenza) | come Windows |
 | Conferma prima di chiudere una sessione connessa | SSH, desktop remoto, VNC; «Non chiedere più» nella conferma deseleziona questa impostazione | sì |
-| Cerca una nuova versione all'avvio | Una richiesta a GitHub al massimo una volta al giorno; un link nella barra di stato se esiste una versione più recente (la finestra «Informazioni» ricorda questa impostazione) | no |
 | File centrale | File di ambiente del team su una condivisione di rete, riletto a ogni avvio; le sue modifiche vengono mostrate prima di essere applicate (vedi [Ambiente condiviso](#ambiente-condiviso)) | vuoto |
 | Importare, esportare l'ambiente | «Importa un ambiente…»: le sue modifiche vengono mostrate, poi riportate nelle pagine e applicate con «Salva» («Annulla» le scarta). «Esporta l'ambiente…»: i valori mostrati, né password né dati personali (vedi [Ambiente condiviso](#ambiente-condiviso)) | — |
-| Registro di debug | Svolgimento delle connessioni in un file, senza segreti (vedi [Sicurezza](#sicurezza)); «Mostra il file» lo apre in Esplora risorse. Anche nel menu del pulsante Impostazioni | no |
+| Registro di debug | Svolgimento delle connessioni in un file, senza segreti (vedi [Sicurezza](#sicurezza)); «Mostra il file del registro», subito sotto la casella, lo apre in Esplora risorse | no |
 
 <a id="settings-cyberark"></a>
 
@@ -1308,6 +1309,19 @@ Un'impostazione rifiutata all'importazione, o cambiata dopo, non ha il badge.
 | --- | --- | --- |
 | Chiavi e certificati dei server | Tabella delle impronte verificate e accettate (server, tipo, impronta): PSMP, SSH diretto, certificati FTPS e Desktop remoto delle voci KeePass (una riga per tipo di chiave); «Filtra i server» restringe l'elenco. «Dimentica le chiavi scelte» rimuove le righe selezionate, dimenticate al salvataggio («Ripristina le chiavi rimosse» le rimette fino ad allora); la chiave verrà richiesta di nuovo alla prossima connessione | — |
 | Vault locale | Password principali KeePass memorizzate: «Crea…», «Sblocca…», «Cambia password…», «Elimina ora…»; queste azioni si applicano subito, senza «Salva» | — |
+
+<a id="settings-about"></a>
+
+#### Pagina Informazioni
+
+Versione di ZillaTerm, link al progetto e alle note di rilascio, licenza, versioni di .NET e di Windows, cartella delle
+impostazioni e della cronologia («Apri la cartella»). «Cerca ora» interroga GitHub; una nuova versione viene scaricata
+nella cartella Download, verificata dalla sua somma SHA-256: non si installa nulla, sostituisci tu stesso l'eseguibile.
+Il link della nuova versione nella barra di stato apre questa pagina.
+
+| Impostazione | Ruolo | Predefinito |
+| --- | --- | --- |
+| Cerca una nuova versione all'avvio | Una richiesta a GitHub al massimo una volta al giorno; un link nella barra di stato se esiste una versione più recente | no |
 
 Le impostazioni che il file di ambiente del team può diffondere sono elencate in [Ambiente condiviso](#ambiente-condiviso).
 
@@ -1506,7 +1520,8 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   - `urgence.log`: data, account Windows, computer, azione, database, voce, destinazione; mai una password. Ogni
     lettura della password di una voce vi è annotata, riconnessioni e connessioni SFTP / SCP della scheda File
     comprese; se il registro non può essere scritto, la connessione non viene aperta.
-- **Registro di debug**, disattivato per impostazione predefinita (menu del pulsante Impostazioni):
+- **Registro di debug**, disattivato per impostazione predefinita (Impostazioni › Generale, con «Mostra il file del registro»
+  subito sotto la casella):
   `%LOCALAPPDATA%\ZillaTerm\debug.log`, al massimo 5 MB più una generazione `.1`. Registra lo svolgimento delle
   connessioni PVWA, PSM, desktop remoto e SSH: indirizzi e stati delle richieste, impostazioni del file .rdp, eventi
   e codici del controllo Desktop remoto, versione e algoritmi del server SSH, errori; per ogni protocollo di invio
@@ -1799,14 +1814,14 @@ non lo interrompe. Con csh, ksh, sh o fish il monitoraggio non viene installato 
 | «L'elenco condiviso è in corso di modifica da parte di qualcun altro» | Un altro computer scrive l'elenco da più di 5 secondi, o tiene il file aperto: riprova tra un momento. |
 | «non hai il diritto di modificare questo file (diritti della condivisione di rete)» | La condivisione è in sola lettura per te: chiedi il diritto di scrittura al suo responsabile. L'elenco resta utilizzabile. |
 | Un elenco condiviso mostra «(illeggibile)» | Condivisione irraggiungibile o file danneggiato: la descrizione comandi riporta l'errore. Se il file è danneggiato, copia al suo posto la versione più recente della cartella `nome.versions`. |
-| Capire un errore di connessione | Impostazioni → Registro di debug, riproduci il problema, poi Impostazioni → «Mostra il file del registro». |
+| Capire un errore di connessione | Impostazioni → Registro di debug, riproduci il problema, poi «Mostra il file del registro», subito sotto la casella. |
 | Una sessione PSM in una scheda chiede di confermare il certificato del PSM | Windows non approva questo certificato (autofirmato, o emesso per un altro nome): confronta l'impronta con il team CyberArk prima di accettare; viene poi memorizzata. Un certificato emesso dall'autorità dell'azienda per il nome del PSM elimina questa domanda. |
 | Sessione PSM: «Nuovo certificato per questo PSM» | L'indirizzo del PSM raggruppa probabilmente più server (bilanciamento del carico), ciascuno con il proprio certificato autofirmato, oppure il certificato è stato rinnovato: confronta l'impronta con l'amministratore CyberArk, poi «Fidati anche di questo» (altro server PSM) o «Sostituisci i certificati noti» (rinnovo). |
 | Sessione PSM: «Impossibile verificare l'identità di …» | ZillaTerm non è riuscito a leggere il certificato del PSM prima della connessione (PSM irraggiungibile, porta filtrata, risposta che non è Desktop remoto): il motivo segue il messaggio. Nulla è stato inviato al PSM. |
 | Una sessione PSM si apre in Connessione Desktop remoto nonostante l'opzione «in una scheda» | Connessione tramite un gateway Desktop remoto, oppure client FreeRDP impossibile da avviare sul computer (criteri del computer): la barra di stato lo dice. |
 | Alt+Tab o il tasto Windows non rispondono più | La scheda di una sessione PSM ha la tastiera: tutti i tasti vanno alla sessione. Fai clic altrove in ZillaTerm (un'altra scheda, l'elenco). |
-| Sessione PSM in una scheda: Ctrl+V di un file o di un testo copiato sul computer non fa nulla | Il PVWA forse non consente gli appunti, o il PSM consente solo il testo. Impostazioni → Registro di debug, riproduci (copia, clic nella sessione, incolla), poi «Mostra il file del registro»: le righe `freerdp` riportano i reindirizzamenti richiesti dal PVWA (`presse-papiers oui/non`), ogni modifica degli appunti del computer (programma, formati: file, testo; mai il contenuto) e gli scambi degli appunti con il PSM (`cliprdr`: `CB_STREAM_FILECLIP_ENABLED` assente dai flag del server significa nessuna copia di file). |
-| Sessione PSM in una scheda: un disco del computer non risponde, o il registro di debug si riempie di `drive_map_windows_err` | Impostazioni → Registro di debug, apri la sessione, apri il disco nella sessione (`\\tsclient\…`), poi «Mostra il file del registro»: con dischi condivisi, le righe `rdpdr` danno ogni richiesta del PSM ai dischi (`MajorFunction`: operazione; `deviceID`: disco) e la sua risposta (`ioStatus`, codice NTSTATUS: `0x00000000` riuscita, `0xC0000001` errore); mai il nome né il contenuto di un file. Il registro diventa prolisso (due righe per richiesta): disattivalo una volta riprodotto il problema. |
+| Sessione PSM in una scheda: Ctrl+V di un file o di un testo copiato sul computer non fa nulla | Il PVWA forse non consente gli appunti, o il PSM consente solo il testo. Impostazioni → Registro di debug, riproduci (copia, clic nella sessione, incolla), poi «Mostra il file del registro» (sotto la casella): le righe `freerdp` riportano i reindirizzamenti richiesti dal PVWA (`presse-papiers oui/non`), ogni modifica degli appunti del computer (programma, formati: file, testo; mai il contenuto) e gli scambi degli appunti con il PSM (`cliprdr`: `CB_STREAM_FILECLIP_ENABLED` assente dai flag del server significa nessuna copia di file). |
+| Sessione PSM in una scheda: un disco del computer non risponde, o il registro di debug si riempie di `drive_map_windows_err` | Impostazioni → Registro di debug, apri la sessione, apri il disco nella sessione (`\\tsclient\…`), poi «Mostra il file del registro» (sotto la casella): con dischi condivisi, le righe `rdpdr` danno ogni richiesta del PSM ai dischi (`MajorFunction`: operazione; `deviceID`: disco) e la sua risposta (`ioStatus`, codice NTSTATUS: `0x00000000` riuscita, `0xC0000001` errore); mai il nome né il contenuto di un file. Il registro diventa prolisso (due righe per richiesta): disattivalo una volta riprodotto il problema. |
 | Sessione PSM: «Verifica la chiave di questo PSM» | Il PSM accetta solo la vecchia «sicurezza RDP», senza TLS: solo l'impronta della sua chiave lo identifica. Accettala al primo utilizzo (viene memorizzata) e chiedi all'amministratore CyberArk di attivare TLS sul PSM. «Chiave debole» in rosso: la chiave ha meno di 2.048 bit; questa richiesta è allora urgente. |
 | Sessione PSM: «Nuova chiave per questo PSM» | L'indirizzo del PSM raggruppa probabilmente più server (bilanciamento del carico), ciascuno con la propria chiave: fidati se l'amministratore CyberArk lo conferma. Le chiavi già accettate restano tali. |
 | Sessione SSH o PSMP: «La connessione è stata interrotta dal server o dalla rete» o «Sessione chiusa dal server» dopo una sospensione, un blocco o una pausa | La connessione è persa: il computer è andato in sospensione, la rete o la VPN sono cambiate, un firewall l'ha dimenticata, oppure il PSMP ha chiuso la sessione (inattività). ZillaTerm lo rileva entro un minuto (richiesta di mantenimento ogni 15 s, a cui il server deve rispondere): «Riconnetti» apre una nuova sessione; la scheda File propone di riaprire la propria. |

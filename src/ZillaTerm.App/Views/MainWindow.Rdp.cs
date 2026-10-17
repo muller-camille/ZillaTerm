@@ -44,6 +44,8 @@ public partial class MainWindow
         view.ShowTag(tag);
         var tab = new TabItem { Tag = session };
         tab.Header = TabHeader(tab, label, "IconWindows", duplicate, tag);
+        // Même reconnexion que « Reconnecter » du menu de l'onglet (nouvelle demande au PVWA pour une session PSM).
+        view.ReconnectRequested += async () => await ReconnectTabAsync(tab);
         // Onglet choisi au clavier : Entrée donne le clavier à la session (voir ShowRdpView).
         tab.KeyDown += (_, e) =>
         {

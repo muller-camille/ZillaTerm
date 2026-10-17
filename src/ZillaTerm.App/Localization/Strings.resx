@@ -181,7 +181,7 @@
     <value>Settings</value>
   </data>
   <data name="ToolSettingsTip" xml:space="preserve">
-    <value>PSMP, language, remembered components, debug log</value>
+    <value>ZillaTerm settings: PSMP, language, remote desktop, debug log, About</value>
   </data>
   <data name="TabAvailable" xml:space="preserve">
     <value>Available</value>
@@ -1622,9 +1622,6 @@ Send them in a single {3} archive? One file to transfer and check instead of {0}
   <data name="InvalidFontSize" xml:space="preserve">
     <value>The font size must be between {0} and {1}.</value>
   </data>
-  <data name="MenuAbout" xml:space="preserve">
-    <value>_About ZillaTerm…</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>About ZillaTerm</value>
   </data>
@@ -2043,26 +2040,8 @@ Your changes stay in the editor: save again to retry.</value>
   <data name="DetachedReattach" xml:space="preserve">
     <value>_Bring it back here</value>
   </data>
-  <data name="MenuSettings" xml:space="preserve">
-    <value>_Settings…</value>
-  </data>
-  <data name="MenuDebugLog" xml:space="preserve">
-    <value>_Debug log</value>
-  </data>
-  <data name="MenuDebugLogTip" xml:space="preserve">
-    <value>Records how connections unfold (PVWA, PSM, remote desktop, SSH) in a file, to understand a failure. It contains server and account names, never passwords or tokens. Off by default.</value>
-  </data>
-  <data name="MenuDebugLogShow" xml:space="preserve">
-    <value>Show the debug log _file</value>
-  </data>
   <data name="DebugLogActive" xml:space="preserve">
     <value>Debug log on</value>
-  </data>
-  <data name="DebugLogStarted" xml:space="preserve">
-    <value>Debug log on: {0}</value>
-  </data>
-  <data name="DebugLogStopped" xml:space="preserve">
-    <value>Debug log off.</value>
   </data>
   <data name="DebugLogMissing" xml:space="preserve">
     <value>No debug log yet: turn it on, then reproduce the problem.</value>
@@ -4020,9 +3999,6 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="SettingsPageSecurity" xml:space="preserve">
     <value>Security</value>
   </data>
-  <data name="SettingsUpdatesSection" xml:space="preserve">
-    <value>Updates</value>
-  </data>
   <data name="SettingsRightClickEffect" xml:space="preserve">
     <value>⚠ A stray right-click sends the clipboard to the shell, root shells included.</value>
   </data>
@@ -4046,12 +4022,6 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="ForgetSelectedKeys" xml:space="preserve">
     <value>Forget the selected _keys</value>
-  </data>
-  <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Updates are checked at start-up (Settings › General).</value>
-  </data>
-  <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>Automatic update check is off (Settings › General).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Used only for a PSM connection (not for SSH or SFTP through the PSMP).</value>
@@ -4598,9 +4568,6 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="SessionImportTip" xml:space="preserve">
     <value>Import the sessions of another tool (PuTTY, WinSCP, mRemoteNG, RDCMan…) to open them through CyberArk</value>
-  </data>
-  <data name="MenuSessionImport" xml:space="preserve">
-    <value>Import sessions from another _tool…</value>
   </data>
   <data name="SessionImportDone" xml:space="preserve">
     <value>{0:# server|# servers} imported into My servers</value>
@@ -6524,7 +6491,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Writes how connections go in a file, to understand a failure: server and account names, never a password.</value>
   </data>
   <data name="SettingsDebugLogShow" xml:space="preserve">
-    <value>Show the _file</value>
+    <value>Show the log _file</value>
   </data>
   <data name="TeamBadge" xml:space="preserve">
     <value>Team</value>
@@ -6687,5 +6654,17 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="PsmStartedNoFolders" xml:space="preserve">
     <value>PSM session started: {0} ({1}). Remote Desktop Connection only shares whole drives: no drive shared (“Only these folders”).</value>
+  </data>
+  <data name="SettingsDebugLogShowTip" xml:space="preserve">
+    <value>Opens File Explorer on the debug log file, to read it again or attach it to a message.</value>
+  </data>
+  <data name="RdpReconnect" xml:space="preserve">
+    <value>Re_connect</value>
+  </data>
+  <data name="RdpReconnectTip" xml:space="preserve">
+    <value>New connection in this tab (for a PSM session, a new request to the PVWA); an open session is closed first, after confirmation.</value>
+  </data>
+  <data name="SettingsPageAbout" xml:space="preserve">
+    <value>About</value>
   </data>
 </root>

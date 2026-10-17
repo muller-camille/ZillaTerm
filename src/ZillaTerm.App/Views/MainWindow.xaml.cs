@@ -231,18 +231,8 @@ public partial class MainWindow : Window
         UpdateLink.Visibility = Visibility.Visible;
     }
 
-    private void OnUpdateLink(object sender, RoutedEventArgs e) => ShowAbout();
-
-    private void OnAbout(object sender, RoutedEventArgs e) => ShowAbout();
-
-    private void ShowAbout()
-    {
-        new AboutWindow(_settings, SaveSettings) { Owner = this }.ShowDialog();
-        if (UpdateService.Available is { } info && UpdateChecker.IsNewer(info.Version, UpdateChecker.CurrentVersion))
-        {
-            ShowUpdateLink(info);
-        }
-    }
+    /// <summary>Nouvelle version signalée dans la barre d'état : page « À propos » des Paramètres (téléchargement vérifié).</summary>
+    private void OnUpdateLink(object sender, RoutedEventArgs e) => OpenSettings(about: true);
 
     /// <summary>Accès d'urgence, sans connexion à CyberArk.</summary>
     private bool IsOffline => _client is null;
@@ -1885,18 +1875,29 @@ public partial class MainWindow : Window
     private void OnSettings(object sender, RoutedEventArgs e) => OpenSettings();
 
     /// <param name="sharing">Ouvre la page « Partage » (partage désactivé, depuis « Partager la session »).</param>
-    private void OpenSettings(bool sharing = false)
+    /// <param name="about">Ouvre la page « À propos » (nouvelle version signalée dans la barre d'état).</param>
+    private void OpenSettings(bool sharing = false, bool about = false)
     {
         var language = _settings.Language;
         var centralFile = _settings.EnvironmentFile;
         var pvwa = _settings.PvwaUrl;
-        var dialog = new SettingsDialog(_settings, _keePass.Store, PvwaHost) { Owner = this };
+        var dialog = new SettingsDialog(_settings, _keePass.Store, PvwaHost, SaveSettings) { Owner = this };
         if (sharing)
         {
             dialog.ShowSharingPage();
         }
+        else if (about)
+        {
+            dialog.ShowAboutPage();
+        }
 
         var accepted = dialog.ShowDialog() == true;
+        // Nouvelle version trouvée depuis la page « À propos » : lien dans la barre d'état.
+        if (UpdateService.Available is { } info && UpdateChecker.IsNewer(info.Version, UpdateChecker.CurrentVersion))
+        {
+            ShowUpdateLink(info);
+        }
+
         // Coffre local supprimé ou créé depuis les paramètres : l'arbre « Mes serveurs » peut changer.
         RefreshSaved();
         if (accepted)
@@ -1975,58 +1976,6 @@ public partial class MainWindow : Window
         {
             MainTabs.SelectedItem = tab;
             (tab.Content as SshSessionView)?.FocusTerminal();
-        }
-    }
-
-    /// <summary>Bouton Paramètres : menu sous le bouton (paramètres, journal de débogage).</summary>
-    private void OnSettingsMenu(object sender, RoutedEventArgs e)
-    {
-        var menu = (ContextMenu)FindResource("SettingsMenu");
-        menu.PlacementTarget = (UIElement)sender;
-        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-        menu.IsOpen = true;
-    }
-
-    private void OnSettingsMenuOpened(object sender, RoutedEventArgs e)
-    {
-        foreach (var item in ((ContextMenu)sender).Items.OfType<MenuItem>().Where(i => i.Tag as string == "debuglog"))
-        {
-            item.IsChecked = _settings.DebugLogEnabled;
-        }
-
-        // Accès d'urgence : pas de compte du PVWA auquel rattacher des sessions importées.
-        foreach (var item in ((ContextMenu)sender).Items.OfType<MenuItem>().Where(i => i.Tag as string == "sessionimport"))
-        {
-            item.Visibility = IsOffline ? Visibility.Collapsed : Visibility.Visible;
-        }
-    }
-
-    private void OnToggleDebugLog(object sender, RoutedEventArgs e)
-    {
-        _settings.DebugLogEnabled = ((MenuItem)sender).IsChecked;
-        AppDebugLog.Apply(_settings);
-        SaveSettings();
-        UpdateDebugLogIndicator();
-        SetStatus(DebugLog.FilePath is { } path ? Text.Format(Strings.DebugLogStarted, path) : Strings.DebugLogStopped);
-    }
-
-    /// <summary>Ouvre l'Explorateur sur le fichier du journal, pour le relire ou le joindre à un message.</summary>
-    private void OnShowDebugLog(object sender, RoutedEventArgs e)
-    {
-        var path = DebugLog.FilePath ?? DebugLog.DefaultPath;
-        if (!File.Exists(path))
-        {
-            SetStatus(Strings.DebugLogMissing, isError: true);
-            return;
-        }
-
-        try
-        {
-            WindowsExplorer.ShowFile(path);
-        }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or ArgumentException)
-        {
-            SetStatus(ex.Message, isError: true);
         }
     }
 

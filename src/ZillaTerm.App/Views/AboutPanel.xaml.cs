@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ZillaTerm.App.Localization;
@@ -11,34 +12,47 @@ using ZillaTerm.Core;
 namespace ZillaTerm.App.Views;
 
 /// <summary>
-/// « À propos » : version, liens du projet, licence, dossier des paramètres, et recherche d'une nouvelle version
-/// (téléchargement vérifié par SHA-256 dans le dossier Téléchargements ; l'exécutable n'est jamais remplacé ici).
+/// Page « À propos » des Paramètres : version, liens du projet, licence, dossier des paramètres, et recherche d'une
+/// nouvelle version (téléchargement vérifié par SHA-256 dans le dossier Téléchargements ; l'exécutable n'est jamais
+/// remplacé ici). Un téléchargement en cours s'arrête à la fermeture des Paramètres, pas en changeant de page.
 /// </summary>
-public partial class AboutWindow : Window
+public partial class AboutPanel : UserControl
 {
-    private readonly AppSettings _settings;
-    private readonly Action _saveSettings;
+    private AppSettings _settings = new();
+    private Action _saveSettings = () => { };
     private CancellationTokenSource? _download;
     private string? _downloaded;
+    private Window? _host;
 
-    public AboutWindow(AppSettings settings, Action saveSettings)
+    public AboutPanel()
     {
         InitializeComponent();
-        _settings = settings;
-        _saveSettings = saveSettings;
         ShowLogo(VisualTreeHelper.GetDpi(this).PixelsPerDip);
         VersionText.Text = Text.Format(Strings.AboutVersion, UpdateChecker.CurrentVersion);
         LicenseText.Text = Strings.AboutLicense;
         SystemText.Text = Text.Format(Strings.AboutSystem, RuntimeInformation.FrameworkDescription, RuntimeInformation.OSDescription,
             RuntimeInformation.ProcessArchitecture);
         FolderText.Text = Text.Format(Strings.AboutSettingsFolder, SettingsFolder);
-        AutoCheckText.Text = settings.CheckForUpdates ? Strings.AboutAutoCheckOn : Strings.AboutAutoCheckOff;
         if (UpdateService.Available is { } known)
         {
             ShowUpdate(known);
         }
 
-        Closed += (_, _) => _download?.Cancel();
+        Loaded += (_, _) =>
+        {
+            if (_host is null && Window.GetWindow(this) is { } host)
+            {
+                _host = host;
+                host.Closed += (_, _) => _download?.Cancel();
+            }
+        };
+    }
+
+    /// <param name="saveSettings">Enregistre les réglages (date de la dernière recherche d'une nouvelle version).</param>
+    internal void Initialize(AppSettings settings, Action? saveSettings)
+    {
+        _settings = settings;
+        _saveSettings = saveSettings ?? (() => { });
     }
 
     /// <summary>Taille du logo à l'écran : sur un écran à une autre échelle, une autre image du .ico.</summary>
@@ -83,7 +97,7 @@ public partial class AboutWindow : Window
     {
         CheckButton.IsEnabled = false;
         UpdateText.Text = Strings.AboutChecking;
-        UpdateText.ClearValue(ForegroundProperty);
+        UpdateText.ClearValue(TextBlock.ForegroundProperty);
         try
         {
             var latest = await UpdateChecker.CheckAsync(UpdateService.Http, CancellationToken.None);
@@ -134,7 +148,7 @@ public partial class AboutWindow : Window
         DownloadProgress.Value = 0;
         DownloadProgress.Visibility = Visibility.Visible;
         UpdateText.Text = Text.Format(Strings.AboutDownloading, info.PackageName);
-        UpdateText.ClearValue(ForegroundProperty);
+        UpdateText.ClearValue(TextBlock.ForegroundProperty);
         _download = new CancellationTokenSource();
         try
         {
@@ -146,7 +160,7 @@ public partial class AboutWindow : Window
         }
         catch (OperationCanceledException) when (_download.IsCancellationRequested)
         {
-            // Fenêtre fermée pendant le téléchargement : le fichier partiel a été supprimé.
+            // Paramètres fermés pendant le téléchargement : le fichier partiel a été supprimé.
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -200,7 +214,15 @@ public partial class AboutWindow : Window
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or ArgumentException)
         {
-            MessageBox.Show(this, ex.Message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError(ex.Message);
+        }
+    }
+
+    private void ShowError(string message)
+    {
+        if (Window.GetWindow(this) is { } owner)
+        {
+            MessageBox.Show(owner, message, Strings.AboutTitle, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -212,7 +234,7 @@ public partial class AboutWindow : Window
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
-            MessageBox.Show(this, ex.Message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError(ex.Message);
         }
     }
 }
