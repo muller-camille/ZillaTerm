@@ -903,8 +903,11 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
     the meantime is kept. A small isolated change (a character typed) is kept once the screen has not moved for 3
     seconds, at the latest after a minute; a still screen costs nothing. Beyond **100 MB of journal**, the screen is
     kept only once every 10 seconds: the journal notes it, the "Intervention" tab says so and the indicator becomes "●
-    Screen recorded (every 10 s)". A session opened with Remote Desktop Connection (mstsc) is not recorded this way:
-    only a capture keeps it.
+    Screen recorded (every 10 s)". Opening the session (PSM screen, Windows sign-in, desktop, application) costs a few
+    whole screens, 0.1 to 1 MB each depending on the screen size and background. With the debug log, a summary every
+    minute gives what the screen cost (captures, frames kept including whole ones, weight, journal size): weight on a
+    still screen shows a picture that changes without it showing. A session opened with Remote Desktop Connection
+    (mstsc) is not recorded this way: only a capture keeps it.
 - **"Intervention" tab of the side panel** (`Ctrl+4`): it appears when recording starts, with a red dot while recording
   lasts: title, notes and history stay next to the session. Opening an SSH session does not replace it with the "Files"
   tab. A click on "● Intervention recorded" in the status bar or on **"Title, notes and history"** in the Intervention
@@ -1415,7 +1418,8 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
   one `.1` generation. It records how PVWA, PSM, remote desktop and SSH connections unfold: request addresses and
   statuses, .rdp file settings, Remote Desktop control events and codes, SSH server version and algorithms, errors;
   for each refused upload protocol, the step (connection, scp command, file announcement), the server's answer and
-  the protocol that took over. It contains server and account names, but **never** a password, session token, PSM session request (`PSM@…` masked), signature, request header or
+  the protocol that took over; while an intervention is recorded, a summary every minute of the screen of remote
+  desktop sessions (captures, frames kept, weight, journal size). It contains server and account names, but **never** a password, session token, PSM session request (`PSM@…` masked), signature, request header or
   body, nor session content. The status bar shows it while it is on. Read it before passing it on, and delete it
   once the problem is solved.
 - **Edited files**: the local copy opened in the editor is stored in the temporary folder (`edit`) and deleted when the

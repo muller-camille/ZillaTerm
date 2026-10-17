@@ -16,7 +16,8 @@ namespace ZillaTerm.App.Services.Rdp;
 /// capturé (<see cref="Show"/>) : un onglet en arrière-plan ou une fenêtre réduite n'a rien à montrer. De retour sur
 /// l'onglet, ce qui a changé entre-temps est gardé comme tout autre changement. Une pause de l'affichage
 /// (<see cref="SetPause"/>) est marquée dans l'enregistrement, avec sa raison : le lecteur du rapport l'affiche sur l'écran
-/// et sur la frise ; l'écran revient entier à la reprise.
+/// et sur la frise ; l'écran revient entier à la reprise. Avec le journal de débogage, un bilan par minute (captures,
+/// images gardées, poids, taille du journal) montre ce que coûte l'écran.
 /// </remarks>
 internal sealed class RdpScreenRecorder : IDisposable
 {
@@ -34,6 +35,7 @@ internal sealed class RdpScreenRecorder : IDisposable
     private string? _journal;
     private DateTime _lastCapture;
     private byte[]? _buffer;
+    private readonly ScreenRecordingStats _stats = new();
 
     public RdpScreenRecorder(RdpSession session, InterventionRecorder recorder)
     {
@@ -85,12 +87,38 @@ internal sealed class RdpScreenRecorder : IDisposable
         {
             // Session fermée.
         }
+        finally
+        {
+            WriteStats(DateTime.UtcNow, final: true);
+        }
+    }
+
+    /// <summary>Bilan de l'écran gardé dans le journal de débogage, chaque minute et à la fin (fil des captures).</summary>
+    private void WriteStats(DateTime now, bool final)
+    {
+        if (_stats.Report(now, final) is not { } line || !DebugLog.Enabled)
+        {
+            return;
+        }
+
+        // Taille du journal seulement si c'est encore celui de ces images (pas après l'arrêt ou un nouvel enregistrement).
+        var journal = _journal is not null && _recorder.JournalPath == _journal
+            ? " ; journal " + ScreenRecordingStats.Bytes(_recorder.JournalBytes)
+              + (_recorder.ScreenThrottled ? ", une capture toutes les 10 s (au-delà de 100 Mo)" : "")
+            : "";
+        DebugLog.Write("intervention", $"Écran de {_session.Label}, {line}{journal}");
     }
 
     private void Capture()
     {
         var journal = _recorder.JournalPath;
         var now = DateTime.UtcNow;
+        if (journal is null)
+        {
+            // Enregistrement arrêté : bilan de ses dernières images.
+            WriteStats(now, final: true);
+        }
+
         // Pause de l'affichage, ou sa fin : marquée dans l'enregistrement de ce journal (pas de bridage : une marque ne
         // pèse rien), même onglet en arrière-plan.
         var pause = (ScreenPause)Volatile.Read(ref _pause);
@@ -129,15 +157,22 @@ internal sealed class RdpScreenRecorder : IDisposable
         // capture, même sans changement : un reste sous le seuil de bruit se rattrape une fois l'écran immobile.
         if (_encoder is null || journal != _journal)
         {
+            // Bilan de l'enregistrement précédent, avant celui du nouveau.
+            WriteStats(now, final: true);
             // Numéro d'enregistrement d'écran unique dans le journal, pour que le rapport sépare les sessions.
             _encoder = new ScreenTileEncoder(_recorder.NextScreenStream());
             _journal = journal;
         }
 
         int stride = pixels.Width * 4;
-        if (_encoder.Encode(now, pixels.Bgra.AsSpan(0, stride * pixels.Height), pixels.Width, pixels.Height, stride) is { } frame)
+        var frame = _encoder.Encode(now, pixels.Bgra.AsSpan(0, stride * pixels.Height), pixels.Width, pixels.Height, stride);
+        _stats.Captured(now);
+        if (frame is not null)
         {
             _recorder.RecordScreen(journal, _session.Label, frame, now);
+            _stats.Kept(frame);
         }
+
+        WriteStats(now, final: false);
     }
 }

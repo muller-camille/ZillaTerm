@@ -962,8 +962,11 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
     caractère tapé) l'est dès que l'écran ne bouge plus pendant 3 secondes, au plus tard après une minute ; un écran
     immobile ne coûte rien. Au-delà de **100 Mo de journal**, l'écran n'est plus gardé qu'une fois toutes les 10
     secondes : le journal le note, l'onglet « Intervention » le dit et l'indicateur devient « ● Écran enregistré (toutes
-    les 10 s) ». Une session ouverte avec Connexion Bureau à distance (mstsc) n'est pas enregistrée ainsi : seule la
-    capture la garde.
+    les 10 s) ». L'ouverture de la session (écran du PSM, ouverture de session Windows, bureau, application) coûte
+    quelques écrans entiers, de 0,1 à 1 Mo chacun selon la taille de l'écran et le fond. Avec le journal de débogage,
+    chaque minute un bilan donne ce que l'écran a coûté (captures, images gardées dont complètes, poids, taille du
+    journal) : du poids sur un écran immobile montre une image qui change sans que cela se voie. Une session ouverte
+    avec Connexion Bureau à distance (mstsc) n'est pas enregistrée ainsi : seule la capture la garde.
 - **Onglet « Intervention » du panneau de gauche** (`Ctrl+4`) : il apparaît au début de l'enregistrement, avec une
   pastille rouge tant que l'enregistrement dure : titre, notes et historique restent à côté de la session. Ouvrir une
   session SSH ne le remplace pas par l'onglet « Fichiers ». Un clic sur « ● Intervention enregistrée » dans la barre
@@ -1499,7 +1502,9 @@ renommé) : téléchargez-la une fois depuis la page des versions.
   connexions PVWA, PSM, Bureau à distance et SSH : adresses et statuts des requêtes, réglages du fichier .rdp,
   événements et codes du contrôle Bureau à distance, version et algorithmes du serveur SSH, erreurs ; pour chaque
   protocole d'envoi refusé, l'étape (connexion, commande scp, annonce du fichier), la réponse du serveur et le
-  protocole qui a pris le relais. Il contient des noms de serveurs et de comptes, mais
+  protocole qui a pris le relais ; pendant l'enregistrement d'une intervention, un bilan par minute de l'écran des
+  sessions Bureau à distance (captures, images gardées, poids, taille du journal). Il contient des noms de serveurs
+  et de comptes, mais
   **jamais** de mot de passe, de jeton de session, de demande de session PSM (`PSM@…` masqué), de signature,
   d'en-tête ou de corps de requête, ni le contenu des sessions. La barre d'état le signale tant qu'il est actif.
   Relisez-le avant de le transmettre, et supprimez-le une fois le problème résolu.
