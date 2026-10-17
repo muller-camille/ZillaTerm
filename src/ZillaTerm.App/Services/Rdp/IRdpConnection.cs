@@ -42,6 +42,12 @@ internal interface IRdpConnection
     /// </summary>
     void PauseDisplay(bool paused);
 
+    /// <summary>
+    /// Bureau tel que le client l'a décodé, reçu par un tube (client FreeRDP, option « /frame-pipe ») ; null pour le
+    /// contrôle de Windows ou avant le lancement du client. Lisible depuis n'importe quel fil.
+    /// </summary>
+    Core.Rdp.RemoteScreen? Screen { get; }
+
     /// <summary>Appelle <paramref name="pong"/> (thread de l'interface) dès que la connexion répond.</summary>
     void Ping(Action pong);
 

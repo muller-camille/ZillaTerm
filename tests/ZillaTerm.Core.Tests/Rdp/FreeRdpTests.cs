@@ -234,6 +234,27 @@ public class FreeRdpTests
             a => a.StartsWith("/drive", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// Tube des zones modifiées du bureau : poignée héritée en décimal et intervalle, une seule fois ; absent sans tube ;
+    /// toute autre valeur refusée (rien d'autre ne peut se glisser dans l'option).
+    /// </summary>
+    [Fact]
+    public void FramePipeIsAnInheritedHandleNumber()
+    {
+        var settings = Read(RemoteAppFile).ForPsmTab();
+
+        var arguments = FreeRdpArguments.Build(settings, 1, (1280, 800), null, false, [Fingerprint], framePipe: "1234").Arguments;
+
+        Assert.Contains("/frame-pipe:1234,interval:200", arguments);
+        AssertEachOptionOnce(arguments);
+        Assert.DoesNotContain(FreeRdpArguments.Build(settings, 1, (1280, 800), null, false, [Fingerprint]).Arguments,
+            a => a.StartsWith("/frame-pipe", StringComparison.Ordinal));
+        foreach (var bad in (string[])["", "12,interval:10", "0x4D2", "-1", "١٢", "123456789012345678901"])
+        {
+            Assert.Throws<ArgumentException>(() => FreeRdpArguments.Build(settings, 1, (1280, 800), null, false, [Fingerprint], framePipe: bad));
+        }
+    }
+
     /// <summary>Dossier qui couperait l'option ou chemin non résolu (variable) : refusé, jamais passé à FreeRDP.</summary>
     [Theory]
     [InlineData("Mon partage", @"C:\Partage")]

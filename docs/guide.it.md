@@ -960,10 +960,12 @@ reperibilità o no:
   - le **catture**: «Cattura un desktop remoto…» (scheda «Intervento») acquisisce l'immagine di una finestra Connessione
     Desktop remoto (sessioni PSM; una finestra ridotta a icona non può essere catturata), e il pulsante «Cattura» delle
     schede desktop remoto di ZillaTerm acquisisce il desktop visualizzato;
-  - lo **schermo delle sessioni desktop remoto aperte in una scheda**, come lo invia il protocollo RDP: la scheda
-    visualizzata è catturata ogni secondo e sono conservate solo le zone modificate (quadrati di 64 × 64 pixel a colori
-    16 bit, compressi; una zona già vista, come un menu che ricompare, è conservata una volta sola). «● Schermo
-    registrato» nella barra della scheda lo ricorda. Una scheda in secondo piano, una finestra ridotta a icona e lo
+  - lo **schermo delle sessioni desktop remoto aperte in una scheda**, come lo invia il protocollo RDP: ogni secondo,
+    lo schermo della scheda visualizzata viene rilevato e sono conservate solo le zone modificate (quadrati di 64 × 64
+    pixel a colori 16 bit, compressi; una zona già vista, come un menu che ricompare, è conservata una volta sola). Con
+    il client FreeRDP di ZillaTerm, è il desktop come il client l'ha decodificato, alla sua dimensione e al pixel, anche
+    se la finestra è ridimensionata, coperta da un'altra o non risponde; con il controllo Desktop remoto di Windows, una
+    cattura della finestra. «● Schermo registrato» nella barra della scheda lo ricorda. Una scheda in secondo piano, una finestra ridotta a icona e lo
     schermo intero non sono catturati; di ritorno sulla scheda, ciò che è cambiato nel frattempo viene conservato. Una
     piccola modifica isolata (un carattere digitato) è conservata non appena lo schermo resta fermo per 3 secondi, al
     più tardi dopo un minuto; uno schermo fermo non costa nulla. Oltre **100 MB di registro** lo schermo è conservato

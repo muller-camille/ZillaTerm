@@ -41,6 +41,9 @@ public static class FreeRdpArguments
     /// </summary>
     public static bool Supports(RdpConnectionSettings settings) => !settings.UsesGateway;
 
+    /// <summary>Intervalle minimal entre deux messages du tube des zones modifiées (<c>framePipe</c> de <see cref="Build"/>).</summary>
+    public static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(200);
+
     /// <param name="parentWindow">Fenêtre de l'onglet où FreeRDP crée la sienne.</param>
     /// <param name="pixels">
     /// Taille de l'onglet en pixels : résolution du bureau distant, mise à l'échelle ensuite
@@ -62,9 +65,17 @@ public static class FreeRdpArguments
     /// Dossier de configuration de FreeRDP (certificats et clés qu'il connaîtrait) : vide, propre à ZillaTerm ; null pour
     /// le dossier par défaut.
     /// </param>
-    /// <exception cref="ArgumentException">Valeur avec un retour à la ligne ou un caractère nul ; dossier partagé invalide.</exception>
+    /// <param name="framePipe">
+    /// Tube (poignée héritée, en décimal) où le client écrit les zones modifiées du bureau (<see cref="RemoteScreen"/>) ;
+    /// null pour ne rien écrire.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// Valeur avec un retour à la ligne ou un caractère nul ; dossier partagé invalide ; poignée de tube qui n'est pas un
+    /// nombre.
+    /// </exception>
     public static FreeRdpLaunch Build(RdpConnectionSettings settings, long parentWindow, (int Width, int Height) pixels,
-        string? password, bool verbose, IReadOnlyCollection<string> fingerprints, bool legacySecurity = false, string? configPath = null)
+        string? password, bool verbose, IReadOnlyCollection<string> fingerprints, bool legacySecurity = false, string? configPath = null,
+        string? framePipe = null)
     {
         if (!Supports(settings))
         {
@@ -137,6 +148,17 @@ public static class FreeRdpArguments
         }
 
         arguments.Add("/tune:" + string.Join(",", tune));
+        if (framePipe is not null)
+        {
+            if (framePipe.Length is 0 or > 20 || !framePipe.All(char.IsAsciiDigit))
+            {
+                throw new ArgumentException("Poignée de tube invalide", nameof(framePipe));
+            }
+
+            // Bureau tel que le client l'a décodé, zones modifiées seulement : au plus un message par intervalle.
+            arguments.Add($"/frame-pipe:{framePipe},interval:{FrameInterval.TotalMilliseconds:0}");
+        }
+
         arguments.Add(settings.RedirectClipboard ? "+clipboard" : "-clipboard");
         if (settings.RedirectDrives)
         {

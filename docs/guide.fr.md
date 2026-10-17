@@ -963,10 +963,12 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   - les **captures** : « Capturer un Bureau à distance… » (onglet « Intervention ») prend une image d'une fenêtre
     Connexion Bureau à distance (sessions PSM ; une fenêtre réduite ne peut pas l'être), et le bouton « Capture » des
     onglets Bureau à distance de ZillaTerm prend celle du bureau affiché ;
-  - l'**écran des sessions Bureau à distance ouvertes dans un onglet**, comme le protocole RDP l'envoie : l'onglet
-    affiché est capturé chaque seconde et seules les zones modifiées sont gardées (carrés de 64 × 64 pixels en couleurs
-    16 bits, compressés ; une zone déjà vue, comme un menu qui revient, n'est gardée qu'une fois). « ● Écran
-    enregistré » dans la barre de l'onglet le rappelle. Un onglet en arrière-plan, une fenêtre réduite et le plein écran
+  - l'**écran des sessions Bureau à distance ouvertes dans un onglet**, comme le protocole RDP l'envoie : chaque
+    seconde, l'écran de l'onglet affiché est relevé et seules les zones modifiées sont gardées (carrés de 64 × 64 pixels
+    en couleurs 16 bits, compressés ; une zone déjà vue, comme un menu qui revient, n'est gardée qu'une fois). Avec le
+    client FreeRDP de ZillaTerm, c'est le bureau tel que le client l'a décodé, à sa taille et au pixel près, même si la
+    fenêtre est mise à l'échelle, couverte par une autre ou ne répond plus ; avec le contrôle Bureau à distance de
+    Windows, une capture de la fenêtre. « ● Écran enregistré » dans la barre de l'onglet le rappelle. Un onglet en arrière-plan, une fenêtre réduite et le plein écran
     ne sont pas capturés ; de retour sur l'onglet, ce qui a changé entre-temps est gardé. Un petit changement isolé (un
     caractère tapé) l'est dès que l'écran ne bouge plus pendant 3 secondes, au plus tard après une minute ; un écran
     immobile ne coûte rien. Au-delà de **100 Mo de journal**, l'écran n'est plus gardé qu'une fois toutes les 10

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
@@ -47,6 +48,9 @@ internal sealed class FreeRdpConnection : IRdpConnection
     // Déconnexion demandée pendant la fin de la connexion (canaux) : FreeRDP peut tarder à s'arrêter (constaté).
     private static readonly TimeSpan DisconnectDelay = TimeSpan.FromSeconds(10);
 
+    // Un lancement à la fois : le tube de l'écran (poignée héritable) n'est hérité que par son client.
+    private static readonly Lock LaunchLock = new();
+
     private readonly RdpSession _session;
     private readonly RdpConnectionRequest _request;
     private readonly string _label;
@@ -68,6 +72,7 @@ internal sealed class FreeRdpConnection : IRdpConnection
     private bool _disconnecting;
     private bool _legacySecurity;
     private IReadOnlyCollection<string> _fingerprints = [];
+    private RemoteScreen? _screen;
 
     public FreeRdpConnection(RdpSession session, RdpConnectionRequest request, string label)
     {
@@ -86,6 +91,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
     public bool HasWindow => _window != IntPtr.Zero;
 
     public bool CanPauseDisplay => true;
+
+    public RemoteScreen? Screen => Volatile.Read(ref _screen);
 
     /// <summary>
     /// Affichage en pause : la fenêtre du client est masquée, et le client demande alors au serveur de ne plus envoyer
@@ -159,18 +166,43 @@ internal sealed class FreeRdpConnection : IRdpConnection
         // Ancienne sécurité RDP permise au client seulement pour un serveur lu sans TLS : un serveur lu avec TLS qui ne la
         // proposerait plus est refusé, puis relu (RecheckAsync), et le retrait de TLS signalé.
         _legacySecurity = check.IsKey;
-        var launch = FreeRdpArguments.Build(settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled, _fingerprints,
-            _legacySecurity, FreeRdpClient.ConfigPath);
-        if (DebugLog.Enabled)
+        Process process;
+        FreeRdpLaunch launch;
+        AnonymousPipeServerStream frames;
+        lock (LaunchLock)
         {
-            // Ni jeton ni mot de passe dans les options : ils sont dans le fichier de connexion (entrée standard).
-            DebugLog.Write("freerdp", $"{_label} : redirections : presse-papiers {OnOff(settings.RedirectClipboard)}, "
-                + $"disques {OnOff(settings.RedirectDrives)}, imprimantes {OnOff(settings.RedirectPrinters)}, "
-                + $"cartes à puce {OnOff(settings.RedirectSmartCards)} ; options : {string.Join(" ", launch.Arguments)}");
+            // Bureau tel que le client l'a décodé, par un tube dont il hérite l'écriture (« /frame-pipe ») :
+            // l'enregistrement et le partage de l'écran le lisent à la place d'une capture de la fenêtre. Créé ici :
+            // aucun autre client lancé en même temps n'en hérite.
+            frames = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
+            try
+            {
+                launch = FreeRdpArguments.Build(settings, slot.ToInt64(), pixels, _request.Password, DebugLog.Enabled, _fingerprints,
+                    _legacySecurity, FreeRdpClient.ConfigPath, frames.GetClientHandleAsString());
+                if (DebugLog.Enabled)
+                {
+                    // Ni jeton ni mot de passe dans les options : ils sont dans le fichier de connexion (entrée standard).
+                    DebugLog.Write("freerdp", $"{_label} : redirections : presse-papiers {OnOff(settings.RedirectClipboard)}, "
+                        + $"disques {OnOff(settings.RedirectDrives)}, imprimantes {OnOff(settings.RedirectPrinters)}, "
+                        + $"cartes à puce {OnOff(settings.RedirectSmartCards)} ; options : {string.Join(" ", launch.Arguments)}");
+                }
+
+                process = FreeRdpClient.Start(launch.Arguments);
+            }
+            catch
+            {
+                frames.Dispose();
+                throw;
+            }
+            finally
+            {
+                // Seul le client garde l'écriture : sa fin ferme le tube.
+                frames.DisposeLocalCopyOfClientHandle();
+            }
         }
 
-        var process = FreeRdpClient.Start(launch.Arguments);
         _process = process;
+        ReadScreen(frames);
         DebugLog.Write("freerdp", $"{_label} : client FreeRDP lancé (processus {process.Id}), session {pixels.Width} × {pixels.Height}, "
             + $"{_fingerprints.Count} empreinte(s) acceptée(s)"
             + (settings.IsRemoteApp ? $", application distante {settings.RemoteApplicationProgram}" : ""));
@@ -214,6 +246,32 @@ internal sealed class FreeRdpConnection : IRdpConnection
             // Client déjà arrêté, ou onglet fermé entre-temps : sa fin est signalée par WatchAsync.
             DebugLog.Write("freerdp", $"{_label} : fichier de connexion non transmis ({e.Message})");
         }
+    }
+
+    /// <summary>
+    /// Lit le bureau envoyé par le client sur un fil à part (lectures bloquantes), jusqu'à la fin du client ; un flux
+    /// illisible est noté, l'écran est alors capturé comme avant.
+    /// </summary>
+    private void ReadScreen(AnonymousPipeServerStream frames)
+    {
+        var screen = new RemoteScreen();
+        Volatile.Write(ref _screen, screen);
+        var label = _label;
+        new Thread(() =>
+        {
+            using (frames)
+            {
+                screen.Read(frames);
+            }
+
+            DebugLog.Write("freerdp", screen.Failed
+                ? $"{label} : bureau reçu du client illisible ; l'écran est capturé dans l'onglet"
+                : $"{label} : fin du bureau reçu du client ({screen.Version} mise(s) à jour dont {screen.PartialUpdates} partielle(s))");
+        })
+        {
+            IsBackground = true,
+            Name = "Bureau FreeRDP",
+        }.Start();
     }
 
     public void Resize((int Width, int Height) pixels)
