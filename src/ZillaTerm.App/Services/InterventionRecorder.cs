@@ -78,6 +78,9 @@ public sealed class InterventionRecorder
     /// <summary>Fichier de l'enregistrement en cours.</summary>
     public string? JournalPath => _journal?.Path;
 
+    /// <summary>Taille du journal en cours (octets écrits) ; 0 hors enregistrement.</summary>
+    public long JournalBytes => _journal?.Length ?? 0;
+
     /// <summary>Le disque a refusé une écriture : la suite de l'intervention n'est plus gardée.</summary>
     public Exception? Failure => _journal?.Failure;
 

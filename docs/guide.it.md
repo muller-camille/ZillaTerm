@@ -958,8 +958,12 @@ reperibilità o no:
     piccola modifica isolata (un carattere digitato) è conservata non appena lo schermo resta fermo per 3 secondi, al
     più tardi dopo un minuto; uno schermo fermo non costa nulla. Oltre **100 MB di registro** lo schermo è conservato
     solo una volta ogni 10 secondi: il registro lo annota, la scheda «Intervento» lo dice e l'indicatore diventa «●
-    Schermo registrato (ogni 10 s)». Una sessione aperta con Connessione Desktop remoto (mstsc) non è registrata così:
-    solo la cattura la conserva.
+    Schermo registrato (ogni 10 s)». L'apertura della sessione (schermata del PSM, accesso a Windows, desktop,
+    applicazione) costa alcuni schermi interi, da 0,1 a 1 MB ciascuno secondo la dimensione dello schermo e lo sfondo.
+    Con il registro di debug, ogni minuto un riepilogo indica quanto è costato lo schermo (catture, immagini
+    conservate di cui complete, peso, dimensione del registro): del peso su uno schermo fermo indica un'immagine che
+    cambia senza che si veda. Una sessione aperta con Connessione Desktop remoto (mstsc) non è registrata così: solo
+    la cattura la conserva.
 - **Scheda «Intervento» del pannello laterale** (`Ctrl+4`): compare all'inizio della registrazione, con un pallino rosso
   finché la registrazione dura: titolo, note e cronologia restano accanto alla sessione. Aprire una sessione SSH non la
   sostituisce con la scheda «File». Un clic su «● Intervento registrato» nella barra di stato o su **«Titolo, note e
@@ -1497,7 +1501,8 @@ può scaricarla da solo (repository rinominato): scaricala una volta dalla pagin
   connessioni PVWA, PSM, desktop remoto e SSH: indirizzi e stati delle richieste, impostazioni del file .rdp, eventi
   e codici del controllo Desktop remoto, versione e algoritmi del server SSH, errori; per ogni protocollo di invio
   rifiutato, il passo (connessione, comando scp, annuncio del file), la risposta del server e il protocollo
-  subentrato. Contiene nomi di server e di account, ma **mai** password, token di
+  subentrato; durante la registrazione di un intervento, un riepilogo al minuto dello schermo delle sessioni desktop
+  remoto (catture, immagini conservate, peso, dimensione del registro). Contiene nomi di server e di account, ma **mai** password, token di
   sessione, richiesta di sessione PSM (`PSM@…` mascherata), firma, intestazione o corpo delle richieste, né il
   contenuto delle sessioni. La barra di stato lo segnala finché è attivo. Rileggilo prima di trasmetterlo, ed
   eliminalo una volta risolto il problema.
