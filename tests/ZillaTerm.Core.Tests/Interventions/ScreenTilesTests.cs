@@ -41,8 +41,9 @@ public sealed partial class ScreenTilesTests : IDisposable
         return pixels;
     }
 
-    private static ushort[] Rgb565(byte[] bgra) =>
-        Enumerable.Range(0, bgra.Length / 4).Select(i => (ushort)(((bgra[(4 * i) + 2] >> 3) << 11) | ((bgra[(4 * i) + 1] >> 2) << 5) | (bgra[4 * i] >> 3))).ToArray();
+    /// <summary>Pixels attendus du décodeur : ceux de l'écran, au pixel près (0x00RRGGBB).</summary>
+    private static uint[] Exact(byte[] bgra) =>
+        Enumerable.Range(0, bgra.Length / 4).Select(i => (uint)(bgra[4 * i] | (bgra[(4 * i) + 1] << 8) | (bgra[(4 * i) + 2] << 16))).ToArray();
 
     private static void Paint(byte[] bgra, int width, int x0, int y0, int w, int h, byte value)
     {
@@ -58,7 +59,7 @@ public sealed partial class ScreenTilesTests : IDisposable
 
     /// <summary>
     /// Première image : image clé avec toutes les tuiles (bords complétés), tuiles identiques gardées une fois, relue au
-    /// pixel près en 16 bits ; la même image ensuite ne donne rien.
+    /// pixel près ; la même image ensuite ne donne rien.
     /// </summary>
     [Fact]
     public void FirstFrameIsAKeyFrameThatDecodesExactly()
@@ -79,7 +80,7 @@ public sealed partial class ScreenTilesTests : IDisposable
 
         var decoder = new ScreenTileDecoder();
         Assert.True(decoder.Apply(frame.Data));
-        Assert.Equal(Rgb565(screen), decoder.Pixels);
+        Assert.Equal(Exact(screen), decoder.Pixels);
         Assert.Null(encoder.Encode(T0.AddSeconds(1), screen, width, height, width * 4));
     }
 
@@ -101,13 +102,13 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.False(frame.Header.Key);
         Assert.Equal(1, frame.Header.Placements);
         Assert.True(decoder.Apply(frame.Data));
-        Assert.Equal(Rgb565(screen), decoder.Pixels);
+        Assert.Equal(Exact(screen), decoder.Pixels);
 
         var key = encoder.Encode(T0.AddSeconds(1), screen, width, height, width * 4, key: true)!;
         Assert.True(key.Header.Key);
         var newcomer = new ScreenTileDecoder();
         Assert.True(newcomer.Apply(key.Data));
-        Assert.Equal(Rgb565(screen), newcomer.Pixels);
+        Assert.Equal(Exact(screen), newcomer.Pixels);
     }
 
     /// <summary>
@@ -133,7 +134,7 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.False(typed.Header.Key);
         Assert.Equal(1, typed.Header.Placements);
         Assert.True(decoder.Apply(typed.Data));
-        Assert.Equal(Rgb565(caret), decoder.Pixels);
+        Assert.Equal(Exact(caret), decoder.Pixels);
 
         // Boîte de dialogue sur 2 × 2 tuiles.
         var dialog = (byte[])caret.Clone();
@@ -143,14 +144,14 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.Equal(1, opened.Header.NewTiles);
         Assert.Equal(4 * 1000 / 15, opened.Header.Activity);
         Assert.True(decoder.Apply(opened.Data));
-        Assert.Equal(Rgb565(dialog), decoder.Pixels);
+        Assert.Equal(Exact(dialog), decoder.Pixels);
 
         // Fermée : l'écran d'avant revient, ses tuiles sont déjà connues.
         var closed = encoder.Encode(T0.AddSeconds(4), caret, width, height, width * 4)!;
         Assert.Equal(4, closed.Header.Placements);
         Assert.Equal(0, closed.Header.NewTiles);
         Assert.True(decoder.Apply(closed.Data));
-        Assert.Equal(Rgb565(caret), decoder.Pixels);
+        Assert.Equal(Exact(caret), decoder.Pixels);
     }
 
     /// <summary>
@@ -236,7 +237,7 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.False(caughtUp.Header.Key);
         Assert.Equal(1, caughtUp.Header.Placements);
         Assert.True(decoder.Apply(caughtUp.Data));
-        Assert.Equal(Rgb565(screen), decoder.Pixels);
+        Assert.Equal(Exact(screen), decoder.Pixels);
         Assert.Null(encoder.Encode(T0.AddSeconds(10), screen, width, height, width * 4));
 
         // Curseur seul qui clignote, dans une autre tuile : un de ses deux états est l'écran gardé, rien à garder.
@@ -260,7 +261,7 @@ public sealed partial class ScreenTilesTests : IDisposable
             {
                 frames.Add(second);
                 Assert.True(decoder.Apply(frame.Data));
-                Assert.Equal(Rgb565(image), decoder.Pixels);
+                Assert.Equal(Exact(image), decoder.Pixels);
             }
         }
 
@@ -290,13 +291,13 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.Equal(1, typed.Header.NewTiles);
         Assert.True(typed.Data.Length < 300, $"{typed.Data.Length} octets");
         Assert.True(decoder.Apply(typed.Data));
-        Assert.Equal(Rgb565(screen), decoder.Pixels);
+        Assert.Equal(Exact(screen), decoder.Pixels);
 
         // Moitié de la tuile repeinte : gardée entière.
         random.NextBytes(screen.AsSpan(0, width * 4 * 32));
         var repainted = encoder.Encode(T0.AddSeconds(2), screen, width, height, width * 4)!;
         Assert.True(decoder.Apply(repainted.Data));
-        Assert.Equal(Rgb565(screen), decoder.Pixels);
+        Assert.Equal(Exact(screen), decoder.Pixels);
     }
 
     /// <summary>
@@ -326,7 +327,7 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.False(decoder.Apply(frames[3].Data));
         Assert.False(decoder.Apply(frames[2].Data));
         Assert.True(decoder.Apply(frames[4].Data));
-        Assert.Equal(Rgb565(screen), decoder.Pixels);
+        Assert.Equal(Exact(screen), decoder.Pixels);
     }
 
     /// <summary>
@@ -352,7 +353,7 @@ public sealed partial class ScreenTilesTests : IDisposable
         Assert.False(decoder.Apply(next.Data));
         Assert.False(decoder.Apply(after.Data));
         Assert.True(decoder.Apply(again.Data));
-        Assert.Equal(Rgb565(screen), decoder.Pixels);
+        Assert.Equal(Exact(screen), decoder.Pixels);
 
         var own = new ScreenTileDecoder();
         Assert.True(own.Apply(key.Data) && own.Apply(next.Data) && own.Apply(after.Data));

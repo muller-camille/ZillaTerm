@@ -20,12 +20,15 @@ public sealed record ScreenCompressionMethod(string Name, long Bytes, TimeSpan T
 /// <param name="KeyFrameBytes">Poids des images clés dans le journal.</param>
 /// <param name="Duration">De la première à la dernière image.</param>
 /// <param name="Scrolled">Images où un défilement a été reconnu.</param>
-/// <param name="Methods">Poids réencodé, la méthode actuelle d'abord (contrôle : proche de <paramref name="JournalBytes"/>).</param>
+/// <param name="Methods">
+/// Poids réencodé, le format d'avant la 0.42 d'abord (contrôle : proche de <paramref name="JournalBytes"/> pour un journal
+/// enregistré avant la 0.42).
+/// </param>
 public sealed record ScreenCompressionResult(
     int Streams, int Frames, int KeyFrames, int Lost, long JournalBytes, long KeyFrameBytes, TimeSpan Duration, int Scrolled,
     IReadOnlyList<ScreenCompressionMethod> Methods)
 {
-    /// <summary>Lignes du journal de débogage : le bilan, puis une ligne par méthode (écart avec la méthode actuelle).</summary>
+    /// <summary>Lignes du journal de débogage : le bilan, puis une ligne par méthode (écart avec la première).</summary>
     public IEnumerable<string> Lines()
     {
         var c = CultureInfo.InvariantCulture;
@@ -48,15 +51,16 @@ public sealed record ScreenCompressionResult(
 
 /// <summary>
 /// Ce que pèserait l'écran d'un enregistrement existant avec d'autres façons de l'encoder, toutes sans perte : chaque
-/// image relue (<see cref="ScreenTileDecoder"/>) est réencodée en tuiles comme aujourd'hui, avec ou sans défilement
-/// reconnu (<see cref="ScreenScroll"/>), puis compressée en zlib image par image (comme aujourd'hui) ou en Brotli d'une
-/// image clé à la suivante (chaque image compressée avec les précédentes en mémoire). Pour le journal de débogage : rien
-/// n'est écrit, l'écran relu ne quitte pas la mémoire.
+/// image relue (<see cref="ScreenTileDecoder"/>) est réencodée en tuiles 16 bits comme avant la 0.42, avec ou sans
+/// défilement reconnu (<see cref="ScreenScroll"/>), puis compressée en zlib image par image (comme avant la 0.42) ou en
+/// Brotli d'une image clé à la suivante (chaque image compressée avec les précédentes en mémoire, comme depuis la 0.42).
+/// Pour le journal de débogage : rien n'est écrit, l'écran relu ne quitte pas la mémoire.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Les images clés restent celles de l'enregistrement, pour comparer à poids d'images clés égal. La méthode actuelle
-/// réencodée retrouve le poids du journal, au seuil de bruit près (déjà appliqué à l'enregistrement, il ne l'est plus).
+/// Les images clés restent celles de l'enregistrement, pour comparer à poids d'images clés égal. Le format d'avant la
+/// 0.42 réencodé retrouve le poids d'un journal enregistré avant elle, au seuil de bruit près (déjà appliqué à
+/// l'enregistrement, il ne l'est plus).
 /// </para>
 /// <para>
 /// Deux façons mesurent ce que coûtent les images clés : un seul flux Brotli pour tout l'enregistrement (une image clé
@@ -150,7 +154,7 @@ public static class ScreenCompressionMeasure
         /// <summary>Façons mesurées ; Brotli 0 : zlib image par image ; un seul flux : Brotli pas repris aux images clés.</summary>
         public static readonly (string Name, TileMode Tiles, int Brotli, bool OneStream)[] Methods =
         [
-            ("méthode actuelle (zlib par image, contrôle)", TileMode.Plain, 0, false),
+            ("format d'avant la 0.42 (zlib par image, contrôle)", TileMode.Plain, 0, false),
             ("Brotli 5 en flux", TileMode.Plain, 5, false),
             ("Brotli 7 en flux", TileMode.Plain, 7, false),
             ("défilement + zlib par image", TileMode.Scroll, 0, false),
@@ -167,8 +171,15 @@ public static class ScreenCompressionMeasure
 
         public int Scrolled => _tiles[(int)TileMode.Scroll].Scrolled;
 
-        public void Add(ScreenFrameHeader header, ushort[] pixels)
+        public void Add(ScreenFrameHeader header, uint[] screen)
         {
+            // Façons mesurées en 16 bits, comme le format d'avant la 0.42.
+            var pixels = new ushort[screen.Length];
+            for (int i = 0; i < screen.Length; i++)
+            {
+                pixels[i] = ScreenTileEncoder.To565(screen[i]);
+            }
+
             if (header.Pause != ScreenPause.None)
             {
                 // Marque de pause : en-tête seul, même poids pour toutes les méthodes.
@@ -381,7 +392,7 @@ public static class ScreenCompressionMeasure
         public abstract void Frame(byte[] payload, bool key);
 
         /// <summary>Marque de pause : en-tête et contenu vide (flux zlib vide, comme aujourd'hui).</summary>
-        public void Mark() => Bytes += ScreenFrameHeader.Length + 8;
+        public void Mark() => Bytes += ScreenFrameHeader.Length2 + 8;
 
         public virtual void End()
         {
@@ -400,7 +411,7 @@ public static class ScreenCompressionMeasure
                 zlib.Write(payload);
             }
 
-            Bytes += ScreenFrameHeader.Length + output.Length;
+            Bytes += ScreenFrameHeader.Length2 + output.Length;
             Clock.Stop();
         }
     }
@@ -443,7 +454,7 @@ public static class ScreenCompressionMeasure
             }
             while (status == OperationStatus.DestinationTooSmall);
 
-            Bytes += ScreenFrameHeader.Length + written;
+            Bytes += ScreenFrameHeader.Length2 + written;
             Clock.Stop();
         }
 

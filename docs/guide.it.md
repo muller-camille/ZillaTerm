@@ -961,11 +961,13 @@ reperibilità o no:
     Desktop remoto (sessioni PSM; una finestra ridotta a icona non può essere catturata), e il pulsante «Cattura» delle
     schede desktop remoto di ZillaTerm acquisisce il desktop visualizzato;
   - lo **schermo delle sessioni desktop remoto aperte in una scheda**, come lo invia il protocollo RDP: ogni secondo,
-    lo schermo della scheda visualizzata viene rilevato e sono conservate solo le zone modificate (quadrati di 64 × 64
-    pixel a colori 16 bit, compressi; una zona già vista, come un menu che ricompare, è conservata una volta sola). Con
-    il client FreeRDP di ZillaTerm, è il desktop come il client l'ha decodificato, alla sua dimensione e al pixel, anche
-    se la finestra è ridimensionata, coperta da un'altra o non risponde; con il controllo Desktop remoto di Windows, una
-    cattura della finestra. «● Schermo registrato» nella barra della scheda lo ricorda. Una scheda in secondo piano, una finestra ridotta a icona e lo
+    lo schermo della scheda visualizzata viene rilevato e sono conservate solo le zone modificate, con i colori esatti
+    (quadrati di 64 × 64 pixel, compressi; una zona già vista, come un menu che ricompare, è conservata una volta sola;
+    uno scorrimento o una finestra spostata è conservato come una copia dello schermo precedente, non come tutto ciò che
+    ha cambiato). Con il client FreeRDP di ZillaTerm, è il desktop come il client l'ha decodificato, alla sua dimensione
+    e al pixel, anche se la finestra è ridimensionata, coperta da un'altra o non risponde, con le copie dello schermo
+    chieste dal server; con il controllo Desktop remoto di Windows, una cattura della finestra, in cui ZillaTerm
+    riconosce da sé gli scorrimenti. «● Schermo registrato» nella barra della scheda lo ricorda. Una scheda in secondo piano, una finestra ridotta a icona e lo
     schermo intero non sono catturati; di ritorno sulla scheda, ciò che è cambiato nel frattempo viene conservato. Una
     piccola modifica isolata (un carattere digitato) è conservata non appena lo schermo resta fermo per 3 secondi, al
     più tardi dopo un minuto; uno schermo fermo non costa nulla. Oltre **100 MB di registro** lo schermo è conservato
@@ -1740,8 +1742,9 @@ giorni vengono cancellate.
 
 Terminale: al consenso, lo schermo attuale (senza la cronologia: contenuto, colori, modalità, cursore), poi il flusso
 così come il terminale lo riceve; un cambio di dimensione rinvia lo schermo intero. Schermo (Desktop remoto, VNC):
-catturato quattro volte al secondo finché qualcuno guarda, in riquadri di 64 × 64 pixel (colori a 16 bit), partono solo
-i riquadri modificati, compressi; un'immagine completa a ogni arrivo. La digitazione di chi ha il controllo è codificata
+catturato quattro volte al secondo finché qualcuno guarda, in riquadri di 64 × 64 pixel (colori esatti), partono solo
+i riquadri modificati, compressi, e uno scorrimento parte come una copia; un'immagine completa a ogni arrivo. Per lo
+schermo serve ZillaTerm 0.42 o più recente da entrambe le parti. La digitazione di chi ha il controllo è codificata
 da chi condivide, secondo le modalità del suo terminale. Limiti: 10 condivisioni contemporanee, 5 persone per
 condivisione, 3 minuti per rispondere, connessione interrotta dopo 60 secondi senza notizie; una persona in ritardo di
 oltre 48 MB riceve lo schermo intero al posto del ritardo (i messaggi di stato, controllo ripreso o visualizzazione

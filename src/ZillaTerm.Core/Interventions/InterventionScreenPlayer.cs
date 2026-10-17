@@ -15,8 +15,8 @@ namespace ZillaTerm.Core.Interventions;
 /// <remarks>
 /// Le seul script de la page est <see cref="Script"/>, écrit ici et autorisé par son empreinte SHA-256 dans la politique
 /// de sécurité de la page : aucun autre script ne s'exécute. Les images voyagent en base64 dans des blocs de données (non
-/// exécutés) ; le texte (nom de la session) est échappé ou posé comme texte. Le navigateur décompresse les images lui-même
-/// (DecompressionStream), sans bibliothèque.
+/// exécutés) ; le texte (nom de la session) est échappé ou posé comme texte. Les images sont décompressées par le
+/// décodeur Brotli de référence embarqué dans le script (format 3) ou par le navigateur (format 2, DecompressionStream).
 /// </remarks>
 internal static class InterventionScreenPlayer
 {
@@ -219,18 +219,42 @@ internal static class InterventionScreenPlayer
     /// d'une note mène à son heure.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// Images au format 3 (<see cref="ScreenTileEncoder"/>) : le flux Brotli d'une image clé à la suivante est décompressé
+    /// d'un coup (décodeur de référence de Brotli, Google, licence MIT, embarqué : Interventions/Player/brotli-decode.js,
+    /// les navigateurs ne décompressant que le deflate), puis découpé image par image. Images au format 2 (journaux
+    /// d'avant la 0.42) : zlib image par image, décompressé par le navigateur (DecompressionStream).
+    /// </para>
+    /// <para>
     /// Fins de ligne ramenées à LF : le navigateur fait de même avant de calculer l'empreinte d'un script de la page
     /// (<see cref="ScriptHash"/>). Compilé sous Windows, le texte du fichier source est en CRLF : sans cela, l'empreinte
     /// ne correspondait plus et le lecteur était bloqué par la politique de sécurité du rapport.
+    /// </para>
     /// </remarks>
-    internal static readonly string Script = ScriptSource.ReplaceLineEndings("\n");
+    internal static readonly string Script = ("(() => {\n" + BrotliDecoder() + "\n" + PlayerSource + "\n})();\n").ReplaceLineEndings("\n");
 
-    private const string ScriptSource = """
-(() => {
+    /// <summary>Décodeur Brotli embarqué, dans la portée du lecteur (pas de module : une seule balise script autorisée).</summary>
+    private static string BrotliDecoder()
+    {
+        using var stream = typeof(InterventionScreenPlayer).Assembly.GetManifestResourceStream("ZillaTerm.Core.BrotliDecode.js")
+            ?? throw new InvalidOperationException("Brotli decoder missing.");
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        var source = reader.ReadToEnd();
+        const string export = "export let BrotliDecode = makeBrotliDecode();";
+        return source.Contains(export, StringComparison.Ordinal)
+            ? source.Replace(export, "const BrotliDecode = makeBrotliDecode();", StringComparison.Ordinal)
+            : throw new InvalidOperationException("Unexpected Brotli decoder.");
+    }
+
+    private const string PlayerSource = """
   const words = JSON.parse(document.getElementById('zt-player').textContent);
   const inflate = async bytes => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());
   const two = n => String(n).padStart(2, '0');
   const clockOf = s => { s = Math.floor(s) % 86400; return two(Math.floor(s / 3600)) + ':' + two(Math.floor(s / 60) % 60) + ':' + two(s % 60); };
+  // Pixels : 0x00RRGGBB ; RGB565 élargi comme le fait FreeRDP.
+  const to565 = v => (((v >> 19) & 31) << 11) | (((v >> 10) & 63) << 5) | ((v >> 3) & 31);
+  const from565 = v => { const r = v >> 11, g = (v >> 5) & 63, b = v & 31; return (((r << 3) | (r >> 2)) << 16) | (((g << 2) | (g >> 4)) << 8) | ((b << 3) | (b >> 2)); };
+  const rgba = v => (0xFF000000 | ((v & 0xFF) << 16) | (v & 0xFF00) | ((v >> 16) & 0xFF)) >>> 0;
   for (const section of document.querySelectorAll('section.screen')) {
     const raw = atob(section.querySelector('script.frames').textContent.trim());
     const data = new Uint8Array(raw.length);
@@ -243,10 +267,16 @@ internal static class InterventionScreenPlayer
       if (o + n > data.length) break;
       const p = data.subarray(o, o + n);
       o += n;
-      if (p.length < 32 || p[0] !== 90 || p[1] !== 84 || p[2] !== 83 || p[3] !== 50) continue;
+      // « ZTS2 » (en-tête de 32 octets) ou « ZTS3 » (36 octets : copies d'écran, couleurs en 24 bits).
+      if (p.length < 32 || p[0] !== 90 || p[1] !== 84 || p[2] !== 83 || (p[3] !== 50 && p[3] !== 51)) continue;
+      const fmt = p[3] - 48, hlen = fmt === 3 ? 36 : 32;
+      if (p.length < hlen) continue;
       const h = new DataView(p.buffer, p.byteOffset, p.byteLength);
-      frames.push({ t, p, seq: h.getUint32(8, true), w: h.getUint16(12, true), h: h.getUint16(14, true), key: (p[16] & 1) === 1, pause: (p[16] >> 1) & 3,
-        size: p[17], activity: h.getUint16(18, true), first: h.getUint32(20, true), count: h.getUint32(24, true), places: h.getUint32(28, true) });
+      const f = { t, p, fmt, hlen, seq: h.getUint32(8, true), w: h.getUint16(12, true), h: h.getUint16(14, true), key: (p[16] & 1) === 1,
+        pause: (p[16] >> 1) & 3, tc: fmt === 3 && (p[16] & 8) !== 0, size: p[17], activity: h.getUint16(18, true), first: h.getUint32(20, true),
+        count: h.getUint32(24, true), places: h.getUint32(28, true), moves: fmt === 3 ? h.getUint32(32, true) : 0 };
+      f.length = f.moves * 12 + f.places * 8 + f.count * 4 + f.count * f.size * f.size * (f.tc ? 3 : 2);
+      frames.push(f);
     }
     if (!frames.length) continue;
     const canvas = section.querySelector('canvas.screen-canvas'), ctx = canvas.getContext('2d');
@@ -259,11 +289,52 @@ internal static class InterventionScreenPlayer
     // Pauses de l'affichage : d'une image de pause à l'image suivante (ou à la fin).
     const pauses = [];
     frames.forEach((f, i) => { if (f.pause) pauses.push({ from: f.t, to: i + 1 < frames.length ? frames[i + 1].t : duration, kind: f.pause }); });
-    let tiles = new Map(), image = null, width = 0, height = 0, current = -1, wanted = -1, running = false;
+    let tiles = new Map(), image = null, pixels = null, width = 0, height = 0, current = -1, wanted = -1, running = false;
     let playing = false, position = 0, last = 0;
 
-    // Écran en RGB565 (base des différences) et en RGBA (affiché) ; une image qui ne suit pas la précédente (numéro) ou
-    // illisible arrête la lecture jusqu'à l'image clé suivante.
+    // Format 3 : contenus d'un intervalle entre images clés, décompressés d'un coup (le flux Brotli part de l'image clé) ;
+    // un morceau illisible ou une image manquante arrête l'intervalle là.
+    let interval = { key: -1, bodies: [] };
+    const decodeInterval = k => {
+      const list = [];
+      for (let i = k; i < frames.length && (i === k || !frames[i].key); i++) {
+        if (frames[i].fmt !== 3 || frames[i].seq !== frames[k].seq + (i - k)) break;
+        list.push(frames[i]);
+      }
+      const attempt = n => {
+        let total = 1;
+        for (let j = 0; j < n; j++) total += list[j].p.length - list[j].hlen;
+        const input = new Int8Array(total);
+        let at = 0;
+        for (let j = 0; j < n; j++) { input.set(list[j].p.subarray(list[j].hlen), at); at += list[j].p.length - list[j].hlen; }
+        // Bloc final vide après le dernier morceau vidé : un flux Brotli complet.
+        input[at] = 3;
+        return BrotliDecode(input);
+      };
+      let n = list.length, out;
+      try { out = attempt(n); } catch (e) {
+        let lo = 0, hi = n - 1;
+        while (lo < hi) { const mid = (lo + hi + 1) >> 1; try { attempt(mid); lo = mid; } catch (e2) { hi = mid - 1; } }
+        n = lo;
+        out = n ? attempt(n) : new Int8Array(0);
+      }
+      const bodies = [];
+      for (let j = 0, offset = 0; j < list.length; j++) {
+        const length = list[j].length;
+        if (j < n && offset + length <= out.length) { bodies.push(new Uint8Array(out.buffer, out.byteOffset + offset, length)); offset += length; }
+        else bodies.push(null);
+      }
+      interval = { key: k, bodies };
+    };
+    const brotliBody = index => {
+      let k = index;
+      while (k > 0 && !frames[k].key) k--;
+      if (interval.key !== k) decodeInterval(k);
+      return interval.bodies[index - k] || null;
+    };
+
+    // Écran (pixels 0x00RRGGBB, base des copies et des différences) et image affichée (RGBA) ; une image qui ne suit pas la
+    // précédente (numéro) ou illisible arrête la lecture jusqu'à l'image clé suivante.
     let screen = null, next = -1, valid = false;
     const paint = (f, body) => {
       if (f.key) {
@@ -271,17 +342,28 @@ internal static class InterventionScreenPlayer
         if (f.w !== width || f.h !== height) {
           width = f.w; height = f.h; canvas.width = width; canvas.height = height;
           image = ctx.createImageData(width, height);
-          screen = new Uint16Array(width * height);
+          pixels = new Uint32Array(image.data.buffer);
+          screen = new Uint32Array(width * height);
         }
         valid = true;
       } else if (f.seq !== next || f.w !== width || f.h !== height) valid = false;
       next = f.seq + 1;
       if (!valid || !image) return;
-      if (!body) { valid = false; return; }
+      if (!body || body.length !== f.length) { valid = false; return; }
       const b = new DataView(body.buffer, body.byteOffset, body.byteLength);
-      const size = f.size, px = size * size, basesAt = f.places * 8, at = basesAt + f.count * 4;
+      const size = f.size, px = size * size, bpp = f.tc ? 3 : 2, placesAt = f.moves * 12, basesAt = placesAt + f.places * 8, at = basesAt + f.count * 4;
       const columns = Math.ceil(width / size), cells = columns * Math.ceil(height / size);
-      if (body.length !== at + f.count * px * 2) { valid = false; return; }
+      // Copies d'écran (défilement, fenêtre déplacée) d'abord, sur l'écran et sur l'image.
+      for (let i = 0; i < f.moves; i++) {
+        const m = i * 12, sx = b.getUint16(m, true), sy = b.getUint16(m + 2, true), w = b.getUint16(m + 4, true), mh = b.getUint16(m + 6, true);
+        const dx = b.getUint16(m + 8, true), dy = b.getUint16(m + 10, true);
+        if (!w || !mh || sx + w > width || dx + w > width || sy + mh > height || dy + mh > height) { valid = false; return; }
+        for (let r = 0; r < mh; r++) {
+          const row = dy > sy ? mh - 1 - r : r, from = (sy + row) * width + sx, to = (dy + row) * width + dx;
+          screen.copyWithin(to, from, from + w);
+          pixels.copyWithin(to, from, from + w);
+        }
+      }
       const each = (index, visit) => {
         const x0 = (index % columns) * size, y0 = Math.floor(index / columns) * size;
         for (let y = 0; y < size && y0 + y < height; y++)
@@ -289,24 +371,25 @@ internal static class InterventionScreenPlayer
       };
       const fresh = [];
       for (let i = 0; i < f.count; i++) {
-        const tile = new Uint16Array(px), base = b.getUint32(basesAt + i * 4, true);
-        for (let k = 0; k < px; k++) tile[k] = b.getUint16(at + (i * px + k) * 2, true);
-        if (base !== 0xFFFFFFFF) {
-          if (f.key || base >= cells) { valid = false; return; }
-          each(base, (k, o) => { tile[k] ^= screen[o]; });
+        const tile = new Uint32Array(px), base = b.getUint32(basesAt + i * 4, true), delta = base !== 0xFFFFFFFF;
+        if (delta && (f.key || base >= cells)) { valid = false; return; }
+        if (bpp === 3) {
+          for (let k = 0, o = at + i * px * 3; k < px; k++, o += 3) tile[k] = body[o] | (body[o + 1] << 8) | (body[o + 2] << 16);
+          if (delta) each(base, (k, o) => { tile[k] ^= screen[o]; });
+        } else {
+          // RGB565 : différence dans cet espace (l'écran ramené en 16 bits), puis élargi.
+          const narrow = new Uint16Array(px);
+          for (let k = 0; k < px; k++) narrow[k] = b.getUint16(at + (i * px + k) * 2, true);
+          if (delta) each(base, (k, o) => { narrow[k] ^= to565(screen[o]); });
+          for (let k = 0; k < px; k++) tile[k] = from565(narrow[k]);
         }
         fresh.push(tile);
       }
       fresh.forEach((tile, i) => tiles.set(f.first + i, tile));
-      const pixels = image.data;
       for (let i = 0; i < f.places; i++) {
-        const index = b.getUint32(i * 8, true), tile = tiles.get(b.getUint32(i * 8 + 4, true));
+        const index = b.getUint32(placesAt + i * 8, true), tile = tiles.get(b.getUint32(placesAt + i * 8 + 4, true));
         if (!tile || index >= cells) { valid = false; return; }
-        each(index, (k, o) => {
-          const v = tile[k], p = o * 4;
-          screen[o] = v;
-          pixels[p] = (v >> 11) * 255 / 31; pixels[p + 1] = ((v >> 5) & 63) * 255 / 63; pixels[p + 2] = (v & 31) * 255 / 31; pixels[p + 3] = 255;
-        });
+        each(index, (k, o) => { const v = tile[k]; screen[o] = v; pixels[o] = rgba(v); });
       }
     };
 
@@ -330,7 +413,7 @@ internal static class InterventionScreenPlayer
       return found;
     };
 
-    // Va à l'image voulue : depuis l'image clé précédente, ou à la suite ; les images sont décompressées par lots.
+    // Va à l'image voulue : depuis l'image clé précédente, ou à la suite ; les images au format 2 sont décompressées par lots.
     const run = async () => {
       running = true;
       try {
@@ -341,7 +424,7 @@ internal static class InterventionScreenPlayer
           const from = target < current || key > current ? key : current + 1;
           for (let i = from; i <= target; i += 32) {
             const batch = frames.slice(i, Math.min(target + 1, i + 32));
-            const bodies = await Promise.all(batch.map(f => inflate(f.p.subarray(32)).catch(() => null)));
+            const bodies = await Promise.all(batch.map((f, j) => f.fmt === 3 ? brotliBody(i + j) : inflate(f.p.subarray(f.hlen)).catch(() => null)));
             batch.forEach((f, j) => paint(f, bodies[j]));
           }
           current = target;
@@ -400,7 +483,6 @@ internal static class InterventionScreenPlayer
     drawGraph();
     show(0);
   }
-})();
 """;
 
     /// <summary>Texte échappé comme dans le reste du rapport : le nom de la session vient des serveurs.</summary>

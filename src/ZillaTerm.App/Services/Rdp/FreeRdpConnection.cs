@@ -266,7 +266,8 @@ internal sealed class FreeRdpConnection : IRdpConnection
 
             DebugLog.Write("freerdp", screen.Failed
                 ? $"{label} : bureau reçu du client illisible ; l'écran est capturé dans l'onglet"
-                : $"{label} : fin du bureau reçu du client ({screen.Version} mise(s) à jour dont {screen.PartialUpdates} partielle(s))");
+                : $"{label} : fin du bureau reçu du client ({screen.Version} mise(s) à jour dont {screen.PartialUpdates} partielle(s), "
+                  + $"{screen.Moves} copie(s) d'écran)");
         })
         {
             IsBackground = true,

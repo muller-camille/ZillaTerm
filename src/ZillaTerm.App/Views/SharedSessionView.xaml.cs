@@ -146,11 +146,12 @@ public partial class SharedSessionView : UserControl
         {
             if (_bitmap is null || _bitmap.PixelWidth != decoder.Width || _bitmap.PixelHeight != decoder.Height)
             {
-                _bitmap = new WriteableBitmap(decoder.Width, decoder.Height, 96, 96, PixelFormats.Bgr565, null);
+                _bitmap = new WriteableBitmap(decoder.Width, decoder.Height, 96, 96, PixelFormats.Bgr32, null);
                 Screen.Source = _bitmap;
             }
 
-            _bitmap.WritePixels(new Int32Rect(0, 0, decoder.Width, decoder.Height), decoder.Pixels, decoder.Width * 2, 0);
+            // Pixels 0x00RRGGBB : B, G, R, inutilisé en mémoire, comme Bgr32.
+            _bitmap.WritePixels(new Int32Rect(0, 0, decoder.Width, decoder.Height), decoder.Pixels, decoder.Width * 4, 0);
         }
     }
 

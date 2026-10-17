@@ -37,7 +37,8 @@ internal static class ScreenScroll
     /// Copies qui rapprochent <paramref name="before"/> de <paramref name="after"/> (une par bande au plus) ; vide si rien
     /// n'a défilé. Les deux écrans ont <paramref name="pitch"/> pixels par ligne, dont <paramref name="width"/> utiles.
     /// </summary>
-    public static List<ScreenScrollCopy> Detect(ReadOnlySpan<ushort> before, ReadOnlySpan<ushort> after, int width, int height, int pitch)
+    public static List<ScreenScrollCopy> Detect<T>(ReadOnlySpan<T> before, ReadOnlySpan<T> after, int width, int height, int pitch)
+        where T : unmanaged, IEquatable<T>
     {
         var copies = new List<ScreenScrollCopy>();
         var hashBefore = new ulong[height];
@@ -66,7 +67,8 @@ internal static class ScreenScroll
     }
 
     /// <summary>Applique une copie à l'écran (en place : les lignes sont prises avant d'être recouvertes).</summary>
-    public static void Apply(Span<ushort> screen, int pitch, ScreenScrollCopy copy)
+    public static void Apply<T>(Span<T> screen, int pitch, ScreenScrollCopy copy)
+        where T : unmanaged
     {
         if (copy.Shift > 0)
         {
@@ -84,8 +86,9 @@ internal static class ScreenScroll
         }
     }
 
-    private static ScreenScrollCopy? Find(ReadOnlySpan<ushort> before, ReadOnlySpan<ushort> after, ulong[] hashBefore, ulong[] hashAfter,
+    private static ScreenScrollCopy? Find<T>(ReadOnlySpan<T> before, ReadOnlySpan<T> after, ulong[] hashBefore, ulong[] hashAfter,
         bool[] flat, int left, int w, int height, int pitch)
+        where T : unmanaged, IEquatable<T>
     {
         // Où chaque ligne (non unie) de l'écran d'avant se trouvait.
         var rows = new Dictionary<ulong, List<int>>();
@@ -157,7 +160,8 @@ internal static class ScreenScroll
     }
 
     /// <summary>Empreinte d'un bout de ligne : égale pour des pixels égaux, presque toujours différente sinon.</summary>
-    private static ulong Hash(ReadOnlySpan<ushort> pixels)
+    private static ulong Hash<T>(ReadOnlySpan<T> pixels)
+        where T : unmanaged
     {
         var bytes = MemoryMarshal.AsBytes(pixels);
         ulong hash = 0x9E3779B97F4A7C15UL ^ (ulong)bytes.Length;

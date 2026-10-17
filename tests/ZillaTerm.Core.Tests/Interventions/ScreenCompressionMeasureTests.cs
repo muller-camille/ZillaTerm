@@ -94,11 +94,11 @@ public sealed class ScreenCompressionMeasureTests
     }
 
     /// <summary>
-    /// La méthode actuelle réencodée retrouve le poids du journal à l'octet près (tuile entière, en différence, déjà vue,
-    /// défilement), preuve que la mesure encode comme l'enregistrement.
+    /// Un journal enregistré au format d'aujourd'hui (copies, Brotli d'une image clé à l'autre) se relit et se mesure ; il
+    /// pèse moins que le même écran au format d'avant la 0.42 (tuile entière, en différence, déjà vue, défilement).
     /// </summary>
     [Fact]
-    public void CurrentMethodFindsTheJournalWeightExactly()
+    public void CurrentFormatIsReadAndLighterThanTheFormerOne()
     {
         var start = Screen(0);
         var entries = Record([
@@ -116,12 +116,13 @@ public sealed class ScreenCompressionMeasureTests
         Assert.Equal(1, result.KeyFrames);
         Assert.Equal(0, result.Lost);
         Assert.Equal(8, result.Methods.Count);
-        Assert.Equal(result.JournalBytes, result.Methods[0].Bytes);
+        Assert.Equal(entries.Sum(e => (long)e.Image!.Length), result.JournalBytes);
+        Assert.True(result.JournalBytes < result.Methods[0].Bytes, $"journal {result.JournalBytes}, format d'avant {result.Methods[0].Bytes}");
     }
 
     /// <summary>
     /// Une fenêtre de texte qui défile d'une ligne à chaque image : défilement reconnu à chaque fois, sans perte (vérifié
-    /// pendant la mesure), pour bien moins que la méthode actuelle. Le gain de Brotli dépend de l'écran : pas vérifié ici.
+    /// pendant la mesure), pour bien moins que le format d'avant la 0.42. Le gain de Brotli dépend de l'écran : pas vérifié ici.
     /// </summary>
     [Fact]
     public void ScrollIsRecognizedAndCostsMuchLess()
@@ -132,7 +133,7 @@ public sealed class ScreenCompressionMeasureTests
         long Scrolling(int method) => result.Methods[method].Bytes - key.Methods[method].Bytes;
 
         Assert.Equal(10, result.Scrolled);
-        Assert.True(Scrolling(3) < Scrolling(0) / 2, $"défilement {Scrolling(3)}, actuel {Scrolling(0)}");
+        Assert.True(Scrolling(3) < Scrolling(0) / 2, $"défilement {Scrolling(3)}, format d'avant {Scrolling(0)}");
         Assert.All(result.Methods, method => Assert.True(method.Bytes > key.Methods[0].Bytes));
     }
 
@@ -255,7 +256,7 @@ public sealed class ScreenCompressionMeasureTests
         Assert.Empty(ScreenScroll.Detect(before, before, Width, Height, Width));
     }
 
-    /// <summary>Lignes du journal de débogage : bilan, une ligne par méthode avec l'écart à la méthode actuelle.</summary>
+    /// <summary>Lignes du journal de débogage : bilan, une ligne par méthode avec l'écart à la première.</summary>
     [Fact]
     public void LinesShowEachMethodAgainstTheCurrentOne()
     {

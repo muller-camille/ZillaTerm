@@ -77,9 +77,11 @@ jobs:
         shell: pwsh
         run: |
           $zip = "ZillaTerm-$env:VERSION-win-x64.zip"
-          # Licences du client Bureau à distance embarqué (FreeRDP, OpenSSL, mingw-w64) et ses versions.
+          # Licences du client Bureau à distance embarqué (FreeRDP, OpenSSL, mingw-w64) et ses versions, et du décodeur Brotli
+          # du lecteur des écrans enregistrés.
           New-Item -ItemType Directory -Force licenses | Out-Null
           Copy-Item local-packages/freerdp/LICENSE.*.txt, local-packages/freerdp/BUILD.txt licenses/
+          Copy-Item src/ZillaTerm.Core/Interventions/Player/LICENSE.brotli.txt licenses/
           Rename-Item licenses/BUILD.txt FreeRDP-BUILD.txt
           Compress-Archive -Path publish/ZillaTerm.exe, LICENSE, licenses -DestinationPath $zip
           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
