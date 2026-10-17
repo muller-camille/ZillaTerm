@@ -972,8 +972,11 @@ reperibilità o no:
     applicazione) costa alcuni schermi interi, da 0,1 a 1 MB ciascuno secondo la dimensione dello schermo e lo sfondo.
     Con il registro di debug, ogni minuto un riepilogo indica quanto è costato lo schermo (catture, immagini
     conservate di cui complete, peso, dimensione del registro): del peso su uno schermo fermo indica un'immagine che
-    cambia senza che si veda. Una sessione aperta con Connessione Desktop remoto (mstsc) non è registrata così: solo
-    la cattura la conserva.
+    cambia senza che si veda. Per un intervento già registrato, clic destro in «Interventi registrati» › «Misura la
+    compressione dello schermo» (solo con il registro di debug): il registro riceve quanto peserebbe il suo schermo con
+    altre codifiche, tutte senza perdita (Brotli, scorrimento riconosciuto); lo schermo riletto resta in memoria, nulla
+    viene salvato né inviato. Una sessione aperta con Connessione Desktop remoto (mstsc) non è registrata così: solo la
+    cattura la conserva.
 - **Scheda «Intervento» del pannello laterale** (`Ctrl+4`): compare all'inizio della registrazione, con un pallino rosso
   finché la registrazione dura: titolo, note e cronologia restano accanto alla sessione. Aprire una sessione SSH non la
   sostituisce con la scheda «File». Un clic su «● Intervento registrato» nella barra di stato o su **«Titolo, note e

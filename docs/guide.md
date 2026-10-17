@@ -914,8 +914,11 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
     Screen recorded (every 10 s)". Opening the session (PSM screen, Windows sign-in, desktop, application) costs a few
     whole screens, 0.1 to 1 MB each depending on the screen size and background. With the debug log, a summary every
     minute gives what the screen cost (captures, frames kept including whole ones, weight, journal size): weight on a
-    still screen shows a picture that changes without it showing. A session opened with Remote Desktop Connection
-    (mstsc) is not recorded this way: only a capture keeps it.
+    still screen shows a picture that changes without it showing. For an intervention already recorded, right-click in
+    "Recorded interventions" › "Measure screen compression" (with the debug log only): the log receives what its screen
+    would weigh with other encodings, all lossless (Brotli, recognized scrolling); the screen read back stays in memory,
+    nothing is saved or sent. A session opened with Remote Desktop Connection (mstsc) is not recorded this way: only a
+    capture keeps it.
 - **"Intervention" tab of the side panel** (`Ctrl+4`): it appears when recording starts, with a red dot while recording
   lasts: title, notes and history stay next to the session. Opening an SSH session does not replace it with the "Files"
   tab. A click on "● Intervention recorded" in the status bar or on **"Title, notes and history"** in the Intervention

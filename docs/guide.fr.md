@@ -974,8 +974,11 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
     les 10 s) ». L'ouverture de la session (écran du PSM, ouverture de session Windows, bureau, application) coûte
     quelques écrans entiers, de 0,1 à 1 Mo chacun selon la taille de l'écran et le fond. Avec le journal de débogage,
     chaque minute un bilan donne ce que l'écran a coûté (captures, images gardées dont complètes, poids, taille du
-    journal) : du poids sur un écran immobile montre une image qui change sans que cela se voie. Une session ouverte
-    avec Connexion Bureau à distance (mstsc) n'est pas enregistrée ainsi : seule la capture la garde.
+    journal) : du poids sur un écran immobile montre une image qui change sans que cela se voie. Pour une intervention
+    déjà enregistrée, clic droit dans « Interventions enregistrées » › « Mesurer la compression de l'écran » (avec le
+    journal de débogage seulement) : le journal reçoit ce que pèserait son écran avec d'autres façons de l'encoder, toutes
+    sans perte (Brotli, défilement reconnu) ; l'écran relu reste en mémoire, rien n'est enregistré ni envoyé. Une
+    session ouverte avec Connexion Bureau à distance (mstsc) n'est pas enregistrée ainsi : seule la capture la garde.
 - **Onglet « Intervention » du panneau de gauche** (`Ctrl+4`) : il apparaît au début de l'enregistrement, avec une
   pastille rouge tant que l'enregistrement dure : titre, notes et historique restent à côté de la session. Ouvrir une
   session SSH ne le remplace pas par l'onglet « Fichiers ». Un clic sur « ● Intervention enregistrée » dans la barre
