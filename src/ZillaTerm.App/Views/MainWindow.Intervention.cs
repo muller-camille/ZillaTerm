@@ -194,7 +194,19 @@ public partial class MainWindow
         }
     }
 
-    private void OnIntervention(object sender, RoutedEventArgs e) => ShowIntervention();
+    private void OnIntervention(object sender, RoutedEventArgs e)
+    {
+        // Clic de souris : attente entre le clic et son traitement, pour le journal de débogage (bouton au clavier : rien).
+        string waited = _interventionPressedAt is { } pressed ? $", clic traité {Environment.TickCount - pressed} ms après" : "";
+        _interventionPressedAt = null;
+        ShowIntervention(waited);
+    }
+
+    /// <summary>Relâchement du bouton « Intervention » : heure du clic donnée par Windows (voir <see cref="OnIntervention"/>).</summary>
+    private void OnInterventionPress(object sender, MouseButtonEventArgs e) => _interventionPressedAt = e.Timestamp;
+
+    // Heure (Environment.TickCount) du dernier relâchement du bouton « Intervention », jusqu'à son clic.
+    private int? _interventionPressedAt;
 
     /// <summary>Indicateur d'enregistrement : l'onglet « Intervention » (titre, notes, historique).</summary>
     private void OnInterventionIndicatorClick(object sender, MouseButtonEventArgs e)
@@ -224,19 +236,46 @@ public partial class MainWindow
         }
     }
 
-    private void ShowIntervention()
+    /// <summary>
+    /// Fenêtre Intervention : ouverte, ou ramenée devant si elle l'est déjà (même réduite ou masquée). Journal de débogage :
+    /// temps de création et d'affichage, état de la fenêtre déjà ouverte, et <paramref name="waited"/> (attente du clic).
+    /// </summary>
+    private void ShowIntervention(string waited = "")
     {
-        if (_interventionWindow is { IsLoaded: true })
+        if (_interventionWindow is { } open)
         {
-            _ = _interventionWindow.ShowReminderAsync(_settings.DutyText, _settings.DutyTextFile);
-            _interventionWindow.Activate();
+            DebugLog.Write("intervention", $"Fenêtre Intervention déjà ouverte ({open.WindowState}, "
+                                           + $"{(open.IsVisible ? "affichée" : "masquée")}) : ramenée devant{waited}");
+            _ = open.ShowReminderAsync(_settings.DutyText, _settings.DutyTextFile);
+            open.BringBack();
             return;
         }
 
-        _interventionWindow = new InterventionWindow(_settings.DutyText, _settings.DutyTextFile, Intervention, _sessionUser, InterventionMode,
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var window = new InterventionWindow(_settings.DutyText, _settings.DutyTextFile, Intervention, _sessionUser, InterventionMode,
             () => ShowSideTab(InterventionTab), InterventionView.CommitPendingNote) { Owner = this };
-        _interventionWindow.Closed += (_, _) => _interventionWindow = null;
-        _interventionWindow.Show();
+        long built = watch.ElapsedMilliseconds;
+        // Gardée avant d'être affichée : un clic de plus la ramène devant au lieu d'en ouvrir une seconde. Seule sa propre
+        // fermeture l'oublie (une autre fenêtre fermée ne doit pas faire oublier celle-ci).
+        _interventionWindow = window;
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_interventionWindow, window))
+            {
+                _interventionWindow = null;
+            }
+        };
+        window.ContentRendered += (_, _) => DebugLog.Write("intervention",
+            $"Fenêtre Intervention affichée en {watch.ElapsedMilliseconds} ms (créée en {built} ms, dont {window.ListDescription}){waited}");
+        try
+        {
+            window.Show();
+        }
+        catch
+        {
+            _interventionWindow = null;
+            throw;
+        }
     }
 
     /// <summary>

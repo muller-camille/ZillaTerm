@@ -3587,6 +3587,48 @@ public sealed partial class DialogTests
     }
 
     /// <summary>
+    /// Fenêtre Intervention redemandée alors qu'elle est déjà ouverte : rétablie si elle était réduite (Activate seul la
+    /// laissait réduite, le bouton semblait ne plus rien ouvrir), affichée si elle était masquée ; la liste lue est décrite
+    /// pour le journal de débogage.
+    /// </summary>
+    [Fact]
+    public void InterventionWindowComesBackWhenMinimizedOrHidden()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var dir = Path.Combine(Path.GetTempPath(), "zillaterm-intervention-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            RunWithTheme(() =>
+            {
+                var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new XorProtector());
+                var window = new InterventionWindow("", "", recorder, "jdoe", "session CyberArk (pvwa.corp.local)");
+                Assert.StartsWith("0 intervention(s) lues en ", window.ListDescription, StringComparison.Ordinal);
+                window.Show();
+                window.WindowState = WindowState.Minimized;
+                window.BringBack();
+                Assert.Equal(WindowState.Normal, window.WindowState);
+                Assert.True(window.IsVisible);
+
+                window.Hide();
+                window.BringBack();
+                Assert.True(window.IsVisible);
+                window.Close();
+            });
+        }
+        finally
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Disque qui refuse le journal pendant l'enregistrement : l'interface est prévenue aussitôt, la fenêtre dit depuis
     /// quand plus rien n'est gardé (couleur d'erreur du thème), et note et capture ne sont plus proposées.
     /// </summary>
