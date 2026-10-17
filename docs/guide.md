@@ -904,9 +904,12 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   - **captures**: "Capture a remote desktop…" ("Intervention" tab) takes an image of a Remote Desktop Connection window
     (PSM sessions; a minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs
     takes the desktop shown;
-  - the **screen of remote desktop sessions opened in a tab**, the way the RDP protocol sends it: the tab shown is
-    captured every second and only the changed areas are kept (64 × 64 pixel squares in 16-bit colour, compressed; an
-    area already seen, like a menu that comes back, is kept only once). "● Screen recorded" in the tab bar reminds you.
+  - the **screen of remote desktop sessions opened in a tab**, the way the RDP protocol sends it: every second, the
+    screen of the tab shown is read and only the changed areas are kept (64 × 64 pixel squares in 16-bit colour,
+    compressed; an area already seen, like a menu that comes back, is kept only once). With ZillaTerm's FreeRDP client,
+    it is the desktop as the client decoded it, at its own size and to the pixel, even when the window is scaled,
+    covered by another one or not responding; with the Windows Remote Desktop control, a capture of the window.
+    "● Screen recorded" in the tab bar reminds you.
     A tab in the background, a minimized window and full screen are not captured; back on the tab, whatever changed in
     the meantime is kept. A small isolated change (a character typed) is kept once the screen has not moved for 3
     seconds, at the latest after a minute; a still screen costs nothing. Beyond **100 MB of journal**, the screen is

@@ -77,6 +77,9 @@ internal sealed class RdpConnection : IRdpConnection
     /// <summary>Le contrôle de Windows ne propose pas de suspendre l'affichage : il reste reçu.</summary>
     public bool CanPauseDisplay => false;
 
+    /// <summary>Le contrôle de Windows ne donne pas son bureau décodé : l'onglet est capturé.</summary>
+    public RemoteScreen? Screen => null;
+
     public void PauseDisplay(bool paused)
     {
     }

@@ -616,6 +616,83 @@ public class RdpSessionTests(ITestOutputHelper output)
     }
 
     /// <summary>
+    /// Bureau décodé par le client FreeRDP, reçu par le tube « /frame-pipe » : dès la connexion, à la taille du bureau,
+    /// mis à jour par les seules zones modifiées, et identique au pixel près à ce que montre la fenêtre de la session
+    /// (sans mise à l'échelle) ; c'est lui que l'enregistrement et le partage de l'écran relèvent.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RdpIntegration")]
+    public async Task FreeRdpSendsTheDecodedDesktop()
+    {
+        if (IntegrationAccount() is not { } account || !FreeRdpPresent())
+        {
+            return;
+        }
+
+        var settings = RdpConnectionSettings.Direct("127.0.0.2", 3389, account.User).ForPsmTab();
+        var request = new RdpConnectionRequest(settings, account.Password)
+        {
+            FreeRdp = true,
+            VerifyCertificate = (_, _, _) => Task.FromResult(RdpTrust.Trusted),
+        };
+        await RunOnStaAsync(request, async (session, _) =>
+        {
+            Assert.Null(session.CopyDecodedScreen(null));
+            await session.ConnectAsync();
+            Assert.Equal(RdpSessionState.Connected,
+                await WaitForAsync(session, s => s != RdpSessionState.Connecting, TimeSpan.FromSeconds(90)));
+            var slot = session.Host.SlotHandle;
+            var bounds = Win32Input.ScreenBounds(slot);
+            var desktop = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
+
+            // Bureau ouvert puis immobile : l'image décodée et la fenêtre montrent la même chose.
+            Services.ScreenPixels? decoded = null;
+            double same = 0;
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+            while (DateTime.UtcNow < deadline && same < 0.999)
+            {
+                await Task.Delay(1000);
+                decoded = session.CopyDecodedScreen(null);
+                var captured = Services.WindowCapture.CaptureChildPixels(slot, null);
+                if (decoded is not { } d || captured is not { } c)
+                {
+                    continue;
+                }
+
+                if (d.Width != c.Width || d.Height != c.Height)
+                {
+                    // Emplacement de largeur impaire : bureau d'un pixel plus étroit, mis à l'échelle dans la fenêtre.
+                    output.WriteLine($"Bureau {d.Width} × {d.Height}, fenêtre {c.Width} × {c.Height} : comparaison au pixel impossible.");
+                    same = 1;
+                    break;
+                }
+
+                int equal = 0;
+                for (int i = 0; i < d.Width * d.Height; i++)
+                {
+                    int o = 4 * i;
+                    equal += d.Bgra[o] == c.Bgra[o] && d.Bgra[o + 1] == c.Bgra[o + 1] && d.Bgra[o + 2] == c.Bgra[o + 2] ? 1 : 0;
+                }
+
+                same = (double)equal / (d.Width * d.Height);
+            }
+
+            var screen = Assert.IsType<Services.ScreenPixels>(decoded);
+            Assert.Equal(desktop, (screen.Width, screen.Height));
+            output.WriteLine($"Pixels identiques à la fenêtre : {same:P2}");
+            Assert.True(same >= 0.999, $"pixels identiques à la fenêtre : {same:P2}");
+            // Ouverture de session (bureau, barre des tâches dessinés par morceaux) : des zones, pas tout le bureau à chaque fois.
+            var (updates, partial) = session.DecodedScreenUpdates!.Value;
+            output.WriteLine($"Mises à jour reçues : {updates}, dont {partial} partielle(s)");
+            Assert.True(partial > 0, $"{updates} mise(s) à jour, aucune partielle");
+
+            session.Disconnect();
+            Assert.Equal(RdpSessionState.Ended,
+                await WaitForAsync(session, s => s is RdpSessionState.Ended or RdpSessionState.Failed, TimeSpan.FromSeconds(30)));
+        });
+    }
+
+    /// <summary>
     /// Redimensionnement dynamique (option expérimentale) avec FreeRDP : quand la fenêtre change de taille, le bureau
     /// distant prend la nouvelle taille de l'onglet (largeur paire), sans mise à l'échelle ; un clic arrive à l'endroit visé.
     /// </summary>
