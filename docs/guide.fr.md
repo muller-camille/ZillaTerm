@@ -215,6 +215,9 @@ fenêtre à part.
     sans disques).
   - *Aucun* : aucun disque n'est partagé dans l'onglet, même si le PVWA le demande (choix gardé dans le PVWA, réglage
     du composant) ; la Connexion Bureau à distance suit le fichier signé du PVWA, qui ne peut pas être modifié.
+  - Avec le client de ZillaTerm dans un onglet, l'Explorateur de la session se met à jour tout seul quand un fichier
+    est ajouté, renommé, modifié ou supprimé sur ce poste dans un disque ou un dossier partagé, comme avec la
+    Connexion Bureau à distance (avant la 0.44, il fallait appuyer sur F5).
 - **Affichage en pause** : l'option « Suspendre l'affichage des sessions que personne ne regarde »
   (Paramètres › Bureau à distance, cochée par défaut) demande au serveur de ne plus envoyer l'image d'une session dans un
   onglet quand l'onglet est en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou quand ni le
