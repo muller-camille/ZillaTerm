@@ -825,7 +825,7 @@
     <value>⏹ {0:# file|# file} su {1} {0:interrotto|interrotti} da un annullamento: copia incompleta eliminata.</value>
   </data>
   <data name="SettingsTailSession" xml:space="preserve">
-    <value>Segui i file (tail -f) in una sessione _indipendente</value>
+    <value>Segui in una sessione _indipendente</value>
   </data>
   <data name="SettingsTailSessionHelp" xml:space="preserve">
     <value>Non attende i trasferimenti, ma apre una sessione PSMP in più (registrata a parte; MFA possibile).</value>
@@ -4459,22 +4459,10 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>File centra_le:</value>
   </data>
   <data name="CentralFileHelp" xml:space="preserve">
-    <value>Impostazioni del team su una condivisione di rete, rilette a ogni avvio: le modifiche ti vengono mostrate prima di essere applicate. Importare o esportare: menu del pulsante Impostazioni.</value>
+    <value>Impostazioni del team su una condivisione di rete, rilette a ogni avvio: le modifiche ti vengono mostrate prima di essere applicate.</value>
   </data>
   <data name="InvalidCentralFile" xml:space="preserve">
     <value>File centrale non valido: inserisci un percorso completo (\\server\condivisione\… o C:\…).</value>
-  </data>
-  <data name="MenuEnvImport" xml:space="preserve">
-    <value>Im_porta un ambiente…</value>
-  </data>
-  <data name="MenuEnvImportTip" xml:space="preserve">
-    <value>Impostazioni del team (PVWA, PSMP, componenti PSM…) da un file: le modifiche vengono mostrate prima di essere applicate.</value>
-  </data>
-  <data name="MenuEnvExport" xml:space="preserve">
-    <value>_Esporta l'ambiente…</value>
-  </data>
-  <data name="MenuEnvExportTip" xml:space="preserve">
-    <value>File da condividere con il team, o da mettere accanto a ZillaTerm.exe (ZillaTerm.env.json): né password né dati personali.</value>
   </data>
   <data name="EnvExported" xml:space="preserve">
     <value>Ambiente esportato in {0} (né password né dati personali).</value>
@@ -4909,7 +4897,7 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
     <value>Server X _locale:</value>
   </data>
   <data name="X11DisplayHelp" xml:space="preserve">
-    <value>Un server X su questo computer (VcXsrv, X410…) che accetta le connessioni TCP locali («:0» è la porta 6000). L'inoltro X11 si attiva server per server.</value>
+    <value>Un server X su questo computer (VcXsrv, X410…) che accetta le connessioni TCP locali («:0» è la porta 6000). L'inoltro X11 si attiva nelle proprietà di ogni server di «I miei server».</value>
   </data>
   <data name="X11DisplayInvalid" xml:space="preserve">
     <value>Server X locale: «:0», «localhost:0» o «127.0.0.1:0.0» (solo questo computer: il protocollo X non è cifrato).</value>
@@ -6576,5 +6564,65 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   </data>
   <data name="EditWriteStuckWait" xml:space="preserve">
     <value>Attendi ancora</value>
+  </data>
+  <data name="SettingsEnvImport" xml:space="preserve">
+    <value>_Importa un ambiente…</value>
+  </data>
+  <data name="SettingsEnvExport" xml:space="preserve">
+    <value>Esp_orta l'ambiente…</value>
+  </data>
+  <data name="SettingsEnvHelp" xml:space="preserve">
+    <value>Importa: le modifiche vengono mostrate, poi applicate con «Salva». Esporta: i valori mostrati qui, né password né dati personali.</value>
+  </data>
+  <data name="SettingsEnvImported" xml:space="preserve">
+    <value>{0} importato: controlla i valori, poi «Salva» per applicarli («Annulla» li scarta).</value>
+  </data>
+  <data name="EnvMessageOnSave" xml:space="preserve">
+    <value>Queste impostazioni verranno riportate e applicate con «Salva» (niente di personale: nome utente, «I miei server» e sessioni recenti restano invariati):</value>
+  </data>
+  <data name="SettingsGuide" xml:space="preserve">
+    <value>Ulteriori informazioni su questa pagina</value>
+  </data>
+  <data name="SettingsGuideTip" xml:space="preserve">
+    <value>Apre la guida online (GitHub) alla sezione di questa pagina. Tasto: F1.</value>
+  </data>
+  <data name="SettingsGuideFailed" xml:space="preserve">
+    <value>Il browser non si è aperto: {0}</value>
+  </data>
+  <data name="SettingsSectionFilesTab" xml:space="preserve">
+    <value>Scheda File</value>
+  </data>
+  <data name="SettingsShowHidden" xml:space="preserve">
+    <value>Mostra i file _nascosti</value>
+  </data>
+  <data name="SettingsFileColumns" xml:space="preserve">
+    <value>Co_lonne:</value>
+  </data>
+  <data name="SettingsFilesTabHelp" xml:space="preserve">
+    <value>Anche nella scheda File: casella «Nascosti» e clic destro sull'intestazione delle colonne.</value>
+  </data>
+  <data name="SettingsSectionTail" xml:space="preserve">
+    <value>Seguire un file (tail -f)</value>
+  </data>
+  <data name="SettingsTailNotifyHelp" xml:space="preserve">
+    <value>Finestra in secondo piano: al massimo una ogni 30 s, senza il contenuto delle righe.</value>
+  </data>
+  <data name="SettingsRestoreKeys" xml:space="preserve">
+    <value>Ri_pristina le chiavi rimosse</value>
+  </data>
+  <data name="SettingsTailColors" xml:space="preserve">
+    <value>_Colori per livello</value>
+  </data>
+  <data name="SettingsTailHighlight" xml:space="preserve">
+    <value>Evi_denzia:</value>
+  </data>
+  <data name="SettingsTailAlert" xml:space="preserve">
+    <value>_Avviso se:</value>
+  </data>
+  <data name="SettingsTailNotify" xml:space="preserve">
+    <value>Notifica di _Windows</value>
+  </data>
+  <data name="SettingsTailWordsHelp" xml:space="preserve">
+    <value>Parole separate da virgole; un avviso segna la riga e fa lampeggiare il pulsante della barra delle applicazioni.</value>
   </data>
 </root>

@@ -429,7 +429,7 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
   (Taille, Modifié, Droits, Propriétaire, Groupe), gardée d'une fois sur l'autre ; une colonne cochée sans la place
   est marquée « faute de place ». « Élargir le panneau pour tout afficher » donne au panneau la largeur qui manque
   (la session garde au moins 360 pixels). Décocher Taille ou Modifié fait de la place pour Droits et Propriétaire
-  dans un panneau étroit.
+  dans un panneau étroit. Les colonnes et les fichiers cachés se choisissent aussi dans Paramètres › Fichiers.
 - **Propriétaire et Groupe** : au survol, `propriétaire:groupe` (comme pour `chown`). Ce sont les noms que le serveur
   envoie avec la liste des fichiers, comme ceux de `ls -l`. En SFTP, si la ligne qui les contient n'a pas la forme
   habituelle (nom avec une espace…), ZillaTerm affiche à la place les numéros (UID et GID, comme `ls -n`) ; en FTP, les
@@ -581,7 +581,7 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
     « ⚠ n alertes » augmente (un clic va à la ligne suivante) et le bouton de la fenêtre clignote dans la barre des
     tâches ; une notification Windows est possible, au plus une toutes les 30 s, avec le nombre de lignes et le nom
     du fichier seulement, **jamais le contenu des lignes** (elle peut s'afficher sur l'écran verrouillé). Ces
-    réglages sont gardés pour les fenêtres suivantes.
+    réglages sont gardés pour les fenêtres suivantes ; ils sont aussi dans Paramètres › Fichiers.
   - **Vue combinée** : plusieurs fichiers sélectionnés s'ouvrent dans une seule fenêtre, et « Ajouter à une fenêtre
     de suivi » y ajoute un fichier d'un autre onglet, donc d'un autre serveur. Les lignes s'intercalent dans l'ordre
     d'arrivée, préfixées et colorées par fichier (`[root@srv01 app.log]`) ; en bas, chaque fichier a son état et un
@@ -602,7 +602,7 @@ entrées KeePass SFTP, FTP, FTPS ([section 7](#7-accès-durgence-hors-cyberark--
     cochée ; « Repère » insère une ligne `—— 14:32:05 ——` pour retrouver un moment (avant une manipulation, par
     exemple).
   - **Connexion** : par défaut, le suivi utilise la connexion SFTP de l'onglet Fichiers ; il passe alors entre deux
-    fichiers d'un transfert. L'option « Suivre les fichiers (tail -f) dans une session indépendante » des Paramètres
+    fichiers d'un transfert. L'option « Suivre dans une session indépendante » (Paramètres › Fichiers)
     lui donne sa propre connexion, une par fenêtre et par serveur : il n'attend plus les transferts, mais c'est une
     session PSMP de plus (enregistrée à part, et une validation MFA peut être demandée). Elle est fermée avec la
     fenêtre. Une connexion perdue n'est jamais rouverte en boucle.
@@ -1176,49 +1176,127 @@ Mes serveurs, Intervention, Partage, Sécurité ; chacune tient sur un écran. C
 « ⚠ » y signale un vrai risque. « Enregistrer » applique les réglages ; une valeur incorrecte affiche la page du champ
 concerné, curseur dans ce champ.
 
+Tout s'applique à « Enregistrer », un environnement importé compris ; seules les actions du coffre local (page
+Sécurité) s'appliquent tout de suite, et le disent. « En savoir plus sur cette page » (ou `F1`), en bas de la fenêtre,
+ouvre la section de la page affichée dans ce guide en ligne (version installée, langue de l'interface).
+
 **Pastille « Équipe »** : à droite d'un réglage, elle indique que le [fichier d'environnement](#environnement-partagé)
 de l'équipe (à côté de l'exécutable ou fichier central) le définit, avec la valeur en vigueur ; son infobulle donne le
 fichier. Le réglage reste modifiable ici, mais une nouvelle version du fichier pourra le changer (toujours après votre
 accord). Un réglage que vous avez refusé à l'import, ou changé depuis, n'a pas de pastille.
 
-| Page | Paramètre | Rôle | Défaut |
-| --- | --- | --- | --- |
-| Général | Langue de l'interface | Français, English, Italiano ou langue du système ; appliquée après la déconnexion de CyberArk ou au prochain démarrage | langue de Windows (anglais si elle n'est pas traduite) |
-| Général | Thème | Comme Windows, Clair ou Sombre ; appliqué tout de suite (le contraste élevé de Windows l'emporte) | comme Windows |
-| Général | Confirmer avant de fermer une session connectée | SSH, Bureau à distance, VNC ; « Ne plus demander » dans la confirmation décoche ce réglage | oui |
-| Général | Rechercher une nouvelle version au démarrage | Une requête vers GitHub au plus une fois par jour ; lien dans la barre d'état si une version plus récente existe (la fenêtre « À propos » rappelle ce réglage) | non |
-| Général | Fichier central | Fichier d'environnement de l'équipe sur un partage réseau, relu à chaque démarrage ; ses changements sont montrés avant d'être appliqués (voir [Environnement partagé](#environnement-partagé)) | vide |
-| Général | Journal de débogage | Déroulement des connexions dans un fichier, sans secret (voir [Sécurité](#sécurité)) ; « Afficher le fichier » l'ouvre dans l'Explorateur. Aussi dans le menu du bouton Paramètres | non |
-| CyberArk | Garder la session ouverte pendant que je travaille | Requête légère toutes les 4 minutes, tant que vous utilisez le poste ; suspendue quand Windows est verrouillé ou après 15 minutes sans clavier ni souris (la session CyberArk expire alors selon son délai d'inactivité) | oui |
-| CyberArk | Afficher tout de suite la liste des comptes de la dernière connexion | Copie chiffrée (compte Windows) de la dernière liste complète, une par PVWA et utilisateur, sans mot de passe, supprimée après 30 jours : affichée aussitôt, puis remplacée par la liste relue au PVWA. Décochée : les copies sont supprimées | oui |
-| CyberArk | Composant des comptes Windows | Composant PSM des comptes Windows (domaine ou locaux) sans composant mémorisé pour leur plateforme, par exemple `WIN-PSM` | vide = `PSM-RDP` |
-| CyberArk | Composant par plateforme | Tableau Plateforme (ID du PVWA, par exemple `WinDomain`) / Composant PSM : « Ajouter un composant », « Enlever la ligne », cellules modifiables ; prioritaire sur le composant des comptes Windows. « Mémoriser ce composant pour la plateforme » (fenêtre de connexion) y ajoute une ligne | vide |
-| SSH | Ouvrir les sessions SSH dans ZillaTerm | Terminal et onglet Fichiers intégrés ; décochée : Windows Terminal | oui |
-| SSH | PSMP par défaut, port | Serveur PSM for SSH ; renseigné (ou un PSMP par domaine), les comptes Unix s'ouvrent en SSH par défaut (en fichiers seuls pour une plateforme « SFTP ») ; sans aucun PSMP, SSH et SFTP sont désactivés | vide, 22 |
-| SSH | PSMP par domaine | Autres PSMP (adresse, port, domaine servi) ; chaque serveur passe par celui du domaine le plus proche du sien (voir [PSMP par domaine](#psmp-par-domaine)) ; « Quel PSMP pour le serveur » pour vérifier | aucun |
-| SSH | Permettre à l'onglet Fichiers de suivre le dossier du terminal | Ajoute une commande à `PROMPT_COMMAND` du shell distant à l'ouverture de la session (voir [Suivi du dossier du terminal](#suivi-du-dossier-du-terminal)) | oui |
-| SSH | Serveur X local | Serveur X de ce poste pour le transfert X11 (`:0` = port 6000) ; ce poste seulement | `:0` |
-| Bureau à distance | Ouvrir les sessions PSM Windows dans un onglet de ZillaTerm | Session PSM (bureau ou application distante) dans un onglet, avec le client FreeRDP embarqué, à la taille de l'onglet (voir [Ouvrir une session PSM](#3-ouvrir-une-session-psm-bureau-à-distance)) ; décochée : Connexion Bureau à distance de Windows | non |
-| Bureau à distance | Adapter la résolution à la taille de l'onglet | Sessions dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine | oui |
-| Bureau à distance | Partager les disques de ce poste | Demande les disques du poste au PVWA (case « Map local drives » de sa fenêtre de connexion, `AllowMappingLocalDrives`) ; s'ils sont permis par le composant, ils apparaissent dans la session (Explorateur › Ce PC). ⚠ Les programmes de la session peuvent alors lire et écrire sur vos disques | oui |
-| Bureau à distance | Suspendre l'affichage des sessions que personne ne regarde | Sessions dans un onglet : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image ; la session reste ouverte, l'image revient au retour sur l'onglet ou au premier mouvement de souris. Jamais pour l'onglet affiché pendant l'enregistrement d'une intervention ou un partage ; pendant un enregistrement, la pause d'un onglet en arrière-plan y est marquée (écran et frise du rapport) | oui |
-| Terminal | Couleurs du terminal, taille de police | Palette (Campbell, One Half, Solarized…) et taille de police des terminaux SSH ; `Ctrl+molette` change la taille d'un terminal, `Ctrl+0` la rétablit | Campbell, 14 |
-| Terminal | Avertir avant de coller plusieurs lignes quand le shell les exécuterait une à une | Aperçu et confirmation avant le collage | oui |
-| Terminal | Le clic droit dans le terminal colle le presse-papiers | Maj+clic droit ouvre alors le menu ; ⚠ un clic droit par mégarde envoie le presse-papiers au shell | non |
-| Fichiers | Protocole d'envoi | Protocole essayé d'abord (SFTP ou SCP) ; si le serveur le refuse, l'autre prend le relais | SFTP |
-| Fichiers | Proposer une archive .tar.gz | Envoi en une seule archive proposé à partir de ce nombre de fichiers déposés d'un coup | oui, 200 |
-| Fichiers | Suivre les fichiers (tail -f) dans une session indépendante | Le suivi d'un fichier ouvre sa propre connexion SFTP (une session PSMP de plus) | non |
-| Fichiers | Éditeur de texte | Programme ouvert par « Modifier » dans l'onglet Fichiers | Bloc-notes |
-| Fichiers | Outil de comparaison | Programme proposé dans la fenêtre de comparaison, avec ses arguments (`{0}` = fichier de gauche, `{1}` = de droite) | aucun |
-| Mes serveurs | Étiquettes des serveurs | Étiquettes données aux serveurs de « Mes serveurs » (nom, couleur) : « Ajouter une étiquette », « Supprimer l'étiquette », cellules modifiables ; renommer suit dans « Mes serveurs », supprimer retire l'étiquette des serveurs (voir [Étiquettes](#étiquettes-prod-qa-dev)) | PROD (rouge), QA (bleu), DEV (vert) |
-| Intervention | Consignes d'astreinte | Bonnes pratiques et numéros d'urgence affichés en haut de l'onglet « Intervention » ; texte brut (voir [Intervention](#8-intervention--enregistrement-et-consignes-dastreinte)) | vide |
-| Intervention | Fichier des consignes | Fichier texte (partage réseau en général) relu à chaque ouverture, affiché à la place des consignes ci-dessus | vide |
-| Intervention | Rappels pendant l'intervention | Une ligne par rappel : minutes depuis le début de l'enregistrement, puis le texte (« 30 Escalader au N3 ») ; montrés dans l'onglet « Intervention » et la barre d'état, notés au journal | vide |
-| Partage | Permettre de partager mes sessions avec un autre ZillaTerm | Partager une session depuis le menu de son onglet ; regarder celle d'une autre personne fonctionne sans (voir [Partager une session](#9-partager-une-session-avec-un-collègue)) | non |
-| Partage | Connexions directes à ce poste, port | L'autre ZillaTerm se connecte à ce poste ; port 0 = un port libre au hasard, de 1024 à 65535 pour un port fixe (utile si le pare-feu doit l'autoriser) | oui, 0 |
-| Partage | Dossier relais | Dossier d'un partage réseau accessible aux deux postes, utilisé quand la connexion directe n'aboutit pas ; échanges chiffrés, effacés à la fin du partage (un dossier sur un serveur réseau venu du fichier d'environnement demande de cocher « J'ai vérifié… ») | vide |
-| Sécurité | Clés et certificats des serveurs | Tableau des empreintes vérifiées et acceptées (serveur, type, empreinte) : PSMP, SSH direct, certificats FTPS et Bureau à distance des entrées KeePass (une ligne par type de clé) ; « Filtrer les serveurs » réduit la liste. « Oublier les clés choisies » retire les lignes sélectionnées à l'enregistrement ; la clé sera redemandée à la prochaine connexion | — |
-| Sécurité | Coffre local | Mots de passe maîtres KeePass mémorisés : « Créer le coffre… », « Déverrouiller… », « Changer le mot de passe… », « Supprimer maintenant… » ; ces actions s'appliquent tout de suite, sans « Enregistrer » | — |
+<a id="settings-general"></a>
+
+#### Page Général
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Langue de l'interface | Français, English, Italiano ou langue du système ; appliquée après la déconnexion de CyberArk ou au prochain démarrage | langue de Windows (anglais si elle n'est pas traduite) |
+| Thème | Comme Windows, Clair ou Sombre ; appliqué tout de suite (le contraste élevé de Windows l'emporte) | comme Windows |
+| Confirmer avant de fermer une session connectée | SSH, Bureau à distance, VNC ; « Ne plus demander » dans la confirmation décoche ce réglage | oui |
+| Rechercher une nouvelle version au démarrage | Une requête vers GitHub au plus une fois par jour ; lien dans la barre d'état si une version plus récente existe (la fenêtre « À propos » rappelle ce réglage) | non |
+| Fichier central | Fichier d'environnement de l'équipe sur un partage réseau, relu à chaque démarrage ; ses changements sont montrés avant d'être appliqués (voir [Environnement partagé](#environnement-partagé)) | vide |
+| Importer, exporter l'environnement | « Importer un environnement… » : ses changements sont montrés, puis repris dans les pages et appliqués à « Enregistrer » (« Annuler » les abandonne). « Exporter l'environnement… » : les valeurs affichées, ni mot de passe ni donnée personnelle (voir [Environnement partagé](#environnement-partagé)) | — |
+| Journal de débogage | Déroulement des connexions dans un fichier, sans secret (voir [Sécurité](#sécurité)) ; « Afficher le fichier » l'ouvre dans l'Explorateur. Aussi dans le menu du bouton Paramètres | non |
+
+<a id="settings-cyberark"></a>
+
+#### Page CyberArk
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Garder la session ouverte pendant que je travaille | Requête légère toutes les 4 minutes, tant que vous utilisez le poste ; suspendue quand Windows est verrouillé ou après 15 minutes sans clavier ni souris (la session CyberArk expire alors selon son délai d'inactivité) | oui |
+| Afficher tout de suite la liste des comptes de la dernière connexion | Copie chiffrée (compte Windows) de la dernière liste complète, une par PVWA et utilisateur, sans mot de passe, supprimée après 30 jours : affichée aussitôt, puis remplacée par la liste relue au PVWA. Décochée : les copies sont supprimées | oui |
+| Composant des comptes Windows | Composant PSM des comptes Windows (domaine ou locaux) sans composant mémorisé pour leur plateforme, par exemple `WIN-PSM` | vide = `PSM-RDP` |
+| Composant par plateforme | Tableau Plateforme (ID du PVWA, par exemple `WinDomain`) / Composant PSM : « Ajouter un composant », « Enlever la ligne », cellules modifiables ; prioritaire sur le composant des comptes Windows. « Mémoriser ce composant pour la plateforme » (fenêtre de connexion) y ajoute une ligne | vide |
+
+<a id="settings-ssh"></a>
+
+#### Page SSH
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Ouvrir les sessions SSH dans ZillaTerm | Terminal et onglet Fichiers intégrés ; décochée : Windows Terminal | oui |
+| PSMP par défaut, port | Serveur PSM for SSH ; renseigné (ou un PSMP par domaine), les comptes Unix s'ouvrent en SSH par défaut (en fichiers seuls pour une plateforme « SFTP ») ; sans aucun PSMP, SSH et SFTP sont désactivés | vide, 22 |
+| PSMP par domaine | Autres PSMP (adresse, port, domaine servi) ; chaque serveur passe par celui du domaine le plus proche du sien (voir [PSMP par domaine](#psmp-par-domaine)) ; « Quel PSMP pour le serveur » pour vérifier | aucun |
+| Permettre à l'onglet Fichiers de suivre le dossier du terminal | Ajoute une commande à `PROMPT_COMMAND` du shell distant à l'ouverture de la session (voir [Suivi du dossier du terminal](#suivi-du-dossier-du-terminal)) | oui |
+| Serveur X local | Serveur X de ce poste pour le transfert X11 (`:0` = port 6000) ; ce poste seulement. Le transfert X11 se coche dans les propriétés de chaque serveur de « Mes serveurs » | `:0` |
+
+<a id="settings-rdp"></a>
+
+#### Page Bureau à distance
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Ouvrir les sessions PSM Windows dans un onglet de ZillaTerm | Session PSM (bureau ou application distante) dans un onglet, avec le client FreeRDP embarqué, à la taille de l'onglet (voir [Ouvrir une session PSM](#3-ouvrir-une-session-psm-bureau-à-distance)) ; décochée : Connexion Bureau à distance de Windows | non |
+| Adapter la résolution à la taille de l'onglet | Sessions dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine | oui |
+| Partager les disques de ce poste | Demande les disques du poste au PVWA (case « Map local drives » de sa fenêtre de connexion, `AllowMappingLocalDrives`) ; s'ils sont permis par le composant, ils apparaissent dans la session (Explorateur › Ce PC). ⚠ Les programmes de la session peuvent alors lire et écrire sur vos disques | oui |
+| Suspendre l'affichage des sessions que personne ne regarde | Sessions dans un onglet : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image ; la session reste ouverte, l'image revient au retour sur l'onglet ou au premier mouvement de souris. Jamais pour l'onglet affiché pendant l'enregistrement d'une intervention ou un partage ; pendant un enregistrement, la pause d'un onglet en arrière-plan y est marquée (écran et frise du rapport) | oui |
+
+<a id="settings-terminal"></a>
+
+#### Page Terminal
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Couleurs du terminal, taille de police | Palette (Campbell, One Half, Solarized…) et taille de police des terminaux SSH ; `Ctrl+molette` change la taille d'un terminal, `Ctrl+0` la rétablit | Campbell, 14 |
+| Avertir avant de coller plusieurs lignes quand le shell les exécuterait une à une | Aperçu et confirmation avant le collage | oui |
+| Le clic droit dans le terminal colle le presse-papiers | Maj+clic droit ouvre alors le menu ; ⚠ un clic droit par mégarde envoie le presse-papiers au shell | non |
+
+<a id="settings-files"></a>
+
+#### Page Fichiers
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Protocole d'envoi | Protocole essayé d'abord (SFTP ou SCP) ; si le serveur le refuse, l'autre prend le relais | SFTP |
+| Proposer une archive .tar.gz | Envoi en une seule archive proposé à partir de ce nombre de fichiers déposés d'un coup | oui, 200 |
+| Afficher les fichiers cachés | Noms commençant par un point ; aussi la case « Cachés » de l'onglet Fichiers | non |
+| Colonnes | Taille, Modifié, Droits, Propriétaire, Groupe (la colonne Nom reste toujours) ; aussi par un clic droit sur l'en-tête des colonnes de l'onglet Fichiers | toutes |
+| Suivre dans une session indépendante | Le suivi d'un fichier (tail -f) ouvre sa propre connexion SFTP (une session PSMP de plus) | non |
+| Couleurs par niveau | Suivi d'un fichier : erreurs (ERROR, FATAL, CRITICAL…) en rouge, avertissements (WARN, WARNING) en orange | oui |
+| Surligner | Suivi d'un fichier : mots surlignés en jaune, séparés par des virgules | vide |
+| Alerte si | Suivi d'un fichier : mots qui marquent la ligne et font clignoter le bouton de la barre des tâches, séparés par des virgules | vide |
+| Notification Windows | Suivi d'un fichier : notification d'alerte quand la fenêtre n'est pas au premier plan (au plus une toutes les 30 secondes ; nombre de lignes et nom du fichier, jamais leur contenu) | oui |
+| Éditeur de texte | Programme ouvert par « Modifier » dans l'onglet Fichiers | Bloc-notes |
+| Outil de comparaison | Programme proposé dans la fenêtre de comparaison, avec ses arguments (`{0}` = fichier de gauche, `{1}` = de droite) | aucun |
+
+<a id="settings-servers"></a>
+
+#### Page Mes serveurs
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Étiquettes des serveurs | Étiquettes données aux serveurs de « Mes serveurs » (nom, couleur) : « Ajouter une étiquette », « Supprimer l'étiquette », cellules modifiables ; renommer suit dans « Mes serveurs », supprimer retire l'étiquette des serveurs (voir [Étiquettes](#étiquettes-prod-qa-dev)) | PROD (rouge), QA (bleu), DEV (vert) |
+
+<a id="settings-intervention"></a>
+
+#### Page Intervention
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Consignes d'astreinte | Bonnes pratiques et numéros d'urgence affichés en haut de l'onglet « Intervention » ; texte brut (voir [Intervention](#8-intervention--enregistrement-et-consignes-dastreinte)) | vide |
+| Fichier des consignes | Fichier texte (partage réseau en général) relu à chaque ouverture, affiché à la place des consignes ci-dessus | vide |
+| Rappels pendant l'intervention | Une ligne par rappel : minutes depuis le début de l'enregistrement, puis le texte (« 30 Escalader au N3 ») ; montrés dans l'onglet « Intervention » et la barre d'état, notés au journal | vide |
+
+<a id="settings-sharing"></a>
+
+#### Page Partage
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Permettre de partager mes sessions avec un autre ZillaTerm | Partager une session depuis le menu de son onglet ; regarder celle d'une autre personne fonctionne sans (voir [Partager une session](#9-partager-une-session-avec-un-collègue)) | non |
+| Connexions directes à ce poste, port | L'autre ZillaTerm se connecte à ce poste ; port 0 = un port libre au hasard, de 1024 à 65535 pour un port fixe (utile si le pare-feu doit l'autoriser) | oui, 0 |
+| Dossier relais | Dossier d'un partage réseau accessible aux deux postes, utilisé quand la connexion directe n'aboutit pas ; échanges chiffrés, effacés à la fin du partage (un dossier sur un serveur réseau venu du fichier d'environnement demande de cocher « J'ai vérifié… ») | vide |
+
+<a id="settings-security"></a>
+
+#### Page Sécurité
+
+| Paramètre | Rôle | Défaut |
+| --- | --- | --- |
+| Clés et certificats des serveurs | Tableau des empreintes vérifiées et acceptées (serveur, type, empreinte) : PSMP, SSH direct, certificats FTPS et Bureau à distance des entrées KeePass (une ligne par type de clé) ; « Filtrer les serveurs » réduit la liste. « Oublier les clés choisies » retire les lignes sélectionnées, oubliées à l'enregistrement (« Rétablir les clés retirées » les remet d'ici là) ; la clé sera redemandée à la prochaine connexion | — |
+| Coffre local | Mots de passe maîtres KeePass mémorisés : « Créer le coffre… », « Déverrouiller… », « Changer le mot de passe… », « Supprimer maintenant… » ; ces actions s'appliquent tout de suite, sans « Enregistrer » | — |
 
 Les réglages que peut diffuser le fichier d'environnement de l'équipe sont listés dans
 [Environnement partagé](#environnement-partagé).
@@ -1230,11 +1308,12 @@ défaut et par domaine, composant des comptes Windows et composants par platefor
 consignes d'astreinte (texte ou fichier), rappels pendant l'intervention, étiquettes des serveurs, partage de sessions,
 quelques options), sans rien de personnel ni aucun mot de passe :
 
-1. **Exporter** : bouton « Paramètres » → « Exporter l'environnement… » enregistre `ZillaTerm.env.json`.
+1. **Exporter** : Paramètres › Général › « Exporter l'environnement… » enregistre `ZillaTerm.env.json` avec les valeurs
+   affichées.
 2. **À côté de l'exécutable** : posez ce fichier à côté de `ZillaTerm.exe` (par exemple dans le même zip). Au
    démarrage, s'il est nouveau ou a changé, ZillaTerm le propose avant l'écran d'identification.
-3. **Importer** : bouton « Paramètres » → « Importer un environnement… », ou « Importer un environnement… » sur
-   l'écran d'identification.
+3. **Importer** : Paramètres › Général › « Importer un environnement… » (repris dans les pages, appliqué à
+   « Enregistrer »), ou « Importer un environnement… » sur l'écran d'identification (appliqué aussitôt).
 4. **Fichier central** : Paramètres › Général › « Fichier central » (un fichier sur un partage réseau, qu'il est
    aussi possible d'indiquer dans l'environnement lui-même). Il est relu à chaque démarrage : quand vous le modifiez,
    chacun voit les changements au démarrage suivant. Un partage injoignable (poste hors VPN) ne retarde pas le

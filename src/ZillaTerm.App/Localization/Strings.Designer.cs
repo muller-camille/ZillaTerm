@@ -7424,7 +7424,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to _Follow files (tail -f) in an independent session.
+        ///   Looks up a localized string similar to _Follow in an independent session.
         /// </summary>
         public static string SettingsTailSession {
             get {
@@ -13285,7 +13285,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Your team's settings on a network share, read at each start: their changes are shown to you before being applied. Import or export: Settings button menu..
+        ///   Looks up a localized string similar to Your team's settings on a network share, read at each start: their changes are shown to you before being applied..
         /// </summary>
         public static string CentralFileHelp {
             get {
@@ -13299,42 +13299,6 @@ namespace ZillaTerm.App.Localization {
         public static string InvalidCentralFile {
             get {
                 return ResourceManager.GetString("InvalidCentralFile", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to _Import an environment….
-        /// </summary>
-        public static string MenuEnvImport {
-            get {
-                return ResourceManager.GetString("MenuEnvImport", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Settings of your team (PVWA, PSMP, PSM components…) from a file: the changes are shown before being applied..
-        /// </summary>
-        public static string MenuEnvImportTip {
-            get {
-                return ResourceManager.GetString("MenuEnvImportTip", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to _Export the environment….
-        /// </summary>
-        public static string MenuEnvExport {
-            get {
-                return ResourceManager.GetString("MenuEnvExport", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to File to share with your team, or to put next to ZillaTerm.exe (ZillaTerm.env.json): no password, no personal data..
-        /// </summary>
-        public static string MenuEnvExportTip {
-            get {
-                return ResourceManager.GetString("MenuEnvExportTip", resourceCulture);
             }
         }
 
@@ -14635,7 +14599,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to An X server on this computer (VcXsrv, X410…) that accepts local TCP connections (“:0” is port 6000). X11 forwarding is turned on server by server..
+        ///   Looks up a localized string similar to An X server on this computer (VcXsrv, X410…) that accepts local TCP connections (“:0” is port 6000). X11 forwarding is turned on in the properties of each server in “My servers”..
         /// </summary>
         public static string X11DisplayHelp {
             get {
@@ -19631,6 +19595,186 @@ namespace ZillaTerm.App.Localization {
         public static string EditWriteStuckWait {
             get {
                 return ResourceManager.GetString("EditWriteStuckWait", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to I_mport an environment….
+        /// </summary>
+        public static string SettingsEnvImport {
+            get {
+                return ResourceManager.GetString("SettingsEnvImport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Export the environment….
+        /// </summary>
+        public static string SettingsEnvExport {
+            get {
+                return ResourceManager.GetString("SettingsEnvExport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Import: the changes are shown, then applied on “Save”. Export: the values shown here, no password, no personal data..
+        /// </summary>
+        public static string SettingsEnvHelp {
+            get {
+                return ResourceManager.GetString("SettingsEnvHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} imported: check the values, then “Save” to apply them (“Cancel” drops them)..
+        /// </summary>
+        public static string SettingsEnvImported {
+            get {
+                return ResourceManager.GetString("SettingsEnvImported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to These settings will be filled in and applied on “Save” (nothing personal: user name, “My servers” and recent sessions stay as they are):.
+        /// </summary>
+        public static string EnvMessageOnSave {
+            get {
+                return ResourceManager.GetString("EnvMessageOnSave", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Learn more about this page.
+        /// </summary>
+        public static string SettingsGuide {
+            get {
+                return ResourceManager.GetString("SettingsGuide", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Opens the online guide (GitHub) at this page's section. Key: F1..
+        /// </summary>
+        public static string SettingsGuideTip {
+            get {
+                return ResourceManager.GetString("SettingsGuideTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The browser did not open: {0}.
+        /// </summary>
+        public static string SettingsGuideFailed {
+            get {
+                return ResourceManager.GetString("SettingsGuideFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Files tab.
+        /// </summary>
+        public static string SettingsSectionFilesTab {
+            get {
+                return ResourceManager.GetString("SettingsSectionFilesTab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show _hidden files.
+        /// </summary>
+        public static string SettingsShowHidden {
+            get {
+                return ResourceManager.GetString("SettingsShowHidden", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Co_lumns:.
+        /// </summary>
+        public static string SettingsFileColumns {
+            get {
+                return ResourceManager.GetString("SettingsFileColumns", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Also in the Files tab: “Hidden” box and right-click on the column headers..
+        /// </summary>
+        public static string SettingsFilesTabHelp {
+            get {
+                return ResourceManager.GetString("SettingsFilesTabHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Following a file (tail -f).
+        /// </summary>
+        public static string SettingsSectionTail {
+            get {
+                return ResourceManager.GetString("SettingsSectionTail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Window in the background: at most one every 30 s, without the content of the lines..
+        /// </summary>
+        public static string SettingsTailNotifyHelp {
+            get {
+                return ResourceManager.GetString("SettingsTailNotifyHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to R_estore removed keys.
+        /// </summary>
+        public static string SettingsRestoreKeys {
+            get {
+                return ResourceManager.GetString("SettingsRestoreKeys", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Colours by level.
+        /// </summary>
+        public static string SettingsTailColors {
+            get {
+                return ResourceManager.GetString("SettingsTailColors", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Words to highlight:.
+        /// </summary>
+        public static string SettingsTailHighlight {
+            get {
+                return ResourceManager.GetString("SettingsTailHighlight", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Alert on:.
+        /// </summary>
+        public static string SettingsTailAlert {
+            get {
+                return ResourceManager.GetString("SettingsTailAlert", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Windows _notification.
+        /// </summary>
+        public static string SettingsTailNotify {
+            get {
+                return ResourceManager.GetString("SettingsTailNotify", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Words separated by commas; an alert marks the line and flashes the taskbar button..
+        /// </summary>
+        public static string SettingsTailWordsHelp {
+            get {
+                return ResourceManager.GetString("SettingsTailWordsHelp", resourceCulture);
             }
         }
     }

@@ -381,7 +381,8 @@
             <MenuItem Header="{x:Static loc:Strings.MenuCopyUser}" Click="OnCopyUser" />
         </ContextMenu>
 
-        <!-- Menu du bouton Paramètres : paramètres, journal de débogage (désactivé par défaut). -->
+        <!-- Menu du bouton Paramètres : paramètres, journal de débogage (désactivé par défaut), import de sessions, À propos.
+             L'environnement de l'équipe s'importe et s'exporte dans Paramètres › Général. -->
         <ContextMenu x:Key="SettingsMenu" Opened="OnSettingsMenuOpened">
             <MenuItem Header="{x:Static loc:Strings.MenuSettings}" Click="OnSettings" FontWeight="SemiBold">
                 <MenuItem.Icon>
@@ -393,8 +394,6 @@
                       ToolTip="{x:Static loc:Strings.MenuDebugLogTip}" />
             <MenuItem Header="{x:Static loc:Strings.MenuDebugLogShow}" Click="OnShowDebugLog" />
             <Separator />
-            <MenuItem Header="{x:Static loc:Strings.MenuEnvImport}" Click="OnImportEnvironment" ToolTip="{x:Static loc:Strings.MenuEnvImportTip}" />
-            <MenuItem Header="{x:Static loc:Strings.MenuEnvExport}" Click="OnExportEnvironment" ToolTip="{x:Static loc:Strings.MenuEnvExportTip}" />
             <MenuItem Tag="sessionimport" Header="{x:Static loc:Strings.MenuSessionImport}" Click="OnImportSessions"
                       ToolTip="{x:Static loc:Strings.SessionImportTip}">
                 <MenuItem.Icon>

@@ -100,20 +100,38 @@ internal static class EnvironmentImport
             return false;
         }
 
+        bool applied = Confirm(owner, settings, full, file, automatic, Strings.EnvMessage);
+        if (applied)
+        {
+            file.Profile.ApplyTo(settings);
+        }
+
+        settings.EnvironmentFileHashes[key] = file.Sha256;
+        Save(settings);
+        return applied;
+    }
+
+    /// <summary>
+    /// Montre les changements du fichier par rapport à <paramref name="settings"/> et demande l'accord (le PVWA et les
+    /// PSMP reçoivent le mot de passe CyberArk) ; sans changement, le dit quand le fichier a été choisi. N'applique rien.
+    /// </summary>
+    /// <returns>Vrai si l'utilisateur accepte les changements.</returns>
+    private static bool Confirm(Window? owner, AppSettings settings, string full, EnvironmentFile file, bool automatic, string message)
+    {
         var changes = file.Profile.Diff(settings);
         var applicable = changes.Where(c => !c.Ignored).ToList();
         var ignored = changes.Where(c => c.Ignored)
             .Select(c => Text.Format(c.NotPsmp ? Strings.EnvHostKeyNotPsmp : Strings.EnvHostKeyIgnored, c.Detail)).ToList();
-        bool applied = false;
+        bool accepted = false;
         if (applicable.Count > 0)
         {
             bool sensitive = applicable.Any(c => c.Sensitive);
-            applied = ConfirmDialog.Confirm(owner, new ConfirmRequest
+            accepted = ConfirmDialog.Confirm(owner, new ConfirmRequest
             {
                 Title = Strings.EnvTitle,
                 Heading = string.IsNullOrWhiteSpace(file.Profile.Name) ? Strings.EnvHeading : Text.Format(Strings.EnvHeadingNamed, ShortName(file.Profile.Name)),
                 Subject = full,
-                Message = Strings.EnvMessage,
+                Message = message,
                 Items = applicable.Select(Line).ToList(),
                 Bullets = ignored,
                 Codes = [("SHA-256", file.Sha256)],
@@ -123,12 +141,7 @@ internal static class EnvironmentImport
                 Actions = [Strings.EnvApply],
                 CancelLabel = Strings.EnvSkip,
             });
-            if (applied)
-            {
-                file.Profile.ApplyTo(settings);
-            }
-
-            DebugLog.Write("env", $"Environnement {(applied ? "appliqué" : "non appliqué")} : {full} (SHA-256 {file.Sha256}, {applicable.Count} changement(s))");
+            DebugLog.Write("env", $"Environnement {(accepted ? "accepté" : "non appliqué")} : {full} (SHA-256 {file.Sha256}, {applicable.Count} changement(s))");
         }
         else if (!automatic)
         {
@@ -149,9 +162,35 @@ internal static class EnvironmentImport
             DebugLog.Write("env", $"{full} : {string.Join(" ; ", ignored)}");
         }
 
-        settings.EnvironmentFileHashes[key] = file.Sha256;
-        Save(settings);
-        return applied;
+        return accepted;
+    }
+
+    /// <summary>
+    /// Fichier choisi dans les Paramètres : ses changements par rapport aux valeurs affichées (<paramref name="settings"/>)
+    /// sont montrés. Accepté, il est rendu pour être appliqué à « Enregistrer » ; rien n'est appliqué ni enregistré ici.
+    /// </summary>
+    internal static EnvironmentFile? Review(Window owner, AppSettings settings, string path)
+    {
+        var full = path.Trim();
+        EnvironmentFile file;
+        try
+        {
+            file = EnvironmentProfile.Load(full);
+        }
+        catch (EnvironmentFileException ex)
+        {
+            DebugLog.Write("env", $"Fichier d'environnement refusé : {full} ({ex.Message})");
+            ShowError(owner, full, Describe(ex));
+            return null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+        {
+            DebugLog.Write("env", $"Fichier d'environnement illisible : {full}", ex);
+            ShowError(owner, full, ex.Message);
+            return null;
+        }
+
+        return Confirm(owner, settings, full, file, automatic: false, Strings.EnvMessageOnSave) ? file : null;
     }
 
     /// <summary>Attente maximale d'un fichier d'environnement au démarrage.</summary>

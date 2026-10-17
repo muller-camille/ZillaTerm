@@ -1,3 +1,5 @@
+using ZillaTerm.Core.Ssh;
+
 namespace ZillaTerm.Core.Tests;
 
 public sealed class AppSettingsTests : IDisposable
@@ -162,6 +164,24 @@ public sealed class AppSettingsTests : IDisposable
         Assert.True(AppSettings.Load(path).PauseRdpDisplay);
         new AppSettings { PauseRdpDisplay = false }.Save(path);
         Assert.False(AppSettings.Load(path).PauseRdpDisplay);
+    }
+
+    /// <summary>Copie des Paramètres : tout ce qui est enregistré, sans rien partager avec l'original.</summary>
+    [Fact]
+    public void CopyIsCompleteAndIndependent()
+    {
+        var settings = new AppSettings { PsmpAddress = "psmp.corp.com", TailHighlights = "db01", HiddenFileColumns = [RemoteSortColumn.Group] };
+        settings.KnownHosts["psmp.corp.com:22"] = "ssh-ed25519 SHA256:AAAA";
+        settings.PsmpServers.Add(new PsmpServer { Address = "psmp.paris.corp.com" });
+
+        var copy = settings.Copy();
+        Assert.Equal(System.Text.Json.JsonSerializer.Serialize(settings), System.Text.Json.JsonSerializer.Serialize(copy));
+        copy.KnownHosts.Clear();
+        copy.PsmpServers[0].Address = "autre";
+        copy.HiddenFileColumns.Add(RemoteSortColumn.Size);
+        Assert.Single(settings.KnownHosts);
+        Assert.Equal("psmp.paris.corp.com", settings.PsmpServers[0].Address);
+        Assert.Equal([RemoteSortColumn.Group], settings.HiddenFileColumns);
     }
 
     /// <summary>Copie chiffrée de la liste des comptes : par défaut, y compris pour des réglages plus anciens ; le choix gardé.</summary>
