@@ -1614,9 +1614,9 @@ l'onglet. Les connexions directes, elles, suivent la taille de l'onglet.
 **Client FreeRDP.** Les sessions PSM dans un onglet passent par le client Windows de FreeRDP (`wfreerdp`), compilé par
 le workflow de release du fork `muller-camille/FreeRDP` (branche `ci`) et publié dans ses releases ;
 `tools/freerdp-download.sh` prend la release figée et la vérifie (somme SHA-256 figée, attestation de provenance de
-GitHub). FreeRDP 3.32.1 et OpenSSL 3.5.9 à des versions figées (commit vérifié, archive vérifiée par sa somme
+GitHub). FreeRDP 3.32.2 et OpenSSL 3.5.9 à des versions figées (commit vérifié, archive vérifiée par sa somme
 SHA-256), liés statiquement (un seul exécutable, qui n'utilise que des DLL de Windows), avec des correctifs
-génériques, sans rien de propre à ZillaTerm, chacun destiné à être proposé au projet FreeRDP (branche `patches-3.32.1`
+génériques, sans rien de propre à ZillaTerm, chacun destiné à être proposé au projet FreeRDP (branche `patches-3.32.2`
 du fork `muller-camille/FreeRDP`) : fichier de connexion lu sur l'entrée standard, ancienne « sécurité RDP » soumise à
 `/cert:deny` et aux empreintes, applications distantes qui répondent au serveur et s'affichent dans la fenêtre parente,
 clavier et molette, fenêtre qui répond entre deux tentatives de reconnexion, DPI de la fenêtre parente, recherche des

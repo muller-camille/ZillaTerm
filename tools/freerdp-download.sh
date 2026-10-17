@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Client Bureau à distance de ZillaTerm : wfreerdp (client Windows de FreeRDP), compilé par le workflow « release » du
-# fork muller-camille/FreeRDP (branche ci) : FreeRDP 3.32.1 et ses correctifs génériques (branche patches-3.32.1, à un
+# fork muller-camille/FreeRDP (branche ci) : FreeRDP 3.32.2 et ses correctifs génériques (branche patches-3.32.2, à un
 # commit figé), lié statiquement à OpenSSL (version figée) ; un seul exécutable, qui n'utilise que des DLL de Windows.
 #
 # Téléchargé depuis la release figée ci-dessous : SHA256SUMS.txt est vérifié par sa somme figée et par l'attestation

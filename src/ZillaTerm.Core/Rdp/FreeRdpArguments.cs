@@ -11,7 +11,7 @@ namespace ZillaTerm.Core.Rdp;
 public sealed record FreeRdpLaunch(IReadOnlyList<string> Arguments, string ConnectionFile);
 
 /// <summary>
-/// Connexion décrite au client FreeRDP (fork muller-camille/FreeRDP, branche patches-3.32.1 : uniquement des
+/// Connexion décrite au client FreeRDP (fork muller-camille/FreeRDP, branche patches-3.32.2 : uniquement des
 /// fonctions génériques de FreeRDP). Le serveur doit présenter un certificat (TLS) ou une clé (ancienne sécurité RDP)
 /// dont l'empreinte a été acceptée par ZillaTerm avant le lancement (« /cert:deny,fingerprint:… ») : FreeRDP refuse
 /// tout autre serveur, sans rien demander.

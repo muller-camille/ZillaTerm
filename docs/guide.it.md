@@ -1612,10 +1612,10 @@ una dimensione fissa, adattata alla scheda. Le connessioni dirette seguono la di
 **Client FreeRDP.** Le sessioni PSM in una scheda passano dal client Windows di FreeRDP (`wfreerdp`), compilato dal
 workflow di release del fork `muller-camille/FreeRDP` (ramo `ci`) e pubblicato nelle sue release;
 `tools/freerdp-download.sh` prende la release fissata e la verifica (somma SHA-256 fissa, attestazione di provenienza
-di GitHub). FreeRDP 3.32.1 e OpenSSL 3.5.9 a versioni fisse (commit verificato, archivio verificato dalla sua somma
+di GitHub). FreeRDP 3.32.2 e OpenSSL 3.5.9 a versioni fisse (commit verificato, archivio verificato dalla sua somma
 SHA-256), collegati staticamente (un solo eseguibile, che usa solo DLL di Windows), con correzioni
 generiche, senza nulla di specifico a ZillaTerm, ciascuna destinata a essere proposta al progetto FreeRDP (ramo
-`patches-3.32.1` del fork `muller-camille/FreeRDP`): file di connessione letto dallo standard input, vecchia
+`patches-3.32.2` del fork `muller-camille/FreeRDP`): file di connessione letto dallo standard input, vecchia
 «sicurezza RDP» soggetta a `/cert:deny` e alle impronte, applicazioni remote che rispondono al server e vengono
 mostrate nella finestra padre, tastiera e rotellina, finestra che risponde tra due tentativi di riconnessione, DPI
 della finestra padre, ricerca delle librerie. ZillaTerm lo integra, lo copia al primo utilizzo in

@@ -1522,9 +1522,9 @@ fixed size, scaled to the tab. Direct connections follow the tab size.
 
 **FreeRDP client.** PSM sessions in a tab go through the FreeRDP Windows client (`wfreerdp`), built by the release
 workflow of the `muller-camille/FreeRDP` fork (branch `ci`) and published in its releases; `tools/freerdp-download.sh`
-takes the pinned release and checks it (pinned SHA-256 sum, GitHub build provenance attestation). FreeRDP 3.32.1 and
+takes the pinned release and checks it (pinned SHA-256 sum, GitHub build provenance attestation). FreeRDP 3.32.2 and
 OpenSSL 3.5.9 at pinned versions (verified commit, archive verified by its SHA-256 sum), statically linked (a single executable, which uses only Windows DLLs), with generic patches, nothing
-specific to ZillaTerm, each one meant to be offered to the FreeRDP project (branch `patches-3.32.1` of the
+specific to ZillaTerm, each one meant to be offered to the FreeRDP project (branch `patches-3.32.2` of the
 `muller-camille/FreeRDP` fork): connection file read from standard input, legacy "RDP security" subject to
 `/cert:deny` and to the fingerprints, remote applications answering the server and shown in the parent window,
 keyboard and mouse wheel, window responsive between reconnection attempts, DPI of the parent window, library search
