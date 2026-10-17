@@ -202,6 +202,9 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
     them (for Remote Desktop Connection, ZillaTerm asks the PVWA for a file without drives).
   - *None*: no drive is shared in the tab, even if the PVWA asks for it (choice kept in the PVWA, component setting);
     Remote Desktop Connection follows the PVWA's signed file, which cannot be modified.
+  - With ZillaTerm's client in a tab, Explorer in the session refreshes by itself when a file is added, renamed,
+    modified or deleted on this computer in a shared drive or folder, as with Remote Desktop Connection (before 0.44,
+    you had to press F5).
 - **Display paused**: the option "Pause the display of sessions nobody is watching" (Settings › Remote
   desktop, checked by default) asks the server to stop sending the picture of a session in a tab when the tab has
   been in the background, ZillaTerm minimized or Windows locked for 1 minute, or when nobody has used the keyboard or

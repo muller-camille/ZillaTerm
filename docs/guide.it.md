@@ -215,6 +215,9 @@ nessuna finestra separata.
   - *Nessuno*: nessun disco viene condiviso nella scheda, anche se il PVWA lo chiede (scelta salvata nel PVWA,
     impostazione del componente); Connessione Desktop remoto segue il file firmato del PVWA, che non può essere
     modificato.
+  - Con il client di ZillaTerm in una scheda, Esplora file della sessione si aggiorna da solo quando un file viene
+    aggiunto, rinominato, modificato o eliminato su questo computer in un disco o una cartella condivisi, come con
+    Connessione Desktop remoto (prima della 0.44 bisognava premere F5).
 - **Visualizzazione in pausa**: l'opzione «Sospendi la visualizzazione delle sessioni che nessuno guarda»
   (Impostazioni › Desktop remoto, selezionata per impostazione predefinita) chiede al server di non inviare più
   l'immagine di una sessione in una scheda quando la scheda è in secondo piano, ZillaTerm ridotto a icona o Windows
