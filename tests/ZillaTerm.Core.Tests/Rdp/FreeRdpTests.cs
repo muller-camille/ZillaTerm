@@ -183,6 +183,28 @@ public class FreeRdpTests
     }
 
     /// <summary>
+    /// Journal de débogage avec des disques partagés : demandes du serveur aux disques et réponses, en plus ; sans disque
+    /// partagé, rien de plus (bavard).
+    /// </summary>
+    [Fact]
+    public void DebugLogTracesDriveRequestsOnlyWhenDrivesAreShared()
+    {
+        static string[] Filters(RdpConnectionSettings settings, bool verbose) =>
+            Assert.Single(FreeRdpArguments.Build(settings, 1, (1280, 800), password: null, verbose, [Fingerprint]).Arguments,
+                a => a.StartsWith("/log-filters:", StringComparison.Ordinal))["/log-filters:".Length..].Split(',');
+
+        var shared = Read(RemoteAppFile).ForPsmTab();
+        Assert.True(shared.RedirectDrives);
+        var filters = Filters(shared, verbose: true);
+        Assert.Contains("com.freerdp.channels.rdpdr.client:TRACE", filters);
+        Assert.Contains("com.freerdp.channels.drive.client:TRACE", filters);
+
+        Assert.DoesNotContain(Filters(shared, verbose: false), f => f.Contains("rdpdr", StringComparison.Ordinal));
+        Assert.DoesNotContain(Filters(Read(RemoteAppFile).ForPsmTab(drives: false), verbose: true),
+            f => f.Contains("rdpdr", StringComparison.Ordinal) || f.Contains("drive.", StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// Accès d'urgence (entrée KeePass) avec FreeRDP : le certificat épinglé est imposé à la connexion qui porte le mot de
     /// passe, et ce mot de passe passe par l'entrée standard, jamais par la ligne de commande (visible des autres
     /// processus du poste).

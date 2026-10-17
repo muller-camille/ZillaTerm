@@ -95,9 +95,13 @@ public static class FreeRdpArguments
         // presse-papiers et de l'affichage (tailles demandées au serveur), canaux dynamiques ouverts par le serveur, et
         // messages du presse-papiers du client Windows (jamais son contenu) : session qui se ferme, copier-coller qui
         // n'aboutit pas, bureau qui ne suit pas la taille de l'onglet.
+        // Disques du poste partagés : chaque demande du serveur (disque, opération, fichier ouvert) et sa réponse (code
+        // NTSTATUS), jamais le nom ni le contenu d'un fichier : erreur d'un disque partagé, en boucle ou non. Bavard
+        // (deux lignes par demande) : seulement avec le journal de débogage et des disques partagés.
         arguments.Add("/log-filters:com.freerdp.client.common:INFO" + (verbose
             ? ",com.freerdp.channels.rail.*:DEBUG,com.freerdp.channels.cliprdr.*:DEBUG,"
               + "com.freerdp.channels.disp.*:DEBUG,com.freerdp.channels.drdynvc.*:DEBUG,com.freerdp.client.windows:DEBUG"
+              + (settings.RedirectDrives ? ",com.freerdp.channels.rdpdr.client:TRACE,com.freerdp.channels.drive.client:TRACE" : "")
             : ""));
 
         // Réglages par leur nom, en une seule option : une option donnée deux fois ne garde que sa dernière valeur.
