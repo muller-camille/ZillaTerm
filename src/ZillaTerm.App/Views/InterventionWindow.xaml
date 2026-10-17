@@ -47,7 +47,15 @@
                 <!-- Plusieurs interventions choisies (Ctrl+clic, Maj+clic) : un seul rapport les réunit. -->
                 <ListBox x:Name="JournalList" Height="110" SelectionMode="Extended" SelectionChanged="OnJournalSelected"
                          MouseDoubleClick="OnJournalDoubleClick" AutomationProperties.Name="{x:Static loc:Strings.InterventionPreviousSection}"
-                         AutomationProperties.HelpText="{x:Static loc:Strings.InterventionPreviousHelp}" />
+                         AutomationProperties.HelpText="{x:Static loc:Strings.InterventionPreviousHelp}" ContextMenuOpening="OnJournalMenuOpening">
+                    <!-- Diagnostic : seulement avec le journal de débogage (OnJournalMenuOpening). -->
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="{x:Static loc:Strings.InterventionMeasureScreen}" Click="OnMeasureScreen"
+                                      ToolTip="{x:Static loc:Strings.InterventionMeasureScreenTip}" />
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+                </ListBox>
             </DockPanel>
             <TextBlock Style="{StaticResource OptionHelp}" Text="{x:Static loc:Strings.InterventionPreviousHelp}" Margin="0,4,0,0" />
             <!-- Le rapport n'est pas chiffré : ce qui ressemble à un secret y est masqué, sauf choix contraire. -->

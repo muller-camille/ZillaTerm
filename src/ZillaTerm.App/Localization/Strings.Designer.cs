@@ -19903,5 +19903,50 @@ namespace ZillaTerm.App.Localization {
                 return ResourceManager.GetString("SettingsPageAbout", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Measure screen compression.
+        /// </summary>
+        public static string InterventionMeasureScreen {
+            get {
+                return ResourceManager.GetString("InterventionMeasureScreen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Debug log: how much the recorded Remote Desktop screen of the selected interventions would weigh with other lossless encodings. Nothing is saved or sent..
+        /// </summary>
+        public static string InterventionMeasureScreenTip {
+            get {
+                return ResourceManager.GetString("InterventionMeasureScreenTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Measuring the recorded screen….
+        /// </summary>
+        public static string InterventionMeasureRunning {
+            get {
+                return ResourceManager.GetString("InterventionMeasureRunning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Screen measurement written to the debug log..
+        /// </summary>
+        public static string InterventionMeasureDone {
+            get {
+                return ResourceManager.GetString("InterventionMeasureDone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The screen could not be measured: {0}.
+        /// </summary>
+        public static string InterventionMeasureFailed {
+            get {
+                return ResourceManager.GetString("InterventionMeasureFailed", resourceCulture);
+            }
+        }
     }
 }

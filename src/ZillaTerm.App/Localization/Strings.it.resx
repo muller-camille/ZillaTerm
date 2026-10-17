@@ -6667,4 +6667,19 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   <data name="SettingsPageAbout" xml:space="preserve">
     <value>Informazioni</value>
   </data>
+  <data name="InterventionMeasureScreen" xml:space="preserve">
+    <value>_Misura la compressione dello schermo</value>
+  </data>
+  <data name="InterventionMeasureScreenTip" xml:space="preserve">
+    <value>Registro di debug: quanto peserebbe lo schermo Desktop remoto registrato degli interventi scelti con altre codifiche senza perdita. Nulla viene salvato né inviato.</value>
+  </data>
+  <data name="InterventionMeasureRunning" xml:space="preserve">
+    <value>Misurazione dello schermo registrato in corso…</value>
+  </data>
+  <data name="InterventionMeasureDone" xml:space="preserve">
+    <value>Misurazione dello schermo scritta nel registro di debug.</value>
+  </data>
+  <data name="InterventionMeasureFailed" xml:space="preserve">
+    <value>Impossibile misurare lo schermo: {0}</value>
+  </data>
 </root>

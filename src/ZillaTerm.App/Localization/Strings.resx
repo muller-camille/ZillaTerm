@@ -6667,4 +6667,19 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   <data name="SettingsPageAbout" xml:space="preserve">
     <value>About</value>
   </data>
+  <data name="InterventionMeasureScreen" xml:space="preserve">
+    <value>_Measure screen compression</value>
+  </data>
+  <data name="InterventionMeasureScreenTip" xml:space="preserve">
+    <value>Debug log: how much the recorded Remote Desktop screen of the selected interventions would weigh with other lossless encodings. Nothing is saved or sent.</value>
+  </data>
+  <data name="InterventionMeasureRunning" xml:space="preserve">
+    <value>Measuring the recorded screen…</value>
+  </data>
+  <data name="InterventionMeasureDone" xml:space="preserve">
+    <value>Screen measurement written to the debug log.</value>
+  </data>
+  <data name="InterventionMeasureFailed" xml:space="preserve">
+    <value>The screen could not be measured: {0}</value>
+  </data>
 </root>

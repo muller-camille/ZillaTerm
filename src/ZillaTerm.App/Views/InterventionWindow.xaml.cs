@@ -443,6 +443,61 @@ public partial class InterventionWindow : Window
         }
     }
 
+    // Mesure de l'écran enregistré en cours (une à la fois).
+    private bool _measuring;
+
+    /// <summary>Menu des interventions : un outil de diagnostic, seulement avec le journal de débogage.</summary>
+    private void OnJournalMenuOpening(object sender, ContextMenuEventArgs e) =>
+        e.Handled = !Core.Diagnostics.DebugLog.Enabled || SelectedJournals.Count == 0 || _measuring;
+
+    /// <summary>
+    /// Ce que pèserait l'écran Bureau à distance enregistré des interventions choisies avec d'autres façons de l'encoder
+    /// (<see cref="ScreenCompressionMeasure"/>), écrit dans le journal de débogage. Sur un fil à part : relire et
+    /// réencoder une longue intervention prend du temps. Rien n'est écrit ailleurs : l'écran relu reste en mémoire.
+    /// </summary>
+    private async void OnMeasureScreen(object sender, RoutedEventArgs e)
+    {
+        var files = SelectedJournals;
+        if (files.Count == 0 || _measuring)
+        {
+            return;
+        }
+
+        if (files.Any(IsRecording))
+        {
+            _recorder.Flush();
+        }
+
+        _measuring = true;
+        ShowMessage(Strings.InterventionMeasureRunning);
+        var protector = _recorder.Protector;
+        try
+        {
+            await Task.Run(() =>
+            {
+                foreach (var file in files)
+                {
+                    var result = ScreenCompressionMeasure.Measure(InterventionJournal.Read(file.Path, protector).Entries);
+                    var start = file.Start.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+                    Core.Diagnostics.DebugLog.Write("intervention", result.Streams == 0
+                        ? $"Mesure de l'écran enregistré de l'intervention du {start} : pas d'écran Bureau à distance"
+                        : $"Mesure de l'écran enregistré de l'intervention du {start} : " + string.Join("\n", result.Lines()));
+                }
+            });
+            ShowMessage(Strings.InterventionMeasureDone);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or CryptographicException
+                                       or InvalidOperationException)
+        {
+            Core.Diagnostics.DebugLog.Write("intervention", "Mesure de l'écran enregistré impossible", ex);
+            ShowMessage(Text.Format(Strings.InterventionMeasureFailed, ex.Message), error: true);
+        }
+        finally
+        {
+            _measuring = false;
+        }
+    }
+
     private void OnDelete(object sender, RoutedEventArgs e)
     {
         var files = SelectedJournals;

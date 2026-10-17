@@ -6667,4 +6667,19 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   <data name="SettingsPageAbout" xml:space="preserve">
     <value>À propos</value>
   </data>
+  <data name="InterventionMeasureScreen" xml:space="preserve">
+    <value>_Mesurer la compression de l'écran</value>
+  </data>
+  <data name="InterventionMeasureScreenTip" xml:space="preserve">
+    <value>Journal de débogage : ce que pèserait l'écran Bureau à distance enregistré des interventions choisies avec d'autres façons de l'encoder, sans perte. Rien n'est enregistré ni envoyé.</value>
+  </data>
+  <data name="InterventionMeasureRunning" xml:space="preserve">
+    <value>Mesure de l'écran enregistré en cours…</value>
+  </data>
+  <data name="InterventionMeasureDone" xml:space="preserve">
+    <value>Mesure de l'écran écrite dans le journal de débogage.</value>
+  </data>
+  <data name="InterventionMeasureFailed" xml:space="preserve">
+    <value>L'écran n'a pas pu être mesuré : {0}</value>
+  </data>
 </root>
