@@ -136,11 +136,12 @@ public partial class MainWindow
     /// Réglages de l'onglet pour ce fichier du PVWA, ou null pour le confier à mstsc : fichier illisible, passerelle
     /// Bureau à distance, application distante sans le client FreeRDP (<paramref name="reason"/> le dit à
     /// l'utilisateur quand il le faut). <paramref name="dynamicResolution"/> : résolution qui suit la taille de l'onglet
-    /// (option expérimentale) au lieu d'une image mise à l'échelle. <paramref name="drives"/> : option « partager les
-    /// disques » ; décochée, aucun disque partagé, même si le fichier le demande.
+    /// (option expérimentale) au lieu d'une image mise à l'échelle. <paramref name="drives"/> : disques du poste
+    /// demandés ; non, aucun disque partagé, même si le fichier le demande. <paramref name="folders"/> : « Ces dossiers
+    /// seulement », ces dossiers à la place de tous les disques (voir <see cref="RdpConnectionSettings.ForPsmTab"/>).
     /// </summary>
     private static RdpConnectionSettings? PsmTabSettings(byte[] rdp, string label, bool freeRdp, bool dynamicResolution, bool drives,
-        out string? reason)
+        IReadOnlyList<SharedFolder>? folders, out string? reason)
     {
         reason = null;
         RdpConnectionSettings settings;
@@ -167,7 +168,34 @@ public partial class MainWindow
             return null;
         }
 
-        return settings.ForPsmTab(dynamicResolution, drives);
+        return settings.ForPsmTab(dynamicResolution, drives, folders);
+    }
+
+    /// <summary>
+    /// « Ces dossiers seulement » : dossiers à partager à cette connexion (null : pas ce mode), variables remplacées et
+    /// dossiers absents écartés (lus hors du fil de l'interface : un partage réseau injoignable peut tarder). Contrôle
+    /// Bureau à distance de Windows : aucun, il ne partage que des disques entiers. <paramref name="notice"/> : ce que
+    /// l'utilisateur doit savoir (dossier absent, aucun dossier avec le contrôle de Windows), sinon null.
+    /// </summary>
+    private static async Task<(IReadOnlyList<SharedFolder>? Folders, string? Notice)> SharedFoldersAsync(string label, bool freeRdp,
+        IReadOnlyList<SharedFolder>? configured)
+    {
+        if (configured is null)
+        {
+            return (null, null);
+        }
+
+        if (!freeRdp)
+        {
+            DebugLog.Write("psm", $"{label} : contrôle Bureau à distance de Windows, aucun dossier partagé (« Ces dossiers seulement »).");
+            return ([], Text.Format(Strings.PsmFoldersWindowsControl, label));
+        }
+
+        var (shared, missing) = await Task.Run(() =>
+            SharedFolderRules.Resolve(configured, Environment.ExpandEnvironmentVariables, System.IO.Directory.Exists)).ConfigureAwait(true);
+        DebugLog.Write("psm", $"{label} : dossiers partagés {(shared.Count == 0 ? "aucun" : SharedFolderRules.Describe(shared))}"
+            + (missing.Count == 0 ? "" : $" ; introuvables, non partagés : {SharedFolderRules.Describe(missing)}"));
+        return (shared, missing.Count == 0 ? null : Text.Format(Strings.PsmFoldersMissing, label, string.Join(", ", missing.Select(f => f.Name))));
     }
 
     /// <summary>

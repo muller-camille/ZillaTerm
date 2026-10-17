@@ -200,12 +200,21 @@ fenêtre à part.
   certificat du PSM émis par l'autorité de l'entreprise, à demander à l'équipe CyberArk, évite les confirmations.
 - **Redirections** (presse-papiers, disques…) : celles demandées par le PVWA, jamais plus. Aucune image de la session
   n'est gardée sur le disque.
-- **Disques du poste** : l'option « Partager les disques de ce poste » (Paramètres › Bureau à
-  distance, cochée par défaut) les demande au PVWA, comme la case « Map local drives » de sa fenêtre de connexion
-  (paramètre `AllowMappingLocalDrives`). Si le composant de connexion le permet, le PVWA les écrit dans le fichier RDP
-  et ils apparaissent dans la session (Explorateur › Ce PC), dans l'onglet comme dans la Connexion Bureau à distance.
-  Option décochée, aucun disque n'est partagé dans l'onglet, même si le PVWA le demande (choix gardé dans le PVWA,
-  réglage du composant) ; la Connexion Bureau à distance suit le fichier signé du PVWA, qui ne peut pas être modifié.
+- **Disques du poste** : Paramètres › Bureau à distance › « Disques du poste partagés avec les sessions PSM
+  Windows » : **Aucun**, **Tous les disques** (par défaut) ou **Ces dossiers seulement**. Avec des disques ou des
+  dossiers, ZillaTerm les demande au PVWA, comme la case « Map local drives » de sa fenêtre de connexion (paramètre
+  `AllowMappingLocalDrives`) ; si le composant de connexion le permet, le PVWA les écrit dans le fichier RDP, et jamais
+  plus n'est partagé que ce qu'il permet.
+  - *Tous les disques* : ils apparaissent dans la session (Explorateur › Ce PC), dans l'onglet comme dans la
+    Connexion Bureau à distance.
+  - *Ces dossiers seulement* : seuls les dossiers de la liste (nom vu dans la session sous `\\tsclient\Nom`, chemin sur
+    ce poste, complet ou commençant par une variable comme `%USERPROFILE%\Partage`), avec le client de ZillaTerm dans
+    un onglet. Un dossier absent à la connexion n'est pas partagé et la barre d'état le dit. Connexion Bureau à
+    distance et le contrôle Bureau à distance de Windows ne savent partager que des disques entiers : aucun disque
+    pour eux dans ce mode, plutôt que tous (pour Connexion Bureau à distance, ZillaTerm demande au PVWA un fichier
+    sans disques).
+  - *Aucun* : aucun disque n'est partagé dans l'onglet, même si le PVWA le demande (choix gardé dans le PVWA, réglage
+    du composant) ; la Connexion Bureau à distance suit le fichier signé du PVWA, qui ne peut pas être modifié.
 - **Affichage en pause** : l'option « Suspendre l'affichage des sessions que personne ne regarde »
   (Paramètres › Bureau à distance, cochée par défaut) demande au serveur de ne plus envoyer l'image d'une session dans un
   onglet quand l'onglet est en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou quand ni le
@@ -1233,7 +1242,8 @@ accord). Un réglage que vous avez refusé à l'import, ou changé depuis, n'a p
 | --- | --- | --- |
 | Ouvrir les sessions PSM Windows dans un onglet de ZillaTerm | Session PSM (bureau ou application distante) dans un onglet, avec le client FreeRDP embarqué, à la taille de l'onglet (voir [Ouvrir une session PSM](#3-ouvrir-une-session-psm-bureau-à-distance)) ; décochée : Connexion Bureau à distance de Windows | non |
 | Adapter la résolution à la taille de l'onglet | Sessions dans un onglet : la résolution suit la taille de l'onglet au lieu d'une image mise à l'échelle ; la connexion du PSM vers la cible peut garder sa taille d'origine | oui |
-| Partager les disques de ce poste | Demande les disques du poste au PVWA (case « Map local drives » de sa fenêtre de connexion, `AllowMappingLocalDrives`) ; s'ils sont permis par le composant, ils apparaissent dans la session (Explorateur › Ce PC). ⚠ Les programmes de la session peuvent alors lire et écrire sur vos disques | oui |
+| Disques du poste partagés avec les sessions PSM Windows | **Aucun**, **Tous les disques** ou **Ces dossiers seulement** (voir [Disques du poste](#3-ouvrir-une-session-psm-bureau-à-distance)). Avec des disques ou des dossiers, ZillaTerm les demande au PVWA (case « Map local drives » de sa fenêtre de connexion, `AllowMappingLocalDrives`), et jamais plus n'est partagé que ce que le composant permet. ⚠ Les programmes de la session peuvent lire et écrire sur les disques ou dossiers partagés | Tous les disques |
+| Dossiers (Ces dossiers seulement) | Nom vu dans la session (`\\tsclient\Nom` : lettres sans accent, chiffres, « . », « - », « _ ») et chemin sur ce poste, complet (`C:\…`, `\\serveur\partage\…`) ou commençant par une variable (`%USERPROFILE%\Partage`) ; « Ajouter un dossier… » propose le nom d'après le dossier choisi. Client de ZillaTerm dans un onglet seulement : Connexion Bureau à distance et le contrôle de Windows ne partagent alors aucun disque | aucun |
 | Suspendre l'affichage des sessions que personne ne regarde | Sessions dans un onglet : onglet en arrière-plan, ZillaTerm réduit ou Windows verrouillé depuis 1 minute, ou ni clavier ni souris depuis 15 minutes, le serveur n'envoie plus l'image ; la session reste ouverte, l'image revient au retour sur l'onglet ou au premier mouvement de souris. Jamais pour l'onglet affiché pendant l'enregistrement d'une intervention ou un partage ; pendant un enregistrement, la pause d'un onglet en arrière-plan y est marquée (écran et frise du rapport) | oui |
 
 <a id="settings-terminal"></a>
@@ -1308,7 +1318,7 @@ Les réglages que peut diffuser le fichier d'environnement de l'équipe sont lis
 
 Pour donner ZillaTerm à un collègue avec la configuration de l'équipe (adresse du PVWA, méthode de connexion, PSMP par
 défaut et par domaine, composant des comptes Windows et composants par plateforme, listes partagées, clés des PSMP,
-consignes d'astreinte (texte ou fichier), rappels pendant l'intervention, étiquettes des serveurs, partage de sessions,
+consignes d'astreinte (texte ou fichier), rappels pendant l'intervention, étiquettes des serveurs, dossiers partagés, partage de sessions,
 quelques options), sans rien de personnel ni aucun mot de passe :
 
 1. **Exporter** : Paramètres › Général › « Exporter l'environnement… » enregistre `ZillaTerm.env.json` avec les valeurs

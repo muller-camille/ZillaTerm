@@ -362,14 +362,51 @@
                             </CheckBox>
                         </DockPanel>
                         <TextBlock Style="{StaticResource Help}" Margin="40,2,0,0" Text="{x:Static loc:Strings.PsmDynamicResolutionHelp}" />
-                        <!-- Onglet et Connexion Bureau à distance : jamais grisée. -->
-                        <DockPanel Style="{StaticResource OptionRow}" Margin="0,14,0,0">
+                        <!-- Disques du poste (onglet et Connexion Bureau à distance) : aucun, tous, ou les dossiers choisis (client
+                             FreeRDP seulement ; aucun disque pour Connexion Bureau à distance et le contrôle de Windows). -->
+                        <DockPanel Margin="0,16,0,0">
                             <views:TeamBadge DockPanel.Dock="Right" Setting="PsmRedirectDrives" />
-                            <CheckBox x:Name="PsmRedirectDrivesBox">
-                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmRedirectDrives}" />
-                            </CheckBox>
+                            <TextBlock x:Name="DrivesTitle" Text="{x:Static loc:Strings.PsmDrivesSection}" Style="{StaticResource SubTitle}" />
                         </DockPanel>
-                        <TextBlock Style="{StaticResource Warn}" Text="{x:Static loc:Strings.PsmRedirectDrivesHelp}" />
+                        <RadioButton x:Name="DrivesNoneRadio" GroupName="Drives" Margin="0,6,0,0"
+                                     AutomationProperties.HelpText="{x:Static loc:Strings.PsmDrivesSection}">
+                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDrivesNone}" />
+                        </RadioButton>
+                        <RadioButton x:Name="DrivesAllRadio" GroupName="Drives" Margin="0,4,0,0"
+                                     AutomationProperties.HelpText="{x:Static loc:Strings.PsmDrivesSection}">
+                            <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDrivesAll}" />
+                        </RadioButton>
+                        <DockPanel Margin="0,4,0,0">
+                            <views:TeamBadge DockPanel.Dock="Right" Setting="PsmShareFoldersOnly" />
+                            <RadioButton x:Name="DrivesFoldersRadio" GroupName="Drives"
+                                         AutomationProperties.HelpText="{x:Static loc:Strings.PsmDrivesSection}">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.PsmDrivesFolders}" />
+                            </RadioButton>
+                        </DockPanel>
+                        <StackPanel x:Name="FoldersPanel" Margin="20,6,0,0" IsEnabled="{Binding IsChecked, ElementName=DrivesFoldersRadio}">
+                            <DockPanel>
+                                <views:TeamBadge DockPanel.Dock="Right" Setting="PsmSharedFolders" />
+                                <TextBlock Style="{StaticResource FieldHelp}" Margin="0,0,0,6" Text="{x:Static loc:Strings.PsmFoldersHelp}" />
+                            </DockPanel>
+                            <DataGrid x:Name="FolderGrid" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False"
+                                      CanUserDeleteRows="False" CanUserReorderColumns="False" SelectionMode="Single" SelectionUnit="FullRow"
+                                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
+                                      MinHeight="70" MaxHeight="150" SelectionChanged="OnFolderSelected"
+                                      AutomationProperties.Name="{x:Static loc:Strings.PsmFoldersList}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{x:Static loc:Strings.PsmFolderColName}" Width="*"
+                                                        Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                    <DataGridTextColumn Header="{x:Static loc:Strings.PsmFolderColPath}" Width="2*"
+                                                        Binding="{Binding Path, UpdateSourceTrigger=PropertyChanged}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="{x:Static loc:Strings.PsmFolderAdd}" Click="OnAddFolder" />
+                                <Button x:Name="RemoveFolderButton" Content="{x:Static loc:Strings.PsmFolderRemove}" Click="OnRemoveFolder"
+                                        IsEnabled="False" Margin="8,0,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource Warn}" Margin="0,8,0,0" Text="{x:Static loc:Strings.PsmRedirectDrivesHelp}" />
                         <!-- Toute session Bureau à distance dans un onglet (PSM, KeePass) avec le client FreeRDP : jamais grisée. -->
                         <DockPanel Style="{StaticResource OptionRow}" Margin="0,14,0,0">
                             <views:TeamBadge DockPanel.Dock="Right" Setting="PauseRdpDisplay" />

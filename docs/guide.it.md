@@ -199,13 +199,22 @@ nessuna finestra separata.
   certificato del PSM emesso dall'autorità dell'azienda, da chiedere al team CyberArk, evita le conferme.
 - **Reindirizzamenti** (appunti, unità…): quelli richiesti dal PVWA, mai di più. Nessuna immagine della sessione
   viene conservata sul disco.
-- **Dischi di questo computer**: l'opzione «Condividi i dischi di questo computer»
-  (Impostazioni › Desktop remoto, selezionata per impostazione predefinita) li chiede al PVWA, come la casella «Map local
-  drives» della sua finestra di connessione (parametro `AllowMappingLocalDrives`). Se il componente di connessione lo
-  consente, il PVWA li scrive nel file RDP e compaiono nella sessione (Esplora file › Questo PC), nella scheda come in
-  Connessione Desktop remoto. Con l'opzione deselezionata, nessun disco viene condiviso nella scheda, anche se il PVWA
-  lo chiede (scelta conservata nel PVWA, impostazione del componente); Connessione Desktop remoto segue il file
-  firmato del PVWA, che non può essere modificato.
+- **Dischi di questo computer**: Impostazioni › Desktop remoto › «Dischi di questo computer condivisi con le
+  sessioni PSM Windows»: **Nessuno**, **Tutti i dischi** (predefinito) o **Solo queste cartelle**. Con dischi o
+  cartelle, ZillaTerm li chiede al PVWA, come la casella «Map local drives» della sua finestra di connessione
+  (parametro `AllowMappingLocalDrives`); se il componente di connessione lo consente, il PVWA li scrive nel file RDP, e
+  non viene mai condiviso più di quanto consente.
+  - *Tutti i dischi*: compaiono nella sessione (Esplora file › Questo PC), nella scheda come in Connessione Desktop
+    remoto.
+  - *Solo queste cartelle*: solo le cartelle dell'elenco (nome visibile nella sessione come `\\tsclient\Nome`, percorso
+    su questo computer, completo o che inizia con una variabile come `%USERPROFILE%\Condivisa`), con il client di
+    ZillaTerm in una scheda. Una cartella assente al momento della connessione non viene condivisa e la barra di stato
+    lo dice. Connessione Desktop remoto e il controllo Desktop remoto di Windows sanno condividere solo dischi interi:
+    nessun disco per loro in questa modalità, piuttosto che tutti (per Connessione Desktop remoto, ZillaTerm chiede al
+    PVWA un file senza dischi).
+  - *Nessuno*: nessun disco viene condiviso nella scheda, anche se il PVWA lo chiede (scelta salvata nel PVWA,
+    impostazione del componente); Connessione Desktop remoto segue il file firmato del PVWA, che non può essere
+    modificato.
 - **Visualizzazione in pausa**: l'opzione «Sospendi la visualizzazione delle sessioni che nessuno guarda»
   (Impostazioni › Desktop remoto, selezionata per impostazione predefinita) chiede al server di non inviare più
   l'immagine di una sessione in una scheda quando la scheda è in secondo piano, ZillaTerm ridotto a icona o Windows
@@ -1231,7 +1240,8 @@ Un'impostazione rifiutata all'importazione, o cambiata dopo, non ha il badge.
 | --- | --- | --- |
 | Apri le sessioni PSM Windows in una scheda di ZillaTerm | Sessione PSM (desktop o applicazione remota) in una scheda, con il client FreeRDP integrato, alla dimensione della scheda (vedi [Aprire una sessione PSM](#3-aprire-una-sessione-psm-desktop-remoto)); non selezionata: Connessione Desktop remoto di Windows | no |
 | Adatta la risoluzione alla dimensione della scheda | Sessioni in una scheda: la risoluzione segue la dimensione della scheda invece di un'immagine adattata; la connessione dal PSM alla destinazione può mantenere la dimensione originale | sì |
-| Condividi i dischi di questo computer | Chiede al PVWA i dischi di questo computer (casella «Map local drives» della sua finestra di connessione, `AllowMappingLocalDrives`); se il componente li consente, compaiono nella sessione (Esplora file › Questo PC). ⚠ I programmi della sessione possono allora leggere e scrivere sui tuoi dischi | sì |
+| Dischi di questo computer condivisi con le sessioni PSM Windows | **Nessuno**, **Tutti i dischi** o **Solo queste cartelle** (vedi [Dischi di questo computer](#3-aprire-una-sessione-psm-desktop-remoto)). Con dischi o cartelle, ZillaTerm li chiede al PVWA (casella «Map local drives» della sua finestra di connessione, `AllowMappingLocalDrives`), e non viene mai condiviso più di quanto il componente consente. ⚠ I programmi della sessione possono leggere e scrivere sui dischi o sulle cartelle condivisi | Tutti i dischi |
+| Cartelle (Solo queste cartelle) | Nome visibile nella sessione (`\\tsclient\Nome`: lettere senza accenti, cifre, «.», «-», «_») e percorso su questo computer, completo (`C:\…`, `\\server\condivisione\…`) o che inizia con una variabile (`%USERPROFILE%\Condivisa`); «Aggiungi una cartella…» propone il nome in base alla cartella scelta. Solo client di ZillaTerm in una scheda: Connessione Desktop remoto e il controllo di Windows non condividono allora nessun disco | nessuna |
 | Sospendi la visualizzazione delle sessioni che nessuno guarda | Sessioni in una scheda: con la scheda in secondo piano, ZillaTerm ridotto a icona o Windows bloccato da 1 minuto, oppure senza tastiera né mouse da 15 minuti, il server smette di inviare l'immagine; la sessione resta aperta, l'immagine torna quando si ritorna sulla scheda o si muove il mouse. Mai per la scheda visualizzata durante la registrazione di un intervento o una condivisione; durante una registrazione, la pausa di una scheda in secondo piano vi è segnata (schermo e linea del tempo del rapporto) | sì |
 
 <a id="settings-terminal"></a>
@@ -1305,7 +1315,7 @@ Le impostazioni che il file di ambiente del team può diffondere sono elencate i
 
 Per dare ZillaTerm a un collega con la configurazione del team (indirizzo del PVWA, metodo di accesso, PSMP predefinito
 e per dominio, componente degli account Windows e componenti per piattaforma, elenchi condivisi, chiavi dei PSMP,
-promemoria di reperibilità (testo o file), avvisi a tempo, etichette dei server, condivisione delle sessioni, alcune
+promemoria di reperibilità (testo o file), avvisi a tempo, etichette dei server, cartelle condivise, condivisione delle sessioni, alcune
 opzioni), senza niente di personale né alcuna password:
 
 1. **Esportare**: Impostazioni › Generale › «Esporta l'ambiente…» salva `ZillaTerm.env.json` con i valori mostrati.

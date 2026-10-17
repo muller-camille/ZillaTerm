@@ -23,7 +23,7 @@ public sealed class PsmConnectOptions
     public bool MapLocalDrives { get; init; }
 
     /// <summary>La même demande sans <see cref="MapLocalDrives"/>.</summary>
-    internal PsmConnectOptions WithoutLocalDrives() => new()
+    public PsmConnectOptions WithoutLocalDrives() => new()
     {
         ConnectionComponent = ConnectionComponent,
         Reason = Reason,

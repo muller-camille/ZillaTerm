@@ -7,6 +7,7 @@ using ZillaTerm.App.Localization;
 using ZillaTerm.App.Views;
 using ZillaTerm.Core;
 using ZillaTerm.Core.Migration;
+using ZillaTerm.Core.Rdp;
 using ZillaTerm.Core.Ssh;
 using ZillaTerm.Core.Terminal;
 
@@ -1430,6 +1431,68 @@ public sealed partial class DialogTests
             Assert.Empty(other.EnvironmentFileHashes);
             refused.Close();
             dialog.Close();
+        });
+    }
+
+    /// <summary>
+    /// Paramètres, page Bureau à distance : disques du poste partagés (aucun, tous, ces dossiers seulement). Les dossiers
+    /// sont vérifiés (nom, chemin, doublon) ; « Ces dossiers seulement » sans dossier est refusé ; le nom proposé pour un
+    /// dossier choisi ne garde que les caractères acceptés.
+    /// </summary>
+    [Fact]
+    public void SettingsShareOnlyChosenFolders()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var settings = new AppSettings();
+            var dialog = new SettingsDialog(settings);
+            Assert.True(dialog.DrivesAllRadio.IsChecked);
+            Assert.False(dialog.FoldersPanel.IsEnabled);
+
+            dialog.DrivesFoldersRadio.IsChecked = true;
+            Assert.True(dialog.FoldersPanel.IsEnabled);
+            Assert.False(dialog.ApplyAll());
+            Assert.Equal(Strings.FoldersEmpty, dialog.ErrorText.Text);
+
+            dialog.FolderRows.Add(new SettingsDialog.FolderRow { Name = "Mon partage", Path = @"C:\Partage" });
+            Assert.False(dialog.ApplyAll());
+            Assert.Equal(Text.Format(Strings.InvalidFolderName, 1, SharedFolderRules.MaxNameLength), dialog.ErrorText.Text);
+            dialog.FolderRows[0].Name = "Partage";
+            dialog.FolderRows[0].Path = "Partage";
+            Assert.False(dialog.ApplyAll());
+            Assert.Equal(Text.Format(Strings.InvalidFolderPath, 1), dialog.ErrorText.Text);
+            dialog.FolderRows[0].Path = @"%USERPROFILE%\Partage";
+            dialog.FolderRows.Add(new SettingsDialog.FolderRow { Name = "partage", Path = @"D:\Logs" });
+            Assert.False(dialog.ApplyAll());
+            Assert.Equal(Text.Format(Strings.DuplicateFolderName, "partage"), dialog.ErrorText.Text);
+            dialog.FolderRows[1].Name = "Logs";
+            dialog.FolderRows.Add(new SettingsDialog.FolderRow());
+
+            Assert.True(dialog.ApplyAll());
+            Assert.Equal(DriveSharing.Folders, settings.DriveSharing());
+            Assert.Equal([new SharedFolder("Partage", @"%USERPROFILE%\Partage"), new SharedFolder("Logs", @"D:\Logs")], settings.PsmSharedFolders);
+
+            // Nom proposé pour un dossier choisi : accents retirés, caractères refusés remplacés, sans doublon.
+            Assert.Equal("Donnees_equipe", dialog.FolderName(@"C:\Données équipe"));
+            Assert.Equal("Partage2", dialog.FolderName(@"\\fs01\Partage"));
+            Assert.Equal("C", dialog.FolderName(@"C:\"));
+
+            // Aucun : la liste reste gardée pour plus tard.
+            dialog.DrivesNoneRadio.IsChecked = true;
+            Assert.True(dialog.ApplyAll());
+            Assert.Equal(DriveSharing.None, settings.DriveSharing());
+            Assert.Equal(2, settings.PsmSharedFolders.Count);
+            dialog.Close();
+
+            var reopened = new SettingsDialog(new AppSettings { PsmShareFoldersOnly = true, PsmSharedFolders = [new("Partage", @"C:\Partage")] });
+            Assert.True(reopened.DrivesFoldersRadio.IsChecked);
+            Assert.Equal(["Partage"], reopened.FolderRows.Select(r => r.Name));
+            reopened.Close();
         });
     }
 

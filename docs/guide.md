@@ -189,12 +189,19 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   to ask the CyberArk team for, avoids the confirmations.
 - **Redirections** (clipboard, drives…): those the PVWA asks for, never more. No picture of the session is kept on
   disk.
-- **This computer's drives**: the option "Share this computer's drives" (Settings › Remote desktop, on by
-  default) asks the PVWA for them, like the "Map local drives" box of its connection window
-  (`AllowMappingLocalDrives` parameter). When the connection component allows it, the PVWA writes them into the RDP
-  file and they appear in the session (File Explorer › This PC), in the tab and in Remote Desktop Connection alike.
-  With the option off, no drive is shared in the tab, even if the PVWA asks for it (choice kept in the PVWA, component
-  setting); Remote Desktop Connection follows the PVWA's signed file, which cannot be modified.
+- **This computer's drives**: Settings › Remote desktop › "This computer's drives shared with PSM Windows
+  sessions": **None**, **All drives** (default) or **Only these folders**. With drives or folders, ZillaTerm asks the
+  PVWA for them, like the "Map local drives" box of its connection window (`AllowMappingLocalDrives` parameter); when
+  the connection component allows it, the PVWA writes them into the RDP file, and never more is shared than it allows.
+  - *All drives*: they appear in the session (File Explorer › This PC), in the tab and in Remote Desktop Connection
+    alike.
+  - *Only these folders*: only the folders of the list (name seen in the session as `\\tsclient\Name`, path on this
+    computer, full or starting with a variable such as `%USERPROFILE%\Share`), with the ZillaTerm client in a tab. A
+    folder missing at connection time is not shared and the status bar says so. Remote Desktop Connection and the
+    Windows Remote Desktop control can only share whole drives: no drive for them in this mode, rather than all of
+    them (for Remote Desktop Connection, ZillaTerm asks the PVWA for a file without drives).
+  - *None*: no drive is shared in the tab, even if the PVWA asks for it (choice kept in the PVWA, component setting);
+    Remote Desktop Connection follows the PVWA's signed file, which cannot be modified.
 - **Display paused**: the option "Pause the display of sessions nobody is watching" (Settings › Remote
   desktop, checked by default) asks the server to stop sending the picture of a session in a tab when the tab has
   been in the background, ZillaTerm minimized or Windows locked for 1 minute, or when nobody has used the keyboard or
@@ -1165,7 +1172,8 @@ import, or changed since, has no badge.
 | --- | --- | --- |
 | Open PSM Windows sessions in a ZillaTerm tab | PSM session (desktop or remote application) in a tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); unchecked: Windows Remote Desktop Connection | no |
 | Resize the remote desktop with the tab | Sessions in a tab: the resolution follows the size of the tab instead of a scaled picture; the connection from the PSM to the target may keep its original size | yes |
-| Share this computer's drives | Asks the PVWA for this computer's drives ("Map local drives" box of its connection window, `AllowMappingLocalDrives`); when the component allows them, they appear in the session (File Explorer › This PC). ⚠ The programs of the session can then read and write your drives | yes |
+| This computer's drives shared with PSM Windows sessions | **None**, **All drives** or **Only these folders** (see [This computer's drives](#3-open-a-psm-session-remote-desktop)). With drives or folders, ZillaTerm asks the PVWA for them ("Map local drives" box of its connection window, `AllowMappingLocalDrives`), and never more is shared than the component allows. ⚠ The programs of the session can read and write the shared drives or folders | All drives |
+| Folders (Only these folders) | Name seen in the session (`\\tsclient\Name`: letters without accents, digits, ".", "-", "_") and path on this computer, full (`C:\…`, `\\server\share\…`) or starting with a variable (`%USERPROFILE%\Share`); "Add a folder…" proposes the name from the chosen folder. ZillaTerm client in a tab only: Remote Desktop Connection and the Windows control then share no drive | none |
 | Pause the display of sessions nobody is watching | Sessions in a tab: when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture; the session stays open, the picture comes back when you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared; during a recording, the pause of a tab in the background is marked in it (screen and timeline of the report) | yes |
 
 <a id="settings-terminal"></a>
@@ -1239,7 +1247,7 @@ The settings the team's environment file can spread are listed in [Shared enviro
 
 To give ZillaTerm to a colleague with the team's configuration (PVWA address, sign-in method, default and by-domain
 PSMPs, Windows accounts component and per-platform components, shared lists, PSMP keys, on-call duty reminder (text or
-file), timed reminders, server tags, session sharing, a few options), with nothing personal and no password:
+file), timed reminders, server tags, shared folders, session sharing, a few options), with nothing personal and no password:
 
 1. **Export**: Settings › General › "Export the environment…" saves `ZillaTerm.env.json` with the values shown.
 2. **Next to the executable**: put this file next to `ZillaTerm.exe` (for example in the same zip). At start, when

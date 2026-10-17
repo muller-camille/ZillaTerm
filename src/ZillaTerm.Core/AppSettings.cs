@@ -106,6 +106,21 @@ public sealed class AppSettings
     /// </summary>
     public bool PsmRedirectDrives { get; set; } = true;
 
+    /// <summary>
+    /// « Ces dossiers seulement » : avec <see cref="PsmRedirectDrives"/>, seuls les dossiers de
+    /// <see cref="PsmSharedFolders"/> sont partagés, avec le client FreeRDP de ZillaTerm (sessions dans un onglet) ; aucun
+    /// s'il n'y en a pas. Connexion Bureau à distance et le contrôle Bureau à distance de Windows ne savent partager que
+    /// des disques entiers : aucun disque pour eux.
+    /// </summary>
+    public bool PsmShareFoldersOnly { get; set; }
+
+    /// <summary>Dossiers partagés avec « Ces dossiers seulement » (voir <see cref="Rdp.SharedFolderRules"/>).</summary>
+    public List<Rdp.SharedFolder> PsmSharedFolders { get; set; } = [];
+
+    /// <summary>Disques du poste partagés avec les sessions PSM Windows : aucun, tous, ou les dossiers choisis.</summary>
+    public Rdp.DriveSharing DriveSharing() =>
+        !PsmRedirectDrives ? Rdp.DriveSharing.None : PsmShareFoldersOnly ? Rdp.DriveSharing.Folders : Rdp.DriveSharing.AllDrives;
+
     /// <summary>Journal de débogage (déroulement des connexions, sans secret), désactivé par défaut.</summary>
     public bool DebugLogEnabled { get; set; }
 
@@ -592,6 +607,7 @@ public sealed class AppSettings
         settings.X11Servers ??= [];
         settings.X11Servers.RemoveAll(string.IsNullOrWhiteSpace);
         settings.ServerTags = ServerTagRules.Sanitize(settings.ServerTags);
+        settings.PsmSharedFolders = Rdp.SharedFolderRules.Sanitize(settings.PsmSharedFolders);
         settings.CompareToolArguments ??= DefaultCompareArguments;
         foreach (var session in settings.Sessions)
         {

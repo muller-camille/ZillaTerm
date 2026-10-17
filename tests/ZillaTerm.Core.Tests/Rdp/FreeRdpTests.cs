@@ -135,7 +135,8 @@ public class FreeRdpTests
     /// </summary>
     private static void AssertEachOptionOnce(IReadOnlyList<string> arguments)
     {
-        var names = arguments.Skip(1).Select(a => a.TrimStart('/', '+', '-').Split(':')[0]);
+        // « /drive:Nom,Chemin » : une option par dossier partagé.
+        var names = arguments.Skip(1).Select(a => a.TrimStart('/', '+', '-').Split(':')[0]).Where(n => n != "drive");
         Assert.All(names.GroupBy(n => n, StringComparer.OrdinalIgnoreCase), g => Assert.True(g.Count() == 1, g.Key));
     }
 
@@ -202,6 +203,48 @@ public class FreeRdpTests
         Assert.DoesNotContain(Filters(shared, verbose: false), f => f.Contains("rdpdr", StringComparison.Ordinal));
         Assert.DoesNotContain(Filters(Read(RemoteAppFile).ForPsmTab(drives: false), verbose: true),
             f => f.Contains("rdpdr", StringComparison.Ordinal) || f.Contains("drive.", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// « Ces dossiers seulement » : une option « /drive:Nom,Chemin » par dossier à la place de « /drives », si le fichier
+    /// du PVWA permet les disques (jamais plus que lui) ; liste vide ou disques refusés, rien.
+    /// </summary>
+    [Fact]
+    public void SharedFoldersReplaceAllDrives()
+    {
+        SharedFolder[] folders = [new("Partage", @"C:\Users\Jean Dupont\Partage"), new("Logs", @"\\fs01\logs")];
+        var settings = Read(RemoteAppFile).ForPsmTab(folders: folders);
+        Assert.False(settings.RedirectDrives);
+        Assert.Equal(folders, settings.SharedFolders);
+
+        var arguments = FreeRdpArguments.Build(settings, 1, (1280, 800), password: null, verbose: true, [Fingerprint]).Arguments;
+        Assert.DoesNotContain("/drives", arguments);
+        Assert.Equal([@"/drive:Partage,C:\Users\Jean Dupont\Partage", @"/drive:Logs,\\fs01\logs"],
+            arguments.Where(a => a.StartsWith("/drive", StringComparison.Ordinal)));
+        Assert.Contains(arguments, a => a.StartsWith("/log-filters:", StringComparison.Ordinal) && a.Contains("rdpdr.client:TRACE", StringComparison.Ordinal));
+        AssertEachOptionOnce(arguments);
+
+        // Fichier du PVWA sans disques, ou option décochée : aucun dossier.
+        var noDrives = Read(RemoteAppFile.Replace("drivestoredirect:s:*\r\n", "", StringComparison.Ordinal)).ForPsmTab(folders: folders);
+        Assert.Empty(noDrives.SharedFolders);
+        Assert.Empty(Read(RemoteAppFile).ForPsmTab(drives: false, folders: folders).SharedFolders);
+        var none = Read(RemoteAppFile).ForPsmTab(folders: []);
+        Assert.False(none.RedirectDrives);
+        Assert.DoesNotContain(FreeRdpArguments.Build(none, 1, (1280, 800), null, false, [Fingerprint]).Arguments,
+            a => a.StartsWith("/drive", StringComparison.Ordinal));
+    }
+
+    /// <summary>Dossier qui couperait l'option ou chemin non résolu (variable) : refusé, jamais passé à FreeRDP.</summary>
+    [Theory]
+    [InlineData("Mon partage", @"C:\Partage")]
+    [InlineData("Partage", @"C:\a,b")]
+    [InlineData("Partage", @"%USERPROFILE%\Partage")]
+    [InlineData("Partage", "Partage")]
+    [InlineData("Partage", "*")]
+    public void InvalidSharedFolderIsNeverPassed(string name, string path)
+    {
+        var settings = Read(RemoteAppFile).ForPsmTab() with { RedirectDrives = false, SharedFolders = [new SharedFolder(name, path)] };
+        Assert.Throws<ArgumentException>(() => FreeRdpArguments.Build(settings, 1, (1280, 800), null, false, [Fingerprint]));
     }
 
     /// <summary>

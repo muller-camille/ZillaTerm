@@ -5388,11 +5388,8 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Plus net qu'une image mise à l'échelle ; à décocher si l'écran du serveur cible ne suit pas.</value>
   </data>
-  <data name="PsmRedirectDrives" xml:space="preserve">
-    <value>Partager les _disques de ce poste</value>
-  </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>Comme « Map local drives » du PVWA, si le composant le permet : les programmes de la session peuvent lire et écrire sur vos disques. Décochée, aucun disque n'est partagé dans un onglet.</value>
+    <value>Comme « Map local drives » du PVWA, si le composant le permet : les programmes de la session peuvent lire et écrire sur les disques ou dossiers partagés. Aucun : rien n'est partagé.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>
@@ -6624,5 +6621,71 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="SettingsTailWordsHelp" xml:space="preserve">
     <value>Mots séparés par des virgules ; une alerte marque la ligne et fait clignoter le bouton de la barre des tâches.</value>
+  </data>
+  <data name="PsmDrivesSection" xml:space="preserve">
+    <value>Disques du poste partagés avec les sessions PSM Windows</value>
+  </data>
+  <data name="PsmDrivesNone" xml:space="preserve">
+    <value>_Aucun</value>
+  </data>
+  <data name="PsmDrivesAll" xml:space="preserve">
+    <value>_Tous les disques</value>
+  </data>
+  <data name="PsmDrivesFolders" xml:space="preserve">
+    <value>_Ces dossiers seulement</value>
+  </data>
+  <data name="PsmFoldersHelp" xml:space="preserve">
+    <value>Vus dans la session sous \\tsclient\Nom. Chemin complet, ou commençant par une variable (%USERPROFILE%\Partage). Sessions dans un onglet avec le client de ZillaTerm seulement : Connexion Bureau à distance et le contrôle de Windows ne partagent alors aucun disque.</value>
+  </data>
+  <data name="PsmFoldersList" xml:space="preserve">
+    <value>Dossiers partagés</value>
+  </data>
+  <data name="PsmFolderColName" xml:space="preserve">
+    <value>Nom dans la session</value>
+  </data>
+  <data name="PsmFolderColPath" xml:space="preserve">
+    <value>Chemin sur ce poste</value>
+  </data>
+  <data name="PsmFolderAdd" xml:space="preserve">
+    <value>Ajouter un _dossier…</value>
+  </data>
+  <data name="PsmFolderRemove" xml:space="preserve">
+    <value>Ret_irer</value>
+  </data>
+  <data name="InvalidFolderName" xml:space="preserve">
+    <value>Nom de dossier partagé invalide (ligne {0}) : lettres sans accent, chiffres, « . », « - » ou « _ », {1} caractères au plus.</value>
+  </data>
+  <data name="InvalidFolderPath" xml:space="preserve">
+    <value>Chemin de dossier partagé invalide (ligne {0}) : chemin complet (C:\…, \\serveur\partage\…) ou commençant par une variable (%USERPROFILE%\…), sans « , » ni guillemets.</value>
+  </data>
+  <data name="DuplicateFolderName" xml:space="preserve">
+    <value>Deux dossiers partagés s'appellent « {0} ».</value>
+  </data>
+  <data name="TooManyFolders" xml:space="preserve">
+    <value>{0} dossiers partagés au plus.</value>
+  </data>
+  <data name="FoldersEmpty" xml:space="preserve">
+    <value>« Ces dossiers seulement » : ajoutez au moins un dossier, ou choisissez « Aucun ».</value>
+  </data>
+  <data name="EnvPsmShareFoldersOnly" xml:space="preserve">
+    <value>Seulement des dossiers choisis partagés avec les sessions PSM Windows</value>
+  </data>
+  <data name="EnvPsmSharedFolders" xml:space="preserve">
+    <value>Dossiers partagés avec les sessions PSM Windows</value>
+  </data>
+  <data name="EnvPsmSharedFoldersNetwork" xml:space="preserve">
+    <value>Dossiers partagés avec les sessions PSM Windows, dont un sur le serveur réseau {0}</value>
+  </data>
+  <data name="EnvInvalidSharedFolder" xml:space="preserve">
+    <value>Dossier partagé invalide (nom en lettres sans accent, chiffres, « . », « - » ou « _ » ; chemin complet ou commençant par une variable, sans « , » ni guillemets ; 16 dossiers au plus, sans doublon) : {0}</value>
+  </data>
+  <data name="PsmFoldersMissing" xml:space="preserve">
+    <value>{0} : dossiers partagés introuvables sur ce poste, non partagés : {1}</value>
+  </data>
+  <data name="PsmFoldersWindowsControl" xml:space="preserve">
+    <value>{0} : le contrôle Bureau à distance de Windows ne partage que des disques entiers ; aucun dossier partagé (« Ces dossiers seulement »).</value>
+  </data>
+  <data name="PsmStartedNoFolders" xml:space="preserve">
+    <value>Session PSM lancée : {0} ({1}). Connexion Bureau à distance ne partage que des disques entiers : aucun disque partagé (« Ces dossiers seulement »).</value>
   </data>
 </root>

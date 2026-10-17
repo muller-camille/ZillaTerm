@@ -13,6 +13,7 @@ using ZillaTerm.Core.Diagnostics;
 using ZillaTerm.Core.Interventions;
 using ZillaTerm.Core.KeePass;
 using ZillaTerm.Core.Localization;
+using ZillaTerm.Core.Rdp;
 using ZillaTerm.Core.Ssh;
 using ZillaTerm.Core.Terminal;
 
@@ -27,6 +28,7 @@ public partial class SettingsDialog : Window
     private readonly ObservableCollection<PsmpRow> _psmpRows = [];
     private readonly ObservableCollection<ComponentRow> _componentRows = [];
     private readonly ObservableCollection<TagRow> _tagRows = [];
+    private readonly ObservableCollection<FolderRow> _folderRows = [];
 
     /// <summary>Fichiers d'environnement importés ici, appliqués à « Enregistrer » dans cet ordre (« Annuler » les abandonne).</summary>
     private readonly List<(string Path, EnvironmentFile File)> _imports = [];
@@ -65,6 +67,7 @@ public partial class SettingsDialog : Window
         PsmpGrid.ItemsSource = _psmpRows;
         ComponentGrid.ItemsSource = _componentRows;
         TagGrid.ItemsSource = _tagRows;
+        FolderGrid.ItemsSource = _folderRows;
         _tagRows.CollectionChanged += (_, _) => UpdateAddTagButton();
         UpdateStore();
         ShowValues(settings);
@@ -102,7 +105,17 @@ public partial class SettingsDialog : Window
         PsmDesktopInTabBox.IsChecked = settings.PsmDesktopInTab;
         PsmDynamicResolutionBox.IsChecked = settings.PsmDynamicResolution;
         PauseRdpDisplayBox.IsChecked = settings.PauseRdpDisplay;
-        PsmRedirectDrivesBox.IsChecked = settings.PsmRedirectDrives;
+        (settings.DriveSharing() switch
+        {
+            DriveSharing.None => DrivesNoneRadio,
+            DriveSharing.Folders => DrivesFoldersRadio,
+            _ => DrivesAllRadio,
+        }).IsChecked = true;
+        _folderRows.Clear();
+        foreach (var folder in settings.PsmSharedFolders)
+        {
+            _folderRows.Add(new FolderRow { Name = folder.Name, Path = folder.Path });
+        }
         FollowBox.IsChecked = settings.FollowTerminalFolder;
         X11DisplayBox.Text = settings.X11Display;
         SessionSharingBox.IsChecked = settings.SessionSharing;
@@ -322,6 +335,7 @@ public partial class SettingsDialog : Window
         PsmpGrid.CommitEdit(DataGridEditingUnit.Row, true);
         ComponentGrid.CommitEdit(DataGridEditingUnit.Row, true);
         TagGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        FolderGrid.CommitEdit(DataGridEditingUnit.Row, true);
         var host = PsmpBox.Text.Trim();
         if (host.Length > 0 && Uri.CheckHostName(host) == UriHostNameType.Unknown)
         {
@@ -385,6 +399,11 @@ public partial class SettingsDialog : Window
         }
 
         if (ReadTags() is not { } tags)
+        {
+            return false;
+        }
+
+        if (ReadFolders() is not { } folders)
         {
             return false;
         }
@@ -454,7 +473,9 @@ public partial class SettingsDialog : Window
         target.PsmDesktopInTab = PsmDesktopInTabBox.IsChecked == true;
         target.PsmDynamicResolution = PsmDynamicResolutionBox.IsChecked == true;
         target.PauseRdpDisplay = PauseRdpDisplayBox.IsChecked == true;
-        target.PsmRedirectDrives = PsmRedirectDrivesBox.IsChecked == true;
+        target.PsmRedirectDrives = DrivesNoneRadio.IsChecked != true;
+        target.PsmShareFoldersOnly = DrivesFoldersRadio.IsChecked == true;
+        target.PsmSharedFolders = folders;
         target.FollowTerminalFolder = FollowBox.IsChecked == true;
         target.X11Display = x11Display;
         target.SessionSharing = SessionSharingBox.IsChecked == true;
@@ -938,6 +959,139 @@ public partial class SettingsDialog : Window
         }
 
         return servers;
+    }
+
+    // ===================== Dossiers partagés =====================
+
+    /// <summary>Ligne du tableau des dossiers partagés (« Ces dossiers seulement ») : nom vu dans la session et chemin.</summary>
+    internal sealed class FolderRow : INotifyPropertyChanged
+    {
+        private string _name = "";
+        private string _path = "";
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value ?? "";
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+            }
+        }
+
+        public string Path
+        {
+            get => _path;
+            set
+            {
+                _path = value ?? "";
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Path)));
+            }
+        }
+    }
+
+    internal IList<FolderRow> FolderRows => _folderRows;
+
+    /// <summary>
+    /// Dossier choisi dans l'Explorateur : nom proposé d'après le dossier (caractères acceptés seulement, sans doublon),
+    /// modifiable dans le tableau.
+    /// </summary>
+    private void OnAddFolder(object sender, RoutedEventArgs e)
+    {
+        FolderGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Multiselect = false };
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        var row = new FolderRow { Name = FolderName(dialog.FolderName), Path = dialog.FolderName };
+        _folderRows.Add(row);
+        FolderGrid.SelectedItem = row;
+        FolderGrid.ScrollIntoView(row);
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
+        {
+            FolderGrid.CurrentCell = new DataGridCellInfo(row, FolderGrid.Columns[0]);
+            FolderGrid.Focus();
+        });
+    }
+
+    /// <summary>Nom proposé pour un dossier : son nom réduit aux caractères acceptés, différent de ceux du tableau.</summary>
+    internal string FolderName(string path)
+    {
+        // Dernier élément du chemin : le dossier, le partage (« \\fs01\Partage ») ou la lettre du lecteur (« C:\ »).
+        var leaf = path.Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.TrimEnd(':') ?? "";
+        var name = new string([.. leaf.Normalize(System.Text.NormalizationForm.FormD)
+            .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            .Select(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '-' or '_' ? c : '_')]).Trim('.', '-', '_');
+        if (name.Length == 0)
+        {
+            name = "Dossier";
+        }
+
+        name = name[..Math.Min(name.Length, SharedFolderRules.MaxNameLength - 3)];
+        var unique = name;
+        for (int i = 2; _folderRows.Any(r => string.Equals(r.Name.Trim(), unique, StringComparison.OrdinalIgnoreCase)); i++)
+        {
+            unique = string.Create(CultureInfo.InvariantCulture, $"{name}{i}");
+        }
+
+        return unique;
+    }
+
+    private void OnRemoveFolder(object sender, RoutedEventArgs e)
+    {
+        if (FolderGrid.SelectedItem is FolderRow row)
+        {
+            FolderGrid.CancelEdit(DataGridEditingUnit.Row);
+            _folderRows.Remove(row);
+        }
+    }
+
+    private void OnFolderSelected(object sender, SelectionChangedEventArgs e) => RemoveFolderButton.IsEnabled = FolderGrid.SelectedItem is FolderRow;
+
+    /// <summary>
+    /// Dossiers du tableau, vérifiés (lignes vides ignorées) ; null après avoir montré la première erreur. « Ces dossiers
+    /// seulement » sans dossier est refusé : rien ne serait partagé, « Aucun » le dit mieux.
+    /// </summary>
+    internal List<SharedFolder>? ReadFolders()
+    {
+        var folders = new List<SharedFolder>();
+        for (int i = 0; i < _folderRows.Count; i++)
+        {
+            var row = _folderRows[i];
+            var name = row.Name.Trim();
+            var path = row.Path.Trim().Trim('"');
+            if (name.Length == 0 && path.Length == 0)
+            {
+                continue;
+            }
+
+            string? error = !SharedFolderRules.IsValidName(name) ? Text.Format(Strings.InvalidFolderName, i + 1, SharedFolderRules.MaxNameLength)
+                : !SharedFolderRules.IsValidPath(path) ? Text.Format(Strings.InvalidFolderPath, i + 1)
+                : folders.Any(f => string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase)) ? Text.Format(Strings.DuplicateFolderName, name)
+                : folders.Count == SharedFolderRules.MaxFolders ? Text.Format(Strings.TooManyFolders, SharedFolderRules.MaxFolders)
+                : null;
+            if (error is not null)
+            {
+                FolderGrid.SelectedItem = row;
+                FolderGrid.ScrollIntoView(row);
+                ShowError(error, FolderGrid);
+                return null;
+            }
+
+            folders.Add(new SharedFolder(name, path));
+        }
+
+        if (DrivesFoldersRadio.IsChecked == true && folders.Count == 0)
+        {
+            ShowError(Strings.FoldersEmpty, DrivesFoldersRadio);
+            return null;
+        }
+
+        return folders;
     }
 
     // ===================== Étiquettes des serveurs =====================

@@ -62,7 +62,7 @@ public static class FreeRdpArguments
     /// Dossier de configuration de FreeRDP (certificats et clés qu'il connaîtrait) : vide, propre à ZillaTerm ; null pour
     /// le dossier par défaut.
     /// </param>
-    /// <exception cref="ArgumentException">Valeur avec un retour à la ligne ou un caractère nul.</exception>
+    /// <exception cref="ArgumentException">Valeur avec un retour à la ligne ou un caractère nul ; dossier partagé invalide.</exception>
     public static FreeRdpLaunch Build(RdpConnectionSettings settings, long parentWindow, (int Width, int Height) pixels,
         string? password, bool verbose, IReadOnlyCollection<string> fingerprints, bool legacySecurity = false, string? configPath = null)
     {
@@ -101,7 +101,9 @@ public static class FreeRdpArguments
         arguments.Add("/log-filters:com.freerdp.client.common:INFO" + (verbose
             ? ",com.freerdp.channels.rail.*:DEBUG,com.freerdp.channels.cliprdr.*:DEBUG,"
               + "com.freerdp.channels.disp.*:DEBUG,com.freerdp.channels.drdynvc.*:DEBUG,com.freerdp.client.windows:DEBUG"
-              + (settings.RedirectDrives ? ",com.freerdp.channels.rdpdr.client:TRACE,com.freerdp.channels.drive.client:TRACE" : "")
+              + (settings.RedirectDrives || settings.SharedFolders.Count > 0
+                  ? ",com.freerdp.channels.rdpdr.client:TRACE,com.freerdp.channels.drive.client:TRACE"
+                  : "")
             : ""));
 
         // Réglages par leur nom, en une seule option : une option donnée deux fois ne garde que sa dernière valeur.
@@ -139,6 +141,19 @@ public static class FreeRdpArguments
         if (settings.RedirectDrives)
         {
             arguments.Add("/drives");
+        }
+
+        // Dossiers choisis à la place de tous les disques : « /drive:Nom,Chemin », une option par dossier. Nom et chemin
+        // vérifiés (rien qui couperait l'option, chemin complet) : jamais un dossier relatif au client ni « * » (tous les
+        // disques).
+        foreach (var folder in settings.SharedFolders)
+        {
+            if (!SharedFolderRules.IsValidName(folder.Name) || !SharedFolderRules.IsValidPath(folder.Path) || folder.Path.Contains('%', StringComparison.Ordinal))
+            {
+                throw new ArgumentException("Dossier partagé invalide : " + folder.Name, nameof(settings));
+            }
+
+            arguments.Add($"/drive:{folder.Name.Trim()},{folder.Path.Trim()}");
         }
 
         if (settings.RedirectPrinters)
