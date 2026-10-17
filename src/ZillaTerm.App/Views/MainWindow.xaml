@@ -488,7 +488,8 @@
                             <TextBlock Text="{x:Static loc:Strings.ToolHistory}" Style="{StaticResource ToolLabel}" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="InterventionButton" Style="{StaticResource ToolButton}" Click="OnIntervention" ToolTip="{x:Static loc:Strings.ToolInterventionTip}"
+                    <Button x:Name="InterventionButton" Style="{StaticResource ToolButton}" Click="OnIntervention" PreviewMouseLeftButtonUp="OnInterventionPress"
+                            ToolTip="{x:Static loc:Strings.ToolInterventionTip}"
                             AutomationProperties.Name="{x:Static loc:Strings.ToolIntervention}">
                         <StackPanel>
                             <Grid>

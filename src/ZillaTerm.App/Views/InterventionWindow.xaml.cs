@@ -300,11 +300,34 @@ public partial class InterventionWindow : Window
     /// <summary>Titre, notes, captures et historique de l'intervention en cours (onglet du panneau de gauche).</summary>
     private void OnOpenNotes(object sender, RoutedEventArgs e) => _showNotes?.Invoke();
 
+    /// <summary>
+    /// Fenêtre déjà ouverte, redemandée : de nouveau affichée et devant, même réduite (<see cref="Window.Activate"/> seul
+    /// ne rétablit pas une fenêtre réduite, qui reste alors une petite barre au bas de l'écran) ou masquée.
+    /// </summary>
+    public void BringBack()
+    {
+        if (!IsVisible)
+        {
+            Show();
+        }
+
+        if (WindowState == WindowState.Minimized)
+        {
+            WindowState = WindowState.Normal;
+        }
+
+        Activate();
+    }
+
+    /// <summary>Dernière lecture de la liste des interventions, pour le journal de débogage (« 12 intervention(s) lues en 8 ms »).</summary>
+    internal string ListDescription { get; private set; } = "";
+
     private void RefreshJournals()
     {
         var keep = SelectedJournals.Select(file => file.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
         JournalList.Items.Clear();
         IReadOnlyList<InterventionFile> files;
+        var watch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             files = InterventionJournal.List(_recorder.Directory, _recorder.Protector);
@@ -313,6 +336,8 @@ public partial class InterventionWindow : Window
         {
             files = [];
         }
+
+        ListDescription = $"{files.Count} intervention(s) lues en {watch.ElapsedMilliseconds} ms";
 
         foreach (var file in files)
         {
