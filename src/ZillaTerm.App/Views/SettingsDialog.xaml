@@ -10,7 +10,8 @@
     <!-- Une page par tâche (onglets à gauche, Ctrl+Tab de l'une à l'autre), chacune tenant sur un écran. Une même mise en
          page partout : titre de section, case ou champ, une ligne d'aide dessous ; « ⚠ » pour un vrai risque ; pastille
          « Équipe » à droite d'un réglage que le fichier d'environnement de l'équipe définit. Tout s'applique avec
-         « Enregistrer », sauf les actions du coffre local, qui le disent. -->
+         « Enregistrer » (un environnement importé compris), sauf les actions du coffre local, qui le disent. Le détail
+         est dans le guide : « En savoir plus » (F1) ouvre la section de la page affichée (ancre « settings-<Tag> »). -->
     <Window.Resources>
         <Style x:Key="Page" TargetType="StackPanel">
             <Setter Property="Margin" Value="20,14,22,18" />
@@ -58,6 +59,12 @@
                     <Button Content="{x:Static loc:Strings.Save}" IsDefault="True" Click="OnSave" />
                     <Button Content="{x:Static loc:Strings.Cancel}" IsCancel="True" Margin="8,0,0,0" />
                 </StackPanel>
+                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <Hyperlink x:Name="GuideHyperlink" Click="OnGuide" ToolTip="{x:Static loc:Strings.SettingsGuideTip}" Foreground="{DynamicResource AccentBrush}"
+                               AutomationProperties.HelpText="{x:Static loc:Strings.SettingsGuideTip}">
+                        <Run Text="{x:Static loc:Strings.SettingsGuide}" />
+                    </Hyperlink>
+                </TextBlock>
                 <views:ErrorLine x:Name="ErrorText" Visibility="Collapsed" Margin="0,0,16,0" VerticalAlignment="Center" />
             </DockPanel>
         </Border>
@@ -78,7 +85,7 @@
             </TabControl.Resources>
 
             <!-- ===== Général ===== -->
-            <TabItem x:Name="GeneralPage" Header="{x:Static loc:Strings.SettingsPageGeneral}">
+            <TabItem x:Name="GeneralPage" Tag="general" Header="{x:Static loc:Strings.SettingsPageGeneral}">
                 <ScrollViewer>
                     <StackPanel Style="{StaticResource Page}">
                         <TextBlock Text="{x:Static loc:Strings.SettingsSectionDisplay}" Style="{StaticResource FirstSection}" />
@@ -137,12 +144,25 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Label Content="{x:Static loc:Strings.CentralFileLabel}" Target="{Binding ElementName=CentralFileBox}" Style="{StaticResource FieldLabel}" />
                             <TextBox Grid.Column="1" x:Name="CentralFileBox" VerticalContentAlignment="Center" />
                             <Button Grid.Column="2" Content="{x:Static loc:Strings.Browse}" Click="OnBrowseCentralFile" Margin="8,0,0,0" />
                             <views:TeamBadge Grid.Column="3" Setting="CentralFile" VerticalAlignment="Center" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.CentralFileHelp}" />
+                            <!-- Fichier importé : repris dans les pages, appliqué à « Enregistrer » ; exporté : les valeurs affichées. -->
+                            <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button x:Name="ImportEnvButton" Click="OnImportEnvironment">
+                                    <AccessText Text="{x:Static loc:Strings.SettingsEnvImport}" />
+                                </Button>
+                                <Button x:Name="ExportEnvButton" Click="OnExportEnvironment" Margin="8,0,0,0">
+                                    <AccessText Text="{x:Static loc:Strings.SettingsEnvExport}" />
+                                </Button>
+                            </StackPanel>
+                            <views:AnnouncedText Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" x:Name="EnvironmentText" Style="{StaticResource FieldHelp}"
+                                                 Text="{x:Static loc:Strings.SettingsEnvHelp}" AutomationProperties.LiveSetting="Polite" />
                         </Grid>
 
                         <TextBlock Text="{x:Static loc:Strings.SettingsSectionTroubleshooting}" Style="{StaticResource Section}" />
@@ -160,7 +180,7 @@
             </TabItem>
 
             <!-- ===== CyberArk ===== -->
-            <TabItem x:Name="CyberArkPage" Header="{x:Static loc:Strings.SettingsPageCyberArk}">
+            <TabItem x:Name="CyberArkPage" Tag="cyberark" Header="{x:Static loc:Strings.SettingsPageCyberArk}">
                 <ScrollViewer>
                     <StackPanel Style="{StaticResource Page}">
                         <TextBlock Text="{x:Static loc:Strings.PvwaSessionSection}" Style="{StaticResource FirstSection}" />
@@ -223,7 +243,7 @@
             </TabItem>
 
             <!-- ===== SSH ===== -->
-            <TabItem x:Name="SshPage" Header="{x:Static loc:Strings.SettingsPageSsh}">
+            <TabItem x:Name="SshPage" Tag="ssh" Header="{x:Static loc:Strings.SettingsPageSsh}">
                 <ScrollViewer>
                     <StackPanel Style="{StaticResource Page}">
                         <DockPanel Margin="0">
@@ -325,7 +345,7 @@
             </TabItem>
 
             <!-- ===== Bureau à distance ===== -->
-            <TabItem x:Name="RdpPage" Header="{x:Static loc:Strings.SettingsPageRdp}">
+            <TabItem x:Name="RdpPage" Tag="rdp" Header="{x:Static loc:Strings.SettingsPageRdp}">
                 <ScrollViewer>
                     <StackPanel Style="{StaticResource Page}">
                         <TextBlock Style="{StaticResource FieldHelp}" Margin="0" Text="{x:Static loc:Strings.SettingsRdpIntro}" />
@@ -363,7 +383,7 @@
             </TabItem>
 
             <!-- ===== Terminal ===== -->
-            <TabItem x:Name="TerminalPage" Header="{x:Static loc:Strings.SettingsPageTerminal}">
+            <TabItem x:Name="TerminalPage" Tag="terminal" Header="{x:Static loc:Strings.SettingsPageTerminal}">
                 <ScrollViewer>
                     <StackPanel Style="{StaticResource Page}">
                         <TextBlock Text="{x:Static loc:Strings.SettingsSectionTerminalDisplay}" Style="{StaticResource FirstSection}" />
@@ -408,7 +428,7 @@
             </TabItem>
 
             <!-- ===== Fichiers ===== -->
-            <TabItem x:Name="FilesPage" Header="{x:Static loc:Strings.SettingsPageFiles}">
+            <TabItem x:Name="FilesPage" Tag="files" Header="{x:Static loc:Strings.SettingsPageFiles}">
                 <ScrollViewer>
                     <StackPanel Style="{StaticResource Page}">
                         <TextBlock Text="{x:Static loc:Strings.SettingsSectionTransfers}" Style="{StaticResource FirstSection}" />
@@ -441,12 +461,77 @@
                             <TextBlock Text="{x:Static loc:Strings.SettingsArchiveFiles}" VerticalAlignment="Center" />
                         </WrapPanel>
                         <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsArchiveHelp}" />
+
+                        <!-- Affichage de l'onglet Fichiers : aussi sur place (case « Cachés », clic droit sur l'en-tête des colonnes). -->
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionFilesTab}" Style="{StaticResource Section}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <CheckBox x:Name="ShowHiddenBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsShowHidden}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.SettingsFileColumns}" Target="{Binding ElementName=SizeColumnBox}"
+                                   Style="{StaticResource FieldLabel}" />
+                            <WrapPanel Grid.Column="1">
+                                <WrapPanel.Resources>
+                                    <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+                                        <Setter Property="Margin" Value="0,2,18,2" />
+                                    </Style>
+                                </WrapPanel.Resources>
+                                <CheckBox x:Name="SizeColumnBox" Content="{x:Static loc:Strings.ColumnSize}" />
+                                <CheckBox x:Name="ModifiedColumnBox" Content="{x:Static loc:Strings.ColumnModified}" />
+                                <CheckBox x:Name="PermissionsColumnBox" Content="{x:Static loc:Strings.ColumnPermissions}" />
+                                <CheckBox x:Name="OwnerColumnBox" Content="{x:Static loc:Strings.ColumnOwner}" />
+                                <CheckBox x:Name="GroupColumnBox" Content="{x:Static loc:Strings.ColumnGroup}" />
+                            </WrapPanel>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.SettingsFilesTabHelp}" />
+                        </Grid>
+
+                        <!-- Suivi d'un fichier (tail -f) : options communes à toutes les fenêtres tail -f, aussi dans leur barre. -->
+                        <TextBlock Text="{x:Static loc:Strings.SettingsSectionTail}" Style="{StaticResource Section}" />
                         <DockPanel Style="{StaticResource OptionRow}">
                             <CheckBox x:Name="TailSessionBox">
                                 <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsTailSession}" />
                             </CheckBox>
                         </DockPanel>
                         <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsTailSessionHelp}" />
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <CheckBox x:Name="TailColorsBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsTailColors}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.TailColorsTip}" />
+                        <Grid Style="{StaticResource FieldRow}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Label" MinWidth="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Content="{x:Static loc:Strings.SettingsTailHighlight}" Target="{Binding ElementName=TailHighlightBox}" Style="{StaticResource FieldLabel}" />
+                            <TextBox Grid.Column="1" x:Name="TailHighlightBox" VerticalContentAlignment="Center" MaxLength="1000" />
+                            <Label Grid.Row="1" Content="{x:Static loc:Strings.SettingsTailAlert}" Target="{Binding ElementName=TailAlertBox}" Style="{StaticResource FieldLabel}"
+                                   Margin="0,8,0,0" />
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="TailAlertBox" VerticalContentAlignment="Center" MaxLength="1000" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldHelp}" Text="{x:Static loc:Strings.SettingsTailWordsHelp}" />
+                        </Grid>
+                        <DockPanel Style="{StaticResource OptionRow}">
+                            <CheckBox x:Name="TailNotifyBox">
+                                <AccessText TextWrapping="Wrap" Text="{x:Static loc:Strings.SettingsTailNotify}" />
+                            </CheckBox>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Help}" Text="{x:Static loc:Strings.SettingsTailNotifyHelp}" />
 
                         <TextBlock Text="{x:Static loc:Strings.SettingsSectionPrograms}" Style="{StaticResource Section}" />
                         <Grid Style="{StaticResource FieldRow}">
@@ -492,7 +577,7 @@
             </TabItem>
 
             <!-- ===== Mes serveurs ===== -->
-            <TabItem x:Name="ServersPage" Header="{x:Static loc:Strings.SettingsPageServers}">
+            <TabItem x:Name="ServersPage" Tag="servers" Header="{x:Static loc:Strings.SettingsPageServers}">
                 <DockPanel Margin="20,14,22,18">
                     <!-- Étiquettes des serveurs de « Mes serveurs » (PROD, QA, DEV…) : nom et couleur. -->
                     <DockPanel DockPanel.Dock="Top">
@@ -563,7 +648,7 @@
             </TabItem>
 
             <!-- ===== Intervention ===== -->
-            <TabItem x:Name="InterventionPage" Header="{x:Static loc:Strings.SettingsPageIntervention}">
+            <TabItem x:Name="InterventionPage" Tag="intervention" Header="{x:Static loc:Strings.SettingsPageIntervention}">
                 <ScrollViewer>
                     <StackPanel Style="{StaticResource Page}">
                         <!-- Astreinte : consignes de l'équipe (texte ou fichier), diffusées par le fichier d'environnement. -->
@@ -608,7 +693,7 @@
             </TabItem>
 
             <!-- ===== Partage de sessions ===== -->
-            <TabItem x:Name="SharingPage" Header="{x:Static loc:Strings.SettingsPageSharing}">
+            <TabItem x:Name="SharingPage" Tag="sharing" Header="{x:Static loc:Strings.SettingsPageSharing}">
                 <ScrollViewer>
                     <StackPanel Style="{StaticResource Page}">
                         <DockPanel>
@@ -657,7 +742,7 @@
             </TabItem>
 
             <!-- ===== Sécurité ===== -->
-            <TabItem x:Name="SecurityPage" Header="{x:Static loc:Strings.SettingsPageSecurity}">
+            <TabItem x:Name="SecurityPage" Tag="security" Header="{x:Static loc:Strings.SettingsPageSecurity}">
                 <DockPanel Margin="20,14,22,18">
                     <!-- Coffre local : actions immédiates, sans « Enregistrer », dans leur propre cadre. -->
                     <Border DockPanel.Dock="Bottom" Margin="0,18,0,0" Padding="12,10" BorderThickness="1" CornerRadius="3"
@@ -676,7 +761,8 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Clés de serveur acceptées : oubliées à l'enregistrement (la connexion suivante redemandera l'empreinte). -->
+                    <!-- Clés de serveur acceptées : oubliées à l'enregistrement (la connexion suivante redemandera l'empreinte) ;
+                         « Rétablir » les remet dans la liste d'ici là. -->
                     <DockPanel DockPanel.Dock="Top">
                         <views:TeamBadge DockPanel.Dock="Right" Setting="HostKey" />
                         <TextBlock Text="{x:Static loc:Strings.HostKeysSection}" Style="{StaticResource FirstSection}" />
@@ -690,6 +776,8 @@
                     <DockPanel DockPanel.Dock="Bottom" Margin="0,6,0,0">
                         <Button x:Name="ForgetKeysButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.ForgetSelectedKeys}"
                                 Click="OnForgetHostKeys" IsEnabled="False" VerticalAlignment="Top" />
+                        <Button x:Name="RestoreKeysButton" DockPanel.Dock="Right" Content="{x:Static loc:Strings.SettingsRestoreKeys}"
+                                Click="OnRestoreHostKeys" Visibility="Collapsed" Margin="0,0,8,0" VerticalAlignment="Top" />
                         <TextBlock x:Name="HostKeysText" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,12,0"
                                    VerticalAlignment="Center" />
                     </DockPanel>

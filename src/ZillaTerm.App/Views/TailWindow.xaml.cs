@@ -658,6 +658,19 @@ public partial class TailWindow : Window
 
     private void OnNotify(object sender, RoutedEventArgs e) => SaveTailSettings();
 
+    /// <summary>
+    /// Couleurs, mots surlignés et alertes changés dans les Paramètres : repris par la fenêtre (sinon, à sa fermeture,
+    /// elle remettrait les anciens).
+    /// </summary>
+    internal void ReloadOptions()
+    {
+        ColorsBox.IsChecked = _settings.TailLevelColors;
+        NotifyBox.IsChecked = _settings.TailAlertNotify;
+        HighlightBox.Text = _settings.TailHighlights;
+        AlertBox.Text = _settings.TailAlerts;
+        RefreshStyle();
+    }
+
     /// <summary>Couleurs, mots surlignés et alertes sont gardés pour les prochaines fenêtres.</summary>
     private void SaveTailSettings()
     {

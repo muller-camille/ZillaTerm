@@ -173,16 +173,20 @@ public sealed partial class UxTextTests
         Assert.Equal(10, Views.MainWindow.MaxSessionsAtOnce);
     }
 
-    /// <summary>Paramètres : chaque case a une touche d'accès dans les trois langues.</summary>
+    /// <summary>
+    /// Paramètres : chaque case a une touche d'accès dans les trois langues, sauf les colonnes de l'onglet Fichiers, un
+    /// groupe atteint par la touche de son libellé « Colonnes ».
+    /// </summary>
     [Fact]
     public void SettingsCheckBoxes_HaveAnAccessKey()
     {
         var app = Path.Combine(AccessKeysTests.RepositoryRoot(), "src", "ZillaTerm.App");
         var keys = XDocument.Load(Path.Combine(app, "Views", "SettingsDialog.xaml")).Root!.Descendants(Wpf + "CheckBox")
+            .Where(c => !((string?)c.Attribute(Xaml + "Name") ?? "").EndsWith("ColumnBox", StringComparison.Ordinal))
             .Select(c => (string?)c.Attribute("Content") ?? (string?)c.Element(Wpf + "AccessText")?.Attribute("Text") ?? (string?)c.Element(Wpf + "TextBlock")?.Attribute("Text"))
             .Select(v => StaticKey().Match(v ?? "").Groups[1].Value)
             .ToList();
-        Assert.Equal(17, keys.Count);
+        Assert.Equal(20, keys.Count);
         foreach (var suffix in new[] { "", ".fr", ".it" })
         {
             var texts = XDocument.Load(Path.Combine(app, "Localization", $"Strings{suffix}.resx")).Root!.Elements("data")

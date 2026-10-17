@@ -22,30 +22,36 @@ public partial class SettingsDialog : Window
 {
     private readonly AppSettings _settings;
     private readonly LocalSecretStore? _store;
+    private readonly string _pvwaHost;
     private readonly HashSet<string> _forgottenKeys = new(StringComparer.Ordinal);
     private readonly ObservableCollection<PsmpRow> _psmpRows = [];
     private readonly ObservableCollection<ComponentRow> _componentRows = [];
     private readonly ObservableCollection<TagRow> _tagRows = [];
 
+    /// <summary>Fichiers d'environnement importés ici, appliqués à « Enregistrer » dans cet ordre (« Annuler » les abandonne).</summary>
+    private readonly List<(string Path, EnvironmentFile File)> _imports = [];
+
+    /// <summary>Réglages affichés : ceux en vigueur, ou une copie où un environnement importé a été appliqué.</summary>
+    private AppSettings _shown;
+
+    /// <summary>Fichiers d'environnement de l'équipe lus à l'ouverture (pastilles « Équipe »).</summary>
+    private List<(string Path, EnvironmentProfile Profile)> _teamFiles = [];
+
     /// <param name="store">Coffre local des mots de passe maîtres KeePass, géré depuis cette fenêtre.</param>
-    public SettingsDialog(AppSettings settings, LocalSecretStore? store = null)
+    /// <param name="pvwaHost">PVWA de la session, nom donné à un environnement exporté.</param>
+    public SettingsDialog(AppSettings settings, LocalSecretStore? store = null, string pvwaHost = "")
     {
         InitializeComponent();
         SourceInitialized += (_, _) => FitToScreen();
         _settings = settings;
+        _shown = settings;
         _store = store;
-        KeepAliveBox.IsChecked = settings.KeepPvwaSessionAlive;
-        KeepAccountListCopyBox.IsChecked = settings.KeepAccountListCopy;
-        UpdateCheckBox.IsChecked = settings.CheckForUpdates;
-        CentralFileBox.Text = settings.EnvironmentFile;
-        DebugLogBox.IsChecked = settings.DebugLogEnabled;
-        UpdateStore();
+        _pvwaHost = pvwaHost;
         LanguageBox.DisplayMemberPath = "Value";
         LanguageBox.SelectedValuePath = "Key";
         LanguageBox.ItemsSource = new[] { new KeyValuePair<string, string>("", CoreStrings.LanguageSystem) }
             .Concat(UiLanguage.Supported.Select(code => new KeyValuePair<string, string>(code, UiLanguage.NativeName(code))))
             .ToList();
-        LanguageBox.SelectedValue = UiLanguage.Normalize(settings.Language);
         AppThemeBox.DisplayMemberPath = "Value";
         AppThemeBox.SelectedValuePath = "Key";
         AppThemeBox.ItemsSource = new[]
@@ -54,15 +60,43 @@ public partial class SettingsDialog : Window
             new KeyValuePair<AppTheme, string>(AppTheme.Light, Strings.AppThemeLight),
             new KeyValuePair<AppTheme, string>(AppTheme.Dark, Strings.AppThemeDark),
         };
+        ThemeBox.ItemsSource = TerminalTheme.All;
+        WindowsComponentBox.ItemsSource = AccountClassifier.CommonComponents;
+        PsmpGrid.ItemsSource = _psmpRows;
+        ComponentGrid.ItemsSource = _componentRows;
+        TagGrid.ItemsSource = _tagRows;
+        _tagRows.CollectionChanged += (_, _) => UpdateAddTagButton();
+        UpdateStore();
+        ShowValues(settings);
+        UpdateAddTagButton();
+        // F1 : la section du guide de la page affichée.
+        CommandBindings.Add(new System.Windows.Input.CommandBinding(System.Windows.Input.ApplicationCommands.Help, (_, _) => OpenGuide()));
+        Loaded += (_, _) =>
+        {
+            (Pages.SelectedItem == SharingPage ? (Control)SessionSharingBox : LanguageBox).Focus();
+            _ = LoadTeamBadgesAsync();
+        };
+    }
+
+    /// <summary>Remplit les pages avec ces réglages (à l'ouverture, puis après l'import d'un environnement).</summary>
+    private void ShowValues(AppSettings settings)
+    {
+        _shown = settings;
+        KeepAliveBox.IsChecked = settings.KeepPvwaSessionAlive;
+        KeepAccountListCopyBox.IsChecked = settings.KeepAccountListCopy;
+        UpdateCheckBox.IsChecked = settings.CheckForUpdates;
+        CentralFileBox.Text = settings.EnvironmentFile;
+        DebugLogBox.IsChecked = settings.DebugLogEnabled;
+        LanguageBox.SelectedValue = UiLanguage.Normalize(settings.Language);
         AppThemeBox.SelectedValue = settings.Theme;
         PsmpBox.Text = settings.PsmpAddress;
         PortBox.Text = settings.PsmpPort.ToString(CultureInfo.InvariantCulture);
+        _psmpRows.Clear();
         foreach (var psmp in settings.PsmpServers)
         {
             AddPsmpRow(PsmpRow.From(psmp));
         }
 
-        PsmpGrid.ItemsSource = _psmpRows;
         UpdatePsmpTest();
         SshInAppBox.IsChecked = settings.SshInApp;
         PsmDesktopInTabBox.IsChecked = settings.PsmDesktopInTab;
@@ -80,7 +114,6 @@ public partial class SettingsDialog : Window
         RemindersBox.Text = InterventionReminder.Format(settings.InterventionReminders).Replace("\n", Environment.NewLine, StringComparison.Ordinal);
         EditorBox.Text = settings.TextEditor;
         CompareToolBox.Text = settings.CompareTool;
-        ThemeBox.ItemsSource = TerminalTheme.All;
         ThemeBox.SelectedItem = TerminalTheme.Find(settings.TerminalTheme);
         FontSizeBox.Text = settings.TerminalFontSize.ToString(CultureInfo.CurrentCulture);
         RightClickBox.IsChecked = settings.TerminalRightClickPastes;
@@ -90,30 +123,47 @@ public partial class SettingsDialog : Window
         (settings.PreferredUploadProtocol == TransferProtocol.Scp ? ScpRadio : SftpRadio).IsChecked = true;
         ArchiveBox.IsChecked = settings.OfferArchive;
         ArchiveThresholdBox.Text = settings.ArchiveThreshold.ToString(CultureInfo.InvariantCulture);
+        ShowHiddenBox.IsChecked = settings.ShowHiddenFiles;
+        foreach (var (box, column) in ColumnBoxes())
+        {
+            box.IsChecked = !settings.HiddenFileColumns.Contains(column);
+        }
+
         TailSessionBox.IsChecked = settings.TailIndependentSession;
+        TailColorsBox.IsChecked = settings.TailLevelColors;
+        TailHighlightBox.Text = settings.TailHighlights;
+        TailAlertBox.Text = settings.TailAlerts;
+        TailNotifyBox.IsChecked = settings.TailAlertNotify;
         ShowHostKeys();
-        WindowsComponentBox.ItemsSource = AccountClassifier.CommonComponents;
         WindowsComponentBox.Text = settings.WindowsComponent;
+        _componentRows.Clear();
         foreach (var (platform, component) in settings.ComponentByPlatform.OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase))
         {
             _componentRows.Add(new ComponentRow { Platform = platform, Component = component });
         }
 
-        ComponentGrid.ItemsSource = _componentRows;
+        _tagRows.Clear();
         foreach (var tag in settings.ServerTags)
         {
             _tagRows.Add(new TagRow(tag.Name, tag.Name, tag.Color));
         }
-
-        TagGrid.ItemsSource = _tagRows;
-        _tagRows.CollectionChanged += (_, _) => UpdateAddTagButton();
-        UpdateAddTagButton();
-        Loaded += (_, _) =>
-        {
-            (Pages.SelectedItem == SharingPage ? (Control)SessionSharingBox : LanguageBox).Focus();
-            _ = ShowTeamBadgesAsync();
-        };
     }
+
+    /// <summary>Cases des colonnes facultatives de l'onglet Fichiers (la colonne Nom reste toujours).</summary>
+    private (CheckBox Box, RemoteSortColumn Column)[] ColumnBoxes() =>
+    [
+        (SizeColumnBox, RemoteSortColumn.Size),
+        (ModifiedColumnBox, RemoteSortColumn.Modified),
+        (PermissionsColumnBox, RemoteSortColumn.Permissions),
+        (OwnerColumnBox, RemoteSortColumn.Owner),
+        (GroupColumnBox, RemoteSortColumn.Group),
+    ];
+
+    /// <summary>Un environnement a été importé ici (et appliqué à l'enregistrement).</summary>
+    internal bool ImportedEnvironment => _imports.Count > 0;
+
+    /// <summary>Fichiers d'environnement importés ici (pour ne pas reproposer aussitôt le même comme fichier central).</summary>
+    internal IEnumerable<string> ImportedPaths => _imports.Select(i => i.Path);
 
     /// <summary>Ouvre la page « Partage » (partage demandé alors qu'il est désactivé).</summary>
     internal void ShowSharingPage() => Pages.SelectedItem = SharingPage;
@@ -129,7 +179,7 @@ public partial class SettingsDialog : Window
 
     private void ShowHostKeys()
     {
-        HostKeyRows = _settings.KnownHosts
+        HostKeyRows = _shown.KnownHosts
             .Where(kv => !_forgottenKeys.Contains(kv.Key))
             .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
             .Select(kv =>
@@ -143,6 +193,7 @@ public partial class SettingsDialog : Window
         HostKeysText.Text = _forgottenKeys.Count > 0 ? Strings.HostKeysForgotten
             : HostKeyRows.Count == 0 ? Strings.NoHostKeys
             : Strings.HostKeysHelp;
+        RestoreKeysButton.Visibility = _forgottenKeys.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnHostKeySelected(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
@@ -179,6 +230,19 @@ public partial class SettingsDialog : Window
     /// <summary>Clés choisies retirées de la liste ; elles sont oubliées à l'enregistrement (« Annuler » les garde).</summary>
     private void OnForgetHostKeys(object sender, RoutedEventArgs e) => ForgetSelectedKeys();
 
+    /// <summary>Clés retirées remises dans la liste : rien ne sera oublié à l'enregistrement.</summary>
+    private void OnRestoreHostKeys(object sender, RoutedEventArgs e)
+    {
+        RestoreForgottenKeys();
+        HostKeysGrid.Focus();
+    }
+
+    internal void RestoreForgottenKeys()
+    {
+        _forgottenKeys.Clear();
+        ShowHostKeys();
+    }
+
     internal void ForgetSelectedKeys()
     {
         foreach (var row in HostKeysGrid.SelectedItems.OfType<HostKeyRow>().ToList())
@@ -190,15 +254,70 @@ public partial class SettingsDialog : Window
     }
 
     /// <summary>À l'enregistrement : les clés choisies sont oubliées des réglages.</summary>
-    internal void ApplyForgottenKeys()
+    internal void ApplyForgottenKeys() => ApplyForgottenKeys(_settings);
+
+    private void ApplyForgottenKeys(AppSettings target)
     {
         foreach (var key in _forgottenKeys)
         {
-            _settings.KnownHosts.Remove(key);
+            target.KnownHosts.Remove(key);
         }
     }
 
     private void OnSave(object sender, RoutedEventArgs e)
+    {
+        if (ApplyAll())
+        {
+            DialogResult = true;
+        }
+    }
+
+    /// <summary>
+    /// Vérifie d'abord tout sur une copie : une valeur refusée ne laisse rien d'appliqué à moitié. Puis les environnements
+    /// importés et les valeurs affichées passent dans les réglages en vigueur.
+    /// </summary>
+    /// <returns>Faux après avoir montré la première valeur refusée (rien n'est appliqué).</returns>
+    internal bool ApplyAll()
+    {
+        if (Pending() is null)
+        {
+            return false;
+        }
+
+        foreach (var import in _imports)
+        {
+            ApplyImport(import, _settings);
+        }
+
+        // Mêmes valeurs que sur la copie : déjà vérifiées.
+        ReadInto(_settings);
+        return true;
+    }
+
+    /// <summary>
+    /// Réglages tels qu'ils seraient enregistrés (environnements importés, puis valeurs affichées), sur une copie ; null
+    /// après avoir montré la première valeur refusée.
+    /// </summary>
+    private AppSettings? Pending()
+    {
+        var copy = _settings.Copy();
+        foreach (var import in _imports)
+        {
+            ApplyImport(import, copy);
+        }
+
+        return ReadInto(copy) ? copy : null;
+    }
+
+    /// <summary>Environnement accepté à l'import : appliqué, et noté comme proposé (il n'est pas reproposé au démarrage).</summary>
+    private static void ApplyImport((string Path, EnvironmentFile File) import, AppSettings target)
+    {
+        import.File.Profile.ApplyTo(target);
+        target.EnvironmentFileHashes[import.Path.ToLowerInvariant()] = import.File.Sha256;
+    }
+
+    /// <summary>Valeurs affichées, vérifiées, écrites dans <paramref name="target"/> ; faux après avoir montré la première refusée.</summary>
+    private bool ReadInto(AppSettings target)
     {
         PsmpGrid.CommitEdit(DataGridEditingUnit.Row, true);
         ComponentGrid.CommitEdit(DataGridEditingUnit.Row, true);
@@ -207,74 +326,74 @@ public partial class SettingsDialog : Window
         if (host.Length > 0 && Uri.CheckHostName(host) == UriHostNameType.Unknown)
         {
             ShowError(Strings.InvalidPsmpAddress, PsmpBox);
-            return;
+            return false;
         }
 
         if (ParsePort(PortBox.Text) is not { } port)
         {
             ShowError(Strings.InvalidPort, PortBox);
-            return;
+            return false;
         }
 
         if (ReadPsmpServers(host) is not { } psmpServers)
         {
-            return;
+            return false;
         }
 
         var centralFile = CentralFileBox.Text.Trim().Trim('"');
         if (centralFile.Length > 0 && !EnvironmentProfile.IsFullPath(centralFile))
         {
             ShowError(Strings.InvalidCentralFile, CentralFileBox);
-            return;
+            return false;
         }
 
         var windowsComponent = WindowsComponentBox.Text.Trim();
         if (windowsComponent.Length > 0 && !AppSettings.IsValidComponentName(windowsComponent))
         {
             ShowError(Strings.InvalidComponentName, WindowsComponentBox);
-            return;
+            return false;
         }
 
         if (ReadComponents() is not { } componentByPlatform)
         {
-            return;
+            return false;
         }
 
         if (!int.TryParse(ArchiveThresholdBox.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var threshold) || threshold < 2)
         {
             ShowError(Strings.InvalidArchiveThreshold, ArchiveThresholdBox);
-            return;
+            return false;
         }
 
         if (!double.TryParse(FontSizeBox.Text.Trim(), NumberStyles.Float, CultureInfo.CurrentCulture, out var fontSize)
             || fontSize < TerminalAppearance.MinFontSize || fontSize > TerminalAppearance.MaxFontSize)
         {
             ShowError(Text.Format(Strings.InvalidFontSize, TerminalAppearance.MinFontSize, TerminalAppearance.MaxFontSize), FontSizeBox);
-            return;
+            return false;
         }
 
         if (!EnvironmentProfile.IsValidDutyText(DutyTextBox.Text))
         {
             ShowError(Strings.InvalidDutyText, DutyTextBox);
-            return;
+            return false;
         }
 
         if (!InterventionReminder.TryParse(RemindersBox.Text, out var reminders, out int badReminder))
         {
             ShowError(Text.Format(Strings.InvalidReminder, badReminder), RemindersBox);
-            return;
+            return false;
         }
 
         if (ReadTags() is not { } tags)
         {
-            return;
+            return false;
         }
 
         var dutyFile = DutyFileBox.Text.Trim();
         if (dutyFile.Length > 0 && !DutyReminderFile.IsValidPath(dutyFile))
         {
             ShowError(Strings.InvalidDutyFile, DutyFileBox);
-            return;
+            return false;
         }
 
         var x11Display = X11DisplayBox.Text.Trim();
@@ -286,7 +405,7 @@ public partial class SettingsDialog : Window
         if (!X11Display.TryParse(x11Display, out _))
         {
             ShowError(Strings.X11DisplayInvalid, X11DisplayBox);
-            return;
+            return false;
         }
 
         var sharePortText = SharePortBox.Text.Trim();
@@ -295,20 +414,20 @@ public partial class SettingsDialog : Window
             && (!int.TryParse(sharePortText, NumberStyles.None, CultureInfo.InvariantCulture, out sharePort) || !AppSettings.IsSharePort(sharePort)))
         {
             ShowError(Strings.InvalidSharePort, SharePortBox);
-            return;
+            return false;
         }
 
         var shareRelay = ShareRelayBox.Text.Trim().Trim('"');
         if (shareRelay.Length > 0 && !Core.Sharing.ShareInvitation.IsRelayFolder(shareRelay))
         {
             ShowError(Strings.InvalidShareRelay, ShareRelayBox);
-            return;
+            return false;
         }
 
         if (SessionSharingBox.IsChecked == true && ShareDirectBox.IsChecked != true && shareRelay.Length == 0)
         {
             ShowError(Strings.ShareNoRoute, ShareDirectBox);
-            return;
+            return false;
         }
 
         var compareArgs = CompareArgsBox.Text.Trim();
@@ -321,51 +440,56 @@ public partial class SettingsDialog : Window
             || !IsValidFormat(compareArgs))
         {
             ShowError(Strings.InvalidCompareArguments, CompareArgsBox);
-            return;
+            return false;
         }
 
-        _settings.Language = LanguageBox.SelectedValue as string ?? "";
-        _settings.Theme = AppThemeBox.SelectedValue as AppTheme? ?? AppTheme.System;
-        _settings.PsmpAddress = host;
-        _settings.PsmpPort = port;
-        _settings.PsmpServers = psmpServers;
-        _settings.WindowsComponent = windowsComponent;
-        _settings.EnvironmentFile = centralFile;
-        _settings.SshInApp = SshInAppBox.IsChecked == true;
-        _settings.PsmDesktopInTab = PsmDesktopInTabBox.IsChecked == true;
-        _settings.PsmDynamicResolution = PsmDynamicResolutionBox.IsChecked == true;
-        _settings.PauseRdpDisplay = PauseRdpDisplayBox.IsChecked == true;
-        _settings.PsmRedirectDrives = PsmRedirectDrivesBox.IsChecked == true;
-        _settings.FollowTerminalFolder = FollowBox.IsChecked == true;
-        _settings.X11Display = x11Display;
-        _settings.SessionSharing = SessionSharingBox.IsChecked == true;
-        _settings.ShareDirect = ShareDirectBox.IsChecked == true;
-        _settings.SharePort = sharePort;
-        _settings.ShareRelayFolder = shareRelay;
-        _settings.DutyText = EnvironmentProfile.NormalizeDutyText(DutyTextBox.Text);
-        _settings.DutyTextFile = dutyFile;
-        _settings.InterventionReminders = reminders;
-        _settings.ReplaceServerTags(tags.Tags, tags.Renamed);
-        _settings.KeepPvwaSessionAlive = KeepAliveBox.IsChecked == true;
-        _settings.KeepAccountListCopy = KeepAccountListCopyBox.IsChecked == true;
-        _settings.CheckForUpdates = UpdateCheckBox.IsChecked == true;
-        _settings.DebugLogEnabled = DebugLogBox.IsChecked == true;
-        _settings.PreferredUploadProtocol = ScpRadio.IsChecked == true ? TransferProtocol.Scp : TransferProtocol.Sftp;
-        _settings.OfferArchive = ArchiveBox.IsChecked == true;
-        _settings.ArchiveThreshold = threshold;
-        _settings.TailIndependentSession = TailSessionBox.IsChecked == true;
-        _settings.TextEditor = EditorBox.Text.Trim().Trim('"');
-        _settings.CompareTool = CompareToolBox.Text.Trim().Trim('"');
-        _settings.TerminalTheme = (ThemeBox.SelectedItem as TerminalTheme ?? TerminalTheme.Campbell).Id;
-        _settings.TerminalFontSize = fontSize;
-        _settings.TerminalRightClickPastes = RightClickBox.IsChecked == true;
-        _settings.ConfirmMultiLinePaste = ConfirmPasteBox.IsChecked == true;
-        _settings.ConfirmCloseSession = ConfirmCloseBox.IsChecked == true;
-        _settings.CompareToolArguments = compareArgs;
-        ApplyForgottenKeys();
-        _settings.ComponentByPlatform = componentByPlatform;
-
-        DialogResult = true;
+        target.Language = LanguageBox.SelectedValue as string ?? "";
+        target.Theme = AppThemeBox.SelectedValue as AppTheme? ?? AppTheme.System;
+        target.PsmpAddress = host;
+        target.PsmpPort = port;
+        target.PsmpServers = psmpServers;
+        target.WindowsComponent = windowsComponent;
+        target.EnvironmentFile = centralFile;
+        target.SshInApp = SshInAppBox.IsChecked == true;
+        target.PsmDesktopInTab = PsmDesktopInTabBox.IsChecked == true;
+        target.PsmDynamicResolution = PsmDynamicResolutionBox.IsChecked == true;
+        target.PauseRdpDisplay = PauseRdpDisplayBox.IsChecked == true;
+        target.PsmRedirectDrives = PsmRedirectDrivesBox.IsChecked == true;
+        target.FollowTerminalFolder = FollowBox.IsChecked == true;
+        target.X11Display = x11Display;
+        target.SessionSharing = SessionSharingBox.IsChecked == true;
+        target.ShareDirect = ShareDirectBox.IsChecked == true;
+        target.SharePort = sharePort;
+        target.ShareRelayFolder = shareRelay;
+        target.DutyText = EnvironmentProfile.NormalizeDutyText(DutyTextBox.Text);
+        target.DutyTextFile = dutyFile;
+        target.InterventionReminders = reminders;
+        target.ReplaceServerTags(tags.Tags, tags.Renamed);
+        target.KeepPvwaSessionAlive = KeepAliveBox.IsChecked == true;
+        target.KeepAccountListCopy = KeepAccountListCopyBox.IsChecked == true;
+        target.CheckForUpdates = UpdateCheckBox.IsChecked == true;
+        target.DebugLogEnabled = DebugLogBox.IsChecked == true;
+        target.PreferredUploadProtocol = ScpRadio.IsChecked == true ? TransferProtocol.Scp : TransferProtocol.Sftp;
+        target.OfferArchive = ArchiveBox.IsChecked == true;
+        target.ArchiveThreshold = threshold;
+        target.TailIndependentSession = TailSessionBox.IsChecked == true;
+        target.TextEditor = EditorBox.Text.Trim().Trim('"');
+        target.CompareTool = CompareToolBox.Text.Trim().Trim('"');
+        target.TerminalTheme = (ThemeBox.SelectedItem as TerminalTheme ?? TerminalTheme.Campbell).Id;
+        target.TerminalFontSize = fontSize;
+        target.TerminalRightClickPastes = RightClickBox.IsChecked == true;
+        target.ConfirmMultiLinePaste = ConfirmPasteBox.IsChecked == true;
+        target.ConfirmCloseSession = ConfirmCloseBox.IsChecked == true;
+        target.CompareToolArguments = compareArgs;
+        target.ShowHiddenFiles = ShowHiddenBox.IsChecked == true;
+        target.HiddenFileColumns = ColumnBoxes().Where(c => c.Box.IsChecked != true).Select(c => c.Column).ToList();
+        target.TailLevelColors = TailColorsBox.IsChecked == true;
+        target.TailHighlights = TailHighlightBox.Text.Trim();
+        target.TailAlerts = TailAlertBox.Text.Trim();
+        target.TailAlertNotify = TailNotifyBox.IsChecked == true;
+        ApplyForgottenKeys(target);
+        target.ComponentByPlatform = componentByPlatform;
+        return true;
     }
 
     private void OnBrowseEditor(object sender, RoutedEventArgs e)
@@ -429,6 +553,92 @@ public partial class SettingsDialog : Window
         }
     }
 
+    // ===================== Environnement de l'équipe : importer, exporter =====================
+
+    /// <summary>
+    /// Fichier d'environnement choisi : ses changements par rapport aux valeurs affichées sont montrés ; acceptés, ils sont
+    /// repris dans les pages et appliqués à « Enregistrer », comme le reste de la fenêtre.
+    /// </summary>
+    private void OnImportEnvironment(object sender, RoutedEventArgs e)
+    {
+        if (Pending() is not { } shown)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = EnvironmentImport.FileFilter, CheckFileExists = true };
+        if (dialog.ShowDialog(this) == true && EnvironmentImport.Review(this, shown, dialog.FileName) is { } file)
+        {
+            TakeImport(dialog.FileName, file);
+        }
+    }
+
+    /// <summary>Environnement accepté : repris dans les pages par-dessus les valeurs affichées, appliqué à l'enregistrement.</summary>
+    internal void TakeImport(string path, EnvironmentFile file)
+    {
+        if (Pending() is not { } shown)
+        {
+            return;
+        }
+
+        var import = (Path: path.Trim(), File: file);
+        _imports.Add(import);
+        ApplyImport(import, shown);
+        ShowValues(shown);
+        ShowTeamBadges();
+        ErrorText.Visibility = Visibility.Collapsed;
+        EnvironmentText.Text = Text.Format(Strings.SettingsEnvImported, Path.GetFileName(import.Path));
+    }
+
+    /// <summary>Exporte les valeurs affichées (vérifiées) : ni mot de passe ni donnée personnelle.</summary>
+    private void OnExportEnvironment(object sender, RoutedEventArgs e)
+    {
+        if (Pending() is not { } shown)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = EnvironmentProfile.FileName, Filter = EnvironmentImport.FileFilter, DefaultExt = ".json",
+        };
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            EnvironmentProfile.FromSettings(shown, _pvwaHost).Save(dialog.FileName);
+            ErrorText.Visibility = Visibility.Collapsed;
+            EnvironmentText.Text = Text.Format(Strings.EnvExported, dialog.FileName);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowError(Text.Format(Strings.EnvExportFailed, ex.Message), ExportEnvButton);
+        }
+    }
+
+    // ===================== Guide en ligne =====================
+
+    private void OnGuide(object sender, RoutedEventArgs e) => OpenGuide();
+
+    /// <summary>Section du guide de la page affichée, dans la langue de l'interface (navigateur par défaut).</summary>
+    private void OpenGuide()
+    {
+        var page = (Pages.SelectedItem as TabItem)?.Tag as string ?? "general";
+        var url = GuideLink.Url(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, UpdateChecker.CurrentVersion, GuideLink.SettingsPrefix + page);
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
+        }
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
+        {
+            ErrorText.Text = Text.Format(Strings.SettingsGuideFailed, ex.Message);
+            ErrorText.Visibility = Visibility.Visible;
+        }
+    }
+
     // ===================== Pastilles « Équipe » =====================
 
     /// <summary>
@@ -436,11 +646,17 @@ public partial class SettingsDialog : Window
     /// le fichier central, avec la valeur en vigueur. Fichiers lus en arrière-plan : le fichier central peut être sur un
     /// partage lent ou absent.
     /// </summary>
-    private async Task ShowTeamBadgesAsync()
+    private async Task LoadTeamBadgesAsync()
     {
         string[] paths = [EnvironmentImport.LocalFile, _settings.EnvironmentFile.Trim()];
-        var files = await Task.Run(() => LoadTeamFiles(paths));
-        var applied = TeamSettings(files, _settings);
+        _teamFiles = await Task.Run(() => LoadTeamFiles(paths));
+        ShowTeamBadges();
+    }
+
+    /// <summary>Pastilles d'après les réglages affichés (ceux en vigueur, ou après l'import d'un environnement).</summary>
+    private void ShowTeamBadges()
+    {
+        var applied = TeamSettings(_teamFiles, _shown);
         foreach (var badge in TeamBadges(Pages))
         {
             if (applied.TryGetValue(badge.Setting, out var path))
@@ -449,6 +665,10 @@ public partial class SettingsDialog : Window
                 badge.ToolTip = tip;
                 System.Windows.Automation.AutomationProperties.SetHelpText(badge, tip);
                 badge.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                badge.Visibility = Visibility.Collapsed;
             }
         }
     }

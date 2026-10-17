@@ -781,6 +781,17 @@ public partial class FileBrowserPanel : UserControl
         return true;
     }
 
+    /// <summary>Fichiers cachés et colonnes changés dans les Paramètres : la case, les colonnes et la liste suivent.</summary>
+    public void ApplyViewSettings()
+    {
+        FitNameColumn();
+        if (HiddenBox.IsChecked != _settings.ShowHiddenFiles)
+        {
+            HiddenBox.IsChecked = _settings.ShowHiddenFiles;
+            _ = RefreshAsync();
+        }
+    }
+
     private void OnHiddenChanged(object sender, RoutedEventArgs e)
     {
         _settings.ShowHiddenFiles = HiddenBox.IsChecked == true;

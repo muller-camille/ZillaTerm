@@ -1365,10 +1365,70 @@ public sealed partial class DialogTests
             dialog.ForgetSelectedKeys();
             Assert.Equal(["psmp.corp.local:22"], dialog.HostKeyRows.Select(r => r.Server));
             Assert.Equal(3, settings.KnownHosts.Count);
+            Assert.Equal(Visibility.Visible, dialog.RestoreKeysButton.Visibility);
+
+            // « Rétablir » : rien ne sera oublié ; choisies de nouveau, elles le seront.
+            dialog.RestoreForgottenKeys();
+            Assert.Equal(3, dialog.HostKeyRows.Count);
+            Assert.Equal(Visibility.Collapsed, dialog.RestoreKeysButton.Visibility);
+            dialog.HostKeysGrid.SelectedItems.Add(dialog.HostKeyRows.Single(r => r.Server == "ftp.corp.local:990"));
+            dialog.HostKeysGrid.SelectedItems.Add(dialog.HostKeyRows.Single(r => r.Algorithm == "rsa-sha2-512"));
+            dialog.ForgetSelectedKeys();
 
             dialog.ApplyForgottenKeys();
             Assert.Equal(["psmp.corp.local:22"], settings.KnownHosts.Keys);
             Assert.Equal("ssh-ed25519 SHA256:AAAA", settings.KnownHosts["psmp.corp.local:22"]);
+            dialog.Close();
+        });
+    }
+
+    /// <summary>
+    /// Paramètres : un environnement importé est repris dans les pages, par-dessus les valeurs déjà changées, et n'est
+    /// appliqué qu'à l'enregistrement ; fichiers cachés, colonnes et options du suivi tail -f s'enregistrent avec le reste.
+    /// </summary>
+    [Fact]
+    public void SettingsImportIsAppliedOnSaveWithFilesAndTailOptions()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        RunWithTheme(() =>
+        {
+            var settings = new AppSettings { PsmpAddress = "psmp.corp.com", HiddenFileColumns = [RemoteSortColumn.Group] };
+            var dialog = new SettingsDialog(settings);
+            Assert.Equal((false, true), (dialog.GroupColumnBox.IsChecked, dialog.OwnerColumnBox.IsChecked));
+
+            dialog.KeepAliveBox.IsChecked = false;
+            var file = new EnvironmentFile(new EnvironmentProfile { PsmpAddress = "psmp2.corp.com", DutyText = "Appeler le N2" }, "00ff");
+            dialog.TakeImport(@"C:\Equipe\zillaterm.env.json", file);
+            Assert.Equal(("psmp2.corp.com", "Appeler le N2", false), (dialog.PsmpBox.Text, dialog.DutyTextBox.Text, dialog.KeepAliveBox.IsChecked));
+            // Rien d'appliqué avant « Enregistrer » (« Annuler » abandonne l'import).
+            Assert.Equal(("psmp.corp.com", true), (settings.PsmpAddress, settings.KeepPvwaSessionAlive));
+            Assert.True(dialog.ImportedEnvironment);
+
+            dialog.ShowHiddenBox.IsChecked = true;
+            dialog.GroupColumnBox.IsChecked = true;
+            dialog.SizeColumnBox.IsChecked = false;
+            dialog.TailHighlightBox.Text = " db01 ";
+            dialog.TailNotifyBox.IsChecked = false;
+            Assert.True(dialog.ApplyAll());
+            Assert.Equal(("psmp2.corp.com", "Appeler le N2", false), (settings.PsmpAddress, settings.DutyText, settings.KeepPvwaSessionAlive));
+            Assert.Equal("00ff", settings.EnvironmentFileHashes[@"c:\equipe\zillaterm.env.json"]);
+            Assert.True(settings.ShowHiddenFiles);
+            Assert.Equal([RemoteSortColumn.Size], settings.HiddenFileColumns);
+            Assert.Equal(("db01", false), (settings.TailHighlights, settings.TailAlertNotify));
+
+            // Valeur refusée : rien n'est appliqué, pas même l'import.
+            var other = new AppSettings();
+            var refused = new SettingsDialog(other);
+            refused.TakeImport(@"C:\Equipe\zillaterm.env.json", file);
+            refused.PortBox.Text = "99999";
+            Assert.False(refused.ApplyAll());
+            Assert.Equal("", other.PsmpAddress);
+            Assert.Empty(other.EnvironmentFileHashes);
+            refused.Close();
             dialog.Close();
         });
     }

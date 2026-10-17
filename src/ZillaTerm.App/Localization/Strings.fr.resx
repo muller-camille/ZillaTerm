@@ -825,7 +825,7 @@
     <value>⏹ {0:# fichier|# fichiers} sur {1} {0:interrompu|interrompus} par une annulation : copie incomplète supprimée.</value>
   </data>
   <data name="SettingsTailSession" xml:space="preserve">
-    <value>_Suivre les fichiers (tail -f) dans une session indépendante</value>
+    <value>_Suivre dans une session indépendante</value>
   </data>
   <data name="SettingsTailSessionHelp" xml:space="preserve">
     <value>N'attend pas les transferts, mais ouvre une session PSMP de plus (enregistrée à part ; MFA possible).</value>
@@ -4459,22 +4459,10 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Fichier centr_al :</value>
   </data>
   <data name="CentralFileHelp" xml:space="preserve">
-    <value>Réglages de l'équipe sur un partage réseau, relus à chaque démarrage : leurs changements vous sont montrés avant d'être appliqués. Importer ou exporter : menu du bouton Paramètres.</value>
+    <value>Réglages de l'équipe sur un partage réseau, relus à chaque démarrage : leurs changements vous sont montrés avant d'être appliqués.</value>
   </data>
   <data name="InvalidCentralFile" xml:space="preserve">
     <value>Fichier central invalide : saisissez un chemin complet (\\serveur\partage\… ou C:\…).</value>
-  </data>
-  <data name="MenuEnvImport" xml:space="preserve">
-    <value>_Importer un environnement…</value>
-  </data>
-  <data name="MenuEnvImportTip" xml:space="preserve">
-    <value>Réglages de l'équipe (PVWA, PSMP, composants PSM…) depuis un fichier : les changements sont montrés avant d'être appliqués.</value>
-  </data>
-  <data name="MenuEnvExport" xml:space="preserve">
-    <value>_Exporter l'environnement…</value>
-  </data>
-  <data name="MenuEnvExportTip" xml:space="preserve">
-    <value>Fichier à partager avec l'équipe, ou à poser à côté de ZillaTerm.exe (ZillaTerm.env.json) : ni mot de passe ni donnée personnelle.</value>
   </data>
   <data name="EnvExported" xml:space="preserve">
     <value>Environnement exporté dans {0} (ni mot de passe ni donnée personnelle).</value>
@@ -4909,7 +4897,7 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
     <value>Serveur X _local :</value>
   </data>
   <data name="X11DisplayHelp" xml:space="preserve">
-    <value>Un serveur X sur ce poste (VcXsrv, X410…) qui accepte les connexions TCP locales (« :0 » : port 6000). Le transfert X11 se coche serveur par serveur.</value>
+    <value>Un serveur X sur ce poste (VcXsrv, X410…) qui accepte les connexions TCP locales (« :0 » : port 6000). Le transfert X11 se coche dans les propriétés de chaque serveur de « Mes serveurs ».</value>
   </data>
   <data name="X11DisplayInvalid" xml:space="preserve">
     <value>Serveur X local : « :0 », « localhost:0 » ou « 127.0.0.1:0.0 » (ce poste seulement : le protocole X n'est pas chiffré).</value>
@@ -6576,5 +6564,65 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="EditWriteStuckWait" xml:space="preserve">
     <value>Attendre encore</value>
+  </data>
+  <data name="SettingsEnvImport" xml:space="preserve">
+    <value>_Importer un environnement…</value>
+  </data>
+  <data name="SettingsEnvExport" xml:space="preserve">
+    <value>E_xporter l'environnement…</value>
+  </data>
+  <data name="SettingsEnvHelp" xml:space="preserve">
+    <value>Importer : les changements sont montrés, puis appliqués à « Enregistrer ». Exporter : les valeurs affichées ici, ni mot de passe ni donnée personnelle.</value>
+  </data>
+  <data name="SettingsEnvImported" xml:space="preserve">
+    <value>{0} importé : vérifiez les valeurs, puis « Enregistrer » pour les appliquer (« Annuler » les abandonne).</value>
+  </data>
+  <data name="EnvMessageOnSave" xml:space="preserve">
+    <value>Ces réglages seront repris dans les Paramètres et appliqués à « Enregistrer » (rien de personnel : identifiant, « Mes serveurs » et sessions récentes restent tels quels) :</value>
+  </data>
+  <data name="SettingsGuide" xml:space="preserve">
+    <value>En savoir plus sur cette page</value>
+  </data>
+  <data name="SettingsGuideTip" xml:space="preserve">
+    <value>Ouvre le guide en ligne (GitHub) à la section de cette page. Touche : F1.</value>
+  </data>
+  <data name="SettingsGuideFailed" xml:space="preserve">
+    <value>Le navigateur ne s'est pas ouvert : {0}</value>
+  </data>
+  <data name="SettingsSectionFilesTab" xml:space="preserve">
+    <value>Onglet Fichiers</value>
+  </data>
+  <data name="SettingsShowHidden" xml:space="preserve">
+    <value>Afficher les fichiers _cachés</value>
+  </data>
+  <data name="SettingsFileColumns" xml:space="preserve">
+    <value>Co_lonnes :</value>
+  </data>
+  <data name="SettingsFilesTabHelp" xml:space="preserve">
+    <value>Aussi dans l'onglet Fichiers : case « Cachés » et clic droit sur l'en-tête des colonnes.</value>
+  </data>
+  <data name="SettingsSectionTail" xml:space="preserve">
+    <value>Suivi d'un fichier (tail -f)</value>
+  </data>
+  <data name="SettingsTailNotifyHelp" xml:space="preserve">
+    <value>Fenêtre en arrière-plan : au plus une toutes les 30 s, sans le contenu des lignes.</value>
+  </data>
+  <data name="SettingsRestoreKeys" xml:space="preserve">
+    <value>_Rétablir les clés retirées</value>
+  </data>
+  <data name="SettingsTailColors" xml:space="preserve">
+    <value>Couleurs par _niveau</value>
+  </data>
+  <data name="SettingsTailHighlight" xml:space="preserve">
+    <value>Surl_igner :</value>
+  </data>
+  <data name="SettingsTailAlert" xml:space="preserve">
+    <value>_Alerte si :</value>
+  </data>
+  <data name="SettingsTailNotify" xml:space="preserve">
+    <value>Notification _Windows</value>
+  </data>
+  <data name="SettingsTailWordsHelp" xml:space="preserve">
+    <value>Mots séparés par des virgules ; une alerte marque la ligne et fait clignoter le bouton de la barre des tâches.</value>
   </data>
 </root>

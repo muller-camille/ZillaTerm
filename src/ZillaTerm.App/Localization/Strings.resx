@@ -825,7 +825,7 @@
     <value>⏹ {0:# file|# files} out of {1} interrupted by a cancellation: incomplete copy deleted.</value>
   </data>
   <data name="SettingsTailSession" xml:space="preserve">
-    <value>_Follow files (tail -f) in an independent session</value>
+    <value>_Follow in an independent session</value>
   </data>
   <data name="SettingsTailSessionHelp" xml:space="preserve">
     <value>Does not wait for transfers, but opens one more PSMP session (recorded separately; MFA may be asked).</value>
@@ -4459,22 +4459,10 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Central f_ile:</value>
   </data>
   <data name="CentralFileHelp" xml:space="preserve">
-    <value>Your team's settings on a network share, read at each start: their changes are shown to you before being applied. Import or export: Settings button menu.</value>
+    <value>Your team's settings on a network share, read at each start: their changes are shown to you before being applied.</value>
   </data>
   <data name="InvalidCentralFile" xml:space="preserve">
     <value>Invalid central file: enter a full path (\\server\share\… or C:\…).</value>
-  </data>
-  <data name="MenuEnvImport" xml:space="preserve">
-    <value>_Import an environment…</value>
-  </data>
-  <data name="MenuEnvImportTip" xml:space="preserve">
-    <value>Settings of your team (PVWA, PSMP, PSM components…) from a file: the changes are shown before being applied.</value>
-  </data>
-  <data name="MenuEnvExport" xml:space="preserve">
-    <value>_Export the environment…</value>
-  </data>
-  <data name="MenuEnvExportTip" xml:space="preserve">
-    <value>File to share with your team, or to put next to ZillaTerm.exe (ZillaTerm.env.json): no password, no personal data.</value>
   </data>
   <data name="EnvExported" xml:space="preserve">
     <value>Environment exported to {0} (no password, no personal data).</value>
@@ -4909,7 +4897,7 @@ Two instances would overwrite each other's settings, local vault and files being
     <value>Local _X server:</value>
   </data>
   <data name="X11DisplayHelp" xml:space="preserve">
-    <value>An X server on this computer (VcXsrv, X410…) that accepts local TCP connections (“:0” is port 6000). X11 forwarding is turned on server by server.</value>
+    <value>An X server on this computer (VcXsrv, X410…) that accepts local TCP connections (“:0” is port 6000). X11 forwarding is turned on in the properties of each server in “My servers”.</value>
   </data>
   <data name="X11DisplayInvalid" xml:space="preserve">
     <value>Local X server: “:0”, “localhost:0” or “127.0.0.1:0.0” (this computer only: the X protocol is not encrypted).</value>
@@ -6576,5 +6564,65 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="EditWriteStuckWait" xml:space="preserve">
     <value>Keep waiting</value>
+  </data>
+  <data name="SettingsEnvImport" xml:space="preserve">
+    <value>I_mport an environment…</value>
+  </data>
+  <data name="SettingsEnvExport" xml:space="preserve">
+    <value>_Export the environment…</value>
+  </data>
+  <data name="SettingsEnvHelp" xml:space="preserve">
+    <value>Import: the changes are shown, then applied on “Save”. Export: the values shown here, no password, no personal data.</value>
+  </data>
+  <data name="SettingsEnvImported" xml:space="preserve">
+    <value>{0} imported: check the values, then “Save” to apply them (“Cancel” drops them).</value>
+  </data>
+  <data name="EnvMessageOnSave" xml:space="preserve">
+    <value>These settings will be filled in and applied on “Save” (nothing personal: user name, “My servers” and recent sessions stay as they are):</value>
+  </data>
+  <data name="SettingsGuide" xml:space="preserve">
+    <value>Learn more about this page</value>
+  </data>
+  <data name="SettingsGuideTip" xml:space="preserve">
+    <value>Opens the online guide (GitHub) at this page's section. Key: F1.</value>
+  </data>
+  <data name="SettingsGuideFailed" xml:space="preserve">
+    <value>The browser did not open: {0}</value>
+  </data>
+  <data name="SettingsSectionFilesTab" xml:space="preserve">
+    <value>Files tab</value>
+  </data>
+  <data name="SettingsShowHidden" xml:space="preserve">
+    <value>Show _hidden files</value>
+  </data>
+  <data name="SettingsFileColumns" xml:space="preserve">
+    <value>Co_lumns:</value>
+  </data>
+  <data name="SettingsFilesTabHelp" xml:space="preserve">
+    <value>Also in the Files tab: “Hidden” box and right-click on the column headers.</value>
+  </data>
+  <data name="SettingsSectionTail" xml:space="preserve">
+    <value>Following a file (tail -f)</value>
+  </data>
+  <data name="SettingsTailNotifyHelp" xml:space="preserve">
+    <value>Window in the background: at most one every 30 s, without the content of the lines.</value>
+  </data>
+  <data name="SettingsRestoreKeys" xml:space="preserve">
+    <value>R_estore removed keys</value>
+  </data>
+  <data name="SettingsTailColors" xml:space="preserve">
+    <value>_Colours by level</value>
+  </data>
+  <data name="SettingsTailHighlight" xml:space="preserve">
+    <value>_Words to highlight:</value>
+  </data>
+  <data name="SettingsTailAlert" xml:space="preserve">
+    <value>_Alert on:</value>
+  </data>
+  <data name="SettingsTailNotify" xml:space="preserve">
+    <value>Windows _notification</value>
+  </data>
+  <data name="SettingsTailWordsHelp" xml:space="preserve">
+    <value>Words separated by commas; an alert marks the line and flashes the taskbar button.</value>
   </data>
 </root>

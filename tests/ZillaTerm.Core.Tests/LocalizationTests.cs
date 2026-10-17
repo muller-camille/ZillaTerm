@@ -125,7 +125,7 @@ public partial class LocalizationTests
     private static HashSet<string> Placeholders(string text) =>
         Placeholder().Matches(text).Select(m => m.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
 
-    private static string RepositoryRoot()
+    internal static string RepositoryRoot()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
         {

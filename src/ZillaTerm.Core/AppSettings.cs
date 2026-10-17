@@ -619,6 +619,12 @@ public sealed class AppSettings
         var temp = DurableFile.WriteTemp(path, JsonSerializer.SerializeToUtf8Bytes(this, JsonOptions));
         DurableFile.Replace(temp, path);
     }
+
+    /// <summary>
+    /// Copie indépendante (tout ce qui est enregistré) : les Paramètres y vérifient et y préparent leurs valeurs sans
+    /// toucher aux réglages en vigueur.
+    /// </summary>
+    public AppSettings Copy() => JsonSerializer.Deserialize<AppSettings>(JsonSerializer.SerializeToUtf8Bytes(this, JsonOptions), JsonOptions)!;
 }
 
 /// <summary>Position et taille d'une fenêtre (pixels indépendants), et si elle était agrandie.</summary>
