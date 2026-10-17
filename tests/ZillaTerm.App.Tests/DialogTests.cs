@@ -3588,8 +3588,8 @@ public sealed partial class DialogTests
 
     /// <summary>
     /// Fenêtre Intervention redemandée alors qu'elle est déjà ouverte : rétablie si elle était réduite (Activate seul la
-    /// laissait réduite, le bouton semblait ne plus rien ouvrir), affichée si elle était masquée ; la liste lue est décrite
-    /// pour le journal de débogage.
+    /// laissait réduite, le bouton semblait ne plus rien ouvrir), affichée si elle était masquée, ramenée sur l'écran de
+    /// la fenêtre principale si elle n'est sur aucun écran ; la liste lue est décrite pour le journal de débogage.
     /// </summary>
     [Fact]
     public void InterventionWindowComesBackWhenMinimizedOrHidden()
@@ -3605,7 +3605,9 @@ public sealed partial class DialogTests
             RunWithTheme(() =>
             {
                 var recorder = new ZillaTerm.App.Services.InterventionRecorder(dir, new XorProtector());
-                var window = new InterventionWindow("", "", recorder, "jdoe", "session CyberArk (pvwa.corp.local)");
+                var owner = new Window { Width = 900, Height = 700, Left = 0, Top = 0, WindowStartupLocation = WindowStartupLocation.Manual };
+                owner.Show();
+                var window = new InterventionWindow("", "", recorder, "jdoe", "session CyberArk (pvwa.corp.local)") { Owner = owner };
                 Assert.StartsWith("0 intervention(s) lues en ", window.ListDescription, StringComparison.Ordinal);
                 window.Show();
                 window.WindowState = WindowState.Minimized;
@@ -3616,7 +3618,16 @@ public sealed partial class DialogTests
                 window.Hide();
                 window.BringBack();
                 Assert.True(window.IsVisible);
+
+                // Écran débranché : la fenêtre restée à sa place n'est plus visible nulle part.
+                window.Left = 20000;
+                window.Top = 20000;
+                Assert.False(ScreenPlacement.SameScreen(window, owner));
+                window.BringBack();
+                Assert.True(ScreenPlacement.SameScreen(window, owner));
+                Assert.StartsWith(@"\\.\", ScreenPlacement.Describe(window), StringComparison.Ordinal);
                 window.Close();
+                owner.Close();
             });
         }
         finally

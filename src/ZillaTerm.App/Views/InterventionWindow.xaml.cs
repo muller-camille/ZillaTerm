@@ -65,7 +65,35 @@ public partial class InterventionWindow : Window
         };
         UpdateState();
         RefreshJournals();
-        Loaded += (_, _) => RecordButton.Focus();
+        SourceInitialized += (_, _) => FitToScreen();
+        Loaded += (_, _) =>
+        {
+            // Avec plusieurs écrans d'échelles différentes, WPF peut la centrer ailleurs que sur la fenêtre principale :
+            // elle s'ouvrait alors sur un autre écran que celui où l'on regarde.
+            if (Owner is { } owner && !ScreenPlacement.SameScreen(this, owner))
+            {
+                ScreenPlacement.CenterOn(this, owner);
+            }
+
+            RecordButton.Focus();
+        };
+    }
+
+    /// <summary>
+    /// Hauteur au plus celle de la zone de travail de l'écran de la fenêtre principale (un second écran peut être moins
+    /// haut que l'écran principal) : la fenêtre y tient entière.
+    /// </summary>
+    private void FitToScreen()
+    {
+        var anchor = Owner ?? this;
+        var handle = new System.Windows.Interop.WindowInteropHelper(anchor).Handle;
+        if (handle == IntPtr.Zero || PresentationSource.FromVisual(this)?.CompositionTarget is not { } target)
+        {
+            return;
+        }
+
+        var area = System.Windows.Forms.Screen.FromHandle(handle).WorkingArea;
+        MaxHeight = target.TransformFromDevice.Transform(new Point(0, area.Height)).Y;
     }
 
     /// <summary>
@@ -302,7 +330,8 @@ public partial class InterventionWindow : Window
 
     /// <summary>
     /// Fenêtre déjà ouverte, redemandée : de nouveau affichée et devant, même réduite (<see cref="Window.Activate"/> seul
-    /// ne rétablit pas une fenêtre réduite, qui reste alors une petite barre au bas de l'écran) ou masquée.
+    /// ne rétablit pas une fenêtre réduite, qui reste alors une petite barre au bas de l'écran) ou masquée, et ramenée sur
+    /// l'écran de la fenêtre principale si elle est sur un autre (avec plusieurs écrans, on ne la voyait pas revenir).
     /// </summary>
     public void BringBack()
     {
@@ -314,6 +343,11 @@ public partial class InterventionWindow : Window
         if (WindowState == WindowState.Minimized)
         {
             WindowState = WindowState.Normal;
+        }
+
+        if (Owner is { } owner && !ScreenPlacement.SameScreen(this, owner))
+        {
+            ScreenPlacement.CenterOn(this, owner);
         }
 
         Activate();

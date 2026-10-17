@@ -245,7 +245,8 @@ public partial class MainWindow
         if (_interventionWindow is { } open)
         {
             DebugLog.Write("intervention", $"Fenêtre Intervention déjà ouverte ({open.WindowState}, "
-                                           + $"{(open.IsVisible ? "affichée" : "masquée")}) : ramenée devant{waited}");
+                                           + $"{(open.IsVisible ? "affichée" : "masquée")}, {ScreenPlacement.Describe(open)}) : ramenée devant"
+                                           + $"{waited} ; fenêtre principale : {ScreenPlacement.Describe(this)}");
             _ = open.ShowReminderAsync(_settings.DutyText, _settings.DutyTextFile);
             open.BringBack();
             return;
@@ -266,7 +267,8 @@ public partial class MainWindow
             }
         };
         window.ContentRendered += (_, _) => DebugLog.Write("intervention",
-            $"Fenêtre Intervention affichée en {watch.ElapsedMilliseconds} ms (créée en {built} ms, dont {window.ListDescription}){waited}");
+            $"Fenêtre Intervention affichée en {watch.ElapsedMilliseconds} ms (créée en {built} ms, dont {window.ListDescription}){waited} ; "
+            + $"{ScreenPlacement.Describe(window)} ; fenêtre principale : {ScreenPlacement.Describe(this)}");
         try
         {
             window.Show();
