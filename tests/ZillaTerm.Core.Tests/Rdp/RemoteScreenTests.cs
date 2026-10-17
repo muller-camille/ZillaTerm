@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using ZillaTerm.Core.Interventions;
 using ZillaTerm.Core.Rdp;
 
 namespace ZillaTerm.Core.Tests.Rdp;
@@ -6,10 +7,23 @@ namespace ZillaTerm.Core.Tests.Rdp;
 public sealed class RemoteScreenTests
 {
     /// <summary>Message du flux /frame-pipe : taille du bureau, puis chaque rectangle rempli d'une couleur (B, G, R, 0).</summary>
-    private static byte[] Message(int width, int height, params (int X, int Y, int W, int H, byte B, byte G, byte R)[] rects)
+    private static byte[] Message(int width, int height, params (int X, int Y, int W, int H, byte B, byte G, byte R)[] rects) =>
+        Message(width, height, [], rects);
+
+    /// <summary>Message avec des copies d'écran, appliquées avant les rectangles.</summary>
+    private static byte[] Message(int width, int height, ScreenMove[] moves, params (int X, int Y, int W, int H, byte B, byte G, byte R)[] rects)
     {
         var body = new MemoryStream();
         Span<byte> value = stackalloc byte[4];
+        foreach (var m in moves)
+        {
+            foreach (int n in (ReadOnlySpan<int>)[m.SourceX, m.SourceY, m.Width, m.Height, m.X, m.Y])
+            {
+                BinaryPrimitives.WriteUInt16LittleEndian(value, (ushort)n);
+                body.Write(value[..2]);
+            }
+        }
+
         foreach (var (x, y, w, h, _, _, _) in rects)
         {
             foreach (int n in (ReadOnlySpan<int>)[x, y, w, h])
@@ -28,7 +42,7 @@ public sealed class RemoteScreenTests
         }
 
         var message = new MemoryStream();
-        foreach (uint n in (ReadOnlySpan<uint>)[(uint)(12 + body.Length), (uint)width, (uint)height, (uint)rects.Length])
+        foreach (uint n in (ReadOnlySpan<uint>)[(uint)(16 + body.Length), (uint)width, (uint)height, (uint)moves.Length, (uint)rects.Length])
         {
             BinaryPrimitives.WriteUInt32LittleEndian(value, n);
             message.Write(value);
@@ -104,6 +118,9 @@ public sealed class RemoteScreenTests
     [InlineData("length")]
     [InlineData("size")]
     [InlineData("empty")]
+    [InlineData("nothing")]
+    [InlineData("move")]
+    [InlineData("resized")]
     public void UnreadableStreamFails(string fault)
     {
         var good = Message(40, 30, (0, 0, 40, 30, 1, 1, 1));
@@ -113,6 +130,9 @@ public sealed class RemoteScreenTests
             "length" => Message(40, 30, (0, 0, 4, 4, 1, 1, 1))[..^4],
             "size" => Message(RemoteScreen.MaxSide + 1, 30, (0, 0, 1, 1, 1, 1, 1)),
             "empty" => Message(40, 30, (0, 0, 0, 4, 1, 1, 1)),
+            "nothing" => Message(40, 30),
+            "move" => Message(40, 30, [new ScreenMove(0, 10, 40, 25, 0, 0)]),
+            "resized" => Message(48, 30, [new ScreenMove(0, 10, 40, 20, 0, 0)], (0, 0, 48, 30, 1, 1, 1)),
             _ => good,
         };
         if (fault == "length")
@@ -133,6 +153,57 @@ public sealed class RemoteScreenTests
         Assert.True(screen.Failed);
         Assert.True(screen.Ended);
         Assert.Equal(fault == "magic" ? 0 : 1, screen.Version);
+    }
+
+    /// <summary>
+    /// Copies d'écran (défilement) appliquées avant les rectangles, et rendues à qui lit l'écran : celles reçues depuis sa
+    /// lecture précédente, dans l'ordre.
+    /// </summary>
+    [Fact]
+    public void MovesScrollTheScreenAndAreHandedOver()
+    {
+        var screen = new RemoteScreen();
+        var up = new ScreenMove(0, 10, 40, 20, 0, 0);
+        var left = new ScreenMove(5, 0, 30, 30, 0, 0);
+        screen.Read(Stream(
+            Message(40, 30, (0, 0, 40, 10, 1, 1, 1), (0, 10, 40, 10, 2, 2, 2), (0, 20, 40, 10, 3, 3, 3)),
+            Message(40, 30, [up], (0, 20, 40, 10, 9, 9, 9)),
+            Message(40, 30, [left])));
+
+        var copy = screen.Copy(null, 1, out long version, out var moves)!.Value;
+
+        Assert.Equal(3, version);
+        Assert.Equal([up, left], moves!);
+        Assert.Equal(2, screen.Moves);
+        // Ligne 0 : la bande 2 remontée ; ligne 15 : la bande 3 remontée ; ligne 25 : la nouvelle.
+        Assert.Equal((2, 2, 2, 255), Pixel(copy.Bgra, 40, 0, 0));
+        Assert.Equal((3, 3, 3, 255), Pixel(copy.Bgra, 40, 0, 15));
+        Assert.Equal((9, 9, 9, 255), Pixel(copy.Bgra, 40, 20, 25));
+        screen.Copy(null, 2, out _, out var last);
+        Assert.Equal([left], last!);
+        screen.Copy(null, 3, out _, out var none);
+        Assert.Empty(none!);
+        // Sans lecture précédente : copies inconnues.
+        screen.Copy(null, 0, out _, out var unknown);
+        Assert.Null(unknown);
+    }
+
+    /// <summary>Après un changement de taille du bureau, les copies d'avant ne valent plus rien.</summary>
+    [Fact]
+    public void MovesAreUnknownAcrossAResize()
+    {
+        var screen = new RemoteScreen();
+        screen.Read(Stream(
+            Message(40, 30, (0, 0, 40, 30, 1, 1, 1)),
+            Message(40, 30, [new ScreenMove(0, 10, 40, 20, 0, 0)]),
+            Message(64, 48, (0, 0, 64, 48, 2, 2, 2)),
+            Message(64, 48, [new ScreenMove(0, 8, 64, 40, 0, 0)])));
+
+        screen.Copy(null, 2, out _, out var across);
+        screen.Copy(null, 3, out _, out var after);
+
+        Assert.Null(across);
+        Assert.Equal([new ScreenMove(0, 8, 64, 40, 0, 0)], after!);
     }
 
     /// <summary>Flux coupé au milieu d'un message (client fermé) : terminé, pas illisible.</summary>

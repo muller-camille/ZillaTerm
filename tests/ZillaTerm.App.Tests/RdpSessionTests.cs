@@ -618,7 +618,8 @@ public class RdpSessionTests(ITestOutputHelper output)
     /// <summary>
     /// Bureau décodé par le client FreeRDP, reçu par le tube « /frame-pipe » : dès la connexion, à la taille du bureau,
     /// mis à jour par les seules zones modifiées, et identique au pixel près à ce que montre la fenêtre de la session
-    /// (sans mise à l'échelle) ; c'est lui que l'enregistrement et le partage de l'écran relèvent.
+    /// (sans mise à l'échelle), y compris après qu'une liste a défilé (copies d'écran du serveur, s'il en envoie) ; c'est
+    /// lui que l'enregistrement et le partage de l'écran relèvent.
     /// </summary>
     [Fact]
     [Trait("Category", "RdpIntegration")]
@@ -635,7 +636,7 @@ public class RdpSessionTests(ITestOutputHelper output)
             FreeRdp = true,
             VerifyCertificate = (_, _, _) => Task.FromResult(RdpTrust.Trusted),
         };
-        await RunOnStaAsync(request, async (session, _) =>
+        await RunOnStaAsync(request, async (session, window) =>
         {
             Assert.Null(session.CopyDecodedScreen(null));
             await session.ConnectAsync();
@@ -645,46 +646,75 @@ public class RdpSessionTests(ITestOutputHelper output)
             var bounds = Win32Input.ScreenBounds(slot);
             var desktop = FreeRdpArguments.DesktopSize((bounds.Width, bounds.Height));
 
-            // Bureau ouvert puis immobile : l'image décodée et la fenêtre montrent la même chose.
-            Services.ScreenPixels? decoded = null;
-            double same = 0;
-            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
-            while (DateTime.UtcNow < deadline && same < 0.999)
+            // Bureau immobile : l'image décodée et la fenêtre montrent la même chose (part des pixels identiques).
+            async Task<(Services.ScreenPixels? Decoded, double Same)> CompareAsync()
             {
-                await Task.Delay(1000);
-                decoded = session.CopyDecodedScreen(null);
-                var captured = Services.WindowCapture.CaptureChildPixels(slot, null);
-                if (decoded is not { } d || captured is not { } c)
+                Services.ScreenPixels? decoded = null;
+                double same = 0;
+                var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(60);
+                while (DateTime.UtcNow < deadline && same < 0.999)
                 {
-                    continue;
+                    await Task.Delay(1000);
+                    decoded = session.CopyDecodedScreen(null);
+                    var captured = Services.WindowCapture.CaptureChildPixels(slot, null);
+                    if (decoded is not { } d || captured is not { } c)
+                    {
+                        continue;
+                    }
+
+                    if (d.Width != c.Width || d.Height != c.Height)
+                    {
+                        // Emplacement de largeur impaire : bureau d'un pixel plus étroit, mis à l'échelle dans la fenêtre.
+                        output.WriteLine($"Bureau {d.Width} × {d.Height}, fenêtre {c.Width} × {c.Height} : comparaison au pixel impossible.");
+                        return (decoded, 1);
+                    }
+
+                    int equal = 0;
+                    for (int i = 0; i < d.Width * d.Height; i++)
+                    {
+                        int o = 4 * i;
+                        equal += d.Bgra[o] == c.Bgra[o] && d.Bgra[o + 1] == c.Bgra[o + 1] && d.Bgra[o + 2] == c.Bgra[o + 2] ? 1 : 0;
+                    }
+
+                    same = (double)equal / (d.Width * d.Height);
                 }
 
-                if (d.Width != c.Width || d.Height != c.Height)
-                {
-                    // Emplacement de largeur impaire : bureau d'un pixel plus étroit, mis à l'échelle dans la fenêtre.
-                    output.WriteLine($"Bureau {d.Width} × {d.Height}, fenêtre {c.Width} × {c.Height} : comparaison au pixel impossible.");
-                    same = 1;
-                    break;
-                }
-
-                int equal = 0;
-                for (int i = 0; i < d.Width * d.Height; i++)
-                {
-                    int o = 4 * i;
-                    equal += d.Bgra[o] == c.Bgra[o] && d.Bgra[o + 1] == c.Bgra[o + 1] && d.Bgra[o + 2] == c.Bgra[o + 2] ? 1 : 0;
-                }
-
-                same = (double)equal / (d.Width * d.Height);
+                return (decoded, same);
             }
 
+            var (decoded, same) = await CompareAsync();
             var screen = Assert.IsType<Services.ScreenPixels>(decoded);
             Assert.Equal(desktop, (screen.Width, screen.Height));
             output.WriteLine($"Pixels identiques à la fenêtre : {same:P2}");
             Assert.True(same >= 0.999, $"pixels identiques à la fenêtre : {same:P2}");
             // Ouverture de session (bureau, barre des tâches dessinés par morceaux) : des zones, pas tout le bureau à chaque fois.
-            var (updates, partial) = session.DecodedScreenUpdates!.Value;
-            output.WriteLine($"Mises à jour reçues : {updates}, dont {partial} partielle(s)");
+            var (updates, partial, moves) = session.DecodedScreenUpdates!.Value;
+            output.WriteLine($"Mises à jour reçues : {updates}, dont {partial} partielle(s), {moves} copie(s) d'écran");
             Assert.True(partial > 0, $"{updates} mise(s) à jour, aucune partielle");
+
+            if (Environment.GetEnvironmentVariable("RDP_TEST_CLICKS") is { Length: > 0 } log)
+            {
+                // Liste de la fenêtre de test qui défile (touche S) : le bureau décodé, copies d'écran comprises, reste
+                // celui de la fenêtre.
+                var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
+                await WaitForLineAsync(log, 0, line => line.StartsWith("size ", StringComparison.Ordinal), TimeSpan.FromSeconds(150));
+                await ClickAndCheckAsync(log, host, bounds, (0.5, 0.5), desktop);
+                for (int i = 0; i < 6; i++)
+                {
+                    int before = Lines(log).Count;
+                    await RetryUntilLineAsync(log, before, l => l == "key S", () =>
+                    {
+                        Win32Input.Type("S");
+                        return Task.CompletedTask;
+                    });
+                }
+
+                (_, same) = await CompareAsync();
+                var (afterUpdates, afterPartial, afterMoves) = session.DecodedScreenUpdates!.Value;
+                output.WriteLine($"Après défilement : pixels identiques {same:P2}, {afterUpdates} mise(s) à jour, "
+                    + $"dont {afterPartial} partielle(s), {afterMoves} copie(s) d'écran");
+                Assert.True(same >= 0.999, $"pixels identiques à la fenêtre après défilement : {same:P2}");
+            }
 
             session.Disconnect();
             Assert.Equal(RdpSessionState.Ended,

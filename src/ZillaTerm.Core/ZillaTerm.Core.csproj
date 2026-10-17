@@ -25,6 +25,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Décodeur Brotli de référence (Google, licence MIT), dans le lecteur des écrans du rapport d'intervention
+         (Interventions/Player/README.md). -->
+    <EmbeddedResource Include="Interventions\Player\brotli-decode.js" LogicalName="ZillaTerm.Core.BrotliDecode.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- SSH, SFTP et SCP vers le PSM for SSH (licence MIT). -->
     <!-- SSH.NET 2026.0.0 patché (noms en SFTP, X11, fin de connexion signalée, maintien avec réponse, serveur muet) :
          tools/sshnet-patched.sh, nuget.config. -->

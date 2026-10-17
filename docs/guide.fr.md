@@ -964,11 +964,13 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
     Connexion Bureau à distance (sessions PSM ; une fenêtre réduite ne peut pas l'être), et le bouton « Capture » des
     onglets Bureau à distance de ZillaTerm prend celle du bureau affiché ;
   - l'**écran des sessions Bureau à distance ouvertes dans un onglet**, comme le protocole RDP l'envoie : chaque
-    seconde, l'écran de l'onglet affiché est relevé et seules les zones modifiées sont gardées (carrés de 64 × 64 pixels
-    en couleurs 16 bits, compressés ; une zone déjà vue, comme un menu qui revient, n'est gardée qu'une fois). Avec le
-    client FreeRDP de ZillaTerm, c'est le bureau tel que le client l'a décodé, à sa taille et au pixel près, même si la
-    fenêtre est mise à l'échelle, couverte par une autre ou ne répond plus ; avec le contrôle Bureau à distance de
-    Windows, une capture de la fenêtre. « ● Écran enregistré » dans la barre de l'onglet le rappelle. Un onglet en arrière-plan, une fenêtre réduite et le plein écran
+    seconde, l'écran de l'onglet affiché est relevé et seules les zones modifiées sont gardées, aux couleurs exactes
+    (carrés de 64 × 64 pixels, compressés ; une zone déjà vue, comme un menu qui revient, n'est gardée qu'une fois ; un
+    défilement ou une fenêtre déplacée est gardé comme une copie de l'écran d'avant, pas comme tout ce qu'il a changé).
+    Avec le client FreeRDP de ZillaTerm, c'est le bureau tel que le client l'a décodé, à sa taille et au pixel près, même
+    si la fenêtre est mise à l'échelle, couverte par une autre ou ne répond plus, avec les copies d'écran que le serveur
+    lui a demandées ; avec le contrôle Bureau à distance de Windows, une capture de la fenêtre, où ZillaTerm reconnaît
+    lui-même les défilements. « ● Écran enregistré » dans la barre de l'onglet le rappelle. Un onglet en arrière-plan, une fenêtre réduite et le plein écran
     ne sont pas capturés ; de retour sur l'onglet, ce qui a changé entre-temps est gardé. Un petit changement isolé (un
     caractère tapé) l'est dès que l'écran ne bouge plus pendant 3 secondes, au plus tard après une minute ; un écran
     immobile ne coûte rien. Au-delà de **100 Mo de journal**, l'écran n'est plus gardé qu'une fois toutes les 10
@@ -1737,8 +1739,9 @@ les 200 ms ; les sous-dossiers abandonnés depuis plus de deux jours sont effac�
 
 Terminal : à l'accord, l'écran actuel (sans l'historique : contenu, couleurs, modes, curseur) puis le flux tel que le
 terminal le reçoit ; un changement de taille renvoie l'écran entier. Écran (Bureau à distance, VNC) : capturé quatre
-fois par seconde tant que quelqu'un regarde, en tuiles de 64 × 64 pixels (couleurs 16 bits), seules les tuiles
-modifiées partent, compressées ; une image complète à chaque arrivée. La saisie de la personne qui a la main est
+fois par seconde tant que quelqu'un regarde, en tuiles de 64 × 64 pixels (couleurs exactes), seules les tuiles
+modifiées partent, compressées, et un défilement part comme une copie ; une image complète à chaque arrivée. Il faut
+ZillaTerm 0.42 ou plus récent des deux côtés pour l'écran. La saisie de la personne qui a la main est
 encodée chez celui qui partage, selon les modes de son terminal. Limites : 10 partages à la fois, 5 personnes par
 partage, 3 minutes pour répondre, connexion coupée après 60 secondes sans nouvelles ; une personne en retard de plus
 de 48 Mo reçoit l'écran entier au lieu du retard (les messages d'état, main reprise ou affichage en pause, sont

@@ -39,8 +39,8 @@ public sealed partial class ScreenPauseTests
         Assert.Equal(1, pause.Header.Sequence);
         Assert.True(ScreenFrameHeader.TryRead(pause.Data, out var read));
         Assert.Equal(ScreenPause.Idle, read.Pause);
-        // Corps : un vrai flux zlib vide (un navigateur refuse de décompresser un corps vide).
-        Assert.Equal([0x78, 0xDA, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01], pause.Data[ScreenFrameHeader.Length..]);
+        // En-tête seul : pas de contenu, le flux Brotli de l'enregistrement n'avance pas.
+        Assert.Equal(ScreenFrameHeader.Length3, pause.Data.Length);
         // Écran figé dessous : la dernière image reste.
         Assert.True(decoder.Apply(pause.Data));
         Assert.Equal(ScreenPause.Idle, decoder.Pause);

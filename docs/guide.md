@@ -905,10 +905,12 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
     (PSM sessions; a minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs
     takes the desktop shown;
   - the **screen of remote desktop sessions opened in a tab**, the way the RDP protocol sends it: every second, the
-    screen of the tab shown is read and only the changed areas are kept (64 × 64 pixel squares in 16-bit colour,
-    compressed; an area already seen, like a menu that comes back, is kept only once). With ZillaTerm's FreeRDP client,
-    it is the desktop as the client decoded it, at its own size and to the pixel, even when the window is scaled,
-    covered by another one or not responding; with the Windows Remote Desktop control, a capture of the window.
+    screen of the tab shown is read and only the changed areas are kept, in exact colours (64 × 64 pixel squares,
+    compressed; an area already seen, like a menu that comes back, is kept only once; a scroll or a moved window is kept
+    as a copy of the previous screen, not as everything it changed). With ZillaTerm's FreeRDP client, it is the desktop
+    as the client decoded it, at its own size and to the pixel, even when the window is scaled, covered by another one
+    or not responding, with the screen to screen copies the server asked it for; with the Windows Remote Desktop
+    control, a capture of the window, in which ZillaTerm recognizes scrolling by itself.
     "● Screen recorded" in the tab bar reminds you.
     A tab in the background, a minimized window and full screen are not captured; back on the tab, whatever changed in
     the meantime is kept. A small isolated change (a character typed) is kept once the screen has not moved for 3
@@ -1640,8 +1642,8 @@ subfolders abandoned for more than two days are deleted.
 
 Terminal: on agreement, the current screen (without the history: content, colors, modes, cursor), then the stream as
 the terminal receives it; a size change sends the whole screen again. Screen (Remote Desktop, VNC): captured four times
-per second while someone watches, in 64 × 64 pixel tiles (16-bit colors), only the changed tiles are sent, compressed;
-a full image at each arrival. The typing of the person who has control is encoded on the sharer's side, according to
+per second while someone watches, in 64 × 64 pixel tiles (exact colors), only the changed tiles are sent, compressed,
+and a scroll is sent as a copy; a full image at each arrival. The screen needs ZillaTerm 0.42 or later on both sides. The typing of the person who has control is encoded on the sharer's side, according to
 the modes of their terminal. Limits: 10 shares at once, 5 people per share, 3 minutes to answer, connection cut after
 60 seconds without news; a person more than 48 MB behind receives the whole screen instead of the backlog (state messages, control taken back or
 display paused, are kept). On the viewer's side, the screen tiles kept between two full images are limited (256 MB);

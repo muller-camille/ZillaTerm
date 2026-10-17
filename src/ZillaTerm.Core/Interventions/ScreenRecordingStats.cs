@@ -4,7 +4,7 @@ namespace ZillaTerm.Core.Interventions;
 
 /// <summary>
 /// Bilan de l'écran d'une session enregistré, par période (<see cref="Period"/>), pour le journal de débogage : captures,
-/// images gardées (dont complètes), poids, tuiles nouvelles. Un écran immobile ne garde rien : du poids sur un écran
+/// images gardées (dont complètes), poids, tuiles nouvelles, copies d'écran (défilement, fenêtre déplacée). Un écran immobile ne garde rien : du poids sur un écran
 /// immobile montre une image qui change sans que cela se voie (image compressée avec pertes qui s'affine, par exemple).
 /// </summary>
 public sealed class ScreenRecordingStats
@@ -16,6 +16,7 @@ public sealed class ScreenRecordingStats
     private int _frames;
     private int _keys;
     private long _newTiles;
+    private long _moves;
     private long _bytes;
     private long _largest;
     private int _width;
@@ -34,6 +35,7 @@ public sealed class ScreenRecordingStats
         _frames++;
         _keys += frame.Header.Key ? 1 : 0;
         _newTiles += frame.Header.NewTiles;
+        _moves += frame.Header.Moves;
         _bytes += frame.Data.Length;
         _largest = Math.Max(_largest, frame.Data.Length);
         (_width, _height) = (frame.Header.Width, frame.Header.Height);
@@ -54,10 +56,10 @@ public sealed class ScreenRecordingStats
         var size = _width > 0 ? string.Create(c, $", écran {_width}×{_height}") : "";
         var line = string.Create(c,
             $"{(now - start).TotalSeconds:0} s : {_captures} capture(s), {_frames} image(s) gardée(s) dont {_keys} complète(s), " +
-            $"{Bytes(_bytes)} (plus grosse {Bytes(_largest)}), {_newTiles} tuile(s) nouvelle(s){size}");
+            $"{Bytes(_bytes)} (plus grosse {Bytes(_largest)}), {_newTiles} tuile(s) nouvelle(s), {_moves} copie(s) d'écran{size}");
         _start = null;
         _captures = _frames = _keys = 0;
-        _newTiles = _bytes = _largest = 0;
+        _newTiles = _moves = _bytes = _largest = 0;
         return line;
     }
 

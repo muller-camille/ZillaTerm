@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Threading;
 using ZillaTerm.App.Localization;
 using ZillaTerm.Core.Diagnostics;
+using ZillaTerm.Core.Interventions;
 using ZillaTerm.Core.Rdp;
 
 namespace ZillaTerm.App.Services.Rdp;
@@ -130,14 +131,27 @@ internal sealed class RdpSession : IDisposable
     /// taille, quoi que montre l'onglet ; null pour le contrôle de Windows, avant la première image, ou si le flux reçu
     /// du client est illisible (la fenêtre est alors capturée). N'importe quel fil.
     /// </summary>
-    public ScreenPixels? CopyDecodedScreen(byte[]? buffer) =>
-        Volatile.Read(ref _connection)?.Screen is { Failed: false } screen && screen.Copy(buffer, out _) is { } copy
+    public ScreenPixels? CopyDecodedScreen(byte[]? buffer) => CopyDecodedScreen(buffer, 0, out _, out _);
+
+    /// <summary>
+    /// Comme <see cref="CopyDecodedScreen(byte[])"/>, avec la version du bureau copiée et les copies d'écran (défilement,
+    /// fenêtre déplacée) reçues depuis la version <paramref name="since"/> ; null si elles ne sont pas connues.
+    /// </summary>
+    public ScreenPixels? CopyDecodedScreen(byte[]? buffer, long since, out long version, out ScreenMove[]? moves)
+    {
+        version = 0;
+        moves = null;
+        return Volatile.Read(ref _connection)?.Screen is { Failed: false } screen && screen.Copy(buffer, since, out version, out moves) is { } copy
             ? new ScreenPixels(copy.Bgra, copy.Width, copy.Height)
             : null;
+    }
 
-    /// <summary>Mises à jour du bureau décodé reçues, dont partielles (zones modifiées seulement) ; null sans bureau décodé.</summary>
-    internal (long Updates, long Partial)? DecodedScreenUpdates =>
-        Volatile.Read(ref _connection)?.Screen is { } screen ? (screen.Version, screen.PartialUpdates) : null;
+    /// <summary>
+    /// Mises à jour du bureau décodé reçues, dont partielles (zones modifiées seulement), et copies d'écran reçues ; null
+    /// sans bureau décodé.
+    /// </summary>
+    internal (long Updates, long Partial, long Moves)? DecodedScreenUpdates =>
+        Volatile.Read(ref _connection)?.Screen is { } screen ? (screen.Version, screen.PartialUpdates, screen.Moves) : null;
 
     /// <summary>
     /// Session PSM : adresse du PSM (infobulle de l'onglet), vide tant que le PVWA ne l'a pas donnée ; null pour une

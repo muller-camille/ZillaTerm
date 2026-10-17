@@ -161,7 +161,8 @@ jobs:
       # Fenêtre plein écran lancée à l'ouverture de session du premier compte (argument « run »), ou comme application
       # distante pour le second : elle note la taille de l'écran de la session (« size LxH »), chaque clic reçu
       # (« click x,y ») et chaque touche (« key Z »), dans un journal par compte lu par les tests. Une horloge en haut à
-      # gauche change l'écran sans cesse : il y a toujours une image à envoyer (pause de l'affichage).
+      # gauche change l'écran sans cesse : il y a toujours une image à envoyer (pause de l'affichage). Une liste en bas à
+      # droite, loin des clics des tests, défile de trois lignes à chaque touche S (copies d'écran du serveur).
       - name: Fenêtre de test des clics
         shell: pwsh
         run: |
@@ -183,6 +184,7 @@ jobs:
             $size = [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize
             $b = New-Object System.Drawing.Rectangle(0, 0, $size.Width, $size.Height)
             if ($form.Bounds -ne $b) { $form.Bounds = $b }
+            $list.Bounds = New-Object System.Drawing.Rectangle([int]($b.Width * 0.8), [int]($b.Height * 0.68), [int]($b.Width * 0.18), [int]($b.Height * 0.28))
             $text = 'size {0}x{1}' -f $b.Width, $b.Height
             if ($text -ne $script:last) { $script:last = $text; Add-Content -Path $log -Value $text }
           }
@@ -193,6 +195,12 @@ jobs:
           $clock.ForeColor = [System.Drawing.Color]::White
           $clock.Font = New-Object System.Drawing.Font('Consolas', 20)
           $form.Controls.Add($clock)
+          $list = New-Object System.Windows.Forms.ListBox
+          $list.IntegralHeight = $false
+          $list.TabStop = $false
+          $list.Font = New-Object System.Drawing.Font('Consolas', 11)
+          1..500 | ForEach-Object { [void]$list.Items.Add(('ligne {0:000} {1}' -f $_, ('=' * ($_ % 37)))) }
+          $form.Controls.Add($list)
           $ticker = New-Object System.Windows.Forms.Timer
           $ticker.Interval = 100
           $ticker.Add_Tick({ $clock.Text = [DateTime]::Now.ToString('HH:mm:ss.f') })
@@ -203,7 +211,11 @@ jobs:
           $timer.Start()
           $form.Add_MouseDown({ param($s, $e) Add-Content -Path $log -Value ('click {0},{1}' -f $e.X, $e.Y) })
           $form.KeyPreview = $true
-          $form.Add_KeyDown({ param($s, $e) Add-Content -Path $log -Value ('key {0}' -f $e.KeyCode) })
+          $form.Add_KeyDown({
+            param($s, $e)
+            Add-Content -Path $log -Value ('key {0}' -f $e.KeyCode)
+            if ($e.KeyCode -eq 'S') { $list.TopIndex = [Math]::Min($list.Items.Count - 1, $list.TopIndex + 3) }
+          })
           [System.Windows.Forms.Application]::Run($form)
           '@
           Set-Content -Path 'C:\Users\Public\zt-clicktarget.ps1' -Value $script

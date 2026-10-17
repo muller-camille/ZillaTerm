@@ -13,7 +13,8 @@ namespace ZillaTerm.App.Services.Rdp;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Avec le client FreeRDP, l'écran relevé est le bureau tel que le client l'a décodé (<see cref="RdpSession.CopyDecodedScreen"/>) :
+/// Avec le client FreeRDP, l'écran relevé est le bureau tel que le client l'a décodé (<see cref="RdpSession.CopyDecodedScreen(byte[], long, out long, out ScreenMove[])"/>),
+/// avec les copies d'écran que le serveur lui a demandées (défilement, fenêtre déplacée) :
 /// à sa taille, au pixel près, quoi que montre la fenêtre (mise à l'échelle, couverte par une autre, session qui ne
 /// répond plus), sans capture de la fenêtre. Sinon (contrôle de Windows, flux du client illisible), la fenêtre de
 /// l'onglet est capturée.
@@ -44,6 +45,10 @@ internal sealed class RdpScreenRecorder : IDisposable
     private string? _source;
     private DateTime _lastCapture;
     private byte[]? _buffer;
+
+    // Version du bureau décodé de la dernière capture encodée (0 : capture de la fenêtre, ou pas encore) : les copies
+    // d'écran reçues depuis s'appliquent à l'image qu'elle a donnée.
+    private long _decodedVersion;
     private readonly ScreenRecordingStats _stats = new();
 
     public RdpScreenRecorder(RdpSession session, InterventionRecorder recorder)
@@ -99,6 +104,7 @@ internal sealed class RdpScreenRecorder : IDisposable
         finally
         {
             WriteStats(DateTime.UtcNow, final: true);
+            _encoder?.Dispose();
         }
     }
 
@@ -156,7 +162,7 @@ internal sealed class RdpScreenRecorder : IDisposable
         // Bureau décodé par le client FreeRDP ; sinon capture de la fenêtre, sauf en plein écran du contrôle Bureau à
         // distance (l'emplacement de l'onglet est vide, le bureau est ailleurs) ou si la session ne répond plus (sa
         // fenêtre pourrait bloquer la capture).
-        var decoded = _session.CopyDecodedScreen(_buffer);
+        var decoded = _session.CopyDecodedScreen(_buffer, _decodedVersion, out long version, out var moves);
         var pixels = decoded
             ?? (_session.IsFullScreen || _session.IsNotResponding ? null : WindowCapture.CaptureChildPixels(slot, _buffer));
         if (pixels is not { } screen || screen.Width > ScreenTileEncoder.MaxSide || screen.Height > ScreenTileEncoder.MaxSide)
@@ -180,12 +186,19 @@ internal sealed class RdpScreenRecorder : IDisposable
             // Bilan de l'enregistrement précédent, avant celui du nouveau.
             WriteStats(now, final: true);
             // Numéro d'enregistrement d'écran unique dans le journal, pour que le rapport sépare les sessions.
+            _encoder?.Dispose();
             _encoder = new ScreenTileEncoder(_recorder.NextScreenStream());
             _journal = journal;
+            _decodedVersion = 0;
         }
 
+        // Copies d'écran du client FreeRDP depuis la capture précédente, si elle venait aussi de lui ; sinon l'encodeur
+        // cherche lui-même un défilement.
+        var known = decoded is not null && _decodedVersion > 0 ? moves : null;
+        _decodedVersion = 0;
         int stride = screen.Width * 4;
-        var frame = _encoder.Encode(now, screen.Bgra.AsSpan(0, stride * screen.Height), screen.Width, screen.Height, stride);
+        var frame = _encoder.Encode(now, screen.Bgra.AsSpan(0, stride * screen.Height), screen.Width, screen.Height, stride, moves: known);
+        _decodedVersion = decoded is not null ? version : 0;
         _stats.Captured(now);
         if (frame is not null)
         {

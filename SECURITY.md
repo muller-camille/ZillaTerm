@@ -45,6 +45,8 @@ Out of scope, to be reported to their maintainers:
 - vulnerabilities in [FreeRDP](https://github.com/FreeRDP/FreeRDP) → its project (except in the generic patches and the
   `/frame-pipe` option that ZillaTerm carries on FreeRDP 3.32.2, built by the release workflow of the fork and fetched
   by `tools/freerdp-download.sh`: report them here);
+- vulnerabilities in the [Brotli](https://github.com/google/brotli) JavaScript decoder embedded unchanged in the screen
+  player of intervention reports → its project;
 - vulnerabilities in the Windows Remote Desktop client or in KeePass / KeePassXC → Microsoft or their projects.
 
 The security measures built into the application are summed up in the [README](README.md#security) and described in

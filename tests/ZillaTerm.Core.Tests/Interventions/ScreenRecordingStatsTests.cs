@@ -46,7 +46,7 @@ public sealed class ScreenRecordingStatsTests
 
         var line = stats.Report(start.AddSeconds(60));
         Assert.Equal($"60 s : 60 capture(s), 2 image(s) gardée(s) dont 1 complète(s), {ScreenRecordingStats.Bytes(kept)} "
-                     + $"(plus grosse {line!.Split("plus grosse ")[1].Split(')')[0]}), 16 tuile(s) nouvelle(s), écran 256×128", line);
+                     + $"(plus grosse {line!.Split("plus grosse ")[1].Split(')')[0]}), 16 tuile(s) nouvelle(s), 0 copie(s) d'écran, écran 256×128", line);
 
         // Compteurs repartis de zéro ; un écran immobile ne garde rien (la taille de l'écran reste la dernière connue) ; le
         // bilan final n'attend pas la minute.
@@ -54,7 +54,7 @@ public sealed class ScreenRecordingStatsTests
         stats.Captured(start.AddSeconds(200));
         Assert.Null(encoder.Encode(start.AddSeconds(200), second, 256, 128, 256 * 4));
         Assert.Equal("5 s : 1 capture(s), 0 image(s) gardée(s) dont 0 complète(s), 0 o (plus grosse 0 o), 0 tuile(s) nouvelle(s), "
-                     + "écran 256×128", stats.Report(start.AddSeconds(205), final: true));
+                     + "0 copie(s) d'écran, écran 256×128", stats.Report(start.AddSeconds(205), final: true));
     }
 
     [Theory]

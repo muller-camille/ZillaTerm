@@ -175,6 +175,11 @@ internal sealed class ScreenShareSource : IShareSource
         {
             // Partage arrêté.
         }
+        finally
+        {
+            // Plus aucune capture : le flux de l'encodeur peut être libéré.
+            _encoder.Dispose();
+        }
     }
 
     private void Capture()
