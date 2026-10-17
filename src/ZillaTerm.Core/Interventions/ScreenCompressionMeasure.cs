@@ -17,11 +17,12 @@ public sealed record ScreenCompressionMethod(string Name, long Bytes, TimeSpan T
 /// <param name="KeyFrames">Images clés parmi elles.</param>
 /// <param name="Lost">Images illisibles, ou perdues jusqu'à l'image clé suivante (bloc du journal abîmé).</param>
 /// <param name="JournalBytes">Poids des images dans le journal, tel qu'enregistré.</param>
+/// <param name="KeyFrameBytes">Poids des images clés dans le journal.</param>
 /// <param name="Duration">De la première à la dernière image.</param>
 /// <param name="Scrolled">Images où un défilement a été reconnu.</param>
 /// <param name="Methods">Poids réencodé, la méthode actuelle d'abord (contrôle : proche de <paramref name="JournalBytes"/>).</param>
 public sealed record ScreenCompressionResult(
-    int Streams, int Frames, int KeyFrames, int Lost, long JournalBytes, TimeSpan Duration, int Scrolled,
+    int Streams, int Frames, int KeyFrames, int Lost, long JournalBytes, long KeyFrameBytes, TimeSpan Duration, int Scrolled,
     IReadOnlyList<ScreenCompressionMethod> Methods)
 {
     /// <summary>Lignes du journal de débogage : le bilan, puis une ligne par méthode (écart avec la méthode actuelle).</summary>
@@ -29,8 +30,9 @@ public sealed record ScreenCompressionResult(
     {
         var c = CultureInfo.InvariantCulture;
         var lost = Lost > 0 ? string.Create(c, $", {Lost} illisible(s) ou perdue(s)") : "";
+        var keys = JournalBytes > 0 ? string.Create(c, $" ({100.0 * KeyFrameBytes / JournalBytes:0} %)") : "";
         yield return string.Create(c,
-            $"{Streams} écran(s), {Frames} image(s) dont {KeyFrames} complète(s){lost}, sur {Duration.TotalMinutes:0.#} min ; journal {ScreenRecordingStats.Bytes(JournalBytes)}");
+            $"{Streams} écran(s), {Frames} image(s) dont {KeyFrames} complète(s){lost}, sur {Duration.TotalMinutes:0.#} min ; journal {ScreenRecordingStats.Bytes(JournalBytes)}, dont images complètes {ScreenRecordingStats.Bytes(KeyFrameBytes)}{keys}");
         long reference = Methods.Count > 0 ? Methods[0].Bytes : 0;
         for (int i = 0; i < Methods.Count; i++)
         {
@@ -52,8 +54,15 @@ public sealed record ScreenCompressionResult(
 /// n'est écrit, l'écran relu ne quitte pas la mémoire.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Les images clés restent celles de l'enregistrement, pour comparer à poids d'images clés égal. La méthode actuelle
 /// réencodée retrouve le poids du journal, au seuil de bruit près (déjà appliqué à l'enregistrement, il ne l'est plus).
+/// </para>
+/// <para>
+/// Deux façons mesurent ce que coûtent les images clés : un seul flux Brotli pour tout l'enregistrement (une image clé
+/// se compresse avec les précédentes, mais ne se lit plus seule), et des images clés allégées (seule la première est
+/// entière ; après une pause ou un poids atteint, seul ce qui a changé est gardé, comme pour toute autre image).
+/// </para>
 /// </remarks>
 public static class ScreenCompressionMeasure
 {
@@ -64,7 +73,7 @@ public static class ScreenCompressionMeasure
     {
         var streams = new Dictionary<int, ScreenStream>();
         int frames = 0, keys = 0, lost = 0;
-        long journal = 0;
+        long journal = 0, keyBytes = 0;
         DateTime? first = null, last = null;
         foreach (var entry in entries)
         {
@@ -89,7 +98,12 @@ public static class ScreenCompressionMeasure
                 continue;
             }
 
-            keys += header.Key ? 1 : 0;
+            if (header.Key)
+            {
+                keys++;
+                keyBytes += data.Length;
+            }
+
             stream.Add(header, stream.Decoder.Pixels);
         }
 
@@ -114,29 +128,44 @@ public static class ScreenCompressionMeasure
         }
 
         int scrolled = streams.Values.Sum(stream => stream.Scrolled);
-        return new ScreenCompressionResult(streams.Count, frames, keys, lost, journal, (last - first) ?? TimeSpan.Zero, scrolled, methods);
+        return new ScreenCompressionResult(streams.Count, frames, keys, lost, journal, keyBytes, (last - first) ?? TimeSpan.Zero, scrolled, methods);
     }
 
-    /// <summary>Un enregistrement d'écran : sa relecture, ses deux encodages en tuiles et leurs compressions.</summary>
+    /// <summary>Encodage en tuiles d'une méthode (<see cref="Tiles"/>).</summary>
+    private enum TileMode
+    {
+        /// <summary>Comme aujourd'hui.</summary>
+        Plain,
+
+        /// <summary>Défilement reconnu.</summary>
+        Scroll,
+
+        /// <summary>Défilement reconnu, images clés allégées (seule la première est entière).</summary>
+        ScrollLightKeys,
+    }
+
+    /// <summary>Un enregistrement d'écran : sa relecture, ses encodages en tuiles et leurs compressions.</summary>
     private sealed class ScreenStream
     {
-        public static readonly (string Name, bool Scroll, int Brotli)[] Methods =
+        /// <summary>Façons mesurées ; Brotli 0 : zlib image par image ; un seul flux : Brotli pas repris aux images clés.</summary>
+        public static readonly (string Name, TileMode Tiles, int Brotli, bool OneStream)[] Methods =
         [
-            ("méthode actuelle (zlib par image, contrôle)", false, 0),
-            ("Brotli 5 en flux", false, 5),
-            ("Brotli 7 en flux", false, 7),
-            ("défilement + zlib par image", true, 0),
-            ("défilement + Brotli 5 en flux", true, 5),
-            ("défilement + Brotli 7 en flux", true, 7),
+            ("méthode actuelle (zlib par image, contrôle)", TileMode.Plain, 0, false),
+            ("Brotli 5 en flux", TileMode.Plain, 5, false),
+            ("Brotli 7 en flux", TileMode.Plain, 7, false),
+            ("défilement + zlib par image", TileMode.Scroll, 0, false),
+            ("défilement + Brotli 5 en flux", TileMode.Scroll, 5, false),
+            ("défilement + Brotli 7 en flux", TileMode.Scroll, 7, false),
+            ("défilement + Brotli 5, un seul flux (images clés comprises)", TileMode.Scroll, 5, true),
+            ("défilement + Brotli 5, images clés allégées", TileMode.ScrollLightKeys, 5, true),
         ];
 
-        private readonly Tiles _plain = new(scroll: false);
-        private readonly Tiles _scroll = new(scroll: true);
-        private readonly Sink[] _sinks = [.. Methods.Select(m => m.Brotli == 0 ? (Sink)new ZlibSink() : new BrotliSink(m.Brotli))];
+        private readonly Tiles[] _tiles = [new(scroll: false), new(scroll: true), new(scroll: true)];
+        private readonly Sink[] _sinks = [.. Methods.Select(m => m.Brotli == 0 ? (Sink)new ZlibSink() : new BrotliSink(m.Brotli, m.OneStream))];
 
         public ScreenTileDecoder Decoder { get; } = new();
 
-        public int Scrolled => _scroll.Scrolled;
+        public int Scrolled => _tiles[(int)TileMode.Scroll].Scrolled;
 
         public void Add(ScreenFrameHeader header, ushort[] pixels)
         {
@@ -151,11 +180,16 @@ public static class ScreenCompressionMeasure
                 return;
             }
 
-            var plain = _plain.Encode(pixels, header.Width, header.Height, header.Key);
-            var scroll = _scroll.Encode(pixels, header.Width, header.Height, header.Key);
+            byte[][] payloads =
+            [
+                _tiles[(int)TileMode.Plain].Encode(pixels, header.Width, header.Height, header.Key),
+                _tiles[(int)TileMode.Scroll].Encode(pixels, header.Width, header.Height, header.Key),
+                // Images clés allégées : seule la première (ou un changement de taille) repart d'un écran vide.
+                _tiles[(int)TileMode.ScrollLightKeys].Encode(pixels, header.Width, header.Height, key: false),
+            ];
             for (int i = 0; i < _sinks.Length; i++)
             {
-                _sinks[i].Frame(Methods[i].Scroll ? scroll : plain, header.Key);
+                _sinks[i].Frame(payloads[(int)Methods[i].Tiles], header.Key);
             }
         }
 
@@ -167,7 +201,7 @@ public static class ScreenCompressionMeasure
             }
         }
 
-        public (Sink Sink, Tiles Tiles) Sink(int method) => (_sinks[method], Methods[method].Scroll ? _scroll : _plain);
+        public (Sink Sink, Tiles Tiles) Sink(int method) => (_sinks[method], _tiles[(int)Methods[method].Tiles]);
     }
 
     /// <summary>
@@ -372,10 +406,10 @@ public static class ScreenCompressionMeasure
     }
 
     /// <summary>
-    /// Un flux Brotli d'une image clé à la suivante, vidé après chaque image : chaque image se compresse avec les
-    /// précédentes en mémoire, et se décompresse dès qu'elle est lue.
+    /// Un flux Brotli d'une image clé à la suivante (ou pour tout l'enregistrement, <c>oneStream</c>), vidé après chaque
+    /// image : chaque image se compresse avec les précédentes en mémoire, et se décompresse dès qu'elle est lue.
     /// </summary>
-    private sealed class BrotliSink(int quality) : Sink
+    private sealed class BrotliSink(int quality, bool oneStream) : Sink
     {
         private readonly byte[] _buffer = new byte[1 << 20];
         private BrotliEncoder _encoder;
@@ -384,7 +418,7 @@ public static class ScreenCompressionMeasure
         public override void Frame(byte[] payload, bool key)
         {
             Clock.Start();
-            if (key || !_open)
+            if (!_open || (key && !oneStream))
             {
                 Finish();
                 _encoder = new BrotliEncoder(quality, BrotliWindow);

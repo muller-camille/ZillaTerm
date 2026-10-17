@@ -115,7 +115,7 @@ public sealed class ScreenCompressionMeasureTests
         Assert.Equal(5, result.Frames);
         Assert.Equal(1, result.KeyFrames);
         Assert.Equal(0, result.Lost);
-        Assert.Equal(6, result.Methods.Count);
+        Assert.Equal(8, result.Methods.Count);
         Assert.Equal(result.JournalBytes, result.Methods[0].Bytes);
     }
 
@@ -169,6 +169,33 @@ public sealed class ScreenCompressionMeasureTests
         Assert.Equal(4, result.Lost);
         Assert.Equal(2, result.KeyFrames);
         Assert.Equal(TimeSpan.FromSeconds(6), result.Duration);
+    }
+
+    /// <summary>
+    /// Retour après une pause sur un écran inchangé : l'enregistrement repart d'une image clé entière (comptée à part) ;
+    /// en un seul flux elle se compresse avec ce qui précède, et allégée elle ne garde rien.
+    /// </summary>
+    [Fact]
+    public void LightKeyFramesKeepOnlyWhatChangedAfterAPause()
+    {
+        var encoder = new ScreenTileEncoder(stream: 1, live: true);
+        var frames = new List<(int Second, ScreenFrame? Frame)>
+        {
+            (0, encoder.Encode(T0, Screen(0), Width, Height, Width * 4)),
+            (1, encoder.Encode(T0.AddSeconds(1), Screen(1), Width, Height, Width * 4)),
+            (2, encoder.Mark(T0.AddSeconds(2), ScreenPause.Hidden)),
+            (3, encoder.Mark(T0.AddSeconds(3), ScreenPause.None)),
+            (4, encoder.Encode(T0.AddSeconds(4), Screen(1), Width, Height, Width * 4)),
+        };
+        var entries = frames.Select(f => new InterventionEntry(T0.AddSeconds(f.Second), InterventionKind.Screen, "srv", "", f.Frame!.Data)).ToList();
+
+        var result = ScreenCompressionMeasure.Measure(entries);
+
+        Assert.Equal(2, result.KeyFrames);
+        Assert.Equal(entries[0].Image!.Length + entries[4].Image!.Length, result.KeyFrameBytes);
+        long perKey = result.Methods[4].Bytes, oneStream = result.Methods[6].Bytes, light = result.Methods[7].Bytes;
+        Assert.True(oneStream < perKey, $"un seul flux {oneStream}, flux par image clé {perKey}");
+        Assert.True(light < oneStream, $"allégées {light}, un seul flux {oneStream}");
     }
 
     /// <summary>
@@ -232,7 +259,7 @@ public sealed class ScreenCompressionMeasureTests
     [Fact]
     public void LinesShowEachMethodAgainstTheCurrentOne()
     {
-        var result = new ScreenCompressionResult(2, 120, 3, 0, 2_000_000, TimeSpan.FromMinutes(12), 30,
+        var result = new ScreenCompressionResult(2, 120, 3, 0, 2_000_000, 500_000, TimeSpan.FromMinutes(12), 30,
         [
             new ScreenCompressionMethod("méthode actuelle (zlib par image, contrôle)", 2_000_000, TimeSpan.FromSeconds(4)),
             new ScreenCompressionMethod("Brotli 5 en flux", 1_000_000, TimeSpan.FromSeconds(1.5)),
@@ -240,7 +267,7 @@ public sealed class ScreenCompressionMeasureTests
 
         var lines = result.Lines().ToList();
 
-        Assert.Equal("2 écran(s), 120 image(s) dont 3 complète(s), sur 12 min ; journal 1.91 Mo", lines[0]);
+        Assert.Equal("2 écran(s), 120 image(s) dont 3 complète(s), sur 12 min ; journal 1.91 Mo, dont images complètes 488.3 Ko (25 %)", lines[0]);
         Assert.Equal("  méthode actuelle (zlib par image, contrôle) : 1.91 Mo, 4.0 s de calcul", lines[1]);
         Assert.Equal("  Brotli 5 en flux : 976.6 Ko (-50 %), 1.5 s de calcul", lines[2]);
         Assert.Equal("  défilement reconnu sur 30 image(s) (25 %)", lines[3]);
