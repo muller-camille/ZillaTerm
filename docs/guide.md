@@ -904,13 +904,15 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
   - **captures**: "Capture a remote desktop…" ("Intervention" tab) takes an image of a Remote Desktop Connection window
     (PSM sessions; a minimized window cannot be captured), and the "Capture" button of ZillaTerm's remote desktop tabs
     takes the desktop shown;
-  - the **screen of remote desktop sessions opened in a tab**, the way the RDP protocol sends it: every second, the
-    screen of the tab shown is read and only the changed areas are kept, in exact colours (64 × 64 pixel squares,
+  - the **screen of remote desktop sessions opened in a tab**, the way the RDP protocol sends it: at most once a
+    second, the screen of the tab shown is read and only the changed areas are kept, in exact colours (64 × 64 pixel squares,
     compressed; an area already seen, like a menu that comes back, is kept only once; a scroll or a moved window is kept
     as a copy of the previous screen, not as everything it changed). With ZillaTerm's FreeRDP client, it is the desktop
     as the client decoded it, at its own size and to the pixel, even when the window is scaled, covered by another one
-    or not responding, with the screen to screen copies the server asked it for; with the Windows Remote Desktop
-    control, a capture of the window, in which ZillaTerm recognizes scrolling by itself.
+    or not responding, with the screen to screen copies the server asked it for: an unchanged desktop is neither copied
+    nor compared (next to nothing for the processor), and a change is read within 200 ms, not up to a second later.
+    With the Windows Remote Desktop control, a capture of the window every second, in which ZillaTerm recognizes
+    scrolling by itself.
     "● Screen recorded" in the tab bar reminds you.
     A tab in the background, a minimized window and full screen are not captured; back on the tab, whatever changed in
     the meantime is kept. A small isolated change (a character typed) is kept once the screen has not moved for 3
@@ -918,11 +920,15 @@ The **"Intervention"** button in the toolbar opens a window for any intervention
     kept only once every 10 seconds: the journal notes it, the "Intervention" tab says so and the indicator becomes "●
     Screen recorded (every 10 s)". Opening the session (PSM screen, Windows sign-in, desktop, application) costs a few
     whole screens, 0.1 to 1 MB each depending on the screen size and background. With the debug log, a summary every
-    minute gives what the screen cost (captures, frames kept including whole ones, weight, journal size): weight on a
+    minute gives what the screen cost (captures including those of an unchanged desktop, frames kept including whole
+    ones, weight, screen copies, journal size): weight on a
     still screen shows a picture that changes without it showing. For an intervention already recorded, right-click in
     "Recorded interventions" › "Measure screen compression" (with the debug log only): the log receives what its screen
-    would weigh with other encodings, all lossless (Brotli, recognized scrolling); the screen read back stays in memory,
-    nothing is saved or sent. A session opened with Remote Desktop Connection (mstsc) is not recorded this way: only a
+    would weigh with other encodings, all lossless and checked, with the computing time of each: the current format
+    (control: the weight of the journal for an intervention recorded since 0.42), without screen copies, 16 or 24 bits
+    tile by tile, tiles of at most 256 colors as a palette, Brotli 9 and 11, a single Brotli stream, one key frame every
+    30 minutes at most, only the first frame whole. The screen read back stays in memory, nothing is saved or sent;
+    measuring a long intervention takes time (Brotli 11 above all). A session opened with Remote Desktop Connection (mstsc) is not recorded this way: only a
     capture keeps it.
 - **"Intervention" tab of the side panel** (`Ctrl+4`): it appears when recording starts, with a red dot while recording
   lasts: title, notes and history stay next to the session. Opening an SSH session does not replace it with the "Files"
@@ -1643,7 +1649,8 @@ subfolders abandoned for more than two days are deleted.
 Terminal: on agreement, the current screen (without the history: content, colors, modes, cursor), then the stream as
 the terminal receives it; a size change sends the whole screen again. Screen (Remote Desktop, VNC): captured four times
 per second while someone watches, in 64 × 64 pixel tiles (exact colors), only the changed tiles are sent, compressed,
-and a scroll is sent as a copy; a full image at each arrival. The screen needs ZillaTerm 0.42 or later on both sides. The typing of the person who has control is encoded on the sharer's side, according to
+and a scroll is sent as a copy (those the server asked ZillaTerm's FreeRDP client for); an unchanged desktop is
+neither copied nor sent; a full image at each arrival. The screen needs ZillaTerm 0.42 or later on both sides. The typing of the person who has control is encoded on the sharer's side, according to
 the modes of their terminal. Limits: 10 shares at once, 5 people per share, 3 minutes to answer, connection cut after
 60 seconds without news; a person more than 48 MB behind receives the whole screen instead of the backlog (state messages, control taken back or
 display paused, are kept). On the viewer's side, the screen tiles kept between two full images are limited (256 MB);

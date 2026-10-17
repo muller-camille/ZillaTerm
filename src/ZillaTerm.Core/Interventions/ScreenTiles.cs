@@ -316,6 +316,28 @@ public sealed class ScreenTileEncoder : IDisposable
             }
         }
 
+        return EncodeCurrent(time, key, moves, unchanged: false);
+    }
+
+    /// <summary>
+    /// Capture identique à la précédente (écran inchangé, connu sans le recopier : bureau décodé par le client FreeRDP),
+    /// à <paramref name="time"/> : rattrape les restes sous le seuil de bruit et donne l'image clé due, comme
+    /// <see cref="Encode"/> le ferait avec la même capture ; null s'il n'y a rien de tel (le plus souvent, sans calcul).
+    /// </summary>
+    public ScreenFrame? Repeat(DateTime time)
+    {
+        if (_shown is null || (!_keyAfterPause && !KeyDue(time) && !Array.Exists(_residueSince, since => since != default)))
+        {
+            return null;
+        }
+
+        return EncodeCurrent(time, key: false, moves: null, unchanged: true);
+    }
+
+    /// <summary>Image de la capture dans <see cref="_current"/> (<paramref name="unchanged"/> : la même que la précédente).</summary>
+    private ScreenFrame? EncodeCurrent(DateTime time, bool key, IReadOnlyList<ScreenMove>? moves, bool unchanged)
+    {
+        int width = _width, height = _height, pitch = _columns * TileSize;
         bool first = _shown is null;
         _shown ??= new uint[_current.Length];
         key |= first || KeyDue(time) || _keyAfterPause || _ids.Count + (_rows * _columns) > MaxTilesBetweenKeys;
@@ -323,7 +345,7 @@ public sealed class ScreenTileEncoder : IDisposable
         _paused = ScreenPause.None;
 
         // Copies d'écran d'abord : l'écran d'avant, déplacé, est la base des comparaisons et des différences.
-        var applied = key ? [] : Moves(pitch, moves);
+        var applied = key || unchanged ? [] : Moves(pitch, moves);
         var shown = _shown;
 
         // Tuiles à garder : modifiées au-delà du seuil, ou dont le reste sous le seuil est à rattraper (toutes pour une
@@ -347,7 +369,7 @@ public sealed class ScreenTileEncoder : IDisposable
                     _residueSince[index] = time;
                 }
 
-                if (!Same(_current, _previous, origin, pitch))
+                if (!unchanged && !Same(_current, _previous, origin, pitch))
                 {
                     _stableSince[index] = time;
                 }
@@ -752,9 +774,13 @@ public sealed class ScreenTileDecoder : IDisposable
     /// <summary>Affichage en pause depuis la dernière image appliquée (<see cref="ScreenTileEncoder.Mark"/>), et pourquoi.</summary>
     public ScreenPause Pause { get; private set; }
 
+    /// <summary>Copies d'écran (défilement, fenêtre déplacée) de la dernière image appliquée, dans l'ordre.</summary>
+    public IReadOnlyList<ScreenMove> Moves { get; private set; } = [];
+
     /// <summary>Applique une image ; faux si elle est illisible, ne suit pas la précédente ou arrive avant une image clé.</summary>
     public bool Apply(byte[] data)
     {
+        Moves = [];
         if (!ScreenFrameHeader.TryRead(data, out var header))
         {
             _next = -1;
@@ -814,6 +840,8 @@ public sealed class ScreenTileDecoder : IDisposable
         {
             move.Apply<uint>(Pixels, Width);
         }
+
+        Moves = moves;
 
         var fresh = new uint[header.NewTiles][];
         var narrow = new ushort[TilePixels];

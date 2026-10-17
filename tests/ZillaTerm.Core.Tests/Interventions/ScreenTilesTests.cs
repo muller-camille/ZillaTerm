@@ -270,6 +270,54 @@ public sealed partial class ScreenTilesTests : IDisposable
     }
 
     /// <summary>
+    /// Écran connu inchangé (bureau décodé par le client FreeRDP), vu sans être recopié : rien tant qu'il n'y a rien à
+    /// rattraper ; le reste sous le seuil de bruit, l'image clé due et celle d'après une pause viennent comme avec la même
+    /// capture.
+    /// </summary>
+    [Fact]
+    public void UnchangedScreenIsSeenWithoutACopy()
+    {
+        const int width = 192, height = 128;
+        var screen = Screen(width, height, (_, _) => (240, 244, 248));
+        var encoder = new ScreenTileEncoder(stream: 4);
+        var decoder = new ScreenTileDecoder();
+        Assert.Null(encoder.Repeat(T0));
+        Assert.True(decoder.Apply(encoder.Encode(T0, screen, width, height, width * 4)!.Data));
+        Assert.Null(encoder.Repeat(T0.AddSeconds(1)));
+
+        // « y » sous le seuil, puis plus rien ne change : rattrapé 3 secondes après, sans nouvelle capture.
+        Paint(screen, width, 10, 10, 5, 5, 0);
+        Assert.Null(encoder.Encode(T0.AddSeconds(2), screen, width, height, width * 4));
+        Assert.Null(encoder.Repeat(T0.AddSeconds(3)));
+        Assert.Null(encoder.Repeat(T0.AddSeconds(4)));
+        var caughtUp = encoder.Repeat(T0.AddSeconds(5))!;
+        Assert.False(caughtUp.Header.Key);
+        Assert.Equal(1, caughtUp.Header.Placements);
+        Assert.True(decoder.Apply(caughtUp.Data));
+        Assert.Equal(Exact(screen), decoder.Pixels);
+        Assert.Null(encoder.Repeat(T0.AddSeconds(6)));
+
+        // Changement gardé, puis écran immobile : image clé 30 minutes après la précédente.
+        Paint(screen, width, 100, 60, 40, 40, 0);
+        Assert.False(encoder.Encode(T0.AddSeconds(7), screen, width, height, width * 4)!.Header.Key);
+        Assert.Null(encoder.Repeat(T0 + ScreenTileEncoder.KeyFrameMaxInterval - TimeSpan.FromSeconds(1)));
+        var key = encoder.Repeat(T0 + ScreenTileEncoder.KeyFrameMaxInterval)!;
+        Assert.True(key.Header.Key);
+        Assert.Equal(6, key.Header.Placements);
+        var fromKey = new ScreenTileDecoder();
+        Assert.True(fromKey.Apply(key.Data));
+        Assert.Equal(Exact(screen), fromKey.Pixels);
+
+        // Fin d'une pause : l'écran revient entier.
+        var later = T0 + TimeSpan.FromHours(1);
+        Assert.NotNull(encoder.Mark(later, ScreenPause.Hidden));
+        Assert.NotNull(encoder.Mark(later.AddSeconds(1), ScreenPause.None));
+        var resumed = encoder.Repeat(later.AddSeconds(2))!;
+        Assert.True(resumed.Header.Key);
+        Assert.Null(encoder.Repeat(later.AddSeconds(3)));
+    }
+
+    /// <summary>
     /// Différence : sur un fond qui ne se compresse pas, un caractère tapé ne coûte que quelques octets (la tuile entière en
     /// coûterait 8 Ko) ; une tuile beaucoup modifiée est gardée entière ; l'écran relu est exact.
     /// </summary>

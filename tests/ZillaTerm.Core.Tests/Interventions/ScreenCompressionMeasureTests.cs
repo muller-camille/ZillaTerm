@@ -76,15 +76,18 @@ public sealed class ScreenCompressionMeasureTests
         [.. Enumerable.Range(0, bgra.Length / 4).Select(i => (ushort)(((bgra[(4 * i) + 2] >> 3) << 11) | ((bgra[(4 * i) + 1] >> 2) << 5) | (bgra[4 * i] >> 3)))];
 
     /// <summary>Images de l'enregistrement de ces captures, une par seconde, comme dans un journal.</summary>
-    private static List<InterventionEntry> Record(IEnumerable<byte[]> screens, bool live = true)
+    private static List<InterventionEntry> Record(IEnumerable<byte[]> screens) => Record(screens, Width, Height);
+
+    /// <summary>Images de l'enregistrement d'écrans de cette taille, une par seconde, comme dans un journal.</summary>
+    private static List<InterventionEntry> Record(IEnumerable<byte[]> screens, int width, int height)
     {
-        var encoder = new ScreenTileEncoder(stream: 3, live);
+        var encoder = new ScreenTileEncoder(stream: 3, live: true);
         var entries = new List<InterventionEntry>();
         int second = 0;
         foreach (var screen in screens)
         {
             var time = T0.AddSeconds(second++);
-            if (encoder.Encode(time, screen, Width, Height, Width * 4) is { } frame)
+            if (encoder.Encode(time, screen, width, height, width * 4) is { } frame)
             {
                 entries.Add(new InterventionEntry(time, InterventionKind.Screen, "srv", "", frame.Data));
             }
@@ -93,48 +96,76 @@ public sealed class ScreenCompressionMeasureTests
         return entries;
     }
 
-    /// <summary>
-    /// Un journal enregistré au format d'aujourd'hui (copies, Brotli d'une image clé à l'autre) se relit et se mesure ; il
-    /// pèse moins que le même écran au format d'avant la 0.42 (tuile entière, en différence, déjà vue, défilement).
-    /// </summary>
-    [Fact]
-    public void CurrentFormatIsReadAndLighterThanTheFormerOne()
+    /// <summary>Écran BGRA de pixels tirés au hasard parmi <paramref name="colors"/> (gris), le même pour une même graine.</summary>
+    private static byte[] Noise(int width, int height, int seed, params byte[] colors)
     {
-        var start = Screen(0);
-        var entries = Record([
-            start,
-            Paint(start, 100, 100, 10, 10, 0),
-            Paint(start, 20, 20, 100, 80, 128),
-            start,
-            Screen(1),
-        ]);
+        var random = new Random(seed);
+        var pixels = new byte[width * height * 4];
+        for (int i = 0; i < pixels.Length; i += 4)
+        {
+            pixels[i] = pixels[i + 1] = pixels[i + 2] = colors[random.Next(colors.Length)];
+            pixels[i + 3] = 255;
+        }
+
+        return pixels;
+    }
+
+    /// <summary>
+    /// Le format actuel réencodé redonne le journal à l'octet près (mêmes images, copies d'écran, images clés, Brotli),
+    /// enregistrement avec seuil de bruit ou en direct, pauses comprises ; chaque façon est mesurée.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CurrentFormatIsReencodedToTheByte(bool live)
+    {
+        var encoder = new ScreenTileEncoder(stream: 2, live);
+        var screens = new[]
+        {
+            Screen(0), Paint(Screen(0), 100, 100, 10, 10, 0), Paint(Screen(0), 20, 20, 100, 80, 129), Screen(0), Screen(1), Screen(4),
+        };
+        var entries = new List<InterventionEntry>();
+        for (int second = 0; second < 12; second++)
+        {
+            var time = T0.AddSeconds(second);
+            var frame = second switch
+            {
+                6 => encoder.Mark(time, ScreenPause.Hidden),
+                7 => encoder.Mark(time, ScreenPause.None),
+                _ => encoder.Encode(time, screens[Math.Min(second, screens.Length - 1)], Width, Height, Width * 4),
+            };
+            if (frame is not null)
+            {
+                entries.Add(new InterventionEntry(time, InterventionKind.Screen, "srv", "", frame.Data));
+            }
+        }
 
         var result = ScreenCompressionMeasure.Measure(entries);
 
         Assert.Equal(1, result.Streams);
-        Assert.Equal(5, result.Frames);
-        Assert.Equal(1, result.KeyFrames);
         Assert.Equal(0, result.Lost);
-        Assert.Equal(8, result.Methods.Count);
+        Assert.Equal(2, result.KeyFrames);
+        Assert.Equal(9, result.Methods.Count);
+        Assert.Equal("format actuel (contrôle)", result.Methods[0].Name);
         Assert.Equal(entries.Sum(e => (long)e.Image!.Length), result.JournalBytes);
-        Assert.True(result.JournalBytes < result.Methods[0].Bytes, $"journal {result.JournalBytes}, format d'avant {result.Methods[0].Bytes}");
+        Assert.Equal(result.JournalBytes, result.Methods[0].Bytes);
+        Assert.All(result.Methods, method => Assert.True(method.Bytes > 0));
     }
 
     /// <summary>
-    /// Une fenêtre de texte qui défile d'une ligne à chaque image : défilement reconnu à chaque fois, sans perte (vérifié
-    /// pendant la mesure), pour bien moins que le format d'avant la 0.42. Le gain de Brotli dépend de l'écran : pas vérifié ici.
+    /// Une fenêtre de texte qui défile d'une ligne à chaque image : copies d'écran à chaque fois, pour bien moins que sans
+    /// elles (tout ce qui a bougé en tuiles).
     /// </summary>
     [Fact]
-    public void ScrollIsRecognizedAndCostsMuchLess()
+    public void MovesCostMuchLessThanTiles()
     {
         var result = ScreenCompressionMeasure.Measure(Record(Enumerable.Range(0, 11).Select(line => Screen(line))));
         // Poids des 10 images qui défilent, sans l'image clé du début.
         var key = ScreenCompressionMeasure.Measure(Record([Screen(0)]));
         long Scrolling(int method) => result.Methods[method].Bytes - key.Methods[method].Bytes;
 
-        Assert.Equal(10, result.Scrolled);
-        Assert.True(Scrolling(3) < Scrolling(0) / 2, $"défilement {Scrolling(3)}, format d'avant {Scrolling(0)}");
-        Assert.All(result.Methods, method => Assert.True(method.Bytes > key.Methods[0].Bytes));
+        Assert.Equal(10, result.Moved);
+        Assert.True(Scrolling(0) < Scrolling(1) / 2, $"avec copies {Scrolling(0)}, sans {Scrolling(1)}");
     }
 
     /// <summary>
@@ -174,10 +205,11 @@ public sealed class ScreenCompressionMeasureTests
 
     /// <summary>
     /// Retour après une pause sur un écran inchangé : l'enregistrement repart d'une image clé entière (comptée à part) ;
-    /// en un seul flux elle se compresse avec ce qui précède, et allégée elle ne garde rien.
+    /// en un seul flux elle se compresse avec ce qui précède ; sans elle (une image clé toutes les 30 minutes, ou seulement
+    /// la première), rien n'est à garder.
     /// </summary>
     [Fact]
-    public void LightKeyFramesKeepOnlyWhatChangedAfterAPause()
+    public void FewerKeyFramesKeepOnlyWhatChangedAfterAPause()
     {
         var encoder = new ScreenTileEncoder(stream: 1, live: true);
         var frames = new List<(int Second, ScreenFrame? Frame)>
@@ -194,9 +226,47 @@ public sealed class ScreenCompressionMeasureTests
 
         Assert.Equal(2, result.KeyFrames);
         Assert.Equal(entries[0].Image!.Length + entries[4].Image!.Length, result.KeyFrameBytes);
-        long perKey = result.Methods[4].Bytes, oneStream = result.Methods[6].Bytes, light = result.Methods[7].Bytes;
+        long perKey = result.Methods[0].Bytes, oneStream = result.Methods[6].Bytes, halfHour = result.Methods[7].Bytes, first = result.Methods[8].Bytes;
         Assert.True(oneStream < perKey, $"un seul flux {oneStream}, flux par image clé {perKey}");
-        Assert.True(light < oneStream, $"allégées {light}, un seul flux {oneStream}");
+        Assert.True(first < oneStream, $"seule la première complète {first}, un seul flux {oneStream}");
+        Assert.Equal(first, halfHour);
+    }
+
+    /// <summary>
+    /// Une tuile en couleurs 24 bits parmi des tuiles 16 bits (couleurs tirées au hasard, que Brotli ne resserre pas) :
+    /// tuile par tuile, seule elle prend 3 octets par pixel, au lieu de toute l'image. Des tuiles de quatre couleurs en
+    /// palette : écrites autrement (un octet par 4 pixels), relues sans perte comme toutes les façons (vérifié pendant la
+    /// mesure) ; ce qu'elles font gagner dépend de l'écran, pas vérifié ici.
+    /// </summary>
+    [Fact]
+    public void TileByTileColorsAndPalettesAreMeasured()
+    {
+        const int width = 512, height = 128;
+        var random = new Random(1);
+        byte[] Colors(Func<uint> pick)
+        {
+            var pixels = new byte[width * height * 4];
+            for (int i = 0; i < pixels.Length; i += 4)
+            {
+                uint color = pick();
+                (pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]) = ((byte)color, (byte)(color >> 8), (byte)(color >> 16), 255);
+            }
+
+            return pixels;
+        }
+
+        uint Exact16() => ScreenTileEncoder.From565((ushort)random.Next(65536));
+        var first = Colors(Exact16);
+        var second = Colors(Exact16);
+        // 0x818181 : pas une couleur 16 bits.
+        second[0] = second[1] = second[2] = 0x81;
+        var result = ScreenCompressionMeasure.Measure(Record([first, second], width, height));
+        long frame = result.Methods[0].Bytes, tile = result.Methods[2].Bytes;
+        Assert.True(tile < frame, $"tuile par tuile {tile}, toute l'image {frame}");
+
+        uint[] four = [0x202020, 0x818181, 0xC0C0C0, 0x0000FF];
+        var palettes = ScreenCompressionMeasure.Measure(Record([Colors(() => four[random.Next(4)])], width, height));
+        Assert.NotEqual(palettes.Methods[2].Bytes, palettes.Methods[3].Bytes);
     }
 
     /// <summary>
@@ -262,15 +332,17 @@ public sealed class ScreenCompressionMeasureTests
     {
         var result = new ScreenCompressionResult(2, 120, 3, 0, 2_000_000, 500_000, TimeSpan.FromMinutes(12), 30,
         [
-            new ScreenCompressionMethod("méthode actuelle (zlib par image, contrôle)", 2_000_000, TimeSpan.FromSeconds(4)),
-            new ScreenCompressionMethod("Brotli 5 en flux", 1_000_000, TimeSpan.FromSeconds(1.5)),
+            new ScreenCompressionMethod("format actuel (contrôle)", 2_000_000, TimeSpan.FromSeconds(4)),
+            new ScreenCompressionMethod("Brotli 11", 1_000_000, TimeSpan.FromSeconds(1.5)),
+            new ScreenCompressionMethod("Brotli 9", 1_999_000, TimeSpan.FromSeconds(4.5)),
         ]);
 
         var lines = result.Lines().ToList();
 
         Assert.Equal("2 écran(s), 120 image(s) dont 3 complète(s), sur 12 min ; journal 1.91 Mo, dont images complètes 488.3 Ko (25 %)", lines[0]);
-        Assert.Equal("  méthode actuelle (zlib par image, contrôle) : 1.91 Mo, 4.0 s de calcul", lines[1]);
-        Assert.Equal("  Brotli 5 en flux : 976.6 Ko (-50 %), 1.5 s de calcul", lines[2]);
-        Assert.Equal("  défilement reconnu sur 30 image(s) (25 %)", lines[3]);
+        Assert.Equal("  format actuel (contrôle) : 1.91 Mo, 4.0 s de calcul", lines[1]);
+        Assert.Equal("  Brotli 11 : 976.6 Ko (-50 %), 1.5 s de calcul", lines[2]);
+        Assert.Equal("  Brotli 9 : 1.91 Mo (+0 %), 4.5 s de calcul", lines[3]);
+        Assert.Equal("  copies d'écran (défilement, fenêtre déplacée) sur 30 image(s) (25 %)", lines[4]);
     }
 }

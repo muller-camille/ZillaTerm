@@ -692,6 +692,16 @@ public class RdpSessionTests(ITestOutputHelper output)
             output.WriteLine($"Mises à jour reçues : {updates}, dont {partial} partielle(s), {moves} copie(s) d'écran");
             Assert.True(partial > 0, $"{updates} mise(s) à jour, aucune partielle");
 
+            // Bureau inchangé depuis le relevé précédent (l'un juste après l'autre) : rien de copié.
+            bool unchanged = false;
+            for (int i = 0; i < 10 && !unchanged; i++)
+            {
+                var last = Assert.IsType<Services.ScreenCapture>(session.CaptureDecoded(null, 0));
+                unchanged = session.CaptureDecoded(null, last.Version) is { Pixels: null };
+            }
+
+            Assert.True(unchanged, "bureau jamais vu inchangé entre deux relevés consécutifs");
+
             if (Environment.GetEnvironmentVariable("RDP_TEST_CLICKS") is { Length: > 0 } log)
             {
                 // Liste de la fenêtre de test qui défile (touche S) : le bureau décodé, copies d'écran comprises, reste
@@ -699,6 +709,7 @@ public class RdpSessionTests(ITestOutputHelper output)
                 var host = new System.Windows.Interop.WindowInteropHelper(window).Handle;
                 await WaitForLineAsync(log, 0, line => line.StartsWith("size ", StringComparison.Ordinal), TimeSpan.FromSeconds(150));
                 await ClickAndCheckAsync(log, host, bounds, (0.5, 0.5), desktop);
+                long since = Assert.IsType<Services.ScreenCapture>(session.CaptureDecoded(null, 0)).Version;
                 for (int i = 0; i < 6; i++)
                 {
                     int before = Lines(log).Count;
@@ -714,6 +725,14 @@ public class RdpSessionTests(ITestOutputHelper output)
                 output.WriteLine($"Après défilement : pixels identiques {same:P2}, {afterUpdates} mise(s) à jour, "
                     + $"dont {afterPartial} partielle(s), {afterMoves} copie(s) d'écran");
                 Assert.True(same >= 0.999, $"pixels identiques à la fenêtre après défilement : {same:P2}");
+                // Copies d'écran reçues depuis le relevé d'avant le défilement (si elles sont encore connues) : celles
+                // que l'enregistrement et le partage reprennent.
+                var scrolled = Assert.IsType<Services.ScreenCapture>(session.CaptureDecoded(null, since));
+                output.WriteLine($"Copies d'écran depuis le relevé d'avant le défilement : {scrolled.Moves?.Count.ToString() ?? "inconnues"}");
+                if (afterMoves > moves && scrolled.Moves is { } known)
+                {
+                    Assert.NotEmpty(known);
+                }
             }
 
             session.Disconnect();

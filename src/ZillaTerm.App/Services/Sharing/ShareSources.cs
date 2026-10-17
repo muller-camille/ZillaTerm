@@ -120,7 +120,9 @@ internal sealed class TerminalShareSource : IShareSource
 
 /// <summary>
 /// Écran partagé (Bureau à distance dans un onglet, VNC) : capturé quatre fois par seconde, seules les zones modifiées
-/// partent (<see cref="ScreenTileEncoder"/> en direct) ; une image complète à chaque arrivée ou retard. Écran
+/// partent (<see cref="ScreenTileEncoder"/> en direct) ; une image complète à chaque arrivée ou retard. Bureau décodé par
+/// le client FreeRDP : inchangé, il n'est ni copié ni comparé ; un défilement ou une fenêtre déplacée part en copies
+/// d'écran, comme le serveur les a demandées. Écran
 /// indisponible (onglet en arrière-plan pour le Bureau à distance, plein écran, déconnexion) : la personne qui regarde
 /// le sait, l'image reste figée.
 /// </summary>
@@ -129,15 +131,22 @@ internal sealed class ScreenShareSource : IShareSource
     public static readonly TimeSpan CaptureInterval = TimeSpan.FromMilliseconds(250);
 
     private readonly HostedShare _share;
-    private readonly Func<byte[]?, ScreenPixels?> _capture;
+    private readonly Func<byte[]?, long, ScreenCapture?> _capture;
     private readonly CancellationTokenSource _stop = new();
     private readonly ScreenTileEncoder _encoder = new(stream: 1, live: true);
     private int _keyWanted = 1;
     private bool _paused;
     private byte[]? _buffer;
 
-    /// <param name="capture">Capture de l'écran (sur un fil de travail) ; null s'il n'est pas disponible.</param>
-    public ScreenShareSource(HostedShare share, Func<byte[]?, ScreenPixels?> capture)
+    // Version du bureau décodé de la dernière image (0 : capture d'une fenêtre ou écran VNC, ou pas encore) : bureau
+    // inchangé tant qu'il a cette version ; les copies d'écran reçues depuis s'appliquent à l'image qu'elle a donnée.
+    private long _version;
+
+    /// <param name="capture">
+    /// Capture de l'écran (sur un fil de travail) comparée à la version de bureau donnée (0 : toujours copié) ; null s'il
+    /// n'est pas disponible.
+    /// </param>
+    public ScreenShareSource(HostedShare share, Func<byte[]?, long, ScreenCapture?> capture)
     {
         _share = share;
         _capture = capture;
@@ -191,7 +200,16 @@ internal sealed class ScreenShareSource : IShareSource
             return;
         }
 
-        if (_capture(_buffer) is not { } pixels || pixels.Width > ScreenTileEncoder.MaxSide || pixels.Height > ScreenTileEncoder.MaxSide)
+        // Image complète demandée (arrivée, resynchronisation, reprise) : le bureau est recopié même inchangé.
+        bool full = Volatile.Read(ref _keyWanted) == 1 || _paused;
+        var capture = _capture(_buffer, full ? 0 : _version);
+        if (capture is { Pixels: null })
+        {
+            // Bureau inchangé depuis l'image précédente : rien à copier, comparer ni envoyer.
+            return;
+        }
+
+        if (capture is not { Pixels: { } pixels } screen || pixels.Width > ScreenTileEncoder.MaxSide || pixels.Height > ScreenTileEncoder.MaxSide)
         {
             if (!_paused)
             {
@@ -211,8 +229,14 @@ internal sealed class ScreenShareSource : IShareSource
             _share.Broadcast(ShareMessage.Notice(ShareNotice.ScreenResumed));
         }
 
+        // Copies d'écran du client FreeRDP depuis l'image précédente, si elle venait aussi de lui (défilement, fenêtre
+        // déplacée : quelques octets au lieu des tuiles) ; sinon l'encodeur cherche lui-même un défilement.
+        var moves = !key && _version > 0 ? screen.Moves : null;
+        _version = 0;
         int stride = pixels.Width * 4;
-        if (_encoder.Encode(DateTime.UtcNow, pixels.Bgra.AsSpan(0, stride * pixels.Height), pixels.Width, pixels.Height, stride, key) is { } frame)
+        var frame = _encoder.Encode(DateTime.UtcNow, pixels.Bgra.AsSpan(0, stride * pixels.Height), pixels.Width, pixels.Height, stride, key, moves);
+        _version = screen.Version;
+        if (frame is not null)
         {
             _share.Broadcast(ShareMessage.ScreenFrame(frame.Data));
         }
