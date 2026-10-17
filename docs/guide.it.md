@@ -960,26 +960,30 @@ reperibilità o no:
   - le **catture**: «Cattura un desktop remoto…» (scheda «Intervento») acquisisce l'immagine di una finestra Connessione
     Desktop remoto (sessioni PSM; una finestra ridotta a icona non può essere catturata), e il pulsante «Cattura» delle
     schede desktop remoto di ZillaTerm acquisisce il desktop visualizzato;
-  - lo **schermo delle sessioni desktop remoto aperte in una scheda**, come lo invia il protocollo RDP: ogni secondo,
-    lo schermo della scheda visualizzata viene rilevato e sono conservate solo le zone modificate, con i colori esatti
+  - lo **schermo delle sessioni desktop remoto aperte in una scheda**, come lo invia il protocollo RDP: al massimo una
+    volta al secondo, lo schermo della scheda visualizzata viene rilevato e sono conservate solo le zone modificate, con i colori esatti
     (quadrati di 64 × 64 pixel, compressi; una zona già vista, come un menu che ricompare, è conservata una volta sola;
     uno scorrimento o una finestra spostata è conservato come una copia dello schermo precedente, non come tutto ciò che
     ha cambiato). Con il client FreeRDP di ZillaTerm, è il desktop come il client l'ha decodificato, alla sua dimensione
     e al pixel, anche se la finestra è ridimensionata, coperta da un'altra o non risponde, con le copie dello schermo
-    chieste dal server; con il controllo Desktop remoto di Windows, una cattura della finestra, in cui ZillaTerm
-    riconosce da sé gli scorrimenti. «● Schermo registrato» nella barra della scheda lo ricorda. Una scheda in secondo piano, una finestra ridotta a icona e lo
+    chieste dal server: un desktop invariato non è né copiato né confrontato (quasi nulla per il processore), e una
+    modifica è rilevata entro 200 ms, non fino a un secondo dopo. Con il controllo Desktop remoto di Windows, una cattura
+    della finestra ogni secondo, in cui ZillaTerm riconosce da sé gli scorrimenti. «● Schermo registrato» nella barra della scheda lo ricorda. Una scheda in secondo piano, una finestra ridotta a icona e lo
     schermo intero non sono catturati; di ritorno sulla scheda, ciò che è cambiato nel frattempo viene conservato. Una
     piccola modifica isolata (un carattere digitato) è conservata non appena lo schermo resta fermo per 3 secondi, al
     più tardi dopo un minuto; uno schermo fermo non costa nulla. Oltre **100 MB di registro** lo schermo è conservato
     solo una volta ogni 10 secondi: il registro lo annota, la scheda «Intervento» lo dice e l'indicatore diventa «●
     Schermo registrato (ogni 10 s)». L'apertura della sessione (schermata del PSM, accesso a Windows, desktop,
     applicazione) costa alcuni schermi interi, da 0,1 a 1 MB ciascuno secondo la dimensione dello schermo e lo sfondo.
-    Con il registro di debug, ogni minuto un riepilogo indica quanto è costato lo schermo (catture, immagini
-    conservate di cui complete, peso, dimensione del registro): del peso su uno schermo fermo indica un'immagine che
+    Con il registro di debug, ogni minuto un riepilogo indica quanto è costato lo schermo (catture di cui quelle di un
+    desktop invariato, immagini conservate di cui complete, peso, copie dello schermo, dimensione del registro): del peso su uno schermo fermo indica un'immagine che
     cambia senza che si veda. Per un intervento già registrato, clic destro in «Interventi registrati» › «Misura la
     compressione dello schermo» (solo con il registro di debug): il registro riceve quanto peserebbe il suo schermo con
-    altre codifiche, tutte senza perdita (Brotli, scorrimento riconosciuto); lo schermo riletto resta in memoria, nulla
-    viene salvato né inviato. Una sessione aperta con Connessione Desktop remoto (mstsc) non è registrata così: solo la
+    altre codifiche, tutte senza perdita e verificate, con il tempo di calcolo di ciascuna: il formato attuale
+    (controllo: il peso del registro per un intervento registrato dalla 0.42), senza copie dello schermo, 16 o 24 bit
+    riquadro per riquadro, riquadri di al massimo 256 colori in tavolozza, Brotli 9 e 11, un solo flusso Brotli,
+    un'immagine chiave ogni 30 minuti al massimo, solo la prima immagine completa. Lo schermo riletto resta in memoria,
+    nulla viene salvato né inviato; misurare un intervento lungo richiede tempo (soprattutto Brotli 11). Una sessione aperta con Connessione Desktop remoto (mstsc) non è registrata così: solo la
     cattura la conserva.
 - **Scheda «Intervento» del pannello laterale** (`Ctrl+4`): compare all'inizio della registrazione, con un pallino rosso
   finché la registrazione dura: titolo, note e cronologia restano accanto alla sessione. Aprire una sessione SSH non la
@@ -1743,7 +1747,8 @@ giorni vengono cancellate.
 Terminale: al consenso, lo schermo attuale (senza la cronologia: contenuto, colori, modalità, cursore), poi il flusso
 così come il terminale lo riceve; un cambio di dimensione rinvia lo schermo intero. Schermo (Desktop remoto, VNC):
 catturato quattro volte al secondo finché qualcuno guarda, in riquadri di 64 × 64 pixel (colori esatti), partono solo
-i riquadri modificati, compressi, e uno scorrimento parte come una copia; un'immagine completa a ogni arrivo. Per lo
+i riquadri modificati, compressi, e uno scorrimento parte come una copia (quelle chieste dal server al client FreeRDP
+di ZillaTerm); un desktop invariato non è né copiato né inviato; un'immagine completa a ogni arrivo. Per lo
 schermo serve ZillaTerm 0.42 o più recente da entrambe le parti. La digitazione di chi ha il controllo è codificata
 da chi condivide, secondo le modalità del suo terminale. Limiti: 10 condivisioni contemporanee, 5 persone per
 condivisione, 3 minuti per rispondere, connessione interrotta dopo 60 secondi senza notizie; una persona in ritardo di

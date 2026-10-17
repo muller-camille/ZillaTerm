@@ -3,6 +3,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using ZillaTerm.Core.Interventions;
 
 namespace ZillaTerm.App.Services;
 
@@ -12,6 +13,13 @@ public sealed record RemoteDesktopWindow(IntPtr Handle, string Title);
 /// <summary>Pixels d'une capture : BGRA 32 bits, de haut en bas, <see cref="Width"/> × 4 octets par ligne, au début de
 /// <see cref="Bgra"/> (qui peut être plus long).</summary>
 public readonly record struct ScreenPixels(byte[] Bgra, int Width, int Height);
+
+/// <summary>
+/// Écran relevé pour l'enregistrement ou le partage : ses pixels, la version du bureau décodé par le client FreeRDP (0 :
+/// capture d'une fenêtre ou écran VNC, sans version) et les copies d'écran reçues depuis la version demandée (null :
+/// inconnues). <see cref="Pixels"/> null : bureau inchangé depuis la version demandée, rien n'a été copié.
+/// </summary>
+public readonly record struct ScreenCapture(ScreenPixels? Pixels, long Version, IReadOnlyList<ScreenMove>? Moves);
 
 /// <summary>
 /// Capture d'une fenêtre en PNG avec PrintWindow (contenu rendu par DirectX compris), même cachée par une autre fenêtre ;

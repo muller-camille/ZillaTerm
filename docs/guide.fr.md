@@ -963,25 +963,30 @@ Le bouton **« Intervention »** de la barre d'outils ouvre une fenêtre utile �
   - les **captures** : « Capturer un Bureau à distance… » (onglet « Intervention ») prend une image d'une fenêtre
     Connexion Bureau à distance (sessions PSM ; une fenêtre réduite ne peut pas l'être), et le bouton « Capture » des
     onglets Bureau à distance de ZillaTerm prend celle du bureau affiché ;
-  - l'**écran des sessions Bureau à distance ouvertes dans un onglet**, comme le protocole RDP l'envoie : chaque
-    seconde, l'écran de l'onglet affiché est relevé et seules les zones modifiées sont gardées, aux couleurs exactes
+  - l'**écran des sessions Bureau à distance ouvertes dans un onglet**, comme le protocole RDP l'envoie : au plus une
+    fois par seconde, l'écran de l'onglet affiché est relevé et seules les zones modifiées sont gardées, aux couleurs exactes
     (carrés de 64 × 64 pixels, compressés ; une zone déjà vue, comme un menu qui revient, n'est gardée qu'une fois ; un
     défilement ou une fenêtre déplacée est gardé comme une copie de l'écran d'avant, pas comme tout ce qu'il a changé).
     Avec le client FreeRDP de ZillaTerm, c'est le bureau tel que le client l'a décodé, à sa taille et au pixel près, même
     si la fenêtre est mise à l'échelle, couverte par une autre ou ne répond plus, avec les copies d'écran que le serveur
-    lui a demandées ; avec le contrôle Bureau à distance de Windows, une capture de la fenêtre, où ZillaTerm reconnaît
-    lui-même les défilements. « ● Écran enregistré » dans la barre de l'onglet le rappelle. Un onglet en arrière-plan, une fenêtre réduite et le plein écran
+    lui a demandées : un bureau inchangé n'est ni copié ni comparé (presque rien pour le processeur), et un changement
+    est relevé dans les 200 ms, pas jusqu'à une seconde plus tard. Avec le contrôle Bureau à distance de Windows, une
+    capture de la fenêtre chaque seconde, où ZillaTerm reconnaît lui-même les défilements. « ● Écran enregistré » dans la barre de l'onglet le rappelle. Un onglet en arrière-plan, une fenêtre réduite et le plein écran
     ne sont pas capturés ; de retour sur l'onglet, ce qui a changé entre-temps est gardé. Un petit changement isolé (un
     caractère tapé) l'est dès que l'écran ne bouge plus pendant 3 secondes, au plus tard après une minute ; un écran
     immobile ne coûte rien. Au-delà de **100 Mo de journal**, l'écran n'est plus gardé qu'une fois toutes les 10
     secondes : le journal le note, l'onglet « Intervention » le dit et l'indicateur devient « ● Écran enregistré (toutes
     les 10 s) ». L'ouverture de la session (écran du PSM, ouverture de session Windows, bureau, application) coûte
     quelques écrans entiers, de 0,1 à 1 Mo chacun selon la taille de l'écran et le fond. Avec le journal de débogage,
-    chaque minute un bilan donne ce que l'écran a coûté (captures, images gardées dont complètes, poids, taille du
-    journal) : du poids sur un écran immobile montre une image qui change sans que cela se voie. Pour une intervention
+    chaque minute un bilan donne ce que l'écran a coûté (captures dont celles d'un bureau inchangé, images gardées dont
+    complètes, poids, copies d'écran, taille du journal) : du poids sur un écran immobile montre une image qui change sans que cela se voie. Pour une intervention
     déjà enregistrée, clic droit dans « Interventions enregistrées » › « Mesurer la compression de l'écran » (avec le
     journal de débogage seulement) : le journal reçoit ce que pèserait son écran avec d'autres façons de l'encoder, toutes
-    sans perte (Brotli, défilement reconnu) ; l'écran relu reste en mémoire, rien n'est enregistré ni envoyé. Une
+    sans perte et vérifiées, avec le temps de calcul de chacune : le format actuel (contrôle : le poids du journal pour
+    une intervention enregistrée depuis la 0.42), sans copie d'écran, 16 ou 24 bits tuile par tuile, tuiles d'au plus 256
+    couleurs en palette, Brotli 9 et 11, un seul flux Brotli, une image clé toutes les 30 minutes au plus, seule la
+    première image complète. L'écran relu reste en mémoire, rien n'est enregistré ni envoyé ; la mesure d'une longue
+    intervention prend du temps (Brotli 11 surtout). Une
     session ouverte avec Connexion Bureau à distance (mstsc) n'est pas enregistrée ainsi : seule la capture la garde.
 - **Onglet « Intervention » du panneau de gauche** (`Ctrl+4`) : il apparaît au début de l'enregistrement, avec une
   pastille rouge tant que l'enregistrement dure : titre, notes et historique restent à côté de la session. Ouvrir une
@@ -1740,7 +1745,8 @@ les 200 ms ; les sous-dossiers abandonnés depuis plus de deux jours sont effac�
 Terminal : à l'accord, l'écran actuel (sans l'historique : contenu, couleurs, modes, curseur) puis le flux tel que le
 terminal le reçoit ; un changement de taille renvoie l'écran entier. Écran (Bureau à distance, VNC) : capturé quatre
 fois par seconde tant que quelqu'un regarde, en tuiles de 64 × 64 pixels (couleurs exactes), seules les tuiles
-modifiées partent, compressées, et un défilement part comme une copie ; une image complète à chaque arrivée. Il faut
+modifiées partent, compressées, et un défilement part comme une copie (celles que le serveur a demandées au client
+FreeRDP de ZillaTerm) ; un bureau inchangé n'est ni copié ni envoyé ; une image complète à chaque arrivée. Il faut
 ZillaTerm 0.42 ou plus récent des deux côtés pour l'écran. La saisie de la personne qui a la main est
 encodée chez celui qui partage, selon les modes de son terminal. Limites : 10 partages à la fois, 5 personnes par
 partage, 3 minutes pour répondre, connexion coupée après 60 secondes sans nouvelles ; une personne en retard de plus

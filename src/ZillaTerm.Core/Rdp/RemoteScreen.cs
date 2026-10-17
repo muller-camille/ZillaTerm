@@ -33,6 +33,8 @@ public sealed class RemoteScreen
     /// <summary>Messages dont les copies restent connues : de quoi couvrir quelques secondes entre deux lectures.</summary>
     private const int MovesKept = 128;
 
+    private static long s_ids;
+
     private readonly object _lock = new();
     private byte[] _pixels = [];
     private int _width;
@@ -45,6 +47,12 @@ public sealed class RemoteScreen
     // Copies de chaque message récent (numéro, copies) ; avant _movesFrom (changement de taille), plus rien ne vaut.
     private readonly Queue<(long Version, ScreenMove[] Moves)> _moves = new();
     private long _movesFrom;
+
+    /// <summary>
+    /// Numéro de cet écran, unique dans le processus (à partir de 1) : la version d'un écran ne se confond pas avec celle
+    /// d'un autre (nouvelle connexion de la même session).
+    /// </summary>
+    public long Id { get; } = Interlocked.Increment(ref s_ids);
 
     /// <summary>Messages appliqués depuis le début : change à chaque mise à jour de l'écran.</summary>
     public long Version

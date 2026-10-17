@@ -207,6 +207,20 @@ public sealed class RemoteScreenTests
     }
 
     /// <summary>Flux coupé au milieu d'un message (client fermé) : terminé, pas illisible.</summary>
+    /// <summary>
+    /// Chaque écran a son numéro (nouvelle connexion de la même session) : la version relevée sur un écran ne se confond
+    /// pas avec celle d'un autre.
+    /// </summary>
+    [Fact]
+    public void EachScreenHasItsOwnNumber()
+    {
+        var first = new RemoteScreen();
+        var second = new RemoteScreen();
+
+        Assert.True(first.Id > 0);
+        Assert.True(second.Id > first.Id);
+    }
+
     [Fact]
     public void CutStreamEndsWithoutFailing()
     {

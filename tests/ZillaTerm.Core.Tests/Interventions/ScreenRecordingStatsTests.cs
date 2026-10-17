@@ -55,6 +55,12 @@ public sealed class ScreenRecordingStatsTests
         Assert.Null(encoder.Encode(start.AddSeconds(200), second, 256, 128, 256 * 4));
         Assert.Equal("5 s : 1 capture(s), 0 image(s) gardée(s) dont 0 complète(s), 0 o (plus grosse 0 o), 0 tuile(s) nouvelle(s), "
                      + "0 copie(s) d'écran, écran 256×128", stats.Report(start.AddSeconds(205), final: true));
+
+        // Écran connu inchangé, vu sans copie : compté parmi les captures, et dit.
+        stats.Captured(start.AddSeconds(300));
+        stats.Unchanged(start.AddSeconds(301));
+        stats.Unchanged(start.AddSeconds(302));
+        Assert.StartsWith("3 s : 3 capture(s) dont 2 sans changement, 0 image(s) gardée(s)", stats.Report(start.AddSeconds(303), final: true));
     }
 
     [Theory]

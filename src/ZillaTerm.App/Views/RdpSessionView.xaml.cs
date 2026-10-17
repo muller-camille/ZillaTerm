@@ -208,11 +208,12 @@ public partial class RdpSessionView : UserControl
     private IntPtr _shownSlot;
 
     /// <summary>
-    /// Image du bureau pour une session partagée (fil de travail) : celle décodée par le client FreeRDP, sinon une capture
-    /// de la fenêtre ; null s'il n'est pas affiché dans l'onglet (onglet en arrière-plan ; plein écran ou session qui ne
-    /// répond plus sans bureau décodé) : la personne qui regarde voit l'image figée, et le sait.
+    /// Image du bureau pour une session partagée (fil de travail) : celle décodée par le client FreeRDP, comparée à sa
+    /// version <paramref name="since"/> (inchangée : rien de copié), sinon une capture de la fenêtre ; null s'il n'est pas
+    /// affiché dans l'onglet (onglet en arrière-plan ; plein écran ou session qui ne répond plus sans bureau décodé) : la
+    /// personne qui regarde voit l'image figée, et le sait.
     /// </summary>
-    internal Services.ScreenPixels? CaptureForShare(byte[]? buffer)
+    internal Services.ScreenCapture? CaptureForShare(byte[]? buffer, long since)
     {
         var slot = Volatile.Read(ref _shownSlot);
         if (slot == IntPtr.Zero)
@@ -220,8 +221,14 @@ public partial class RdpSessionView : UserControl
             return null;
         }
 
-        return Session.CopyDecodedScreen(buffer)
-            ?? (Session.IsFullScreen || Session.IsNotResponding ? null : Services.WindowCapture.CaptureChildPixels(slot, buffer));
+        if (Session.CaptureDecoded(buffer, since) is { } decoded)
+        {
+            return decoded;
+        }
+
+        return !Session.IsFullScreen && !Session.IsNotResponding && Services.WindowCapture.CaptureChildPixels(slot, buffer) is { } pixels
+            ? new Services.ScreenCapture(pixels, 0, null)
+            : null;
     }
 
     private void OnFullScreen(object sender, RoutedEventArgs e) => Session.EnterFullScreen();

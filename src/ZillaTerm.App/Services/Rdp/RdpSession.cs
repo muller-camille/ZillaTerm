@@ -131,20 +131,36 @@ internal sealed class RdpSession : IDisposable
     /// taille, quoi que montre l'onglet ; null pour le contrôle de Windows, avant la première image, ou si le flux reçu
     /// du client est illisible (la fenêtre est alors capturée). N'importe quel fil.
     /// </summary>
-    public ScreenPixels? CopyDecodedScreen(byte[]? buffer) => CopyDecodedScreen(buffer, 0, out _, out _);
+    public ScreenPixels? CopyDecodedScreen(byte[]? buffer) => CaptureDecoded(buffer, 0)?.Pixels;
 
     /// <summary>
-    /// Comme <see cref="CopyDecodedScreen(byte[])"/>, avec la version du bureau copiée et les copies d'écran (défilement,
-    /// fenêtre déplacée) reçues depuis la version <paramref name="since"/> ; null si elles ne sont pas connues.
+    /// Bureau décodé par le client FreeRDP, comparé à sa version <paramref name="since"/> (relevé précédent ; 0 : aucun,
+    /// toujours copié) : inchangé (rien de copié, sans calcul), ou copié dans <paramref name="buffer"/> avec sa version et
+    /// les copies d'écran (défilement, fenêtre déplacée) reçues depuis. Null pour le contrôle de Windows, avant la
+    /// première image, ou si le flux reçu du client est illisible. N'importe quel fil.
     /// </summary>
-    public ScreenPixels? CopyDecodedScreen(byte[]? buffer, long since, out long version, out ScreenMove[]? moves)
+    public ScreenCapture? CaptureDecoded(byte[]? buffer, long since)
     {
-        version = 0;
-        moves = null;
-        return Volatile.Read(ref _connection)?.Screen is { Failed: false } screen && screen.Copy(buffer, since, out version, out moves) is { } copy
-            ? new ScreenPixels(copy.Bgra, copy.Width, copy.Height)
+        if (Volatile.Read(ref _connection)?.Screen is not { Failed: false } screen)
+        {
+            return null;
+        }
+
+        // Version rendue : numéro de l'écran et version dans cet écran. Celle d'un écran précédent (nouvelle connexion de
+        // la session, qui repart de zéro) ne vaut rien pour celui-ci : tout est recopié, sans copie d'écran.
+        long known = since >> VersionBits == screen.Id ? since & ((1L << VersionBits) - 1) : 0;
+        if (known > 0 && screen.Version == known)
+        {
+            return new ScreenCapture(null, since, []);
+        }
+
+        return screen.Copy(buffer, known, out long version, out var moves) is { } copy
+            ? new ScreenCapture(new ScreenPixels(copy.Bgra, copy.Width, copy.Height), (screen.Id << VersionBits) | version, moves)
             : null;
     }
+
+    /// <summary>Bits de la version dans un écran, dans celle rendue par <see cref="CaptureDecoded"/> (le reste : son numéro).</summary>
+    private const int VersionBits = 40;
 
     /// <summary>
     /// Mises à jour du bureau décodé reçues, dont partielles (zones modifiées seulement), et copies d'écran reçues ; null

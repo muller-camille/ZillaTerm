@@ -3,8 +3,8 @@ using System.Globalization;
 namespace ZillaTerm.Core.Interventions;
 
 /// <summary>
-/// Bilan de l'écran d'une session enregistré, par période (<see cref="Period"/>), pour le journal de débogage : captures,
-/// images gardées (dont complètes), poids, tuiles nouvelles, copies d'écran (défilement, fenêtre déplacée). Un écran immobile ne garde rien : du poids sur un écran
+/// Bilan de l'écran d'une session enregistré, par période (<see cref="Period"/>), pour le journal de débogage : captures
+/// (dont celles d'un écran connu inchangé, sans copie), images gardées (dont complètes), poids, tuiles nouvelles, copies d'écran (défilement, fenêtre déplacée). Un écran immobile ne garde rien : du poids sur un écran
 /// immobile montre une image qui change sans que cela se voie (image compressée avec pertes qui s'affine, par exemple).
 /// </summary>
 public sealed class ScreenRecordingStats
@@ -13,6 +13,7 @@ public sealed class ScreenRecordingStats
 
     private DateTime? _start;
     private int _captures;
+    private int _unchanged;
     private int _frames;
     private int _keys;
     private long _newTiles;
@@ -27,6 +28,16 @@ public sealed class ScreenRecordingStats
     {
         _start ??= now;
         _captures++;
+    }
+
+    /// <summary>
+    /// Écran inchangé depuis la capture précédente, vu par l'encodeur sans être copié ni comparé (bureau décodé par le client
+    /// FreeRDP) : compté comme une capture.
+    /// </summary>
+    public void Unchanged(DateTime now)
+    {
+        Captured(now);
+        _unchanged++;
     }
 
     /// <summary>Image gardée dans le journal.</summary>
@@ -54,11 +65,12 @@ public sealed class ScreenRecordingStats
 
         var c = CultureInfo.InvariantCulture;
         var size = _width > 0 ? string.Create(c, $", écran {_width}×{_height}") : "";
+        var unchanged = _unchanged > 0 ? string.Create(c, $" dont {_unchanged} sans changement") : "";
         var line = string.Create(c,
-            $"{(now - start).TotalSeconds:0} s : {_captures} capture(s), {_frames} image(s) gardée(s) dont {_keys} complète(s), " +
+            $"{(now - start).TotalSeconds:0} s : {_captures} capture(s){unchanged}, {_frames} image(s) gardée(s) dont {_keys} complète(s), " +
             $"{Bytes(_bytes)} (plus grosse {Bytes(_largest)}), {_newTiles} tuile(s) nouvelle(s), {_moves} copie(s) d'écran{size}");
         _start = null;
-        _captures = _frames = _keys = 0;
+        _captures = _unchanged = _frames = _keys = 0;
         _newTiles = _moves = _bytes = _largest = 0;
         return line;
     }

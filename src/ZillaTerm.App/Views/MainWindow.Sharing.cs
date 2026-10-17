@@ -174,7 +174,7 @@ public partial class MainWindow
         {
             SshSession ssh => new TerminalShareSource(share, ssh, Dispatcher),
             RdpSession rdp when RdpViewOf(rdp) is { } view => new ScreenShareSource(share, view.CaptureForShare),
-            VncSession vnc => new ScreenShareSource(share, buffer => CaptureVnc(vnc, buffer)),
+            VncSession vnc => new ScreenShareSource(share, (buffer, _) => CaptureVnc(vnc, buffer) is { } pixels ? new ScreenCapture(pixels, 0, null) : null),
             _ => throw new InvalidOperationException("Session non partageable."),
         }, session);
         FollowShare(active, tab);
