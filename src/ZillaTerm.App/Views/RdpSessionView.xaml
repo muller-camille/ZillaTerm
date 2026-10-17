@@ -16,6 +16,10 @@
                             Click="OnCapture" Padding="10,1" Margin="0,0,6,0" Visibility="Collapsed" />
                     <Button x:Name="FullScreenButton" Content="{x:Static loc:Strings.RdpFullScreen}" ToolTip="{x:Static loc:Strings.RdpFullScreenTip}"
                             Click="OnFullScreen" Padding="10,1" Margin="0,0,6,0" />
+                    <!-- Nouvelle connexion dans l'onglet (comme « Reconnecter » du menu de l'onglet) : confirmation si la session est ouverte. -->
+                    <Button x:Name="ToolbarReconnectButton" Content="{x:Static loc:Strings.RdpReconnect}" ToolTip="{x:Static loc:Strings.RdpReconnectTip}"
+                            AutomationProperties.HelpText="{x:Static loc:Strings.RdpReconnectTip}"
+                            Click="OnToolbarReconnect" Padding="10,1" Margin="0,0,6,0" />
                     <Button x:Name="DisconnectButton" Content="{x:Static loc:Strings.RdpDisconnect}" ToolTip="{x:Static loc:Strings.RdpDisconnectTip}"
                             Click="OnDisconnect" Padding="10,1" />
                 </StackPanel>

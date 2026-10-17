@@ -181,7 +181,7 @@
     <value>Paramètres</value>
   </data>
   <data name="ToolSettingsTip" xml:space="preserve">
-    <value>PSMP, langue, composants mémorisés, journal de débogage</value>
+    <value>Paramètres de ZillaTerm : PSMP, langue, Bureau à distance, journal de débogage, À propos</value>
   </data>
   <data name="TabAvailable" xml:space="preserve">
     <value>Disponibles</value>
@@ -1622,9 +1622,6 @@ Les envoyer dans une seule archive {3} ? Un seul fichier à transférer et à v�
   <data name="InvalidFontSize" xml:space="preserve">
     <value>La taille de police doit être comprise entre {0} et {1}.</value>
   </data>
-  <data name="MenuAbout" xml:space="preserve">
-    <value>À propos de _ZillaTerm…</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>À propos de ZillaTerm</value>
   </data>
@@ -2043,26 +2040,8 @@ Vos modifications restent dans l'éditeur : enregistrez à nouveau pour réessay
   <data name="DetachedReattach" xml:space="preserve">
     <value>_Ramener dans l'onglet</value>
   </data>
-  <data name="MenuSettings" xml:space="preserve">
-    <value>_Paramètres…</value>
-  </data>
-  <data name="MenuDebugLog" xml:space="preserve">
-    <value>_Journal de débogage</value>
-  </data>
-  <data name="MenuDebugLogTip" xml:space="preserve">
-    <value>Note le déroulement des connexions (PVWA, PSM, Bureau à distance, SSH) dans un fichier, pour comprendre un échec. Il contient des noms de serveurs et de comptes, jamais de mot de passe ni de jeton. Désactivé par défaut.</value>
-  </data>
-  <data name="MenuDebugLogShow" xml:space="preserve">
-    <value>Afficher le _fichier du journal</value>
-  </data>
   <data name="DebugLogActive" xml:space="preserve">
     <value>Journal de débogage actif</value>
-  </data>
-  <data name="DebugLogStarted" xml:space="preserve">
-    <value>Journal de débogage activé : {0}</value>
-  </data>
-  <data name="DebugLogStopped" xml:space="preserve">
-    <value>Journal de débogage désactivé.</value>
   </data>
   <data name="DebugLogMissing" xml:space="preserve">
     <value>Pas encore de journal de débogage : activez-le, puis reproduisez le problème.</value>
@@ -4020,9 +3999,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="SettingsPageSecurity" xml:space="preserve">
     <value>Sécurité</value>
   </data>
-  <data name="SettingsUpdatesSection" xml:space="preserve">
-    <value>Mises à jour</value>
-  </data>
   <data name="SettingsRightClickEffect" xml:space="preserve">
     <value>⚠ Un clic droit par mégarde envoie le presse-papiers au shell, même root.</value>
   </data>
@@ -4046,12 +4022,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="ForgetSelectedKeys" xml:space="preserve">
     <value>Oublier les _clés choisies</value>
-  </data>
-  <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Les mises à jour sont recherchées au démarrage (Paramètres › Général).</value>
-  </data>
-  <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>La recherche automatique des mises à jour est désactivée (Paramètres › Général).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Ne sert que pour une connexion par le PSM (pas en SSH ni en SFTP via le PSMP).</value>
@@ -4598,9 +4568,6 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   </data>
   <data name="SessionImportTip" xml:space="preserve">
     <value>Importer les sessions d'un autre logiciel (PuTTY, WinSCP, mRemoteNG, RDCMan…) pour les ouvrir via CyberArk</value>
-  </data>
-  <data name="MenuSessionImport" xml:space="preserve">
-    <value>Importer les sessions d'un autre _logiciel…</value>
   </data>
   <data name="SessionImportDone" xml:space="preserve">
     <value>{0:# serveur importé|# serveurs importés} dans « Mes serveurs »</value>
@@ -5388,11 +5355,8 @@ Deux instances écraseraient l'une l'autre leurs réglages, leur coffre local et
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Plus net qu'une image mise à l'échelle ; à décocher si l'écran du serveur cible ne suit pas.</value>
   </data>
-  <data name="PsmRedirectDrives" xml:space="preserve">
-    <value>Partager les _disques de ce poste</value>
-  </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>Comme « Map local drives » du PVWA, si le composant le permet : les programmes de la session peuvent lire et écrire sur vos disques. Décochée, aucun disque n'est partagé dans un onglet.</value>
+    <value>Comme « Map local drives » du PVWA, si le composant le permet : les programmes de la session peuvent lire et écrire sur les disques ou dossiers partagés. Aucun : rien n'est partagé.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessions PSM Windows dans un onglet</value>
@@ -6527,7 +6491,7 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
     <value>Note le déroulement des connexions dans un fichier, pour comprendre un échec : noms de serveurs et de comptes, jamais de mot de passe.</value>
   </data>
   <data name="SettingsDebugLogShow" xml:space="preserve">
-    <value>Afficher le _fichier</value>
+    <value>Afficher le _fichier du journal</value>
   </data>
   <data name="TeamBadge" xml:space="preserve">
     <value>Équipe</value>
@@ -6624,5 +6588,83 @@ L'onglet est fermé : gardez vos modifications en les enregistrant ailleurs depu
   </data>
   <data name="SettingsTailWordsHelp" xml:space="preserve">
     <value>Mots séparés par des virgules ; une alerte marque la ligne et fait clignoter le bouton de la barre des tâches.</value>
+  </data>
+  <data name="PsmDrivesSection" xml:space="preserve">
+    <value>Disques du poste partagés avec les sessions PSM Windows</value>
+  </data>
+  <data name="PsmDrivesNone" xml:space="preserve">
+    <value>_Aucun</value>
+  </data>
+  <data name="PsmDrivesAll" xml:space="preserve">
+    <value>_Tous les disques</value>
+  </data>
+  <data name="PsmDrivesFolders" xml:space="preserve">
+    <value>_Ces dossiers seulement</value>
+  </data>
+  <data name="PsmFoldersHelp" xml:space="preserve">
+    <value>Vus dans la session sous \\tsclient\Nom. Chemin complet, ou commençant par une variable (%USERPROFILE%\Partage). Sessions dans un onglet avec le client de ZillaTerm seulement : Connexion Bureau à distance et le contrôle de Windows ne partagent alors aucun disque.</value>
+  </data>
+  <data name="PsmFoldersList" xml:space="preserve">
+    <value>Dossiers partagés</value>
+  </data>
+  <data name="PsmFolderColName" xml:space="preserve">
+    <value>Nom dans la session</value>
+  </data>
+  <data name="PsmFolderColPath" xml:space="preserve">
+    <value>Chemin sur ce poste</value>
+  </data>
+  <data name="PsmFolderAdd" xml:space="preserve">
+    <value>Ajouter un _dossier…</value>
+  </data>
+  <data name="PsmFolderRemove" xml:space="preserve">
+    <value>Ret_irer</value>
+  </data>
+  <data name="InvalidFolderName" xml:space="preserve">
+    <value>Nom de dossier partagé invalide (ligne {0}) : lettres sans accent, chiffres, « . », « - » ou « _ », {1} caractères au plus.</value>
+  </data>
+  <data name="InvalidFolderPath" xml:space="preserve">
+    <value>Chemin de dossier partagé invalide (ligne {0}) : chemin complet (C:\…, \\serveur\partage\…) ou commençant par une variable (%USERPROFILE%\…), sans « , » ni guillemets.</value>
+  </data>
+  <data name="DuplicateFolderName" xml:space="preserve">
+    <value>Deux dossiers partagés s'appellent « {0} ».</value>
+  </data>
+  <data name="TooManyFolders" xml:space="preserve">
+    <value>{0} dossiers partagés au plus.</value>
+  </data>
+  <data name="FoldersEmpty" xml:space="preserve">
+    <value>« Ces dossiers seulement » : ajoutez au moins un dossier, ou choisissez « Aucun ».</value>
+  </data>
+  <data name="EnvPsmShareFoldersOnly" xml:space="preserve">
+    <value>Seulement des dossiers choisis partagés avec les sessions PSM Windows</value>
+  </data>
+  <data name="EnvPsmSharedFolders" xml:space="preserve">
+    <value>Dossiers partagés avec les sessions PSM Windows</value>
+  </data>
+  <data name="EnvPsmSharedFoldersNetwork" xml:space="preserve">
+    <value>Dossiers partagés avec les sessions PSM Windows, dont un sur le serveur réseau {0}</value>
+  </data>
+  <data name="EnvInvalidSharedFolder" xml:space="preserve">
+    <value>Dossier partagé invalide (nom en lettres sans accent, chiffres, « . », « - » ou « _ » ; chemin complet ou commençant par une variable, sans « , » ni guillemets ; 16 dossiers au plus, sans doublon) : {0}</value>
+  </data>
+  <data name="PsmFoldersMissing" xml:space="preserve">
+    <value>{0} : dossiers partagés introuvables sur ce poste, non partagés : {1}</value>
+  </data>
+  <data name="PsmFoldersWindowsControl" xml:space="preserve">
+    <value>{0} : le contrôle Bureau à distance de Windows ne partage que des disques entiers ; aucun dossier partagé (« Ces dossiers seulement »).</value>
+  </data>
+  <data name="PsmStartedNoFolders" xml:space="preserve">
+    <value>Session PSM lancée : {0} ({1}). Connexion Bureau à distance ne partage que des disques entiers : aucun disque partagé (« Ces dossiers seulement »).</value>
+  </data>
+  <data name="SettingsDebugLogShowTip" xml:space="preserve">
+    <value>Ouvre l'Explorateur sur le fichier du journal de débogage, pour le relire ou le joindre à un message.</value>
+  </data>
+  <data name="RdpReconnect" xml:space="preserve">
+    <value>Re_connecter</value>
+  </data>
+  <data name="RdpReconnectTip" xml:space="preserve">
+    <value>Nouvelle connexion dans cet onglet (pour une session PSM, nouvelle demande au PVWA) ; une session ouverte est d'abord fermée, après confirmation.</value>
+  </data>
+  <data name="SettingsPageAbout" xml:space="preserve">
+    <value>À propos</value>
   </data>
 </root>

@@ -181,7 +181,7 @@
     <value>Settings</value>
   </data>
   <data name="ToolSettingsTip" xml:space="preserve">
-    <value>PSMP, language, remembered components, debug log</value>
+    <value>ZillaTerm settings: PSMP, language, remote desktop, debug log, About</value>
   </data>
   <data name="TabAvailable" xml:space="preserve">
     <value>Available</value>
@@ -1622,9 +1622,6 @@ Send them in a single {3} archive? One file to transfer and check instead of {0}
   <data name="InvalidFontSize" xml:space="preserve">
     <value>The font size must be between {0} and {1}.</value>
   </data>
-  <data name="MenuAbout" xml:space="preserve">
-    <value>_About ZillaTerm…</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>About ZillaTerm</value>
   </data>
@@ -2043,26 +2040,8 @@ Your changes stay in the editor: save again to retry.</value>
   <data name="DetachedReattach" xml:space="preserve">
     <value>_Bring it back here</value>
   </data>
-  <data name="MenuSettings" xml:space="preserve">
-    <value>_Settings…</value>
-  </data>
-  <data name="MenuDebugLog" xml:space="preserve">
-    <value>_Debug log</value>
-  </data>
-  <data name="MenuDebugLogTip" xml:space="preserve">
-    <value>Records how connections unfold (PVWA, PSM, remote desktop, SSH) in a file, to understand a failure. It contains server and account names, never passwords or tokens. Off by default.</value>
-  </data>
-  <data name="MenuDebugLogShow" xml:space="preserve">
-    <value>Show the debug log _file</value>
-  </data>
   <data name="DebugLogActive" xml:space="preserve">
     <value>Debug log on</value>
-  </data>
-  <data name="DebugLogStarted" xml:space="preserve">
-    <value>Debug log on: {0}</value>
-  </data>
-  <data name="DebugLogStopped" xml:space="preserve">
-    <value>Debug log off.</value>
   </data>
   <data name="DebugLogMissing" xml:space="preserve">
     <value>No debug log yet: turn it on, then reproduce the problem.</value>
@@ -4020,9 +3999,6 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="SettingsPageSecurity" xml:space="preserve">
     <value>Security</value>
   </data>
-  <data name="SettingsUpdatesSection" xml:space="preserve">
-    <value>Updates</value>
-  </data>
   <data name="SettingsRightClickEffect" xml:space="preserve">
     <value>⚠ A stray right-click sends the clipboard to the shell, root shells included.</value>
   </data>
@@ -4046,12 +4022,6 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="ForgetSelectedKeys" xml:space="preserve">
     <value>Forget the selected _keys</value>
-  </data>
-  <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Updates are checked at start-up (Settings › General).</value>
-  </data>
-  <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>Automatic update check is off (Settings › General).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Used only for a PSM connection (not for SSH or SFTP through the PSMP).</value>
@@ -4598,9 +4568,6 @@ Two instances would overwrite each other's settings, local vault and files being
   </data>
   <data name="SessionImportTip" xml:space="preserve">
     <value>Import the sessions of another tool (PuTTY, WinSCP, mRemoteNG, RDCMan…) to open them through CyberArk</value>
-  </data>
-  <data name="MenuSessionImport" xml:space="preserve">
-    <value>Import sessions from another _tool…</value>
   </data>
   <data name="SessionImportDone" xml:space="preserve">
     <value>{0:# server|# servers} imported into My servers</value>
@@ -5388,11 +5355,8 @@ Two instances would overwrite each other's settings, local vault and files being
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Sharper than a scaled picture; turn it off if the target server's screen does not follow.</value>
   </data>
-  <data name="PsmRedirectDrives" xml:space="preserve">
-    <value>Share this _computer's drives</value>
-  </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>Like “Map local drives” in the PVWA, when the component allows it: programs in the session can read and write your drives. Unchecked, no drive is shared in a tab.</value>
+    <value>Like “Map local drives” in the PVWA, when the component allows it: programs in the session can read and write the shared drives or folders. None: nothing is shared.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>PSM Windows sessions in a tab</value>
@@ -6527,7 +6491,7 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
     <value>Writes how connections go in a file, to understand a failure: server and account names, never a password.</value>
   </data>
   <data name="SettingsDebugLogShow" xml:space="preserve">
-    <value>Show the _file</value>
+    <value>Show the log _file</value>
   </data>
   <data name="TeamBadge" xml:space="preserve">
     <value>Team</value>
@@ -6624,5 +6588,83 @@ The tab is closed: keep your changes by saving them elsewhere from the editor, t
   </data>
   <data name="SettingsTailWordsHelp" xml:space="preserve">
     <value>Words separated by commas; an alert marks the line and flashes the taskbar button.</value>
+  </data>
+  <data name="PsmDrivesSection" xml:space="preserve">
+    <value>This computer's drives shared with PSM Windows sessions</value>
+  </data>
+  <data name="PsmDrivesNone" xml:space="preserve">
+    <value>_None</value>
+  </data>
+  <data name="PsmDrivesAll" xml:space="preserve">
+    <value>_All drives</value>
+  </data>
+  <data name="PsmDrivesFolders" xml:space="preserve">
+    <value>_Only these folders</value>
+  </data>
+  <data name="PsmFoldersHelp" xml:space="preserve">
+    <value>Seen in the session as \\tsclient\Name. Full path, or starting with a variable (%USERPROFILE%\Share). Sessions in a tab with the ZillaTerm client only: Remote Desktop Connection and the Windows control then share no drive.</value>
+  </data>
+  <data name="PsmFoldersList" xml:space="preserve">
+    <value>Shared folders</value>
+  </data>
+  <data name="PsmFolderColName" xml:space="preserve">
+    <value>Name in the session</value>
+  </data>
+  <data name="PsmFolderColPath" xml:space="preserve">
+    <value>Path on this computer</value>
+  </data>
+  <data name="PsmFolderAdd" xml:space="preserve">
+    <value>Add a _folder…</value>
+  </data>
+  <data name="PsmFolderRemove" xml:space="preserve">
+    <value>Re_move</value>
+  </data>
+  <data name="InvalidFolderName" xml:space="preserve">
+    <value>Invalid shared folder name (line {0}): letters without accents, digits, “.”, “-” or “_”, {1} characters at most.</value>
+  </data>
+  <data name="InvalidFolderPath" xml:space="preserve">
+    <value>Invalid shared folder path (line {0}): full path (C:\…, \\server\share\…) or starting with a variable (%USERPROFILE%\…), without “,” or quotation marks.</value>
+  </data>
+  <data name="DuplicateFolderName" xml:space="preserve">
+    <value>Two shared folders are named “{0}”.</value>
+  </data>
+  <data name="TooManyFolders" xml:space="preserve">
+    <value>{0} shared folders at most.</value>
+  </data>
+  <data name="FoldersEmpty" xml:space="preserve">
+    <value>“Only these folders”: add at least one folder, or choose “None”.</value>
+  </data>
+  <data name="EnvPsmShareFoldersOnly" xml:space="preserve">
+    <value>Only chosen folders shared with PSM Windows sessions</value>
+  </data>
+  <data name="EnvPsmSharedFolders" xml:space="preserve">
+    <value>Folders shared with PSM Windows sessions</value>
+  </data>
+  <data name="EnvPsmSharedFoldersNetwork" xml:space="preserve">
+    <value>Folders shared with PSM Windows sessions, including one on the network server {0}</value>
+  </data>
+  <data name="EnvInvalidSharedFolder" xml:space="preserve">
+    <value>Invalid shared folder (name in letters without accents, digits, “.”, “-” or “_”; full path or starting with a variable, without “,” or quotation marks; 16 folders at most, no duplicate): {0}</value>
+  </data>
+  <data name="PsmFoldersMissing" xml:space="preserve">
+    <value>{0}: shared folders not found on this computer, not shared: {1}</value>
+  </data>
+  <data name="PsmFoldersWindowsControl" xml:space="preserve">
+    <value>{0}: the Windows Remote Desktop control only shares whole drives; no folder shared (“Only these folders”).</value>
+  </data>
+  <data name="PsmStartedNoFolders" xml:space="preserve">
+    <value>PSM session started: {0} ({1}). Remote Desktop Connection only shares whole drives: no drive shared (“Only these folders”).</value>
+  </data>
+  <data name="SettingsDebugLogShowTip" xml:space="preserve">
+    <value>Opens File Explorer on the debug log file, to read it again or attach it to a message.</value>
+  </data>
+  <data name="RdpReconnect" xml:space="preserve">
+    <value>Re_connect</value>
+  </data>
+  <data name="RdpReconnectTip" xml:space="preserve">
+    <value>New connection in this tab (for a PSM session, a new request to the PVWA); an open session is closed first, after confirmation.</value>
+  </data>
+  <data name="SettingsPageAbout" xml:space="preserve">
+    <value>About</value>
   </data>
 </root>

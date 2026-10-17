@@ -181,7 +181,7 @@
     <value>Impostazioni</value>
   </data>
   <data name="ToolSettingsTip" xml:space="preserve">
-    <value>PSMP, lingua, componenti memorizzati, registro di debug</value>
+    <value>Impostazioni di ZillaTerm: PSMP, lingua, Desktop remoto, registro di debug, Informazioni</value>
   </data>
   <data name="TabAvailable" xml:space="preserve">
     <value>Disponibili</value>
@@ -1622,9 +1622,6 @@ Inviarli in un unico archivio {3}? Un solo file da trasferire e verificare invec
   <data name="InvalidFontSize" xml:space="preserve">
     <value>La dimensione del carattere deve essere compresa tra {0} e {1}.</value>
   </data>
-  <data name="MenuAbout" xml:space="preserve">
-    <value>Informazioni su _ZillaTerm…</value>
-  </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Informazioni su ZillaTerm</value>
   </data>
@@ -2043,26 +2040,8 @@ Le modifiche restano nell'editor: salva di nuovo per riprovare.</value>
   <data name="DetachedReattach" xml:space="preserve">
     <value>_Riporta nella scheda</value>
   </data>
-  <data name="MenuSettings" xml:space="preserve">
-    <value>_Impostazioni…</value>
-  </data>
-  <data name="MenuDebugLog" xml:space="preserve">
-    <value>_Registro di debug</value>
-  </data>
-  <data name="MenuDebugLogTip" xml:space="preserve">
-    <value>Registra in un file lo svolgimento delle connessioni (PVWA, PSM, desktop remoto, SSH), per capire un errore. Contiene nomi di server e di account, mai password né token. Disattivato per impostazione predefinita.</value>
-  </data>
-  <data name="MenuDebugLogShow" xml:space="preserve">
-    <value>Mostra il _file del registro</value>
-  </data>
   <data name="DebugLogActive" xml:space="preserve">
     <value>Registro di debug attivo</value>
-  </data>
-  <data name="DebugLogStarted" xml:space="preserve">
-    <value>Registro di debug attivato: {0}</value>
-  </data>
-  <data name="DebugLogStopped" xml:space="preserve">
-    <value>Registro di debug disattivato.</value>
   </data>
   <data name="DebugLogMissing" xml:space="preserve">
     <value>Ancora nessun registro di debug: attivalo, poi riproduci il problema.</value>
@@ -4020,9 +3999,6 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="SettingsPageSecurity" xml:space="preserve">
     <value>Sicurezza</value>
   </data>
-  <data name="SettingsUpdatesSection" xml:space="preserve">
-    <value>Aggiornamenti</value>
-  </data>
   <data name="SettingsRightClickEffect" xml:space="preserve">
     <value>⚠ Un clic destro involontario invia gli appunti alla shell, anche root.</value>
   </data>
@@ -4046,12 +4022,6 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="ForgetSelectedKeys" xml:space="preserve">
     <value>Dimentica le c_hiavi scelte</value>
-  </data>
-  <data name="AboutAutoCheckOn" xml:space="preserve">
-    <value>Gli aggiornamenti vengono cercati all'avvio (Impostazioni › Generale).</value>
-  </data>
-  <data name="AboutAutoCheckOff" xml:space="preserve">
-    <value>La ricerca automatica degli aggiornamenti è disattivata (Impostazioni › Generale).</value>
   </data>
   <data name="PsmOnlyField" xml:space="preserve">
     <value>Serve solo per una connessione tramite il PSM (non in SSH né in SFTP tramite il PSMP).</value>
@@ -4598,9 +4568,6 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   </data>
   <data name="SessionImportTip" xml:space="preserve">
     <value>Importa le sessioni di un altro programma (PuTTY, WinSCP, mRemoteNG, RDCMan…) per aprirle tramite CyberArk</value>
-  </data>
-  <data name="MenuSessionImport" xml:space="preserve">
-    <value>Importa le sessioni di un altro pro_gramma…</value>
   </data>
   <data name="SessionImportDone" xml:space="preserve">
     <value>{0:# server importato|# server importati} in «I miei server»</value>
@@ -5388,11 +5355,8 @@ Due istanze sovrascriverebbero a vicenda impostazioni, vault locale e file in mo
   <data name="PsmDynamicResolutionHelp" xml:space="preserve">
     <value>Più nitido di un'immagine adattata; disattivala se lo schermo del server di destinazione non si adegua.</value>
   </data>
-  <data name="PsmRedirectDrives" xml:space="preserve">
-    <value>Condividi i _dischi di questo computer</value>
-  </data>
   <data name="PsmRedirectDrivesHelp" xml:space="preserve">
-    <value>Come «Map local drives» del PVWA, se il componente lo consente: i programmi della sessione possono leggere e scrivere sui tuoi dischi. Deselezionata, nessun disco è condiviso in una scheda.</value>
+    <value>Come «Map local drives» del PVWA, se il componente lo consente: i programmi della sessione possono leggere e scrivere sui dischi o sulle cartelle condivisi. Nessuno: non viene condiviso nulla.</value>
   </data>
   <data name="EnvPsmDesktopInTab" xml:space="preserve">
     <value>Sessioni PSM Windows in una scheda</value>
@@ -6527,7 +6491,7 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
     <value>Annota lo svolgimento delle connessioni in un file, per capire un errore: nomi di server e di account, mai una password.</value>
   </data>
   <data name="SettingsDebugLogShow" xml:space="preserve">
-    <value>Mostra il fil_e</value>
+    <value>Mostra il file del re_gistro</value>
   </data>
   <data name="TeamBadge" xml:space="preserve">
     <value>Team</value>
@@ -6624,5 +6588,83 @@ La scheda è chiusa: conserva le modifiche salvandole altrove dall'editor, poi i
   </data>
   <data name="SettingsTailWordsHelp" xml:space="preserve">
     <value>Parole separate da virgole; un avviso segna la riga e fa lampeggiare il pulsante della barra delle applicazioni.</value>
+  </data>
+  <data name="PsmDrivesSection" xml:space="preserve">
+    <value>Dischi di questo computer condivisi con le sessioni PSM Windows</value>
+  </data>
+  <data name="PsmDrivesNone" xml:space="preserve">
+    <value>N_essuno</value>
+  </data>
+  <data name="PsmDrivesAll" xml:space="preserve">
+    <value>_Tutti i dischi</value>
+  </data>
+  <data name="PsmDrivesFolders" xml:space="preserve">
+    <value>Solo _queste cartelle</value>
+  </data>
+  <data name="PsmFoldersHelp" xml:space="preserve">
+    <value>Visibili nella sessione come \\tsclient\Nome. Percorso completo, o che inizia con una variabile (%USERPROFILE%\Condivisa). Solo sessioni in una scheda con il client di ZillaTerm: Connessione Desktop remoto e il controllo di Windows non condividono allora nessun disco.</value>
+  </data>
+  <data name="PsmFoldersList" xml:space="preserve">
+    <value>Cartelle condivise</value>
+  </data>
+  <data name="PsmFolderColName" xml:space="preserve">
+    <value>Nome nella sessione</value>
+  </data>
+  <data name="PsmFolderColPath" xml:space="preserve">
+    <value>Percorso su questo computer</value>
+  </data>
+  <data name="PsmFolderAdd" xml:space="preserve">
+    <value>Aggiungi una _cartella…</value>
+  </data>
+  <data name="PsmFolderRemove" xml:space="preserve">
+    <value>Ri_muovi</value>
+  </data>
+  <data name="InvalidFolderName" xml:space="preserve">
+    <value>Nome di cartella condivisa non valido (riga {0}): lettere senza accenti, cifre, «.», «-» o «_», al massimo {1} caratteri.</value>
+  </data>
+  <data name="InvalidFolderPath" xml:space="preserve">
+    <value>Percorso di cartella condivisa non valido (riga {0}): percorso completo (C:\…, \\server\condivisione\…) o che inizia con una variabile (%USERPROFILE%\…), senza «,» né virgolette.</value>
+  </data>
+  <data name="DuplicateFolderName" xml:space="preserve">
+    <value>Due cartelle condivise si chiamano «{0}».</value>
+  </data>
+  <data name="TooManyFolders" xml:space="preserve">
+    <value>Al massimo {0} cartelle condivise.</value>
+  </data>
+  <data name="FoldersEmpty" xml:space="preserve">
+    <value>«Solo queste cartelle»: aggiungi almeno una cartella, o scegli «Nessuno».</value>
+  </data>
+  <data name="EnvPsmShareFoldersOnly" xml:space="preserve">
+    <value>Solo cartelle scelte condivise con le sessioni PSM Windows</value>
+  </data>
+  <data name="EnvPsmSharedFolders" xml:space="preserve">
+    <value>Cartelle condivise con le sessioni PSM Windows</value>
+  </data>
+  <data name="EnvPsmSharedFoldersNetwork" xml:space="preserve">
+    <value>Cartelle condivise con le sessioni PSM Windows, di cui una sul server di rete {0}</value>
+  </data>
+  <data name="EnvInvalidSharedFolder" xml:space="preserve">
+    <value>Cartella condivisa non valida (nome in lettere senza accenti, cifre, «.», «-» o «_»; percorso completo o che inizia con una variabile, senza «,» né virgolette; al massimo 16 cartelle, senza duplicati): {0}</value>
+  </data>
+  <data name="PsmFoldersMissing" xml:space="preserve">
+    <value>{0}: cartelle condivise non trovate su questo computer, non condivise: {1}</value>
+  </data>
+  <data name="PsmFoldersWindowsControl" xml:space="preserve">
+    <value>{0}: il controllo Desktop remoto di Windows condivide solo dischi interi; nessuna cartella condivisa («Solo queste cartelle»).</value>
+  </data>
+  <data name="PsmStartedNoFolders" xml:space="preserve">
+    <value>Sessione PSM avviata: {0} ({1}). Connessione Desktop remoto condivide solo dischi interi: nessun disco condiviso («Solo queste cartelle»).</value>
+  </data>
+  <data name="SettingsDebugLogShowTip" xml:space="preserve">
+    <value>Apre Esplora file sul file del registro di debug, per rileggerlo o allegarlo a un messaggio.</value>
+  </data>
+  <data name="RdpReconnect" xml:space="preserve">
+    <value>Ri_connetti</value>
+  </data>
+  <data name="RdpReconnectTip" xml:space="preserve">
+    <value>Nuova connessione in questa scheda (per una sessione PSM, nuova richiesta al PVWA); una sessione aperta viene prima chiusa, dopo conferma.</value>
+  </data>
+  <data name="SettingsPageAbout" xml:space="preserve">
+    <value>Informazioni</value>
   </data>
 </root>

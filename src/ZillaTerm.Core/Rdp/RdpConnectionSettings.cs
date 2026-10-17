@@ -49,7 +49,15 @@ public sealed record RdpConnectionSettings
 
     public bool RedirectClipboard { get; init; } = true;
 
+    /// <summary>Tous les disques du poste partagés.</summary>
     public bool RedirectDrives { get; init; }
+
+    /// <summary>
+    /// Dossiers du poste partagés à la place de tous les disques (chemins complets, déjà vérifiés : voir
+    /// <see cref="SharedFolderRules.Resolve"/>) : client FreeRDP de ZillaTerm seulement, le contrôle Bureau à distance de
+    /// Windows n'en partage aucun.
+    /// </summary>
+    public IReadOnlyList<SharedFolder> SharedFolders { get; init; } = [];
 
     public bool RedirectPrinters { get; init; }
 
@@ -205,12 +213,17 @@ public sealed record RdpConnectionSettings
     /// Option « partager les disques » de ZillaTerm : décochée, les disques de ce poste ne sont jamais partagés, même si
     /// le fichier du PVWA le demande (choix gardé dans le PVWA, réglage du composant).
     /// </param>
-    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false, bool drives = true) => this with
+    /// <param name="folders">
+    /// « Ces dossiers seulement » : ces dossiers à la place de tous les disques, si le fichier du PVWA permet les disques
+    /// (jamais plus que lui) ; liste vide, aucun.
+    /// </param>
+    public RdpConnectionSettings ForPsmTab(bool dynamicResolution = false, bool drives = true, IReadOnlyList<SharedFolder>? folders = null) => this with
     {
         SmartSizing = !dynamicResolution,
         BitmapPersistence = false,
         AuthenticationLevel = AuthenticationLevel == 1 ? 1 : 2,
-        RedirectDrives = RedirectDrives && drives,
+        RedirectDrives = RedirectDrives && drives && folders is null,
+        SharedFolders = RedirectDrives && drives && folders is not null ? [.. folders] : [],
     };
 
     /// <summary>Réglages d'un fichier .rdp (voir <see cref="Parse"/>), quel que soit son encodage.</summary>

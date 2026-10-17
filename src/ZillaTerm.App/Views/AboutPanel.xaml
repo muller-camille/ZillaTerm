@@ -1,10 +1,9 @@
-<Window x:Class="ZillaTerm.App.Views.AboutWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:loc="clr-namespace:ZillaTerm.App.Localization"
-        Title="{x:Static loc:Strings.AboutTitle}" Width="560" SizeToContent="Height" ResizeMode="NoResize"
-        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
-    <StackPanel Margin="18">
+<!-- Page « À propos » des Paramètres : version, liens du projet, licence, dossier des paramètres, nouvelle version. -->
+<UserControl x:Class="ZillaTerm.App.Views.AboutPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:ZillaTerm.App.Localization">
+    <StackPanel>
         <DockPanel Margin="0,0,0,12">
             <!-- Source choisie selon l'échelle de l'écran (AboutWindow.ShowLogo) ; réduction lissée. -->
             <Image x:Name="LogoImage" DockPanel.Dock="Left" Width="56" Height="56" Margin="0,0,14,0" VerticalAlignment="Top"
@@ -17,9 +16,9 @@
         </DockPanel>
 
         <TextBlock Margin="0,0,0,4">
-            <Hyperlink Click="OnProject"><Run Text="{x:Static loc:Strings.AboutProject}" /></Hyperlink>
+            <Hyperlink Click="OnProject" Foreground="{DynamicResource AccentBrush}"><Run Text="{x:Static loc:Strings.AboutProject}" /></Hyperlink>
             <Run Text="   " />
-            <Hyperlink Click="OnReleases"><Run Text="{x:Static loc:Strings.AboutReleases}" /></Hyperlink>
+            <Hyperlink Click="OnReleases" Foreground="{DynamicResource AccentBrush}"><Run Text="{x:Static loc:Strings.AboutReleases}" /></Hyperlink>
         </TextBlock>
         <TextBlock x:Name="LicenseText" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
 
@@ -45,10 +44,6 @@
             <Button x:Name="ShowFileButton" Content="{x:Static loc:Strings.AboutShowFile}" Click="OnShowFile" Margin="8,0,0,0" Visibility="Collapsed" />
         </StackPanel>
         <ProgressBar x:Name="DownloadProgress" Height="8" Maximum="1" Visibility="Collapsed" Margin="0,0,0,6" />
-        <!-- Réglage de la recherche automatique : dans les Paramètres seulement (page Général). -->
-        <TextBlock x:Name="AutoCheckText" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,4" />
-        <TextBlock Text="{x:Static loc:Strings.AboutUpdateNote}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
-
-        <Button Content="{x:Static loc:Strings.CloseButton}" IsCancel="True" IsDefault="True" HorizontalAlignment="Right" />
+        <TextBlock Text="{x:Static loc:Strings.AboutUpdateNote}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,0,0,4" />
     </StackPanel>
-</Window>
+</UserControl>

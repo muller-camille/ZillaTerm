@@ -175,18 +175,21 @@ public sealed partial class UxTextTests
 
     /// <summary>
     /// Paramètres : chaque case a une touche d'accès dans les trois langues, sauf les colonnes de l'onglet Fichiers, un
-    /// groupe atteint par la touche de son libellé « Colonnes ».
+    /// groupe atteint par la touche de son libellé « Colonnes » ; de même pour les choix à texte traduit (disques du
+    /// poste : Aucun, Tous les disques, Ces dossiers seulement).
     /// </summary>
     [Fact]
     public void SettingsCheckBoxes_HaveAnAccessKey()
     {
         var app = Path.Combine(AccessKeysTests.RepositoryRoot(), "src", "ZillaTerm.App");
-        var keys = XDocument.Load(Path.Combine(app, "Views", "SettingsDialog.xaml")).Root!.Descendants(Wpf + "CheckBox")
+        var root = XDocument.Load(Path.Combine(app, "Views", "SettingsDialog.xaml")).Root!;
+        var keys = root.Descendants(Wpf + "CheckBox")
+            .Concat(root.Descendants(Wpf + "RadioButton").Where(r => r.Element(Wpf + "AccessText") is not null))
             .Where(c => !((string?)c.Attribute(Xaml + "Name") ?? "").EndsWith("ColumnBox", StringComparison.Ordinal))
             .Select(c => (string?)c.Attribute("Content") ?? (string?)c.Element(Wpf + "AccessText")?.Attribute("Text") ?? (string?)c.Element(Wpf + "TextBlock")?.Attribute("Text"))
             .Select(v => StaticKey().Match(v ?? "").Groups[1].Value)
             .ToList();
-        Assert.Equal(20, keys.Count);
+        Assert.Equal(22, keys.Count);
         foreach (var suffix in new[] { "", ".fr", ".it" })
         {
             var texts = XDocument.Load(Path.Combine(app, "Localization", $"Strings{suffix}.resx")).Root!.Elements("data")

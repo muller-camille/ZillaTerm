@@ -189,12 +189,19 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   to ask the CyberArk team for, avoids the confirmations.
 - **Redirections** (clipboard, drives…): those the PVWA asks for, never more. No picture of the session is kept on
   disk.
-- **This computer's drives**: the option "Share this computer's drives" (Settings › Remote desktop, on by
-  default) asks the PVWA for them, like the "Map local drives" box of its connection window
-  (`AllowMappingLocalDrives` parameter). When the connection component allows it, the PVWA writes them into the RDP
-  file and they appear in the session (File Explorer › This PC), in the tab and in Remote Desktop Connection alike.
-  With the option off, no drive is shared in the tab, even if the PVWA asks for it (choice kept in the PVWA, component
-  setting); Remote Desktop Connection follows the PVWA's signed file, which cannot be modified.
+- **This computer's drives**: Settings › Remote desktop › "This computer's drives shared with PSM Windows
+  sessions": **None**, **All drives** (default) or **Only these folders**. With drives or folders, ZillaTerm asks the
+  PVWA for them, like the "Map local drives" box of its connection window (`AllowMappingLocalDrives` parameter); when
+  the connection component allows it, the PVWA writes them into the RDP file, and never more is shared than it allows.
+  - *All drives*: they appear in the session (File Explorer › This PC), in the tab and in Remote Desktop Connection
+    alike.
+  - *Only these folders*: only the folders of the list (name seen in the session as `\\tsclient\Name`, path on this
+    computer, full or starting with a variable such as `%USERPROFILE%\Share`), with the ZillaTerm client in a tab. A
+    folder missing at connection time is not shared and the status bar says so. Remote Desktop Connection and the
+    Windows Remote Desktop control can only share whole drives: no drive for them in this mode, rather than all of
+    them (for Remote Desktop Connection, ZillaTerm asks the PVWA for a file without drives).
+  - *None*: no drive is shared in the tab, even if the PVWA asks for it (choice kept in the PVWA, component setting);
+    Remote Desktop Connection follows the PVWA's signed file, which cannot be modified.
 - **Display paused**: the option "Pause the display of sessions nobody is watching" (Settings › Remote
   desktop, checked by default) asks the server to stop sending the picture of a session in a tab when the tab has
   been in the background, ZillaTerm minimized or Windows locked for 1 minute, or when nobody has used the keyboard or
@@ -204,7 +211,8 @@ it includes: no `.rdp` file, no Windows warning about its publisher, no separate
   Never for the tab shown while an intervention is being recorded or the session is shared. During a recording, the
   pause of a tab in the background is marked in it: the report's player shows "Display paused" on the screen and a grey
   band on the timeline (see [Intervention](#8-intervention-recording-and-on-call-duty-reminder)).
-- **Reconnect**, "Duplicate tab": new request to the PVWA (a PSM session token is used only once); reason and ticket
+- **Reconnect** (button of the tab bar, next to "Full screen" and "Disconnect", or tab menu; confirmation if the
+  session is open), "Duplicate tab": new request to the PVWA (a PSM session token is used only once); reason and ticket
   stay those of the first connection. If the CyberArk session has expired in the meantime, the sign-in window is
   offered, then the request starts again.
 - The tab shows the server's tag (PROD, QA…) and its coloured frame; "Capture" adds a picture to the log of an
@@ -724,7 +732,7 @@ other):
 ### Bring in the sessions of another tool
 
 To move to ZillaTerm without typing your servers again, and stop connecting to them directly: "Import ▾" menu ›
-"Sessions of another tool…" at the top of the tab, or **Settings** menu › "Import sessions from another tool…". The PVWA accounts must be loaded.
+"Sessions of another tool…" at the top of the tab. The PVWA accounts must be loaded.
 
 <img src="captures/en/session-import.png" alt="Importing the sessions of another tool: preview before the import" width="820">
 
@@ -1105,15 +1113,16 @@ windows and to the title bar; Windows high contrast always takes precedence. SSH
 
 <img src="captures/en/settings.png" alt="Settings" width="480">
 
-Settings toolbar button → "Settings…" (or `Ctrl+,`). The window, which can be resized, has one page per topic (on the
+Settings toolbar button (or `Ctrl+,`). The window, which can be resized, has one page per topic (on the
 left, `Ctrl+Tab` from one to the next): General, CyberArk, SSH, Remote desktop, Terminal, Files, My servers,
-Intervention, Sharing, Security; each fits on one screen. Every setting has its help line underneath; "⚠" there marks
+Intervention, Sharing, Security, About; each fits on one screen. Every setting has its help line underneath; "⚠" there marks
 a real risk. "Save" applies the settings; an incorrect value shows the page of the field concerned, with the cursor in
 it.
 
 Everything applies on "Save", an imported environment included; only the actions of the local vault (Security page)
 apply at once, and say so. "Learn more about this page" (or `F1`), at the bottom of the window, opens the section of
-the page shown in this online guide (installed version, interface language).
+the page shown in this online guide (installed version, interface language). The toolbar's **Settings** button opens this
+window directly, without a menu.
 
 **"Team" badge**: on the right of a setting, it means that the team's [environment file](#shared-environment) (next to
 the executable or central file) sets it, with the value in effect; its tooltip gives the file. You can still change the
@@ -1129,10 +1138,9 @@ import, or changed since, has no badge.
 | Interface language | Français, English, Italiano or system language; applied after signing out of CyberArk or at the next start | Windows language (English if it is not translated) |
 | Theme | Same as Windows, Light or Dark; applied right away (Windows high contrast takes precedence) | same as Windows |
 | Confirm before closing a connected session | SSH, remote desktop, VNC; "Don't ask again" in the confirmation unticks this setting | yes |
-| Look for a new version at startup | One request to GitHub at most once a day; a link in the status bar when a newer version exists (the "About" window recalls this setting) | no |
 | Central file | Team environment file on a network share, read at each start; its changes are shown before being applied (see [Shared environment](#shared-environment)) | empty |
 | Import, export the environment | "Import an environment…": its changes are shown, then filled in the pages and applied on "Save" ("Cancel" drops them). "Export the environment…": the values shown, no password, no personal data (see [Shared environment](#shared-environment)) | — |
-| Debug log | How connections unfold, in a file, without secrets (see [Security](#security)); "Show the file" opens it in Explorer. Also in the Settings button menu | no |
+| Debug log | How connections unfold, in a file, without secrets (see [Security](#security)); "Show the log file", just under the box, opens it in Explorer | no |
 
 <a id="settings-cyberark"></a>
 
@@ -1165,7 +1173,8 @@ import, or changed since, has no badge.
 | --- | --- | --- |
 | Open PSM Windows sessions in a ZillaTerm tab | PSM session (desktop or remote application) in a tab, with the built-in FreeRDP client, at the size of the tab (see [Open a PSM session](#3-open-a-psm-session-remote-desktop)); unchecked: Windows Remote Desktop Connection | no |
 | Resize the remote desktop with the tab | Sessions in a tab: the resolution follows the size of the tab instead of a scaled picture; the connection from the PSM to the target may keep its original size | yes |
-| Share this computer's drives | Asks the PVWA for this computer's drives ("Map local drives" box of its connection window, `AllowMappingLocalDrives`); when the component allows them, they appear in the session (File Explorer › This PC). ⚠ The programs of the session can then read and write your drives | yes |
+| This computer's drives shared with PSM Windows sessions | **None**, **All drives** or **Only these folders** (see [This computer's drives](#3-open-a-psm-session-remote-desktop)). With drives or folders, ZillaTerm asks the PVWA for them ("Map local drives" box of its connection window, `AllowMappingLocalDrives`), and never more is shared than the component allows. ⚠ The programs of the session can read and write the shared drives or folders | All drives |
+| Folders (Only these folders) | Name seen in the session (`\\tsclient\Name`: letters without accents, digits, ".", "-", "_") and path on this computer, full (`C:\…`, `\\server\share\…`) or starting with a variable (`%USERPROFILE%\Share`); "Add a folder…" proposes the name from the chosen folder. ZillaTerm client in a tab only: Remote Desktop Connection and the Windows control then share no drive | none |
 | Pause the display of sessions nobody is watching | Sessions in a tab: when the tab has been in the background, ZillaTerm minimized or Windows locked for 1 minute, or nobody has used the keyboard or mouse for 15 minutes, the server stops sending the picture; the session stays open, the picture comes back when you return to the tab or move the mouse. Never for the tab shown while an intervention is being recorded or the session is shared; during a recording, the pause of a tab in the background is marked in it (screen and timeline of the report) | yes |
 
 <a id="settings-terminal"></a>
@@ -1233,13 +1242,26 @@ import, or changed since, has no badge.
 | Server keys and certificates | Table of the fingerprints checked and accepted (server, type, fingerprint): PSMP, direct SSH, FTPS and Remote Desktop certificates of KeePass entries (one row per key type); "Filter the servers" narrows the list. "Forget the selected keys" removes the selected rows, forgotten on save ("Restore removed keys" puts them back until then); the key will be asked again at the next connection | — |
 | Local vault | Remembered KeePass master passwords: "Create…", "Unlock…", "Change password…", "Delete now…"; these actions apply at once, without "Save" | — |
 
+<a id="settings-about"></a>
+
+#### About page
+
+ZillaTerm's version, links to the project and the release notes, licence, .NET and Windows versions, folder of the
+settings and history ("Open the folder"). "Check now" asks GitHub; a new version downloads into the Downloads folder,
+checked by its SHA-256 sum: nothing is installed, you replace the executable yourself. The status bar's new-version
+link opens this page.
+
+| Setting | Purpose | Default |
+| --- | --- | --- |
+| Look for a new version at startup | One request to GitHub at most once a day; a link in the status bar when a newer version exists | no |
+
 The settings the team's environment file can spread are listed in [Shared environment](#shared-environment).
 
 ### Shared environment
 
 To give ZillaTerm to a colleague with the team's configuration (PVWA address, sign-in method, default and by-domain
 PSMPs, Windows accounts component and per-platform components, shared lists, PSMP keys, on-call duty reminder (text or
-file), timed reminders, server tags, session sharing, a few options), with nothing personal and no password:
+file), timed reminders, server tags, shared folders, session sharing, a few options), with nothing personal and no password:
 
 1. **Export**: Settings › General › "Export the environment…" saves `ZillaTerm.env.json` with the values shown.
 2. **Next to the executable**: put this file next to `ZillaTerm.exe` (for example in the same zip). At start, when
@@ -1414,7 +1436,7 @@ first ZillaTerm version but cannot download it itself (renamed repository): down
   - `urgence.log`: date, Windows account, computer, action, database, entry, target; never a password. Every read of an
     entry's password is written there, reconnections and the Files tab's SFTP / SCP connections included; if the
     log cannot be written, the connection is not opened.
-- **Debug log**, off by default (Settings button menu): `%LOCALAPPDATA%\ZillaTerm\debug.log`, 5 MB at most plus
+- **Debug log**, off by default (Settings › General, with "Show the log file" just under the box): `%LOCALAPPDATA%\ZillaTerm\debug.log`, 5 MB at most plus
   one `.1` generation. It records how PVWA, PSM, remote desktop and SSH connections unfold: request addresses and
   statuses, .rdp file settings, Remote Desktop control events and codes, SSH server version and algorithms, errors;
   for each refused upload protocol, the step (connection, scp command, file announcement), the server's answer and
@@ -1522,9 +1544,9 @@ fixed size, scaled to the tab. Direct connections follow the tab size.
 
 **FreeRDP client.** PSM sessions in a tab go through the FreeRDP Windows client (`wfreerdp`), built by the release
 workflow of the `muller-camille/FreeRDP` fork (branch `ci`) and published in its releases; `tools/freerdp-download.sh`
-takes the pinned release and checks it (pinned SHA-256 sum, GitHub build provenance attestation). FreeRDP 3.32.1 and
+takes the pinned release and checks it (pinned SHA-256 sum, GitHub build provenance attestation). FreeRDP 3.32.2 and
 OpenSSL 3.5.9 at pinned versions (verified commit, archive verified by its SHA-256 sum), statically linked (a single executable, which uses only Windows DLLs), with generic patches, nothing
-specific to ZillaTerm, each one meant to be offered to the FreeRDP project (branch `patches-3.32.1` of the
+specific to ZillaTerm, each one meant to be offered to the FreeRDP project (branch `patches-3.32.2` of the
 `muller-camille/FreeRDP` fork): connection file read from standard input, legacy "RDP security" subject to
 `/cert:deny` and to the fingerprints, remote applications answering the server and shown in the parent window,
 keyboard and mouse wheel, window responsive between reconnection attempts, DPI of the parent window, library search
@@ -1690,13 +1712,14 @@ sh or fish, following is not set up and nothing stays on screen.
 | "The shared list is being modified by someone else" | Another computer has been writing the list for more than 5 seconds, or keeps the file open: try again in a moment. |
 | "you do not have the right to modify this file (rights of the network share)" | The share is read-only for you: ask its owner for write access. The list can still be used. |
 | A shared list shows "(unreadable)" | Share unreachable or damaged file: the tooltip gives the error. If the file is damaged, copy the most recent version of the `name.versions` folder in its place. |
-| Understanding a connection failure | Settings → Debug log, reproduce the problem, then Settings → "Show the debug log file". |
+| Understanding a connection failure | Settings → Debug log, reproduce the problem, then "Show the log file", just under the box. |
 | A PSM session in a tab asks you to confirm the PSM certificate | Windows does not trust this certificate (self-signed, or issued for another name): compare the fingerprint with the CyberArk team before accepting; it is then remembered. A certificate issued by the company authority for the PSM name removes this question. |
 | PSM session: "New certificate for this PSM" | The PSM address probably groups several servers (load balancing), each with its own self-signed certificate, or the certificate was renewed: compare the fingerprint with the CyberArk administrator, then "Also trust it" (another PSM server) or "Replace the known certificates" (renewal). |
 | PSM session: "The identity of … could not be checked" | ZillaTerm could not read the PSM certificate before the connection (PSM unreachable, port filtered, answer that is not Remote Desktop): the reason follows the message. Nothing was sent to the PSM. |
 | A PSM session opens in Remote Desktop Connection despite the "in a tab" option | Connection through a Remote Desktop gateway, or FreeRDP client cannot be launched on the computer (computer policy): the status bar says so. |
 | Alt+Tab or the Windows key no longer respond | The tab of a PSM session has the keyboard: all keys go to the session. Click elsewhere in ZillaTerm (another tab, the list). |
-| PSM session in a tab: Ctrl+V of a file or text copied on the computer does nothing | The PVWA may not allow the clipboard, or the PSM may only allow text. Settings → Debug log, reproduce (copy, click in the session, paste), then "Show the debug log file": the `freerdp` lines give the redirections asked by the PVWA (`presse-papiers oui/non`), each change of the computer clipboard (program, formats: files, text; never the contents) and the clipboard exchanges with the PSM (`cliprdr`: `CB_STREAM_FILECLIP_ENABLED` missing from the server flags means no file copy). |
+| PSM session in a tab: Ctrl+V of a file or text copied on the computer does nothing | The PVWA may not allow the clipboard, or the PSM may only allow text. Settings → Debug log, reproduce (copy, click in the session, paste), then "Show the log file" (under the box): the `freerdp` lines give the redirections asked by the PVWA (`presse-papiers oui/non`), each change of the computer clipboard (program, formats: files, text; never the contents) and the clipboard exchanges with the PSM (`cliprdr`: `CB_STREAM_FILECLIP_ENABLED` missing from the server flags means no file copy). |
+| PSM session in a tab: a computer drive does not respond, or the debug log fills with `drive_map_windows_err` | Settings → Debug log, open the session, open the drive in the session (`\\tsclient\…`), then "Show the log file" (under the box): with shared drives, the `rdpdr` lines give each request of the PSM to the drives (`MajorFunction`: operation; `deviceID`: drive) and its answer (`ioStatus`, NTSTATUS code: `0x00000000` success, `0xC0000001` failure); never the name or the contents of a file. The log becomes verbose (two lines per request): turn it off once the problem is reproduced. |
 | PSM session: "Check the key of this PSM" | The PSM only accepts the legacy "RDP security", without TLS: only the fingerprint of its key identifies it. Accept it on first use (it is remembered) and ask the CyberArk administrator to enable TLS on the PSM. "Weak key" in red: the key is shorter than 2,048 bits; this request is then urgent. |
 | PSM session: "New key for this PSM" | The PSM address probably groups several servers (load balancing), each with its own key: trust it if the CyberArk administrator confirms. The keys already accepted stay accepted. |
 | SSH or PSMP session: "The connection was cut by the server or the network" or "Session closed by the server" after sleep, a lock or a break | The connection is lost: the computer went to sleep, the network or VPN changed, a firewall forgot it, or the PSMP closed the session (inactivity). ZillaTerm detects it within a minute (keep-alive request every 15 s, which the server must answer): "Reconnect" opens a new session; the Files tab offers to reopen its own. |

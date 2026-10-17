@@ -32,6 +32,8 @@ public enum EnvironmentSetting
     ServerTags,
     PsmDesktopInTab,
     PsmRedirectDrives,
+    PsmShareFoldersOnly,
+    PsmSharedFolders,
     PauseRdpDisplay,
     KeepAccountListCopy,
 }
@@ -62,6 +64,7 @@ public enum EnvironmentProblem
     InvalidDutyText,
     InvalidServerTag,
     InvalidReminder,
+    InvalidSharedFolder,
 }
 
 /// <summary>Fichier d'environnement refusé ; <see cref="Detail"/> nomme la valeur en cause.</summary>
@@ -143,6 +146,12 @@ public sealed class EnvironmentProfile
     /// <summary>Disques du poste partagés avec les sessions PSM Windows.</summary>
     public bool? PsmRedirectDrives { get; set; }
 
+    /// <summary>« Ces dossiers seulement » à la place de tous les disques (voir <see cref="AppSettings.PsmShareFoldersOnly"/>).</summary>
+    public bool? PsmShareFoldersOnly { get; set; }
+
+    /// <summary>Dossiers partagés avec « Ces dossiers seulement », à la place de ceux du poste ; vide pour n'en garder aucun.</summary>
+    public List<Rdp.SharedFolder>? PsmSharedFolders { get; set; }
+
     /// <summary>Affichage des sessions Bureau à distance en pause quand personne ne les regarde.</summary>
     public bool? PauseRdpDisplay { get; set; }
 
@@ -215,6 +224,8 @@ public sealed class EnvironmentProfile
         If(SshInApp is not null, EnvironmentSetting.SshInApp);
         If(PsmDesktopInTab is not null, EnvironmentSetting.PsmDesktopInTab);
         If(PsmRedirectDrives is not null, EnvironmentSetting.PsmRedirectDrives);
+        If(PsmShareFoldersOnly is not null, EnvironmentSetting.PsmShareFoldersOnly);
+        If(PsmSharedFolders is not null, EnvironmentSetting.PsmSharedFolders);
         If(PauseRdpDisplay is not null, EnvironmentSetting.PauseRdpDisplay);
         If(CheckForUpdates is not null, EnvironmentSetting.CheckForUpdates);
         If(UploadProtocol is not null, EnvironmentSetting.UploadProtocol);
@@ -261,6 +272,8 @@ public sealed class EnvironmentProfile
             SshInApp = settings.SshInApp,
             PsmDesktopInTab = settings.PsmDesktopInTab,
             PsmRedirectDrives = settings.PsmRedirectDrives,
+            PsmShareFoldersOnly = settings.PsmShareFoldersOnly,
+            PsmSharedFolders = settings.PsmSharedFolders.Count == 0 && !settings.PsmShareFoldersOnly ? null : [.. settings.PsmSharedFolders],
             PauseRdpDisplay = settings.PauseRdpDisplay,
             CheckForUpdates = settings.CheckForUpdates,
             UploadProtocol = settings.PreferredUploadProtocol,
@@ -433,6 +446,11 @@ public sealed class EnvironmentProfile
             }
         }
 
+        if (PsmSharedFolders is not null && Rdp.SharedFolderRules.Check(PsmSharedFolders) is { } folderProblem)
+        {
+            Fail(EnvironmentProblem.InvalidSharedFolder, folderProblem.Detail);
+        }
+
         if (ServerTags is not null)
         {
             if (ServerTags.Count > ServerTagRules.MaxTags)
@@ -555,6 +573,17 @@ public sealed class EnvironmentProfile
         AddFlag(EnvironmentSetting.SshInApp, settings.SshInApp, SshInApp);
         AddFlag(EnvironmentSetting.PsmDesktopInTab, settings.PsmDesktopInTab, PsmDesktopInTab);
         AddFlag(EnvironmentSetting.PsmRedirectDrives, settings.PsmRedirectDrives, PsmRedirectDrives);
+        AddFlag(EnvironmentSetting.PsmShareFoldersOnly, settings.PsmShareFoldersOnly, PsmShareFoldersOnly);
+        if (PsmSharedFolders is not null)
+        {
+            // Dossier sur un partage réseau : Windows s'y authentifie à chaque session qui le partage ; signalé avec le
+            // serveur (comme une liste partagée).
+            var folders = Rdp.SharedFolderRules.Sanitize(PsmSharedFolders);
+            var server = Rdp.SharedFolderRules.NetworkServer(folders);
+            Add(EnvironmentSetting.PsmSharedFolders, server, Rdp.SharedFolderRules.Describe(settings.PsmSharedFolders),
+                Rdp.SharedFolderRules.Describe(folders), server is not null);
+        }
+
         AddFlag(EnvironmentSetting.PauseRdpDisplay, settings.PauseRdpDisplay, PauseRdpDisplay);
         AddFlag(EnvironmentSetting.CheckForUpdates, settings.CheckForUpdates, CheckForUpdates);
         if (UploadProtocol is { } protocol)
@@ -682,6 +711,11 @@ public sealed class EnvironmentProfile
         settings.SshInApp = SshInApp ?? settings.SshInApp;
         settings.PsmDesktopInTab = PsmDesktopInTab ?? settings.PsmDesktopInTab;
         settings.PsmRedirectDrives = PsmRedirectDrives ?? settings.PsmRedirectDrives;
+        settings.PsmShareFoldersOnly = PsmShareFoldersOnly ?? settings.PsmShareFoldersOnly;
+        if (PsmSharedFolders is not null)
+        {
+            settings.PsmSharedFolders = Rdp.SharedFolderRules.Sanitize(PsmSharedFolders);
+        }
         settings.PauseRdpDisplay = PauseRdpDisplay ?? settings.PauseRdpDisplay;
         settings.CheckForUpdates = CheckForUpdates ?? settings.CheckForUpdates;
         settings.PreferredUploadProtocol = UploadProtocol ?? settings.PreferredUploadProtocol;

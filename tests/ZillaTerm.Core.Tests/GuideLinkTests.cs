@@ -21,7 +21,7 @@ public sealed partial class GuideLinkTests
         var root = LocalizationTests.RepositoryRoot();
         var xaml = File.ReadAllText(Path.Combine(root, "src", "ZillaTerm.App", "Views", "SettingsDialog.xaml"));
         var pages = TabTag().Matches(xaml).Select(m => m.Groups[1].Value).ToList();
-        Assert.Equal(10, pages.Count);
+        Assert.Equal(11, pages.Count);
         Assert.Equal(pages.Count, Regex.Matches(xaml, "<TabItem ").Count);
         foreach (var guide in new[] { "guide.md", "guide.fr.md", "guide.it.md" })
         {

@@ -234,6 +234,10 @@ internal static class EnvironmentImport
             EnvironmentSetting.SshInApp => Strings.EnvSshInApp,
             EnvironmentSetting.PsmDesktopInTab => Strings.EnvPsmDesktopInTab,
             EnvironmentSetting.PsmRedirectDrives => Strings.EnvPsmRedirectDrives,
+            EnvironmentSetting.PsmShareFoldersOnly => Strings.EnvPsmShareFoldersOnly,
+            EnvironmentSetting.PsmSharedFolders => change.Detail is { } folderServer
+                ? Text.Format(Strings.EnvPsmSharedFoldersNetwork, folderServer)
+                : Strings.EnvPsmSharedFolders,
             EnvironmentSetting.PauseRdpDisplay => Strings.EnvPauseRdpDisplay,
             EnvironmentSetting.CheckForUpdates => Strings.EnvCheckForUpdates,
             EnvironmentSetting.DutyText => Strings.EnvDutyText,
@@ -290,6 +294,7 @@ internal static class EnvironmentImport
         EnvironmentProblem.InvalidDutyText => Strings.EnvInvalidDutyText,
         EnvironmentProblem.InvalidServerTag => Strings.EnvInvalidServerTag,
         EnvironmentProblem.InvalidReminder => Strings.EnvInvalidReminder,
+        EnvironmentProblem.InvalidSharedFolder => Strings.EnvInvalidSharedFolder,
         _ => Strings.EnvInvalidPath,
     }, ex.Detail);
 

@@ -33,6 +33,9 @@ public partial class RdpSessionView : UserControl
     /// <summary>Geste sur l'onglet pendant une pause pour inactivité : l'affichage est à reprendre sans attendre.</summary>
     internal event Action? WakeRequested;
 
+    /// <summary>Bouton « Reconnecter » de la barre de l'onglet : la fenêtre principale demande confirmation si la session est ouverte.</summary>
+    internal event Action? ReconnectRequested;
+
     private void Wake()
     {
         if (Session.DisplayPause == RdpDisplayPauseReason.Idle)
@@ -217,6 +220,8 @@ public partial class RdpSessionView : UserControl
     private void OnFullScreen(object sender, RoutedEventArgs e) => Session.EnterFullScreen();
 
     private void OnDisconnect(object sender, RoutedEventArgs e) => Session.Disconnect();
+
+    private void OnToolbarReconnect(object sender, RoutedEventArgs e) => ReconnectRequested?.Invoke();
 
     private async void OnReconnect(object sender, RoutedEventArgs e) => await Session.ConnectAsync();
 }

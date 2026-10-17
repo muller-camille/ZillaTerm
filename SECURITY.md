@@ -43,7 +43,7 @@ Out of scope, to be reported to their maintainers:
   (except in the two patches that ZillaTerm carries on SSH.NET, SFTP longname and X11 forwarding, built by the release
   workflow of the fork and fetched by `tools/sshnet-patched.sh`: report them here);
 - vulnerabilities in [FreeRDP](https://github.com/FreeRDP/FreeRDP) → its project (except in the generic patches that
-  ZillaTerm carries on FreeRDP 3.32.1, built by the release workflow of the fork and fetched by
+  ZillaTerm carries on FreeRDP 3.32.2, built by the release workflow of the fork and fetched by
   `tools/freerdp-download.sh`: report them here);
 - vulnerabilities in the Windows Remote Desktop client or in KeePass / KeePassXC → Microsoft or their projects.
 

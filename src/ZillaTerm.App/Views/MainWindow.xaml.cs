@@ -231,18 +231,8 @@ public partial class MainWindow : Window
         UpdateLink.Visibility = Visibility.Visible;
     }
 
-    private void OnUpdateLink(object sender, RoutedEventArgs e) => ShowAbout();
-
-    private void OnAbout(object sender, RoutedEventArgs e) => ShowAbout();
-
-    private void ShowAbout()
-    {
-        new AboutWindow(_settings, SaveSettings) { Owner = this }.ShowDialog();
-        if (UpdateService.Available is { } info && UpdateChecker.IsNewer(info.Version, UpdateChecker.CurrentVersion))
-        {
-            ShowUpdateLink(info);
-        }
-    }
+    /// <summary>Nouvelle version signalée dans la barre d'état : page « À propos » des Paramètres (téléchargement vérifié).</summary>
+    private void OnUpdateLink(object sender, RoutedEventArgs e) => OpenSettings(about: true);
 
     /// <summary>Accès d'urgence, sans connexion à CyberArk.</summary>
     private bool IsOffline => _client is null;
@@ -1210,6 +1200,7 @@ public partial class MainWindow : Window
         if (request.Mode == ConnectMode.Psm)
         {
             SetStatus(Text.Format(Strings.PsmOpening, label, request.Component));
+            var sharing = _settings.DriveSharing();
             var options = new PsmConnectOptions
             {
                 ConnectionComponent = request.Component,
@@ -1217,8 +1208,9 @@ public partial class MainWindow : Window
                 TicketingSystemName = request.TicketingSystem,
                 TicketId = request.TicketId,
                 RemoteMachine = request.RemoteMachine,
-                // Case « Map local drives » du PVWA : le PVWA l'écrit dans le fichier RDP si le composant le permet.
-                MapLocalDrives = _settings.PsmRedirectDrives,
+                // Case « Map local drives » du PVWA : le PVWA l'écrit dans le fichier RDP si le composant le permet. Disques
+                // entiers ou dossiers choisis : la demande est la même, l'onglet choisit ce qu'il partage.
+                MapLocalDrives = sharing != DriveSharing.None,
             };
             if (PsmTabClient(label, out var mstscReason) is { } freeRdp)
             {
@@ -1227,10 +1219,16 @@ public partial class MainWindow : Window
                 return true;
             }
 
+            if (sharing == DriveSharing.Folders)
+            {
+                // Connexion Bureau à distance ne partage que des disques entiers : aucun, plutôt que tous.
+                options = options.WithoutLocalDrives();
+            }
+
             LoadProgress.IsIndeterminate = true;
             LoadProgress.Visibility = Visibility.Visible;
             byte[] rdp;
-            DebugLog.Write("psm", PsmRequestLog(account, request, label));
+            DebugLog.Write("psm", PsmRequestLog(account, request, label, options));
             try
             {
                 rdp = await Client.PsmConnectAsync(account.Id, options, _lifetime.Token);
@@ -1242,7 +1240,7 @@ public partial class MainWindow : Window
 
             LogRdpFile(rdp);
             AddRecent(account, label, request.Component, request.RemoteMachine);
-            LaunchPsmInMstsc(request, label, rdp, mstscReason);
+            LaunchPsmInMstsc(request, label, rdp, MstscStatus(mstscReason, request, label, sharing));
         }
         else
         {
@@ -1303,11 +1301,14 @@ public partial class MainWindow : Window
         // option décochée, aucun, même si le fichier du PVWA les demande.
         bool dynamicResolution = _settings.PsmDynamicResolution;
         bool drives = options.MapLocalDrives;
+        var sharing = _settings.DriveSharing();
+        List<SharedFolder>? configured = sharing == DriveSharing.Folders ? [.. _settings.PsmSharedFolders] : null;
+        string? folderNotice = null;
         session = AddRdpTab(label, async ct =>
         {
             bool initial = attempts++ == 0;
             session!.ShowStep(Strings.PsmTabRequesting);
-            DebugLog.Write("psm", initial ? PsmRequestLog(account, request, label) : $"Nouvelle demande de connexion PSM pour {label} (reconnexion)");
+            DebugLog.Write("psm", initial ? PsmRequestLog(account, request, label, options) : $"Nouvelle demande de connexion PSM pour {label} (reconnexion)");
             byte[] file;
             try
             {
@@ -1335,11 +1336,18 @@ public partial class MainWindow : Window
             }
 
             LogRdpFile(file);
+            // Dossiers relus à chaque connexion : un dossier (clé USB, partage) peut apparaître ou disparaître entre deux.
+            var (folders, notice) = await SharedFoldersAsync(label, freeRdp, configured);
+            if (initial)
+            {
+                folderNotice = notice;
+            }
+
             RdpConnectionSettings settings;
             if (initial)
             {
                 first = file;
-                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, drives, out mstscReason) is not { } tab)
+                if (PsmTabSettings(file, label, freeRdp, dynamicResolution, drives, folders, out mstscReason) is not { } tab)
                 {
                     toMstsc = true;
                     throw new RdpHandedOffException("session PSM confiée à mstsc");
@@ -1360,7 +1368,7 @@ public partial class MainWindow : Window
                     throw new InvalidOperationException(Strings.PsmTabRemoteAppNow);
                 }
 
-                settings = settings.ForPsmTab(dynamicResolution, drives);
+                settings = settings.ForPsmTab(dynamicResolution, drives, folders);
             }
 
             ShowPsmAddress(session, settings.Server);
@@ -1392,7 +1400,11 @@ public partial class MainWindow : Window
         if (toMstsc && first is not null)
         {
             await RemoveRdpTabAsync(session);
-            LaunchPsmInMstsc(request, label, first, mstscReason);
+            if (await FileForMstscAsync(account, options, first, sharing) is { } forMstsc)
+            {
+                LaunchPsmInMstsc(request, label, forMstsc, MstscStatus(mstscReason, request, label, sharing));
+            }
+
             return;
         }
 
@@ -1402,11 +1414,24 @@ public partial class MainWindow : Window
             DebugLog.Write("psm", $"Client Bureau à distance inutilisable ({session.Error}) : session PSM ouverte avec mstsc.");
             var error = session.Error;
             await RemoveRdpTabAsync(session);
-            LaunchPsmInMstsc(request, label, first, Text.Format(Strings.PsmTabFallback, label, error));
+            if (await FileForMstscAsync(account, options, first, sharing) is { } forMstsc)
+            {
+                LaunchPsmInMstsc(request, label, forMstsc, Text.Format(Strings.PsmTabFallback, label, error));
+            }
+
             return;
         }
 
-        SetStatus(Text.Format(Strings.PsmStarted, label, request.Component));
+        if (folderNotice is not null)
+        {
+            // Dossier absent, ou contrôle de Windows sans dossier : l'utilisateur s'attend à le trouver dans la session.
+            SetStatus(folderNotice, isError: true);
+        }
+        else
+        {
+            SetStatus(Text.Format(Strings.PsmStarted, label, request.Component));
+        }
+
         InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: true));
     }
 
@@ -1418,9 +1443,51 @@ public partial class MainWindow : Window
         InterventionRecord(Core.Interventions.InterventionKind.Connection, label, InterventionPsmText(request, inTab: false));
     }
 
-    private string PsmRequestLog(PvwaAccount account, ConnectRequest request, string label) =>
+    /// <summary>
+    /// « Ces dossiers seulement » et Connexion Bureau à distance, qui ne partage que des disques entiers : nouveau fichier
+    /// du PVWA, demandé sans les disques du poste (le jeton du premier n'a pas servi). Sinon le premier, tel quel. Null si
+    /// la demande échoue (erreur affichée).
+    /// </summary>
+    private async Task<byte[]?> FileForMstscAsync(PvwaAccount account, PsmConnectOptions options, byte[] first, DriveSharing sharing)
+    {
+        if (sharing != DriveSharing.Folders || !options.MapLocalDrives)
+        {
+            return first;
+        }
+
+        var without = options.WithoutLocalDrives();
+        DebugLog.Write("psm", $"« Ces dossiers seulement » : nouvelle demande de connexion PSM (compte {account.Id}, composant "
+            + $"{options.ConnectionComponent}), sans les disques du poste, pour Connexion Bureau à distance.");
+        try
+        {
+            var file = await Client.PsmConnectAsync(account.Id, without, _lifetime.Token);
+            LogRdpFile(file);
+            return file;
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+            return null;
+        }
+        catch (Exception e) when (e is PvwaException or HttpRequestException or IOException or OperationCanceledException)
+        {
+            SetStatus(Text.Format(Strings.ConnectFailed, ErrorText.Describe(e)), isError: true);
+            return null;
+        }
+    }
+
+    /// <summary>État affiché quand Connexion Bureau à distance ouvre la session : la raison donnée, sinon l'absence de disque
+    /// avec « Ces dossiers seulement » (elle ne partage que des disques entiers).</summary>
+    private static string? MstscStatus(string? reason, ConnectRequest request, string label, DriveSharing sharing) =>
+        reason ?? (sharing == DriveSharing.Folders ? Text.Format(Strings.PsmStartedNoFolders, label, request.Component) : null);
+
+    private string PsmRequestLog(PvwaAccount account, ConnectRequest request, string label, PsmConnectOptions options) =>
         $"Demande de connexion PSM pour {label} (compte {account.Id}, composant {request.Component}, machine cible « {request.RemoteMachine} », "
-        + $"disques du poste demandés {(_settings.PsmRedirectDrives ? "oui" : "non")})";
+        + $"disques du poste demandés {(options.MapLocalDrives ? "oui" : "non")}, partage {_settings.DriveSharing() switch
+        {
+            DriveSharing.None => "aucun",
+            DriveSharing.Folders => $"dossiers ({SharedFolderRules.Describe(_settings.PsmSharedFolders)})",
+            _ => "tous les disques",
+        }})";
 
     /// <summary>Fichier .rdp renvoyé par le PVWA, dans le journal de débogage (jetons et signature masqués).</summary>
     private static void LogRdpFile(byte[] rdp)
@@ -1808,18 +1875,29 @@ public partial class MainWindow : Window
     private void OnSettings(object sender, RoutedEventArgs e) => OpenSettings();
 
     /// <param name="sharing">Ouvre la page « Partage » (partage désactivé, depuis « Partager la session »).</param>
-    private void OpenSettings(bool sharing = false)
+    /// <param name="about">Ouvre la page « À propos » (nouvelle version signalée dans la barre d'état).</param>
+    private void OpenSettings(bool sharing = false, bool about = false)
     {
         var language = _settings.Language;
         var centralFile = _settings.EnvironmentFile;
         var pvwa = _settings.PvwaUrl;
-        var dialog = new SettingsDialog(_settings, _keePass.Store, PvwaHost) { Owner = this };
+        var dialog = new SettingsDialog(_settings, _keePass.Store, PvwaHost, SaveSettings) { Owner = this };
         if (sharing)
         {
             dialog.ShowSharingPage();
         }
+        else if (about)
+        {
+            dialog.ShowAboutPage();
+        }
 
         var accepted = dialog.ShowDialog() == true;
+        // Nouvelle version trouvée depuis la page « À propos » : lien dans la barre d'état.
+        if (UpdateService.Available is { } info && UpdateChecker.IsNewer(info.Version, UpdateChecker.CurrentVersion))
+        {
+            ShowUpdateLink(info);
+        }
+
         // Coffre local supprimé ou créé depuis les paramètres : l'arbre « Mes serveurs » peut changer.
         RefreshSaved();
         if (accepted)
@@ -1898,58 +1976,6 @@ public partial class MainWindow : Window
         {
             MainTabs.SelectedItem = tab;
             (tab.Content as SshSessionView)?.FocusTerminal();
-        }
-    }
-
-    /// <summary>Bouton Paramètres : menu sous le bouton (paramètres, journal de débogage).</summary>
-    private void OnSettingsMenu(object sender, RoutedEventArgs e)
-    {
-        var menu = (ContextMenu)FindResource("SettingsMenu");
-        menu.PlacementTarget = (UIElement)sender;
-        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-        menu.IsOpen = true;
-    }
-
-    private void OnSettingsMenuOpened(object sender, RoutedEventArgs e)
-    {
-        foreach (var item in ((ContextMenu)sender).Items.OfType<MenuItem>().Where(i => i.Tag as string == "debuglog"))
-        {
-            item.IsChecked = _settings.DebugLogEnabled;
-        }
-
-        // Accès d'urgence : pas de compte du PVWA auquel rattacher des sessions importées.
-        foreach (var item in ((ContextMenu)sender).Items.OfType<MenuItem>().Where(i => i.Tag as string == "sessionimport"))
-        {
-            item.Visibility = IsOffline ? Visibility.Collapsed : Visibility.Visible;
-        }
-    }
-
-    private void OnToggleDebugLog(object sender, RoutedEventArgs e)
-    {
-        _settings.DebugLogEnabled = ((MenuItem)sender).IsChecked;
-        AppDebugLog.Apply(_settings);
-        SaveSettings();
-        UpdateDebugLogIndicator();
-        SetStatus(DebugLog.FilePath is { } path ? Text.Format(Strings.DebugLogStarted, path) : Strings.DebugLogStopped);
-    }
-
-    /// <summary>Ouvre l'Explorateur sur le fichier du journal, pour le relire ou le joindre à un message.</summary>
-    private void OnShowDebugLog(object sender, RoutedEventArgs e)
-    {
-        var path = DebugLog.FilePath ?? DebugLog.DefaultPath;
-        if (!File.Exists(path))
-        {
-            SetStatus(Strings.DebugLogMissing, isError: true);
-            return;
-        }
-
-        try
-        {
-            WindowsExplorer.ShowFile(path);
-        }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or ArgumentException)
-        {
-            SetStatus(ex.Message, isError: true);
         }
     }
 

@@ -1784,24 +1784,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Debug log on: {0}.
-        /// </summary>
-        public static string DebugLogStarted {
-            get {
-                return ResourceManager.GetString("DebugLogStarted", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Debug log off..
-        /// </summary>
-        public static string DebugLogStopped {
-            get {
-                return ResourceManager.GetString("DebugLogStopped", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Default _reason:.
         /// </summary>
         public static string DefaultReasonLabel {
@@ -4127,15 +4109,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to _About ZillaTerm….
-        /// </summary>
-        public static string MenuAbout {
-            get {
-                return ResourceManager.GetString("MenuAbout", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Add an account….
         /// </summary>
         public static string MenuAddAccount {
@@ -4267,33 +4240,6 @@ namespace ZillaTerm.App.Localization {
         public static string MenuCreateSharedList {
             get {
                 return ResourceManager.GetString("MenuCreateSharedList", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to _Debug log.
-        /// </summary>
-        public static string MenuDebugLog {
-            get {
-                return ResourceManager.GetString("MenuDebugLog", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Show the debug log _file.
-        /// </summary>
-        public static string MenuDebugLogShow {
-            get {
-                return ResourceManager.GetString("MenuDebugLogShow", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Records how connections unfold (PVWA, PSM, remote desktop, SSH) in a file, to understand a failur[rest of string was truncated].
-        /// </summary>
-        public static string MenuDebugLogTip {
-            get {
-                return ResourceManager.GetString("MenuDebugLogTip", resourceCulture);
             }
         }
 
@@ -4627,15 +4573,6 @@ namespace ZillaTerm.App.Localization {
         public static string MenuSafeMembersOf {
             get {
                 return ResourceManager.GetString("MenuSafeMembersOf", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to _Settings….
-        /// </summary>
-        public static string MenuSettings {
-            get {
-                return ResourceManager.GetString("MenuSettings", resourceCulture);
             }
         }
 
@@ -9270,7 +9207,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to PSMP, language, remembered components, debug log.
+        ///   Looks up a localized string similar to ZillaTerm settings: PSMP, language, remote desktop, debug log, About.
         /// </summary>
         public static string ToolSettingsTip {
             get {
@@ -11971,15 +11908,6 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Updates.
-        /// </summary>
-        public static string SettingsUpdatesSection {
-            get {
-                return ResourceManager.GetString("SettingsUpdatesSection", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to ⚠ A stray right-click sends the clipboard to the shell, root shells included..
         /// </summary>
         public static string SettingsRightClickEffect {
@@ -12048,24 +11976,6 @@ namespace ZillaTerm.App.Localization {
         public static string ForgetSelectedKeys {
             get {
                 return ResourceManager.GetString("ForgetSelectedKeys", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Updates are checked at start-up (Settings &gt; General)..
-        /// </summary>
-        public static string AboutAutoCheckOn {
-            get {
-                return ResourceManager.GetString("AboutAutoCheckOn", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Automatic update check is off (Settings &gt; General)..
-        /// </summary>
-        public static string AboutAutoCheckOff {
-            get {
-                return ResourceManager.GetString("AboutAutoCheckOff", resourceCulture);
             }
         }
 
@@ -13704,15 +13614,6 @@ namespace ZillaTerm.App.Localization {
         public static string SessionImportTip {
             get {
                 return ResourceManager.GetString("SessionImportTip", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Import sessions from another _tool….
-        /// </summary>
-        public static string MenuSessionImport {
-            get {
-                return ResourceManager.GetString("MenuSessionImport", resourceCulture);
             }
         }
 
@@ -16078,16 +15979,7 @@ namespace ZillaTerm.App.Localization {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Share this _computer's drives.
-        /// </summary>
-        public static string PsmRedirectDrives {
-            get {
-                return ResourceManager.GetString("PsmRedirectDrives", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Like “Map local drives” in the PVWA, when the component allows it: programs in the session can read and write your drives. Unchecked, no drive is shared in a tab..
+        ///   Looks up a localized string similar to Like “Map local drives” in the PVWA, when the component allows it: programs in the session can read and write the shared drives or folders. None: nothing is shared..
         /// </summary>
         public static string PsmRedirectDrivesHelp {
             get {
@@ -19482,7 +19374,7 @@ namespace ZillaTerm.App.Localization {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Show the _file.
+        ///   Looks up a localized string similar to Show the log _file.
         /// </summary>
         public static string SettingsDebugLogShow {
             get {
@@ -19775,6 +19667,240 @@ namespace ZillaTerm.App.Localization {
         public static string SettingsTailWordsHelp {
             get {
                 return ResourceManager.GetString("SettingsTailWordsHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This computer's drives shared with PSM Windows sessions.
+        /// </summary>
+        public static string PsmDrivesSection {
+            get {
+                return ResourceManager.GetString("PsmDrivesSection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _None.
+        /// </summary>
+        public static string PsmDrivesNone {
+            get {
+                return ResourceManager.GetString("PsmDrivesNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _All drives.
+        /// </summary>
+        public static string PsmDrivesAll {
+            get {
+                return ResourceManager.GetString("PsmDrivesAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Only these folders.
+        /// </summary>
+        public static string PsmDrivesFolders {
+            get {
+                return ResourceManager.GetString("PsmDrivesFolders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Seen in the session as \\tsclient\Name. Full path, or starting with a variable (%USERPROFILE%\Share). Sessions in a tab with the ZillaTerm client only: Remote Desktop Connection and the Windows control then share no drive..
+        /// </summary>
+        public static string PsmFoldersHelp {
+            get {
+                return ResourceManager.GetString("PsmFoldersHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shared folders.
+        /// </summary>
+        public static string PsmFoldersList {
+            get {
+                return ResourceManager.GetString("PsmFoldersList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name in the session.
+        /// </summary>
+        public static string PsmFolderColName {
+            get {
+                return ResourceManager.GetString("PsmFolderColName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path on this computer.
+        /// </summary>
+        public static string PsmFolderColPath {
+            get {
+                return ResourceManager.GetString("PsmFolderColPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Add a _folder….
+        /// </summary>
+        public static string PsmFolderAdd {
+            get {
+                return ResourceManager.GetString("PsmFolderAdd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Re_move.
+        /// </summary>
+        public static string PsmFolderRemove {
+            get {
+                return ResourceManager.GetString("PsmFolderRemove", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid shared folder name (line {0}): letters without accents, digits, “.”, “-” or “_”, {1} characters at most..
+        /// </summary>
+        public static string InvalidFolderName {
+            get {
+                return ResourceManager.GetString("InvalidFolderName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid shared folder path (line {0}): full path (C:\…, \\server\share\…) or starting with a variable (%USERPROFILE%\…), without “,” or quotation marks..
+        /// </summary>
+        public static string InvalidFolderPath {
+            get {
+                return ResourceManager.GetString("InvalidFolderPath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Two shared folders are named “{0}”..
+        /// </summary>
+        public static string DuplicateFolderName {
+            get {
+                return ResourceManager.GetString("DuplicateFolderName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} shared folders at most..
+        /// </summary>
+        public static string TooManyFolders {
+            get {
+                return ResourceManager.GetString("TooManyFolders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to “Only these folders”: add at least one folder, or choose “None”..
+        /// </summary>
+        public static string FoldersEmpty {
+            get {
+                return ResourceManager.GetString("FoldersEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only chosen folders shared with PSM Windows sessions.
+        /// </summary>
+        public static string EnvPsmShareFoldersOnly {
+            get {
+                return ResourceManager.GetString("EnvPsmShareFoldersOnly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Folders shared with PSM Windows sessions.
+        /// </summary>
+        public static string EnvPsmSharedFolders {
+            get {
+                return ResourceManager.GetString("EnvPsmSharedFolders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Folders shared with PSM Windows sessions, including one on the network server {0}.
+        /// </summary>
+        public static string EnvPsmSharedFoldersNetwork {
+            get {
+                return ResourceManager.GetString("EnvPsmSharedFoldersNetwork", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid shared folder (name in letters without accents, digits, “.”, “-” or “_”; full path or starting with a variable, without “,” or quotation marks; 16 folders at most, no duplicate): {0}.
+        /// </summary>
+        public static string EnvInvalidSharedFolder {
+            get {
+                return ResourceManager.GetString("EnvInvalidSharedFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: shared folders not found on this computer, not shared: {1}.
+        /// </summary>
+        public static string PsmFoldersMissing {
+            get {
+                return ResourceManager.GetString("PsmFoldersMissing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: the Windows Remote Desktop control only shares whole drives; no folder shared (“Only these folders”)..
+        /// </summary>
+        public static string PsmFoldersWindowsControl {
+            get {
+                return ResourceManager.GetString("PsmFoldersWindowsControl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PSM session started: {0} ({1}). Remote Desktop Connection only shares whole drives: no drive shared (“Only these folders”)..
+        /// </summary>
+        public static string PsmStartedNoFolders {
+            get {
+                return ResourceManager.GetString("PsmStartedNoFolders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Opens File Explorer on the debug log file, to read it again or attach it to a message..
+        /// </summary>
+        public static string SettingsDebugLogShowTip {
+            get {
+                return ResourceManager.GetString("SettingsDebugLogShowTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Re_connect.
+        /// </summary>
+        public static string RdpReconnect {
+            get {
+                return ResourceManager.GetString("RdpReconnect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New connection in this tab (for a PSM session, a new request to the PVWA); an open session is closed first, after confirmation..
+        /// </summary>
+        public static string RdpReconnectTip {
+            get {
+                return ResourceManager.GetString("RdpReconnectTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to About.
+        /// </summary>
+        public static string SettingsPageAbout {
+            get {
+                return ResourceManager.GetString("SettingsPageAbout", resourceCulture);
             }
         }
     }

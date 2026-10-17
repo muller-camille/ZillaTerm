@@ -11,7 +11,7 @@ namespace ZillaTerm.Core.Rdp;
 public sealed record FreeRdpLaunch(IReadOnlyList<string> Arguments, string ConnectionFile);
 
 /// <summary>
-/// Connexion décrite au client FreeRDP (fork muller-camille/FreeRDP, branche patches-3.32.1 : uniquement des
+/// Connexion décrite au client FreeRDP (fork muller-camille/FreeRDP, branche patches-3.32.2 : uniquement des
 /// fonctions génériques de FreeRDP). Le serveur doit présenter un certificat (TLS) ou une clé (ancienne sécurité RDP)
 /// dont l'empreinte a été acceptée par ZillaTerm avant le lancement (« /cert:deny,fingerprint:… ») : FreeRDP refuse
 /// tout autre serveur, sans rien demander.
@@ -62,7 +62,7 @@ public static class FreeRdpArguments
     /// Dossier de configuration de FreeRDP (certificats et clés qu'il connaîtrait) : vide, propre à ZillaTerm ; null pour
     /// le dossier par défaut.
     /// </param>
-    /// <exception cref="ArgumentException">Valeur avec un retour à la ligne ou un caractère nul.</exception>
+    /// <exception cref="ArgumentException">Valeur avec un retour à la ligne ou un caractère nul ; dossier partagé invalide.</exception>
     public static FreeRdpLaunch Build(RdpConnectionSettings settings, long parentWindow, (int Width, int Height) pixels,
         string? password, bool verbose, IReadOnlyCollection<string> fingerprints, bool legacySecurity = false, string? configPath = null)
     {
@@ -95,9 +95,15 @@ public static class FreeRdpArguments
         // presse-papiers et de l'affichage (tailles demandées au serveur), canaux dynamiques ouverts par le serveur, et
         // messages du presse-papiers du client Windows (jamais son contenu) : session qui se ferme, copier-coller qui
         // n'aboutit pas, bureau qui ne suit pas la taille de l'onglet.
+        // Disques du poste partagés : chaque demande du serveur (disque, opération, fichier ouvert) et sa réponse (code
+        // NTSTATUS), jamais le nom ni le contenu d'un fichier : erreur d'un disque partagé, en boucle ou non. Bavard
+        // (deux lignes par demande) : seulement avec le journal de débogage et des disques partagés.
         arguments.Add("/log-filters:com.freerdp.client.common:INFO" + (verbose
             ? ",com.freerdp.channels.rail.*:DEBUG,com.freerdp.channels.cliprdr.*:DEBUG,"
               + "com.freerdp.channels.disp.*:DEBUG,com.freerdp.channels.drdynvc.*:DEBUG,com.freerdp.client.windows:DEBUG"
+              + (settings.RedirectDrives || settings.SharedFolders.Count > 0
+                  ? ",com.freerdp.channels.rdpdr.client:TRACE,com.freerdp.channels.drive.client:TRACE"
+                  : "")
             : ""));
 
         // Réglages par leur nom, en une seule option : une option donnée deux fois ne garde que sa dernière valeur.
@@ -135,6 +141,19 @@ public static class FreeRdpArguments
         if (settings.RedirectDrives)
         {
             arguments.Add("/drives");
+        }
+
+        // Dossiers choisis à la place de tous les disques : « /drive:Nom,Chemin », une option par dossier. Nom et chemin
+        // vérifiés (rien qui couperait l'option, chemin complet) : jamais un dossier relatif au client ni « * » (tous les
+        // disques).
+        foreach (var folder in settings.SharedFolders)
+        {
+            if (!SharedFolderRules.IsValidName(folder.Name) || !SharedFolderRules.IsValidPath(folder.Path) || folder.Path.Contains('%', StringComparison.Ordinal))
+            {
+                throw new ArgumentException("Dossier partagé invalide : " + folder.Name, nameof(settings));
+            }
+
+            arguments.Add($"/drive:{folder.Name.Trim()},{folder.Path.Trim()}");
         }
 
         if (settings.RedirectPrinters)

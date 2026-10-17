@@ -241,6 +241,11 @@ public sealed class EnvironmentProfileTests : IDisposable
     [InlineData("""{ "AuthMethod": "LDAP, RADIUS" }""", EnvironmentProblem.InvalidJson)]
     [InlineData("""{ "UploadProtocol": "Ftp" }""", EnvironmentProblem.InvalidJson)]
     [InlineData("""{ "PvwaUrl": """, EnvironmentProblem.InvalidJson)]
+    [InlineData("""{ "PsmSharedFolders": [ { "Name": "Mon partage", "Path": "C:\\Partage" } ] }""", EnvironmentProblem.InvalidSharedFolder)]
+    [InlineData("""{ "PsmSharedFolders": [ { "Name": "Partage", "Path": "Partage" } ] }""", EnvironmentProblem.InvalidSharedFolder)]
+    [InlineData("""{ "PsmSharedFolders": [ { "Name": "Partage", "Path": "C:\\a,b" } ] }""", EnvironmentProblem.InvalidSharedFolder)]
+    [InlineData("""{ "PsmSharedFolders": [ { "Name": "P", "Path": "C:\\a" }, { "Name": "p", "Path": "C:\\b" } ] }""", EnvironmentProblem.InvalidSharedFolder)]
+    [InlineData("""{ "PsmSharedFolders": [ null ] }""", EnvironmentProblem.InvalidSharedFolder)]
     public void InvalidFilesAreRefused(string json, EnvironmentProblem problem)
     {
         var path = Path.Combine(_dir, "bad.env.json");
@@ -361,8 +366,44 @@ public sealed class EnvironmentProfileTests : IDisposable
             KeepPvwaSessionAlive = true, KeepAccountListCopy = true, SshInApp = true, PsmDesktopInTab = true, PsmRedirectDrives = true,
             PauseRdpDisplay = true, CheckForUpdates = false, UploadProtocol = TransferProtocol.Sftp, DutyText = "N2", DutyTextFile = @"\\fs\d.txt",
             InterventionReminders = [], SessionSharing = true, ShareDirect = true, SharePort = 50000, ShareRelayFolder = @"\\fs\relais",
-            ServerTags = [],
+            ServerTags = [], PsmShareFoldersOnly = true, PsmSharedFolders = [],
         };
         Assert.Equal(Enum.GetValues<EnvironmentSetting>().Order(), full.DefinedSettings().Order());
+    }
+
+    /// <summary>
+    /// « Ces dossiers seulement » diffusé par l'équipe : exporté, relu, appliqué à la place des dossiers du poste. Un
+    /// dossier sur un partage réseau est signalé (Windows s'y authentifie à chaque session qui le partage).
+    /// </summary>
+    [Fact]
+    public void SharedFoldersAreSharedByTheTeam()
+    {
+        var team = Team();
+        team.PsmRedirectDrives = true;
+        team.PsmShareFoldersOnly = true;
+        team.PsmSharedFolders = [new Core.Rdp.SharedFolder("Partage", @"%USERPROFILE%\Partage"), new Core.Rdp.SharedFolder("Logs", @"\\fs01\logs")];
+        var path = Path.Combine(_dir, "team.env.json");
+        EnvironmentProfile.FromSettings(team, "Prod").Save(path);
+
+        var profile = EnvironmentProfile.Load(path).Profile;
+        Assert.True(profile.PsmShareFoldersOnly);
+        Assert.Equal(team.PsmSharedFolders, profile.PsmSharedFolders);
+
+        var mine = new AppSettings { PsmSharedFolders = [new Core.Rdp.SharedFolder("Perso", @"D:\perso")] };
+        var changes = profile.Diff(mine);
+        Assert.Contains(changes, c => c.Setting == EnvironmentSetting.PsmShareFoldersOnly && c.New == "true");
+        var folders = Assert.Single(changes, c => c.Setting == EnvironmentSetting.PsmSharedFolders);
+        Assert.True(folders.Sensitive);
+        Assert.Equal("fs01", folders.Detail);
+        Assert.Equal(@"Perso (D:\perso)", folders.Current);
+
+        profile.ApplyTo(mine);
+        Assert.Equal(Core.Rdp.DriveSharing.Folders, mine.DriveSharing());
+        Assert.Equal(team.PsmSharedFolders, mine.PsmSharedFolders);
+
+        // Tous les disques : aucune liste exportée.
+        Assert.Null(EnvironmentProfile.FromSettings(new AppSettings(), null).PsmSharedFolders);
+        // « Ces dossiers seulement » sans dossier : liste vide exportée (aucun dossier), pas absente.
+        Assert.Equal([], EnvironmentProfile.FromSettings(new AppSettings { PsmShareFoldersOnly = true }, null).PsmSharedFolders);
     }
 }
